@@ -1,5 +1,7 @@
 package app
 
-func main() {
+import "fmt"
 
+func main() {
+	fmt.Println("Hello Bugsy!")
 }
