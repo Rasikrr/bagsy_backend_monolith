@@ -1,0 +1,88 @@
+environment: dev # dev, prod
+
+name: bugsy_backend # name of application
+
+log:
+  level: info # debug, info, warn, error
+  add_source: true
+
+metrics:
+  enabled: false
+  namespace: core
+  prometheus:
+    port: 9100
+
+
+http:
+  host: 0.0.0.0
+  port: 8080
+  required: true
+
+grpc:
+  host: 0.0.0.0
+  port: 3000
+  required: true
+
+postgres:
+  required: false
+  max_conns: 10
+  min_conns: 3
+  max_idle_conn_time: 10m
+
+redis:
+  required: false
+  pool_size: 10
+  min_idle_conns: 3
+  max_idle_conns: 10
+  read_timeout: 1m
+
+nats:
+  required: false
+  dsn: localhost:4222
+  queue: example_queue # It is like load balancer, read more about it here: https://docs.nats.io/nats-concepts/core-nats/queue
+
+
+# If you not provide 'required' field or set it to false, then variable will be ignored
+# 'env_name' is name of variable in .env file.
+# !!! IMPORTANT !!! .env variables has more priority than config variables
+# Available variable types: 'string', 'int', 'float', 'bool', 'duration'
+
+env:
+  example_string:
+    type: "string"
+    value: "example"
+    env_name: "EXAMPLE_STRING"
+    required: true
+
+  example_float:
+    type: "float"
+    value: 1.0
+    env_name: "EXAMPLE_FLOAT"
+    required: true
+
+  example_int:
+    type: "int"
+    value: 1
+    env_name: "EXAMPLE_INT"
+    required: true
+
+  example_bool:
+    type: "bool"
+    value: true
+    env_name: "EXAMPLE_BOOL"
+    required: true
+
+  example_duration:
+    type: "duration"
+    value: "1s"
+    env_name: "EXAMPLE_DURATION"
+    required: true
+
+# This is example of variable that do not have value in config but in .env file.
+# by env_name you can get value from .env file
+# !!! IMPORTANT !!! if tou want to add .env variable, first you need to add it to config.yaml
+# Second: you need to declare env_name in config.yaml
+  ex_string:
+    type: "string"
+    env_name: "EX_STRING"
+    required: false
