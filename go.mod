@@ -2,7 +2,7 @@ module github.com/Rasikrr/bugsy_backend_monolith
 
 go 1.25.1
 
-require github.com/Rasikrr/core v0.0.28
+require github.com/Rasikrr/core v0.0.34
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect

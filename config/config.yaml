@@ -24,21 +24,20 @@ grpc:
   required: true
 
 postgres:
-  required: false
+  required: true
   max_conns: 10
   min_conns: 3
   max_idle_conn_time: 10m
 
 redis:
-  required: false
+  required: true
   pool_size: 10
   min_idle_conns: 3
   max_idle_conns: 10
   read_timeout: 1m
 
 nats:
-  required: false
-  dsn: localhost:4222
+  required: true
   queue: example_queue # It is like load balancer, read more about it here: https://docs.nats.io/nats-concepts/core-nats/queue
 
 
@@ -48,6 +47,46 @@ nats:
 # Available variable types: 'string', 'int', 'float', 'bool', 'duration'
 
 env:
+  config_path:
+    type: "string"
+    env_name: "CONFIG_PATH"
+    required: true
+
+  postgres_dsn:
+    type: "string"
+    env_name: "POSTGRES_DSN"
+    required: true
+
+  redis_host:
+    type: "string"
+    env_name: "REDIS_HOST"
+    required: true
+
+  redis_port:
+    type: "int"
+    env_name: "REDIS_PORT"
+    required: true
+
+  redis_user:
+    type: "string"
+    env_name: "REDIS_USER"
+    required: true
+
+  redis_password:
+    type: "string"
+    env_name: "REDIS_PASSWORD"
+    required: true
+
+  redis_db:
+    type: "int"
+    env_name: "REDIS_DB"
+    required: true
+
+  nats_dsn:
+    type: "string"
+    env_name: "NATS_DSN"
+    required: true
+
   example_string:
     type: "string"
     value: "example"

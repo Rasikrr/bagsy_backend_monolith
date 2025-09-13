@@ -5,6 +5,8 @@ github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/Rasikrr/core v0.0.28 h1:qhr1s2RraHpUIAu2lW5EdL71wP0ppM+ccoo27Tyz+Gc=
 github.com/Rasikrr/core v0.0.28/go.mod h1:4sObCu4c+LpruDDUrOmVMJ42QGy1a34pzz47xOg4Kq4=
+github.com/Rasikrr/core v0.0.34 h1:RPUMl3wNnMNeHvRJ383aCJQTnDA/5BDQ1+8UWrsbfAc=
+github.com/Rasikrr/core v0.0.34/go.mod h1:4sObCu4c+LpruDDUrOmVMJ42QGy1a34pzz47xOg4Kq4=
 github.com/avast/retry-go v3.0.0+incompatible h1:4SOWQ7Qs+oroOTQOYnAHqelpCO0biHSxpiH9JdtuBj0=
 github.com/avast/retry-go v3.0.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
