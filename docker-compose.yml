@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: bugsy_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bugsy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: bugsy_redis
+    ports:
+      - "6379:6379"
+
+  nats:
+    image: nats:2.10
+    container_name: bugsy_nats
+    ports:
+      - "4222:4222"
+      - "8222:8222" # HTTP-админка, можно открыть в браузере
+    command: ["-js"] # включаем JetStream
+
+volumes:
+  postgres_data:
