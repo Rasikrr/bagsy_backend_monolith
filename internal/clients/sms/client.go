@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -22,7 +21,7 @@ type client struct {
 	httpc    *http.Client
 }
 
-func NewClient(login, host, password string) Client {
+func NewClient(host, login, password string) Client {
 	return &client{
 		host:     host,
 		login:    login,
@@ -34,25 +33,39 @@ func NewClient(login, host, password string) Client {
 }
 
 func (c *client) Send(ctx context.Context, message string, phones ...string) error {
+	if message == "" {
+		return errEmptyMessage
+	}
+	if len(phones) == 0 {
+		return errEmptyPhones
+	}
 	reqBody := createRequestBody(c.login, c.password, message, phones)
-	return c.doRequest(ctx, http.MethodPost, "/rest/send/ ", reqBody)
+
+	resp, err := c.send(ctx, reqBody)
+	if err != nil {
+		return err
+	}
+	if err := resp.getError(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (c *client) doRequest(ctx context.Context, method, path string, body any) error {
-	bb, err := json.Marshal(body)
+func (c *client) send(ctx context.Context, reqBody request) (*sendResponse, error) {
+	bb, err := json.Marshal(reqBody)
 	if err != nil {
-		return fmt.Errorf("marshal request: %w", err)
+		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, c.host+path, bytes.NewReader(bb))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host+"/rest/send/", bytes.NewReader(bb))
 	if err != nil {
-		return fmt.Errorf("build request: %w", err)
+		return nil, fmt.Errorf("build request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpc.Do(req)
 	if err != nil {
-		return fmt.Errorf("send request: %w", err)
+		return nil, fmt.Errorf("send request: %w", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -60,8 +73,10 @@ func (c *client) doRequest(ctx context.Context, method, path string, body any) e
 
 	respBody, _ := io.ReadAll(resp.Body)
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("bad status %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+	var sendResp sendResponse
+
+	if err := json.Unmarshal(respBody, &sendResp); err != nil {
+		return nil, fmt.Errorf("unmarshal response: %w", err)
 	}
-	return nil
+	return &sendResp, nil
 }
