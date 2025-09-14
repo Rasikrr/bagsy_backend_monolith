@@ -11,6 +11,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-chi/chi/v5 v5.2.1 // indirect
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/ilyakaznacheev/cleanenv v1.5.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
