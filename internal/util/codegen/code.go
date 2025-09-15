@@ -1,3 +1,4 @@
+// nolint: depguard, gosec
 package codegen
 
 import (

@@ -97,35 +97,30 @@ env:
     env_name: "DEV_SMS_CHAT_ID"
     required: true
 
-  example_string:
-    type: "string"
-    value: "example"
-    env_name: "EXAMPLE_STRING"
-    required: true
-
-  example_float:
-    type: "float"
-    value: 1.0
-    env_name: "EXAMPLE_FLOAT"
-    required: true
-
-  example_int:
-    type: "int"
-    value: 1
-    env_name: "EXAMPLE_INT"
-    required: true
-
-  example_bool:
-    type: "bool"
-    value: true
-    env_name: "EXAMPLE_BOOL"
-    required: true
-
-  example_duration:
+  sms_spam_ttl:
     type: "duration"
-    value: "1s"
-    env_name: "EXAMPLE_DURATION"
+    env_name: "SMS_SPAM_TTL"
     required: true
+    value: "86400s"
+
+  sms_client_login:
+    type: "string"
+    env_name: "SMS_CLIENT_LOGIN"
+    required: true
+
+  sms_client_password:
+    type: "string"
+    env_name: "SMS_CLIENT_PASSWORD"
+    required: true
+
+  auth_code_ttl:
+    type: "duration"
+    env_name: "AUTH_CODE_TTL"
+    required: true
+    value: "60s"
+
+
+
 
 # This is example of variable that do not have value in config but in .env file.
 # by env_name you can get value from .env file

@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
 	"github.com/avast/retry-go"
 )
 
@@ -18,26 +20,28 @@ const (
 )
 
 type Client interface {
-	Send(ctx context.Context, message string, phone string) error
+	Send(ctx context.Context, phone, message string) error
 }
 
 type client struct {
-	login    string
-	password string
-	httpc    *http.Client
+	login        string
+	password     string
+	smsSpamCache sms.Cache
+	httpc        *http.Client
 }
 
-func NewClient(login, password string) Client {
+func NewClient(login, password string, cache sms.Cache) Client {
 	return &client{
 		login:    login,
 		password: password,
 		httpc: &http.Client{
 			Timeout: 10 * time.Second,
 		},
+		smsSpamCache: cache,
 	}
 }
 
-func (c *client) Send(ctx context.Context, message string, phone string) error {
+func (c *client) Send(ctx context.Context, phone, message string) error {
 	if message == "" {
 		return errEmptyMessage
 	}
@@ -45,12 +49,20 @@ func (c *client) Send(ctx context.Context, message string, phone string) error {
 		return errEmptyPhones
 	}
 
+	spam, err := c.smsSpamCache.IsSpam(ctx, phone, message)
+	if err != nil {
+		return fmt.Errorf("sms spam cache: %w", err)
+	}
+	if spam {
+		return errSpam
+	}
+
 	reqBody := createRequestBody(c.login, c.password, message, phone)
 	resp, err := c.sendWithRetry(ctx, reqBody)
 	if err != nil {
 		return err
 	}
-	if err := resp.getError(); err != nil {
+	if err = resp.getError(); err != nil {
 		return err
 	}
 	status, err := c.getStatus(ctx, phone, resp.MessageID)
@@ -58,9 +70,10 @@ func (c *client) Send(ctx context.Context, message string, phone string) error {
 		return err
 	}
 	if status.OneOf(errSmsStatuses...) {
-		return fmt.Errorf("%v: status: %d", errCheckStatus, status)
+		return fmt.Errorf("%w: status: %d", errCheckStatus, status)
 	}
-	return nil
+
+	return c.smsSpamCache.Set(ctx, phone, message)
 }
 
 func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response, error) {
@@ -82,6 +95,7 @@ func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response,
 		if err != nil {
 			return fmt.Errorf("send request: %w", err)
 		}
+		defer resp.Body.Close()
 		return nil
 	}, retry.Attempts(3), retry.Delay(time.Millisecond*500))
 
@@ -89,16 +103,10 @@ func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response,
 		return nil, err
 	}
 
-	defer func() {
-		if resp != nil {
-			_ = resp.Body.Close()
-		}
-	}()
-
 	respBody, _ := io.ReadAll(resp.Body)
 
 	var sendResp response
-	if err := json.Unmarshal(respBody, &sendResp); err != nil {
+	if err = json.Unmarshal(respBody, &sendResp); err != nil {
 		return nil, fmt.Errorf("unmarshal response: %w", err)
 	}
 	return &sendResp, nil
@@ -115,8 +123,8 @@ func (c *client) getStatus(ctx context.Context, phone string, messageID int) (sm
 	q.Add("psw", c.password)
 	q.Add("phone", phone)
 	q.Add("charset", "utf-8")
-	q.Add("fmt", fmt.Sprintf("%d", responseFormatJSON))
-	q.Add("id", fmt.Sprintf("%d", messageID))
+	q.Add("fmt", strconv.Itoa(int(responseFormatJSON)))
+	q.Add("id", strconv.Itoa(messageID))
 
 	req.URL.RawQuery = q.Encode()
 
@@ -132,7 +140,7 @@ func (c *client) getStatus(ctx context.Context, phone string, messageID int) (sm
 	respBody, _ := io.ReadAll(resp.Body)
 
 	var statusResp response
-	if err := json.Unmarshal(respBody, &statusResp); err != nil {
+	if err = json.Unmarshal(respBody, &statusResp); err != nil {
 		return smsStatusNotFound, fmt.Errorf("unmarshal response: %w", err)
 	}
 	return statusResp.Status, nil
