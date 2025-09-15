@@ -10,18 +10,18 @@ import (
 )
 
 var (
-	phones  = []string{"77715275251"}
-	message = "мам вызывай такси"
+	testPhone = "77783784148"
+	message   = "сырники"
 )
 
 func TestSMSClient(t *testing.T) {
-	//t.Skip()
+	t.Skip()
 	ctx := context.Background()
 	godotenv.Load()
-	host, login, password := os.Getenv("HOST"), os.Getenv("LOGIN"), os.Getenv("PASSWORD")
-	cli := NewClient(host, login, password)
+	login, password := os.Getenv("LOGIN"), os.Getenv("PASSWORD")
+	cli := NewClient(login, password)
 
-	err := cli.Send(ctx, message, phones...)
+	err := cli.Send(ctx, message, testPhone)
 
 	require.NoError(t, err)
 }

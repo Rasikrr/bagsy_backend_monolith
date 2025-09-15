@@ -3,27 +3,6 @@ package sms
 
 import (
 	"fmt"
-	"strings"
-)
-
-type responseFormat uint8
-
-const (
-	responseFormatString responseFormat = iota
-	responseFormatNumber
-	responseFormatXML
-	responseFormatJSON
-)
-
-type smsStatus int8
-
-const (
-	smsStatusNotFound smsStatus = iota - 3
-	smsStatusStopped
-	smsStatusPending
-	smsStatusPassedToOperator
-	smsSatusDelivered
-	smsStatusChecked
 )
 
 type request struct {
@@ -34,28 +13,28 @@ type request struct {
 	ResponseFormat responseFormat `json:"fmt"`
 }
 
-func createRequestBody(login, password, message string, phones []string) request {
+func createRequestBody(login, password, message string, phone string) request {
 	req := request{
 		Login:          login,
 		Password:       password,
 		Message:        message,
-		Phones:         strings.Join(phones, ","),
+		Phones:         phone,
 		ResponseFormat: responseFormatJSON,
 	}
 	return req
 }
 
-type sendResponse struct {
+type response struct {
 	Error     string    `json:"error,omitempty"`
-	ErrorCode int       `json:"error_code,omitempty"`
+	ErrorCode errCodes  `json:"error_code,omitempty"`
 	MessageID int       `json:"id"`
 	Cnt       int       `json:"cnt"`
 	Status    smsStatus `json:"status,omitempty"`
 }
 
-func (s sendResponse) getError() error {
-	if s.Error != "" {
-		return fmt.Errorf("error while sending sms: %s | error_code: %d", s.Error, s.ErrorCode)
+func (r response) getError() error {
+	if r.Error != "" {
+		return fmt.Errorf("error while sending sms: %s | error_code: %d", r.Error, r.ErrorCode)
 	}
 	return nil
 }
