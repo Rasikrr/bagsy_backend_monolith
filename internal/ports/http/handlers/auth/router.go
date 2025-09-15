@@ -1,7 +1,7 @@
 package auth
 
 import (
-	fasthttprouter "github.com/fasthttp/router"
+	"github.com/go-chi/chi/v5"
 )
 
 type Controller struct {
@@ -13,7 +13,7 @@ func New() *Controller {
 	return &Controller{}
 }
 
-func (c *Controller) Init(r *fasthttprouter.Router) {
+func (c *Controller) Init(r *chi.Mux) {
 	// group := r.Group("/api/v1")
 
 	// TODO: resolve
