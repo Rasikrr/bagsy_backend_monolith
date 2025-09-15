@@ -1,0 +1,40 @@
+version: "2"
+
+run:
+  go: "1.25"
+  timeout: 5m
+  tests: false
+  concurrency: 4
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - revive
+    - errcheck
+    - ineffassign
+    - unparam
+    - misspell
+    - goconst
+    - gocyclo
+  settings:
+    gocyclo:
+      min-complexity: 15
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    revive:
+      severity: warning
+      rules:
+        - name: indent-error-flow
+        - name: var-naming
+    misspell:
+      locale: US
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - "error return value not checked.*(Close|Write|Flush).*"
+    - "should have comment.*or be unexported"
