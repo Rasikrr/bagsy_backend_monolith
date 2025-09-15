@@ -4,12 +4,11 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/core/telegram"
 )
 
 type Service interface {
-	Login(ctx context.Context, phone string) (*entity.Auth, error)
+	SendCode(ctx context.Context, phone string) error
 }
 
 type service struct {
@@ -27,7 +26,7 @@ func NewService(
 	}
 }
 
-func (s *service) Login(ctx context.Context, phone string) (*entity.Auth, error) {
+func (s *service) SendCode(ctx context.Context, phone string) error {
 	// TODO
-	return nil, nil
+	return nil
 }

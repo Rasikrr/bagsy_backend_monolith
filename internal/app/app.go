@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/appenv"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/telegram"
 
@@ -40,18 +42,22 @@ func (a *App) initHTTP(ctx context.Context) error {
 }
 
 func (a *App) initCache(ctx context.Context) error {
-	a.tgDevAuthCache = auth.NewCache(a.Redis())
+	authCodeTTL, err := a.Config().Variables.GetDuration(appenv.AuthCodeTTL)
+	if err != nil {
+		return err
+	}
+	a.tgDevAuthCache = auth.NewCache(a.Redis(), authCodeTTL)
 
 	return nil
 }
 
 func (a *App) initClients(ctx context.Context) error {
-	token, err := a.Config().Variables.GetString("dev_sms_bot_token")
+	token, err := a.Config().Variables.GetString(appenv.DevSMSBotToken)
 	if err != nil {
 		return err
 	}
 
-	chatID, err := a.Config().Variables.GetInt("dev_sms_chat_id")
+	chatID, err := a.Config().Variables.GetInt(appenv.DevSMSChatID)
 	if err != nil {
 		return err
 	}
