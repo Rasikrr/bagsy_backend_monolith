@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
 	"time"
+
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
 )
 
 type User struct {

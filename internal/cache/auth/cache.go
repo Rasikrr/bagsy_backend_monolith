@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/codegen"
 	"github.com/Rasikrr/core/redis"
 )
 
 const (
-	prefix     = "auth"
-	codePrefix = "code"
+	authPrefix = "AUTH"
 )
 
 type Cache interface {
-	Save(ctx context.Context, phone string) error
+	SetCode(ctx context.Context, phone, code string) error
+	CheckSpam(ctx context.Context, phone string) (bool, error)
 }
 
 type cache struct {
@@ -30,16 +29,6 @@ func NewCache(cli redis.Cache, codeTTL time.Duration) Cache {
 	}
 }
 
-func (c *cache) Save(ctx context.Context, phone string) error {
-	code := codegen.GenerateAuthCode()
-
-	err := c.cli.SetWithExpiration(ctx, c.codeKey(phone), code, c.codeTTL)
-	if err != nil {
-		return fmt.Errorf("failed to set code to cache: %v", err)
-	}
-	return nil
-}
-
-func (c *cache) codeKey(phone string) string {
-	return fmt.Sprintf("%s:%s:%s", prefix, codePrefix, phone)
+func (c *cache) genKey(key string) string {
+	return fmt.Sprintf("%s:%s", authPrefix, key)
 }
