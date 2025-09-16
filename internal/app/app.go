@@ -41,6 +41,7 @@ func InitApp(ctx context.Context) *App {
 			log.Fatal(ctx, "app init", log.Err(err))
 		}
 	}
+	log.Infof(ctx, "env: %s", app.Config().Environment)
 	return app
 }
 
