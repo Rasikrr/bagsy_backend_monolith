@@ -6,3 +6,9 @@ migrate-up:
 
 migrate-down:
 	goose -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" down
+
+
+create-migration:
+	goose -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" create $(name) sql
+
+
