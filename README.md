@@ -2,6 +2,7 @@
 
 Для запуска нужен .env файл с переменными окружения:
 ```
+ENVIRONMENT=dev, prod
 CONFIG_PATH=./config/твой_файл.yaml
 
 POSTGRES_DSN=postgres://postgres:rasik1234@localhost:5432/test?sslmode=disable

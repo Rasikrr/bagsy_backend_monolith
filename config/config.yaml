@@ -1,4 +1,4 @@
-environment: dev # dev, prod
+# !!! environment replaced to .env
 
 name: bugsy_backend # name of application
 
@@ -47,6 +47,11 @@ nats:
 # Available variable types: 'string', 'int', 'float', 'bool', 'duration'
 
 env:
+  environment: #dev, prod
+    type: "string"
+    env_name: "ENVIRONMENT"
+    required: true
+
   config_path:
     type: "string"
     env_name: "CONFIG_PATH"
