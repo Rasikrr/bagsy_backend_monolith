@@ -6,7 +6,8 @@ type Auth struct {
 }
 
 type PayloadParams struct {
-	Phone  string
-	Role   string
-	Active bool
+	Phone   string
+	Role    string
+	Active  bool
+	Refresh bool
 }

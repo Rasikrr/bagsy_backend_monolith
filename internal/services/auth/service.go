@@ -86,21 +86,7 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 		return nil, err
 	}
 
-	params := &entity.PayloadParams{
-		Phone:  user.Phone,
-		Role:   user.Role.String(),
-		Active: user.Active,
-	}
-
-	accessToken, err := jwt.GenerateAccessToken(params)
-	if err != nil {
-		return nil, err
-	}
-
-	refreshToken, err := jwt.GenerateRefreshToken(params)
-	if err != nil {
-		return nil, err
-	}
+	accessToken, refreshToken := s.generateTokens(user)
 
 	return &entity.Auth{
 		AccessToken:  accessToken,
@@ -113,4 +99,32 @@ func (s *service) prepareMessage(phone, code string) string {
 		return fmt.Sprintf("%s: %s - код для входа на bagsy.kz", phone, code)
 	}
 	return fmt.Sprintf("%s: Ваш код для входа в bagsy.kz", code)
+}
+
+func (s *service) generateTokens(user *entity.User) (accessToken string, refreshToken string) {
+	accessParams := &entity.PayloadParams{
+		Phone:   user.Phone,
+		Role:    user.Role.String(),
+		Active:  user.Active,
+		Refresh: false,
+	}
+
+	accessToken, err := jwt.GenerateAccessToken(accessParams)
+	if err != nil {
+		return "", ""
+	}
+
+	refreshParams := &entity.PayloadParams{
+		Phone:   user.Phone,
+		Role:    user.Role.String(),
+		Active:  user.Active,
+		Refresh: true,
+	}
+
+	refreshToken, err = jwt.GenerateRefreshToken(refreshParams)
+	if err != nil {
+		return "", ""
+	}
+
+	return accessToken, refreshToken
 }
