@@ -18,6 +18,7 @@ type model struct {
 	UpdatedBy *string    `db:"updated_by"`
 	PointCode *string    `db:"point_code"`
 	Active    bool       `db:"active"`
+	Password  *string    `db:"password"`
 }
 
 type models []model

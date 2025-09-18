@@ -90,6 +90,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.smsClient,
 		a.tgClient,
 		a.authCache,
+		a.usersService,
 		int64(devSMSChatID),
 	)
 	a.usersService = usersS.NewService(a.usersRepo)

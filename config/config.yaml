@@ -124,6 +124,11 @@ env:
     required: true
     value: "60s"
 
+  jwt_secret:
+    type: "string"
+    env_name: "JWT_SECRET"
+    required: true
+
 
 
 

@@ -13,6 +13,7 @@ type Repository interface {
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
 	Update(ctx context.Context, user *entity.User) error
 	Delete(ctx context.Context, phone string) error
+	SetPassword(ctx context.Context, phone string, password string) error
 }
 
 type repository struct {
@@ -76,5 +77,10 @@ func (r *repository) Update(ctx context.Context, user *entity.User) error {
 
 func (r *repository) Delete(ctx context.Context, phone string) error {
 	_, err := r.db.Exec(ctx, deleteUser, phone)
+	return err
+}
+
+func (r *repository) SetPassword(ctx context.Context, phone string, password string) error {
+	_, err := r.db.Exec(ctx, setPassword, password, phone)
 	return err
 }

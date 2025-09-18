@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
@@ -11,6 +12,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
+	SetPasswordByPhone(ctx context.Context, phone string, password string) error
 }
 
 type service struct {
@@ -36,4 +38,13 @@ func (s *service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 		return nil, fmt.Errorf("get user by phone: %w", err)
 	}
 	return user, nil
+}
+
+func (s *service) SetPasswordByPhone(ctx context.Context, phone string, password string) error {
+	err := s.usersRepo.SetPassword(ctx, phone, password)
+	if err != nil {
+		return errors.New("cannot set password")
+	}
+
+	return nil
 }

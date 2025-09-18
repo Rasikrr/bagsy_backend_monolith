@@ -16,4 +16,5 @@ type User struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	UpdatedBy *string    `json:"updated_by,omitempty"`
 	Active    bool       `json:"active"`
+	Password  *string    `json:"password"`
 }
