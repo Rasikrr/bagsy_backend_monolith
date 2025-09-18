@@ -9,16 +9,16 @@ import (
 )
 
 type model struct {
-	Phone          string     `db:"phone"`
-	Role           string     `db:"role"`
-	Name           string     `db:"name"`
-	Surname        string     `db:"surname"`
-	CreatedAt      time.Time  `db:"created_at"`
-	UpdatedAt      *time.Time `db:"updated_at"`
-	UpdatedBy      *string    `db:"updated_by"`
-	PointCode      *string    `db:"point_code"`
-	Active         bool       `db:"active"`
-	HashedPassword *string    `db:"active"`
+	Phone     string     `db:"phone"`
+	Role      string     `db:"role"`
+	Name      string     `db:"name"`
+	Surname   string     `db:"surname"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt *time.Time `db:"updated_at"`
+	UpdatedBy *string    `db:"updated_by"`
+	PointCode *string    `db:"point_code"`
+	Active    bool       `db:"active"`
+	Password  *string    `db:"password"`
 }
 
 type models []model
