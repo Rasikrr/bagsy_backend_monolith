@@ -83,3 +83,83 @@ func (v *sendCodeRequest) UnmarshalJSON(data []byte) error {
 func (v *sendCodeRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(l, v)
 }
+func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(in *jlexer.Lexer, out *registerRequest) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "phone":
+			out.Phone = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		case "surname":
+			out.Surname = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(out *jwriter.Writer, in registerRequest) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"phone\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Phone))
+	}
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix)
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"surname\":"
+		out.RawString(prefix)
+		out.String(string(in.Surname))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v registerRequest) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v registerRequest) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *registerRequest) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *registerRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(l, v)
+}
