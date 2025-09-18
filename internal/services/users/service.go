@@ -26,8 +26,15 @@ func NewService(usersRepo users.Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, user *entity.User) error {
-	if err := s.usersRepo.Create(ctx, user); err != nil {
-		return fmt.Errorf("create user: %w", err)
+	existingUser, err := s.usersRepo.GetByPhone(ctx, user.Phone)
+	if err != nil && !errors.Is(err, users.ErrUserNotFound) {
+		return fmt.Errorf("get user by phone: %w", err)
+	}
+	if existingUser != nil {
+		return errors.New("user already exists")
+	}
+	if createErr := s.usersRepo.Create(ctx, user); createErr != nil {
+		return fmt.Errorf("create user: %w", createErr)
 	}
 	return nil
 }

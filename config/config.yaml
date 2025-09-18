@@ -129,6 +129,12 @@ env:
     env_name: "JWT_SECRET"
     required: true
 
+  auth_confirmation_url:
+    type: "string"
+    env_name: "AUTH_CONFIRMATION_URL"
+    value: "https://bagsy.kz/ru/invite"
+    required: true
+
 
 
 

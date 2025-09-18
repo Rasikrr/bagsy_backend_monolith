@@ -77,6 +77,7 @@ func (r *registerRequest) convert() *entity.User {
 		Phone:   r.Phone,
 		Name:    r.Name,
 		Surname: r.Surname,
+		Role:    enum.RoleStaff,
 	}
 	if r.Role != nil {
 		role, _ := enum.RoleString(*r.Role)

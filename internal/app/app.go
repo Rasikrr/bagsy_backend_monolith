@@ -85,6 +85,10 @@ func (a *App) initServices(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+	authConfirmationURL, err := a.Config().Variables.GetString(appenv.AuthConfirmationURL)
+	if err != nil {
+		return err
+	}
 	a.authService = authS.NewService(
 		a.Config().Environment,
 		a.smsClient,
@@ -92,6 +96,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.authCache,
 		a.usersService,
 		int64(devSMSChatID),
+		authConfirmationURL,
 	)
 	a.usersService = usersS.NewService(a.usersRepo)
 	return nil

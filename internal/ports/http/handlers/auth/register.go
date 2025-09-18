@@ -4,9 +4,11 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/core/api"
+	"github.com/Rasikrr/core/log"
 )
 
 func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var req registerRequest
 	if err := api.GetData(r, &req); err != nil {
 		return
@@ -21,6 +23,17 @@ func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, err)
 		return
 	}
+	link, err := c.authService.GenAuthConfirmationLink(r.Context(), req.Phone)
+	if err != nil {
+		api.SendError(w, err)
+		return
+	}
 	// TODO: send temporary link to whatsapp
+	log.Infof(ctx, "registration link: %s", link)
+	err = c.authService.SendCode(ctx, link)
+	if err != nil {
+		api.SendError(w, err)
+		return
+	}
 	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
 }

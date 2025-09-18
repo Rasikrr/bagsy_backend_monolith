@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
@@ -16,6 +17,7 @@ import (
 type Service interface {
 	SendCode(ctx context.Context, phone string) error
 	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
+	GenAuthConfirmationLink(ctx context.Context, phone string) (string, error)
 }
 
 type service struct {
@@ -26,7 +28,8 @@ type service struct {
 	tgClient    telegram.Client
 	userService users.Service
 
-	tgChatID int64
+	tgChatID            int64
+	authConfirmationURL string
 }
 
 func NewService(
@@ -36,6 +39,7 @@ func NewService(
 	authCache auth.Cache,
 	userService users.Service,
 	tgChatID int64,
+	authConfirmationURL string,
 ) Service {
 	return &service{
 		smsClient:   smsClient,
@@ -44,7 +48,8 @@ func NewService(
 		userService: userService,
 		tgChatID:    tgChatID,
 
-		env: env,
+		env:                 env,
+		authConfirmationURL: authConfirmationURL,
 	}
 }
 
@@ -92,6 +97,14 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (s *service) GenAuthConfirmationLink(_ context.Context, phone string) (string, error) {
+	token, err := jwt.GenerateRegistrationToken(phone)
+	if err != nil {
+		return "", fmt.Errorf("generate registration token: %w", err)
+	}
+	return fmt.Sprintf("%s?token=%s", s.authConfirmationURL, token), nil
 }
 
 func (s *service) prepareMessage(phone, code string) string {

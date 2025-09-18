@@ -2,10 +2,16 @@ package users
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/core/database"
 	"github.com/georgysavva/scany/v2/pgxscan"
+)
+
+var (
+	ErrUserNotFound = errors.New("user not found")
 )
 
 type Repository interface {
@@ -42,6 +48,7 @@ func (r *repository) Create(ctx context.Context, user *entity.User) error {
 		model.UpdatedAt,
 		model.UpdatedBy,
 		model.PointCode,
+		model.Active,
 	)
 	return err
 }
@@ -50,6 +57,9 @@ func (r *repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getUserByPhone, phone)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
 		return nil, err
 	}
 	return m.convert()

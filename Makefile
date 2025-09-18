@@ -1,1 +1,2 @@
-include scripts/*.mk
+include $(wildcard scripts/*.mk)
+-include .env
