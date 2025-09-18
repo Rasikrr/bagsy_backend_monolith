@@ -19,4 +19,10 @@ const (
 		DELETE FROM users
 		WHERE phone = $1
 	`
+
+	setPassword = `
+		UPDATE users
+		SET password = $1
+		WHERE phone = $2
+	`
 )

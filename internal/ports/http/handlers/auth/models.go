@@ -2,9 +2,9 @@
 package auth
 
 import (
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"sync"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
 	"github.com/go-playground/validator/v10"
 )
@@ -52,6 +52,16 @@ type registerRequest struct {
 	Name    string  `json:"name"           validate:"required,min=2,max=50"`
 	Surname string  `json:"surname"        validate:"required,min=2,max=50"`
 	Role    *string `json:"role,omitempty" validate:"omitempty,valid_role_not_admin"`
+}
+
+type loginRequest struct {
+	Phone    string `json:"phone"          validate:"required,min=10,max=15"`
+	Password string `json:"password"`
+}
+
+type loginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 func (s *sendCodeRequest) validate() error {
