@@ -16,6 +16,7 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 	tokens, err := c.authService.Login(r.Context(), req.Phone, req.Password)
 	if err != nil {
 		api.SendError(w, err)
+		return
 	}
 
 	resp := loginResponse{

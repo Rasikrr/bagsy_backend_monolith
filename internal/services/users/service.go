@@ -45,4 +45,6 @@ func (s *service) SetPasswordByPhone(ctx context.Context, phone string, password
 	if err != nil {
 		return errors.New("cannot set password")
 	}
+
+	return nil
 }
