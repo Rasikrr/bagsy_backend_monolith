@@ -1,14 +1,20 @@
 package auth
 
 import (
-	"github.com/Rasikrr/core/api"
 	"net/http"
+
+	"github.com/Rasikrr/core/api"
 )
 
 func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 
 	if err := api.GetData(r, req); err != nil {
+		api.SendError(w, err)
+		return
+	}
+
+	if err := req.validate(); err != nil {
 		api.SendError(w, err)
 		return
 	}

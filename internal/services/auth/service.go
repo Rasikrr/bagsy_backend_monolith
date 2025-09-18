@@ -9,6 +9,7 @@ import (
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/codegen"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/hash"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/jwt"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/telegram"
@@ -84,14 +85,20 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 		return nil, errUserNotFound
 	}
 
-	hashedPassword, err := jwt.HashPassword(password)
+	hashedPassword, err := hash.Password(password)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
 
 	err = s.userService.SetPasswordByPhone(ctx, phone, hashedPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	accessToken, refreshToken := s.generateTokens(user)
+	accessToken, refreshToken, err := s.generateTokens(user)
+	if err != nil {
+		return nil, fmt.Errorf("generate tokens: %w", err)
+	}
 
 	return &entity.Auth{
 		AccessToken:  accessToken,
@@ -114,7 +121,8 @@ func (s *service) prepareMessage(phone, code string) string {
 	return fmt.Sprintf("%s: Ваш код для входа в bagsy.kz", code)
 }
 
-func (s *service) generateTokens(user *entity.User) (accessToken string, refreshToken string) {
+// nolint: nonamedreturns
+func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken string, err error) {
 	accessParams := &entity.PayloadParams{
 		Phone:   user.Phone,
 		Role:    user.Role.String(),
@@ -122,9 +130,9 @@ func (s *service) generateTokens(user *entity.User) (accessToken string, refresh
 		Refresh: false,
 	}
 
-	accessToken, err := jwt.GenerateAccessToken(accessParams)
+	accessToken, err = jwt.GenerateAccessToken(accessParams)
 	if err != nil {
-		return "", ""
+		return "", "", fmt.Errorf("generate access token: %w", err)
 	}
 
 	refreshParams := &entity.PayloadParams{
@@ -136,8 +144,8 @@ func (s *service) generateTokens(user *entity.User) (accessToken string, refresh
 
 	refreshToken, err = jwt.GenerateRefreshToken(refreshParams)
 	if err != nil {
-		return "", ""
+		return "", "", fmt.Errorf("generate refresh token: %w", err)
 	}
 
-	return accessToken, refreshToken
+	return accessToken, refreshToken, nil
 }

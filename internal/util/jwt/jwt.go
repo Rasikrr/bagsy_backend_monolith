@@ -1,9 +1,10 @@
 package jwt
 
 import (
-	"github.com/golang-jwt/jwt"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 )

@@ -2,9 +2,9 @@
 package auth
 
 import (
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"sync"
 
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
 	"github.com/go-playground/validator/v10"
 )
@@ -55,8 +55,8 @@ type registerRequest struct {
 }
 
 type loginRequest struct {
-	Phone    string `json:"phone"          validate:"required,min=10,max=15"`
-	Password string `json:"password"`
+	Phone    string `json:"phone"    validate:"required,min=10,max=15"`
+	Password string `json:"password" validate:"required"`
 }
 
 type loginResponse struct {
@@ -70,6 +70,10 @@ func (s *sendCodeRequest) validate() error {
 
 func (r *registerRequest) validate() error {
 	return getValidator().Struct(r)
+}
+
+func (l *loginRequest) validate() error {
+	return getValidator().Struct(l)
 }
 
 func (r *registerRequest) convert() *entity.User {
