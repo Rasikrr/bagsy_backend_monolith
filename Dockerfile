@@ -15,3 +15,4 @@ WORKDIR /app
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/configs ./configs
 
+CMD ["./bin/app"]
