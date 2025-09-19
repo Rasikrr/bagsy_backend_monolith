@@ -40,6 +40,25 @@ jobs:
       - name: Run tests
         run: make test
 
+  migrate:
+    # запускаем только когда изменились миграции и только для веток stage/main
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main')
+    needs: [ lint, test ]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'stage' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Apply migrations
+        # можно ограничить срабатывание только если реально менялись файлы миграций
+        if: contains(github.event.head_commit.message, '[force-migrate]') || true
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_DSN }}
+        run: make migrate-up
+
+
   release:
     # только push в main
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
