@@ -1,14 +1,11 @@
-MIGRATIONS_DIR=./migrations
+MIGRATIONS_DIR := ./migrations
+GOOSE := go run github.com/pressly/goose/v3/cmd/goose@v3.25.0
 
 migrate-up:
-	echo $(POSTGRES_DSN)
-	goose -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" up
+	$(GOOSE) -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" up
 
 migrate-down:
-	goose -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" down
-
+	$(GOOSE) -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" down
 
 create-migration:
-	goose -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" create $(name) sql
-
-
+	$(GOOSE) -dir $(MIGRATIONS_DIR) create $(name) sql
