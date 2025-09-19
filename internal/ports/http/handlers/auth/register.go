@@ -1,3 +1,4 @@
+// nolint: godot
 package auth
 
 import (
@@ -16,7 +17,7 @@ import (
 // @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router api/v1/auth/register [post]
+// @Router /api/v1/auth/register [post]
 func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var req registerRequest

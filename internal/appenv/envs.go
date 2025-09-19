@@ -10,4 +10,9 @@ const (
 	SMSClientLogin      = "sms_client_login"
 	SMSClientPassword   = "sms_client_password"
 	AuthConfirmationURL = "auth_confirmation_url"
+
+	SwaggerHost   = "swagger_host"
+	SwaggerScheme = "swagger_scheme"
+
+	JWTSecret = "jwt_secret"
 )

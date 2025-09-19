@@ -30,6 +30,7 @@ type service struct {
 	userService users.Service
 
 	tgChatID            int64
+	jwtSecret           string
 	authConfirmationURL string
 }
 
@@ -40,6 +41,7 @@ func NewService(
 	userService users.Service,
 	tgChatID int64,
 	authConfirmationURL string,
+	jwtSecret string,
 ) Service {
 	return &service{
 		smsClient:   smsClient,
@@ -49,6 +51,7 @@ func NewService(
 		tgChatID:    tgChatID,
 
 		authConfirmationURL: authConfirmationURL,
+		jwtSecret:           jwtSecret,
 	}
 }
 
@@ -67,7 +70,7 @@ func (s *service) SendCode(ctx context.Context, phone string) (err error) {
 		err = s.authCache.SetCode(ctx, phone, code)
 	}()
 
-	if version.GetVersion() == enum.EnvironmentDev {
+	if version.GetVersion() != enum.EnvironmentProd {
 		return s.tgClient.SendText(ctx, s.tgChatID, msg)
 	}
 	err = s.smsClient.Send(ctx, phone, msg)
@@ -105,7 +108,7 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 }
 
 func (s *service) GenAuthConfirmationLink(_ context.Context, phone string) (string, error) {
-	token, err := jwt.GenerateRegistrationToken(phone)
+	token, err := jwt.GenerateRegistrationToken(phone, s.jwtSecret)
 	if err != nil {
 		return "", fmt.Errorf("generate registration token: %w", err)
 	}
@@ -113,7 +116,7 @@ func (s *service) GenAuthConfirmationLink(_ context.Context, phone string) (stri
 }
 
 func (s *service) prepareMessage(phone, code string) string {
-	if s.env == enum.EnvironmentDev {
+	if version.GetVersion() != enum.EnvironmentProd {
 		return fmt.Sprintf("%s: %s - код для входа на bagsy.kz", phone, code)
 	}
 	return fmt.Sprintf("%s: Ваш код для входа в bagsy.kz", code)
@@ -128,7 +131,7 @@ func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken s
 		Refresh: false,
 	}
 
-	accessToken, err = jwt.GenerateAccessToken(accessParams)
+	accessToken, err = jwt.GenerateAccessToken(accessParams, s.jwtSecret)
 	if err != nil {
 		return "", "", fmt.Errorf("generate access token: %w", err)
 	}

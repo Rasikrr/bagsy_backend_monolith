@@ -5,8 +5,8 @@ github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
-github.com/Rasikrr/core v0.0.39 h1:BVdOhKcYsPV6HQfham32uptV4Ya4S4cPVkhFmMACF4M=
-github.com/Rasikrr/core v0.0.39/go.mod h1:4sObCu4c+LpruDDUrOmVMJ42QGy1a34pzz47xOg4Kq4=
+github.com/Rasikrr/core v0.0.40 h1:YF4miJ9UJovwVktXl3ro3u135nstHYlMAA4ibZ9gynw=
+github.com/Rasikrr/core v0.0.40/go.mod h1:4sObCu4c+LpruDDUrOmVMJ42QGy1a34pzz47xOg4Kq4=
 github.com/avast/retry-go v3.0.0+incompatible h1:4SOWQ7Qs+oroOTQOYnAHqelpCO0biHSxpiH9JdtuBj0=
 github.com/avast/retry-go v3.0.0+incompatible/go.mod h1:XtSnn+n/sHqQIpZ10K1qAevBhOOCWBLXXy3hyiqqBrY=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=

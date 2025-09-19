@@ -2,10 +2,13 @@
 package auth
 
 import (
+	"context"
+	"reflect"
 	"sync"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/core/log"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -24,17 +27,19 @@ func getValidator() *validator.Validate {
 func validRoleNotAdminValidator(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
-	// Если поле nil, разрешаем (omitempty уже проверит это)
-	if field.IsNil() {
-		return true
+	// Validator автоматически разыменовывает указатели для кастомных валидаторов
+	// Поэтому мы работаем со строкой напрямую
+	if field.Kind() != reflect.String {
+		log.Infof(context.Background(), "field is not a string, kind: %v", field.Kind())
+		return false
 	}
 
-	// Получаем значение из указателя
-	value := field.Elem().String()
+	value := field.String()
 
 	// Проверяем, что это валидная роль из enum
 	_, err := enum.RoleString(value)
 	if err != nil {
+		log.Infof(context.Background(), "role not found in enum: %s", value)
 		return false // роль не найдена в enum
 	}
 

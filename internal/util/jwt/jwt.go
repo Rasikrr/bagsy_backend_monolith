@@ -14,7 +14,7 @@ const (
 	refreshTTL = 3 * 24 * time.Hour
 )
 
-func GenerateAccessToken(params *entity.PayloadParams) (string, error) {
+func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, error) {
 	claims := jwt.MapClaims{
 		"phone":   params.Phone,
 		"role":    params.Role,
@@ -24,7 +24,7 @@ func GenerateAccessToken(params *entity.PayloadParams) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	return token.SignedString([]byte(secret))
 }
 
 func GenerateRefreshToken(params *entity.PayloadParams) (string, error) {

@@ -51,8 +51,18 @@ func InitApp(ctx context.Context) *App {
 }
 
 func (a *App) initHTTP(_ context.Context) error {
+	swaggerHost, err := a.Config().Variables.GetString(appenv.SwaggerHost)
+	if err != nil {
+		return err
+	}
+	swaggerScheme, err := a.Config().Variables.GetString(appenv.SwaggerScheme)
+	if err != nil {
+		return err
+	}
 	http.NewServer(
 		a.HTTPServer(),
+		swaggerHost,
+		swaggerScheme,
 		a.authService,
 		a.usersService,
 	)
@@ -89,6 +99,11 @@ func (a *App) initServices(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+	jwtSecret, err := a.Config().Variables.GetString(appenv.JWTSecret)
+	if err != nil {
+		return err
+	}
+
 	a.authService = authS.NewService(
 		a.smsClient,
 		a.tgClient,
@@ -96,6 +111,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.usersService,
 		int64(devSMSChatID),
 		authConfirmationURL,
+		jwtSecret,
 	)
 	a.usersService = usersS.NewService(a.usersRepo)
 	return nil
