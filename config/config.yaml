@@ -87,11 +87,6 @@ env:
     env_name: "REDIS_DB"
     required: true
 
-  nats_dsn:
-    type: "string"
-    env_name: "NATS_DSN"
-    required: true
-
   dev_sms_bot_token:
     type: "string"
     env_name: "DEV_SMS_BOT_TOKEN"
