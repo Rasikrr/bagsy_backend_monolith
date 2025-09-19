@@ -55,7 +55,7 @@ jobs:
         # можно ограничить срабатывание только если реально менялись файлы миграций
         if: contains(github.event.head_commit.message, '[force-migrate]') || true
         env:
-          DATABASE_URL: ${{ secrets.POSTGRES_DSN }}
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
         run: make migrate-up
 
 
