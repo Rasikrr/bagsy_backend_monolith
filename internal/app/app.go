@@ -90,7 +90,6 @@ func (a *App) initServices(_ context.Context) error {
 		return err
 	}
 	a.authService = authS.NewService(
-		a.Config().Environment,
 		a.smsClient,
 		a.tgClient,
 		a.authCache,

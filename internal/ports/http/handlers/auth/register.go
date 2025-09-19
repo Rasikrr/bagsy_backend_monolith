@@ -7,6 +7,16 @@ import (
 	"github.com/Rasikrr/core/log"
 )
 
+// Register godoc
+// @Summary Регистрация пользователя
+// @Description Создает нового пользователя в системе
+// @Tags auth
+// @Accept json
+// @Param request body registerRequest true "Данные для регистрации"
+// @Success 201 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router api/v1/auth/register [post]
 func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var req registerRequest

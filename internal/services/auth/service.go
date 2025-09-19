@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Rasikrr/core/version"
+
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
@@ -22,8 +24,6 @@ type Service interface {
 }
 
 type service struct {
-	env enum.Environment
-
 	smsClient   sms.Client
 	authCache   auth.Cache
 	tgClient    telegram.Client
@@ -34,7 +34,6 @@ type service struct {
 }
 
 func NewService(
-	env enum.Environment,
 	smsClient sms.Client,
 	tgClient telegram.Client,
 	authCache auth.Cache,
@@ -49,7 +48,6 @@ func NewService(
 		userService: userService,
 		tgChatID:    tgChatID,
 
-		env:                 env,
 		authConfirmationURL: authConfirmationURL,
 	}
 }
@@ -69,7 +67,7 @@ func (s *service) SendCode(ctx context.Context, phone string) (err error) {
 		err = s.authCache.SetCode(ctx, phone, code)
 	}()
 
-	if s.env == enum.EnvironmentDev {
+	if version.GetVersion() == enum.EnvironmentDev {
 		return s.tgClient.SendText(ctx, s.tgChatID, msg)
 	}
 	err = s.smsClient.Send(ctx, phone, msg)
