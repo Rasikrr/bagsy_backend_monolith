@@ -14,6 +14,8 @@ RUN make build
 FROM golang:1.25.1-alpine AS runner
 
 WORKDIR /app
+
+COPY --from=builder /app/docs ./docs
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/config ./config
 
