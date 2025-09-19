@@ -12,6 +12,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+//go:generate easyjson -all models.go
+
 var (
 	validate      = validator.New()
 	validatorOnce sync.Once
@@ -47,7 +49,6 @@ func validRoleNotAdminValidator(fl validator.FieldLevel) bool {
 	return value != "admin"
 }
 
-//go:generate easyjson -all models.go
 type sendCodeRequest struct {
 	Phone string `json:"phone" validate:"required,min=10,max=15"`
 }
@@ -93,4 +94,9 @@ func (r *registerRequest) convert() *entity.User {
 		user.Role = role
 	}
 	return user
+}
+
+type registerConfirmRequest struct {
+	Phone    string `json:"phone"    validate:"required,min=10,max=15"`
+	Password string `json:"password"`
 }

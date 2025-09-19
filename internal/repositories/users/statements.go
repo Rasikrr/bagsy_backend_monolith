@@ -26,4 +26,7 @@ const (
 		SET password = $1
 		WHERE phone = $2
 	`
+	existsByPhone = `
+		SELECT EXISTS (SELECT 1 FROM users WHERE phone = $1)
+	`
 )

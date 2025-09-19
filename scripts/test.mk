@@ -13,3 +13,6 @@ lint: lint-tools
 	$(LINTER) run
 
 
+test:
+	go test ./...
+

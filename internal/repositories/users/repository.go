@@ -18,6 +18,7 @@ type Repository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
 	Update(ctx context.Context, user *entity.User) error
+	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Delete(ctx context.Context, phone string) error
 	SetPassword(ctx context.Context, phone string, password string) error
 }
@@ -93,4 +94,10 @@ func (r *repository) Delete(ctx context.Context, phone string) error {
 func (r *repository) SetPassword(ctx context.Context, phone string, password string) error {
 	_, err := r.db.Exec(ctx, setPassword, password, phone)
 	return err
+}
+
+func (r *repository) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
+	var exists bool
+	err := pgxscan.Get(ctx, r.db, &exists, existsByPhone, phone)
+	return exists, err
 }

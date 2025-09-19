@@ -1,3 +1,4 @@
+// nolint: godot
 package auth
 
 import (
@@ -6,6 +7,18 @@ import (
 	"github.com/Rasikrr/core/api"
 )
 
+// Login godoc
+// @Summary Авторизация пользователя
+// @Description Выполняет авторизацию пользователя по номеру телефона и паролю
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body loginRequest true "Данные для авторизации"
+// @Success 200 {object} map[string]string "Успешная авторизация"
+// @Failure 400 {object} map[string]string "Неверные данные"
+// @Failure 401 {object} map[string]string "Неверный логин или пароль"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/v1/auth/login [post]
 func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 
@@ -25,10 +38,18 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := loginResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
-	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    tokens.AccessToken,
+		Path:     "/",
+		HttpOnly: true,
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		Path:     "/",
+		HttpOnly: true,
+	})
 
-	api.SendData(w, resp, http.StatusOK)
+	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
 }

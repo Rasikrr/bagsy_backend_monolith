@@ -1,7 +1,8 @@
 package jwt
 
 import (
-	"os"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -27,7 +28,7 @@ func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, e
 	return token.SignedString([]byte(secret))
 }
 
-func GenerateRefreshToken(params *entity.PayloadParams) (string, error) {
+func GenerateRefreshToken(params *entity.PayloadParams, secret string) (string, error) {
 	claims := jwt.MapClaims{
 		"phone":   params.Phone,
 		"role":    params.Role,
@@ -36,5 +37,47 @@ func GenerateRefreshToken(params *entity.PayloadParams) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	return token.SignedString([]byte(secret))
+}
+
+func ValidateToken(token string, secret string) (bool, error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if !parsedToken.Valid {
+		return false, errors.New("token is not valid")
+	}
+
+	return true, nil
+}
+
+func ParseToken(tokenString string, secret string) (jwt.MapClaims, error) {
+	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !parsedToken.Valid {
+		return nil, errors.New("token is not valid")
+	}
+
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
+		return claims, nil
+	}
+
+	return nil, errors.New("unable to parse claims")
 }

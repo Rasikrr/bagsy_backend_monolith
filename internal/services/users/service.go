@@ -12,6 +12,7 @@ import (
 type Service interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
+	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	SetPasswordByPhone(ctx context.Context, phone string, password string) error
 }
 
@@ -54,4 +55,8 @@ func (s *service) SetPasswordByPhone(ctx context.Context, phone string, password
 	}
 
 	return nil
+}
+
+func (s *service) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
+	return s.usersRepo.ExistsByPhone(ctx, phone)
 }

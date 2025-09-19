@@ -15,17 +15,16 @@ import (
 	"github.com/Rasikrr/core/version"
 )
 
-// @title Bugsy API
+// @title Bagsy API
 // @version 1.0
-// @description API для системы Bugsy
+// @description API для приложения Bagsy
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.email support@bagsy.com
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
 
 // @host localhost:8080
 // @BasePath /api/v1

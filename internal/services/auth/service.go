@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/hash"
 	"github.com/Rasikrr/core/version"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
@@ -11,7 +12,6 @@ import (
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/codegen"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/hash"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/jwt"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/telegram"
@@ -19,6 +19,8 @@ import (
 
 type Service interface {
 	SendCode(ctx context.Context, phone string) error
+	RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error)
+	ValidateRegistrationToken(ctx context.Context, token string) (bool, error)
 	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
 	GenAuthConfirmationLink(ctx context.Context, phone string) (string, error)
 }
@@ -83,17 +85,14 @@ func (s *service) SendCode(ctx context.Context, phone string) (err error) {
 func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
 	user, err := s.userService.GetByPhone(ctx, phone)
 	if err != nil {
-		return nil, errUserNotFound
-	}
-
-	hashedPassword, err := hash.Password(password)
-	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
-	}
-
-	err = s.userService.SetPasswordByPhone(ctx, phone, hashedPassword)
-	if err != nil {
 		return nil, err
+	}
+	if user.Password == nil {
+		return nil, errNoAccess
+	}
+	valid := hash.CheckPassword(*user.Password, password)
+	if !valid {
+		return nil, errInvalidPassword
 	}
 
 	accessToken, refreshToken, err := s.generateTokens(user)
@@ -122,6 +121,29 @@ func (s *service) prepareMessage(phone, code string) string {
 	return fmt.Sprintf("%s: Ваш код для входа в bagsy.kz", code)
 }
 
+func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {
+	user, err := s.userService.GetByPhone(ctx, phone)
+	if err != nil {
+		return nil, err
+	}
+	err = s.userService.SetPasswordByPhone(ctx, phone, password)
+	if err != nil {
+		return nil, err
+	}
+	accessToken, refreshToken, err := s.generateTokens(user)
+	if err != nil {
+		return nil, fmt.Errorf("generate tokens: %w", err)
+	}
+	return &entity.Auth{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+
+func (s *service) ValidateRegistrationToken(_ context.Context, token string) (bool, error) {
+	return jwt.ValidateToken(token, s.jwtSecret)
+}
+
 // nolint: nonamedreturns
 func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken string, err error) {
 	accessParams := &entity.PayloadParams{
@@ -143,7 +165,7 @@ func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken s
 		Refresh: true,
 	}
 
-	refreshToken, err = jwt.GenerateRefreshToken(refreshParams)
+	refreshToken, err = jwt.GenerateRefreshToken(refreshParams, s.jwtSecret)
 	if err != nil {
 		return "", "", fmt.Errorf("generate refresh token: %w", err)
 	}

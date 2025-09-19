@@ -1,5 +1,28 @@
-basePath: /
+basePath: /api/v1
 definitions:
+  auth.loginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  auth.registerConfirmRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
   auth.registerRequest:
     properties:
       name:
@@ -34,6 +57,48 @@ info:
   title: Bagsy API
   version: "1.0"
 paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет авторизацию пользователя по номеру телефона и паролю
+      parameters:
+      - description: Данные для авторизации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная авторизация
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверные данные
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неверный логин или пароль
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Авторизация пользователя
+      tags:
+      - auth
   /api/v1/auth/register:
     post:
       consumes:
@@ -46,9 +111,11 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/auth.registerRequest'
+      produces:
+      - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
             additionalProperties:
               type: string
@@ -68,4 +135,56 @@ paths:
       summary: Регистрация пользователя
       tags:
       - auth
+  /api/v1/auth/register/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает регистрацию пользователя и устанавливает пароль
+      parameters:
+      - description: Токен подтверждения регистрации
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Данные для подтверждения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.registerConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Регистрация успешно подтверждена
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверные данные
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Неверный или просроченный токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Подтверждение регистрации
+      tags:
+      - auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

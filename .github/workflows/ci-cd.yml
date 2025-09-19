@@ -11,23 +11,34 @@ on:
 
 jobs:
   lint:
-    # работает всегда, КРОМЕ push в main
     if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: "1.25.1"
-
       - name: Install dependencies
         run: go mod tidy
-
-      - name: Start linter
+      - name: Run linter
         run: make lint
+
+  test:
+    if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25.1"
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Run tests
+        run: make test
 
   release:
     # только push в main

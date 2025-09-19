@@ -13,8 +13,9 @@ import (
 // @Description Создает нового пользователя в системе
 // @Tags auth
 // @Accept json
+// @Produce json
 // @Param request body registerRequest true "Данные для регистрации"
-// @Success 201 {object} map[string]string
+// @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/v1/auth/register [post]

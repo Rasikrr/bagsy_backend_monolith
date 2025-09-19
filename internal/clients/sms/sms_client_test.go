@@ -19,7 +19,7 @@ func TestSMSClient(t *testing.T) {
 	ctx := context.Background()
 	godotenv.Load()
 	login, password := os.Getenv("LOGIN"), os.Getenv("PASSWORD")
-	cli := NewClient(login, password)
+	cli := NewClient(login, password, nil)
 
 	err := cli.Send(ctx, message, testPhone)
 
