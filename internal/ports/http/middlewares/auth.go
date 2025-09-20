@@ -2,11 +2,11 @@ package middlewares
 
 import (
 	"errors"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/cookies"
 	"net/http"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/bugsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 )
