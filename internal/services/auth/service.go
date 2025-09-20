@@ -23,7 +23,7 @@ import (
 type Service interface {
 	SendCode(ctx context.Context, phone string) error
 	RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error)
-	RefreshToken(ctx context.Context, token string) (*entity.Auth, error)
+	RefreshTokens(ctx context.Context, token string) (*entity.Auth, error)
 	ValidateToken(ctx context.Context, token string) (bool, error)
 	GetAuthTokenPayload(ctx context.Context, token string) (*entity.PayloadParams, error)
 	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
@@ -164,7 +164,7 @@ func (s *service) GetAuthTokenPayload(_ context.Context, token string) (*entity.
 	return jwt.ParseAuthToken(token, s.jwtSecret)
 }
 
-func (s *service) RefreshToken(ctx context.Context, token string) (*entity.Auth, error) {
+func (s *service) RefreshTokens(ctx context.Context, token string) (*entity.Auth, error) {
 	valid, err := jwt.ValidateToken(token, s.jwtSecret)
 	if err != nil {
 		return nil, fmt.Errorf("validate token: %w", err)

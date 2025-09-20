@@ -27,7 +27,7 @@ func (c *Controller) refresh(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, errors.New("token is required"))
 		return
 	}
-	tokens, err := c.authService.RefreshToken(ctx, token)
+	tokens, err := c.authService.RefreshTokens(ctx, token)
 	if err != nil {
 		api.SendError(w, err)
 		return
