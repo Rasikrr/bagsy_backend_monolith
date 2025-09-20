@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"errors"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/cookies"
 	"net/http"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
@@ -28,7 +29,7 @@ func NewAuth(
 // nolint: nonamedreturns
 func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
+		token := cookies.GetAccessToken(r)
 		if token == "" {
 			api.SendError(w, errors.New("invalid token"))
 			return
