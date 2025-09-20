@@ -47,7 +47,7 @@ func initSwagger(server *http.Server, swaggerHost, swaggerScheme string) {
 	if version.GetVersion() != enum.EnvironmentProd {
 		docs.SwaggerInfo.Host = swaggerHost
 		docs.SwaggerInfo.Schemes = []string{swaggerScheme}
-		server.WithControllers(swagger.New())
+		server.WithControllers(swagger.New(swaggerScheme, swaggerHost))
 		return
 	}
 	log.Warn(context.Background(), "version is not supported", log.String("version", version.GetVersion().String()))
