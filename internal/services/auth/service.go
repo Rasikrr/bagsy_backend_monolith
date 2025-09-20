@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"github.com/Rasikrr/core/log"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/hash"
 	"github.com/Rasikrr/core/version"
@@ -84,6 +85,9 @@ func (s *service) SendCode(ctx context.Context, phone string) (err error) {
 
 func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
 	user, err := s.userService.GetByPhone(ctx, phone)
+
+	log.Infof(ctx, "user %+v", user)
+
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +126,8 @@ func (s *service) prepareMessage(phone, code string) string {
 }
 
 func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {
+	log.Infof(ctx, "phone %v", phone)
+
 	user, err := s.userService.GetByPhone(ctx, phone)
 	if err != nil {
 		return nil, err

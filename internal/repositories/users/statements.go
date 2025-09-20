@@ -7,7 +7,7 @@ const (
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 	getUserByPhone = `
-		SELECT phone, role, name, surname, created_at, updated_at, updated_by, point_code, active
+		SELECT phone, role, name, surname, created_at, updated_at, updated_by, point_code, active, password
 		FROM users
 		WHERE phone = $1
 	`

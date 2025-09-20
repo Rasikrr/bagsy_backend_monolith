@@ -38,6 +38,7 @@ func (m model) convert() (*entity.User, error) {
 		UpdatedBy: m.UpdatedBy,
 		PointCode: m.PointCode,
 		Active:    m.Active,
+		Password:  m.Password,
 	}, nil
 }
 
