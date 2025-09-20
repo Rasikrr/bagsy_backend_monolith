@@ -126,7 +126,13 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 	if err != nil {
 		return nil, err
 	}
-	err = s.userService.SetPasswordByPhone(ctx, phone, password)
+
+	hashedPassword, err := hash.Password(password)
+	if err != nil {
+		return nil, fmt.Errorf("hashing failed: %w", err)
+	}
+
+	err = s.userService.SetPasswordByPhone(ctx, phone, hashedPassword)
 	if err != nil {
 		return nil, err
 	}
