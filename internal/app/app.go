@@ -104,6 +104,8 @@ func (a *App) initServices(_ context.Context) error {
 		return err
 	}
 
+	a.usersService = usersS.NewService(a.usersRepo)
+
 	a.authService = authS.NewService(
 		a.smsClient,
 		a.tgClient,
@@ -113,7 +115,7 @@ func (a *App) initServices(_ context.Context) error {
 		authConfirmationURL,
 		jwtSecret,
 	)
-	a.usersService = usersS.NewService(a.usersRepo)
+
 	return nil
 }
 

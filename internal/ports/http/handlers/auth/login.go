@@ -22,7 +22,7 @@ import (
 func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 
-	if err := api.GetData(r, req); err != nil {
+	if err := api.GetData(r, &req); err != nil {
 		api.SendError(w, err)
 		return
 	}
