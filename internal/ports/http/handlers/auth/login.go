@@ -4,6 +4,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/core/api"
 )
 
@@ -38,18 +39,7 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    tokens.AccessToken,
-		Path:     "/",
-		HttpOnly: true,
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	cookies.SetAuthTokens(w, tokens)
 
 	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
 }

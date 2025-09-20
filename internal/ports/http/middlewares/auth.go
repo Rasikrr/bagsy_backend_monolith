@@ -1,8 +1,13 @@
 package middlewares
 
 import (
+	"errors"
+	"net/http"
+
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bugsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/core/api"
 )
 
 type AuthMiddleware struct {
@@ -18,4 +23,41 @@ func NewAuth(
 		authService:  authService,
 		usersService: usersService,
 	}
+}
+
+// nolint: nonamedreturns
+func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			api.SendError(w, errors.New("invalid token"))
+			return
+		}
+		ctx := r.Context()
+		valid, err := a.authService.ValidateToken(ctx, token)
+		if err != nil {
+			api.SendError(w, err)
+			return
+		}
+		if !valid {
+			api.SendError(w, errors.New("invalid token"))
+			return
+		}
+		payload, err := a.authService.GetAuthTokenPayload(ctx, token)
+		if err != nil {
+			api.SendError(w, err)
+			return
+		}
+		if payload.IsRefresh() {
+			api.SendError(w, errors.New("refresh token is not allowed"))
+			return
+		}
+		ses, err := payload.ToSession()
+		if err != nil {
+			api.SendError(w, err)
+			return
+		}
+		ctx = session.SetSession(ctx, ses)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

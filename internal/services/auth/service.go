@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Rasikrr/core/log"
@@ -22,7 +23,9 @@ import (
 type Service interface {
 	SendCode(ctx context.Context, phone string) error
 	RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error)
-	ValidateRegistrationToken(ctx context.Context, token string) (bool, error)
+	RefreshToken(ctx context.Context, token string) (*entity.Auth, error)
+	ValidateToken(ctx context.Context, token string) (bool, error)
+	GetAuthTokenPayload(ctx context.Context, token string) (*entity.PayloadParams, error)
 	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
 	GenAuthConfirmationLink(ctx context.Context, phone string) (string, error)
 }
@@ -153,8 +156,41 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 	}, nil
 }
 
-func (s *service) ValidateRegistrationToken(_ context.Context, token string) (bool, error) {
+func (s *service) ValidateToken(_ context.Context, token string) (bool, error) {
 	return jwt.ValidateToken(token, s.jwtSecret)
+}
+
+func (s *service) GetAuthTokenPayload(_ context.Context, token string) (*entity.PayloadParams, error) {
+	return jwt.ParseAuthToken(token, s.jwtSecret)
+}
+
+func (s *service) RefreshToken(ctx context.Context, token string) (*entity.Auth, error) {
+	valid, err := jwt.ValidateToken(token, s.jwtSecret)
+	if err != nil {
+		return nil, fmt.Errorf("validate token: %w", err)
+	}
+	if !valid {
+		return nil, errors.New("invalid token")
+	}
+	payload, err := jwt.ParseRefreshToken(token, s.jwtSecret)
+	if err != nil {
+		return nil, fmt.Errorf("parse refresh token: %w", err)
+	}
+	if !payload.IsRefresh() {
+		return nil, errors.New("access token is not allowed")
+	}
+	user, err := s.userService.GetByPhone(ctx, payload.Phone)
+	if err != nil {
+		return nil, fmt.Errorf("get user by phone: %w", err)
+	}
+	accessToken, refreshToken, err := s.generateTokens(user)
+	if err != nil {
+		return nil, fmt.Errorf("generate tokens: %w", err)
+	}
+	return &entity.Auth{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 // nolint: nonamedreturns

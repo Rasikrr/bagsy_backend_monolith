@@ -31,7 +31,6 @@ func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, e
 func GenerateRefreshToken(params *entity.PayloadParams, secret string) (string, error) {
 	claims := jwt.MapClaims{
 		"phone":   params.Phone,
-		"role":    params.Role,
 		"refresh": params.Refresh,
 		"exp":     time.Now().Add(refreshTTL).Unix(),
 	}
@@ -59,7 +58,8 @@ func ValidateToken(token string, secret string) (bool, error) {
 	return true, nil
 }
 
-func ParseToken(tokenString string, secret string) (jwt.MapClaims, error) {
+// nolint: govet
+func ParseAuthToken(tokenString string, secret string) (*entity.PayloadParams, error) {
 	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -74,10 +74,58 @@ func ParseToken(tokenString string, secret string) (jwt.MapClaims, error) {
 	if !parsedToken.Valid {
 		return nil, errors.New("token is not valid")
 	}
-
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
-		return claims, nil
+		phone, ok := claims["phone"].(string)
+		if !ok {
+			return nil, errInvalidToken
+		}
+		role, ok := claims["role"].(string)
+		if !ok {
+			return nil, errInvalidToken
+		}
+		refresh, ok := claims["refresh"].(bool)
+		if !ok {
+			return nil, errInvalidToken
+		}
+		return &entity.PayloadParams{
+			Phone:   phone,
+			Role:    role,
+			Refresh: refresh,
+		}, nil
 	}
 
+	return nil, errors.New("unable to parse claims")
+}
+
+// nolint: govet
+func ParseRefreshToken(tokenString string, secret string) (*entity.PayloadParams, error) {
+	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !parsedToken.Valid {
+		return nil, errors.New("token is not valid")
+	}
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
+		phone, ok := claims["phone"].(string)
+		if !ok {
+			return nil, errInvalidToken
+		}
+		refresh, ok := claims["refresh"].(bool)
+		if !ok {
+			return nil, errInvalidToken
+		}
+		return &entity.PayloadParams{
+			Phone:   phone,
+			Refresh: refresh,
+		}, nil
+	}
 	return nil, errors.New("unable to parse claims")
 }

@@ -1,3 +1,4 @@
+basePath: /api/v1
 definitions:
   auth.loginRequest:
     properties:
@@ -96,6 +97,41 @@ paths:
               type: string
             type: object
       summary: Авторизация пользователя
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет токены авторизации
+      parameters:
+      - description: Токен авторизации
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токены авторизации успешно обновлены
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Неверный токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновление токенов авторизации
       tags:
       - auth
   /api/v1/auth/register:

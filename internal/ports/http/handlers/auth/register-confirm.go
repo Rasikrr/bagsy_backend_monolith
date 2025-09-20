@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/core/api"
 )
 
@@ -30,7 +31,7 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valid, err := c.authService.ValidateRegistrationToken(ctx, token)
+	valid, err := c.authService.ValidateToken(ctx, token)
 	if err != nil {
 		api.SendError(w, err)
 		return
@@ -51,17 +52,6 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, err)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    tokens.AccessToken,
-		Path:     "/",
-		HttpOnly: true,
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    tokens.RefreshToken,
-		Path:     "/",
-		HttpOnly: true,
-	})
+	cookies.SetAuthTokens(w, tokens)
 	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
 }
