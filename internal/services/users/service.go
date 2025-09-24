@@ -47,11 +47,14 @@ func (s *service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 }
 
 func (s *service) SetPasswordByPhone(ctx context.Context, phone string, password string) error {
-	err := s.usersRepo.SetPassword(ctx, phone, password)
+	patch := users.NewUserUpdatePatch().
+		SetPhones(phone).
+		SetPassword(password).
+		Build()
+	err := s.usersRepo.Update(ctx, patch)
 	if err != nil {
-		return errors.New("cannot set password")
+		return fmt.Errorf("update user: %w", err)
 	}
-
 	return nil
 }
 
@@ -60,5 +63,13 @@ func (s *service) ExistsByPhone(ctx context.Context, phone string) (bool, error)
 }
 
 func (s *service) SetActive(ctx context.Context, phone string) error {
-	return s.usersRepo.SetActive(ctx, phone)
+	patch := users.NewUserUpdatePatch().
+		SetPhones(phone).
+		SetActive(true).
+		Build()
+	err := s.usersRepo.Update(ctx, patch)
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	return nil
 }

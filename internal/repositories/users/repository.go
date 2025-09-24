@@ -17,11 +17,10 @@ var (
 type Repository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
-	Update(ctx context.Context, user *entity.User) error
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Delete(ctx context.Context, phone string) error
-	SetPassword(ctx context.Context, phone string, password string) error
-	SetActive(ctx context.Context, phone string) error
+
+	Update(ctx context.Context, patch *UserUpdatePatch) error
 }
 
 type repository struct {
@@ -67,33 +66,10 @@ func (r *repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 	return m.convert()
 }
 
-func (r *repository) Update(ctx context.Context, user *entity.User) error {
-	model, err := convert(user)
-	if err != nil {
-		return err
-	}
-	_, err = r.db.Exec(ctx,
-		updateUser,
-		model.Phone,
-		model.Role,
-		model.Name,
-		model.Surname,
-		model.CreatedAt,
-		model.UpdatedAt,
-		model.UpdatedBy,
-		model.PointCode,
-		model.Active,
-	)
-	return err
-}
+// Update реализован в update.go
 
 func (r *repository) Delete(ctx context.Context, phone string) error {
 	_, err := r.db.Exec(ctx, deleteUser, phone)
-	return err
-}
-
-func (r *repository) SetPassword(ctx context.Context, phone string, password string) error {
-	_, err := r.db.Exec(ctx, setPassword, password, phone)
 	return err
 }
 
@@ -103,7 +79,15 @@ func (r *repository) ExistsByPhone(ctx context.Context, phone string) (bool, err
 	return exists, err
 }
 
-func (r *repository) SetActive(ctx context.Context, phone string) error {
-	_, err := r.db.Exec(ctx, setActive, phone)
+func (r *repository) Update(ctx context.Context, patch *UserUpdatePatch) error {
+	if patch == nil || patch.IsEmpty() {
+		return errNothingToUpdate
+	}
+
+	sql, args, err := patch.ToSQL()
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Exec(ctx, sql, args...)
 	return err
 }
