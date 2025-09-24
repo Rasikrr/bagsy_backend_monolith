@@ -95,7 +95,11 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 	if err != nil {
 		return nil, err
 	}
+	// TODO: errors
 	if user.Password == nil {
+		return nil, errNoAccess
+	}
+	if !user.Active {
 		return nil, errNoAccess
 	}
 	valid := hash.CheckPassword(*user.Password, password)
@@ -141,8 +145,12 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 	if err != nil {
 		return nil, fmt.Errorf("hashing failed: %w", err)
 	}
-
+	// TODO: in transaction
 	err = s.userService.SetPasswordByPhone(ctx, phone, hashedPassword)
+	if err != nil {
+		return nil, err
+	}
+	err = s.userService.SetActive(ctx, phone)
 	if err != nil {
 		return nil, err
 	}

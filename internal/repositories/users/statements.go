@@ -29,4 +29,8 @@ const (
 	existsByPhone = `
 		SELECT EXISTS (SELECT 1 FROM users WHERE phone = $1)
 	`
+
+	setActive = `
+		UPDATE users SET active = TRUE WHERE PHONE $1
+	`
 )
