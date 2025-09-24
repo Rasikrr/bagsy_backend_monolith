@@ -21,6 +21,7 @@ type Repository interface {
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Delete(ctx context.Context, phone string) error
 	SetPassword(ctx context.Context, phone string, password string) error
+	SetActive(ctx context.Context, phone string) error
 }
 
 type repository struct {
@@ -34,22 +35,22 @@ func NewRepository(db *database.Postgres) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, user *entity.User) error {
-	model, err := convert(user)
+	m, err := convert(user)
 	if err != nil {
 		return err
 	}
 	_, err = r.db.Exec(
 		ctx,
 		createUser,
-		model.Phone,
-		model.Role,
-		model.Name,
-		model.Surname,
-		model.CreatedAt,
-		model.UpdatedAt,
-		model.UpdatedBy,
-		model.PointCode,
-		model.Active,
+		m.Phone,
+		m.Role,
+		m.Name,
+		m.Surname,
+		m.CreatedAt,
+		m.UpdatedAt,
+		m.UpdatedBy,
+		m.PointCode,
+		m.Active,
 	)
 	return err
 }
@@ -100,4 +101,9 @@ func (r *repository) ExistsByPhone(ctx context.Context, phone string) (bool, err
 	var exists bool
 	err := pgxscan.Get(ctx, r.db, &exists, existsByPhone, phone)
 	return exists, err
+}
+
+func (r *repository) SetActive(ctx context.Context, phone string) error {
+	_, err := r.db.Exec(ctx, setActive, phone)
+	return err
 }
