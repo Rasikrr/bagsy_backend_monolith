@@ -14,6 +14,7 @@ type Service interface {
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	SetPasswordByPhone(ctx context.Context, phone string, password string) error
+	SetActive(ctx context.Context, phone string) error
 }
 
 type service struct {
@@ -27,12 +28,9 @@ func NewService(usersRepo users.Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, user *entity.User) error {
-	existingUser, err := s.usersRepo.GetByPhone(ctx, user.Phone)
+	_, err := s.usersRepo.GetByPhone(ctx, user.Phone)
 	if err != nil && !errors.Is(err, users.ErrUserNotFound) {
 		return fmt.Errorf("get user by phone: %w", err)
-	}
-	if existingUser != nil {
-		return errors.New("user already exists")
 	}
 	if createErr := s.usersRepo.Create(ctx, user); createErr != nil {
 		return fmt.Errorf("create user: %w", createErr)
@@ -49,14 +47,29 @@ func (s *service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 }
 
 func (s *service) SetPasswordByPhone(ctx context.Context, phone string, password string) error {
-	err := s.usersRepo.SetPassword(ctx, phone, password)
+	patch := users.NewUserUpdatePatch().
+		SetPhones(phone).
+		SetPassword(password).
+		Build()
+	err := s.usersRepo.Update(ctx, patch)
 	if err != nil {
-		return errors.New("cannot set password")
+		return fmt.Errorf("update user: %w", err)
 	}
-
 	return nil
 }
 
 func (s *service) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
 	return s.usersRepo.ExistsByPhone(ctx, phone)
+}
+
+func (s *service) SetActive(ctx context.Context, phone string) error {
+	patch := users.NewUserUpdatePatch().
+		SetPhones(phone).
+		SetActive(true).
+		Build()
+	err := s.usersRepo.Update(ctx, patch)
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	return nil
 }
