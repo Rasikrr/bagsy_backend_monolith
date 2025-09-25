@@ -29,7 +29,7 @@ type Service interface {
 	ValidateToken(ctx context.Context, token string) (bool, error)
 	GetAuthTokenPayload(ctx context.Context, token string) (*entity.PayloadParams, error)
 	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
-	GenAuthConfirmationLink(ctx context.Context, phone string) (string, error)
+	GenAuthConfirmationLink(ctx context.Context, phone, pointCode string) (string, error)
 }
 
 type service struct {
@@ -122,8 +122,8 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 	}, nil
 }
 
-func (s *service) GenAuthConfirmationLink(_ context.Context, phone string) (string, error) {
-	token, err := jwt.GenerateRegistrationToken(phone, s.jwtSecret)
+func (s *service) GenAuthConfirmationLink(_ context.Context, phone, pointCode string) (string, error) {
+	token, err := jwt.GenerateRegistrationToken(phone, pointCode, s.jwtSecret)
 	if err != nil {
 		return "", fmt.Errorf("generate registration token: %w", err)
 	}

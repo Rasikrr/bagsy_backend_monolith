@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-const _RoleName = "adminnet_managermanagerstaffusermoderatorself_owner"
+const _RoleName = "userstaffmanagernet_managerself_owneradmin"
 
-var _RoleIndex = [...]uint8{0, 5, 16, 23, 28, 32, 41, 51}
+var _RoleIndex = [...]uint8{0, 4, 9, 16, 27, 37, 42}
 
-const _RoleLowerName = "adminnet_managermanagerstaffusermoderatorself_owner"
+const _RoleLowerName = "userstaffmanagernet_managerself_owneradmin"
 
 func (i Role) String() string {
 	if i < 0 || i >= Role(len(_RoleIndex)-1) {
@@ -25,42 +25,38 @@ func (i Role) String() string {
 // Re-run the stringer command to generate them again.
 func _RoleNoOp() {
 	var x [1]struct{}
-	_ = x[RoleAdmin-(0)]
-	_ = x[RoleNetManager-(1)]
+	_ = x[RoleUser-(0)]
+	_ = x[RoleStaff-(1)]
 	_ = x[RoleManager-(2)]
-	_ = x[RoleStaff-(3)]
-	_ = x[RoleUser-(4)]
-	_ = x[RoleModerator-(5)]
-	_ = x[RoleSelfOwner-(6)]
+	_ = x[RoleNetManager-(3)]
+	_ = x[RoleSelfOwner-(4)]
+	_ = x[RoleAdmin-(5)]
 }
 
-var _RoleValues = []Role{RoleAdmin, RoleNetManager, RoleManager, RoleStaff, RoleUser, RoleModerator, RoleSelfOwner}
+var _RoleValues = []Role{RoleUser, RoleStaff, RoleManager, RoleNetManager, RoleSelfOwner, RoleAdmin}
 
 var _RoleNameToValueMap = map[string]Role{
-	_RoleName[0:5]:        RoleAdmin,
-	_RoleLowerName[0:5]:   RoleAdmin,
-	_RoleName[5:16]:       RoleNetManager,
-	_RoleLowerName[5:16]:  RoleNetManager,
-	_RoleName[16:23]:      RoleManager,
-	_RoleLowerName[16:23]: RoleManager,
-	_RoleName[23:28]:      RoleStaff,
-	_RoleLowerName[23:28]: RoleStaff,
-	_RoleName[28:32]:      RoleUser,
-	_RoleLowerName[28:32]: RoleUser,
-	_RoleName[32:41]:      RoleModerator,
-	_RoleLowerName[32:41]: RoleModerator,
-	_RoleName[41:51]:      RoleSelfOwner,
-	_RoleLowerName[41:51]: RoleSelfOwner,
+	_RoleName[0:4]:        RoleUser,
+	_RoleLowerName[0:4]:   RoleUser,
+	_RoleName[4:9]:        RoleStaff,
+	_RoleLowerName[4:9]:   RoleStaff,
+	_RoleName[9:16]:       RoleManager,
+	_RoleLowerName[9:16]:  RoleManager,
+	_RoleName[16:27]:      RoleNetManager,
+	_RoleLowerName[16:27]: RoleNetManager,
+	_RoleName[27:37]:      RoleSelfOwner,
+	_RoleLowerName[27:37]: RoleSelfOwner,
+	_RoleName[37:42]:      RoleAdmin,
+	_RoleLowerName[37:42]: RoleAdmin,
 }
 
 var _RoleNames = []string{
-	_RoleName[0:5],
-	_RoleName[5:16],
-	_RoleName[16:23],
-	_RoleName[23:28],
-	_RoleName[28:32],
-	_RoleName[32:41],
-	_RoleName[41:51],
+	_RoleName[0:4],
+	_RoleName[4:9],
+	_RoleName[9:16],
+	_RoleName[16:27],
+	_RoleName[27:37],
+	_RoleName[37:42],
 }
 
 // RoleString retrieves an enum value from the enum constants string name.

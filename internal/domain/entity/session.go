@@ -6,10 +6,11 @@ import (
 )
 
 type Session struct {
-	ID     uuid.UUID
-	Phone  string
-	Active bool
-	Role   enum.Role
+	ID        uuid.UUID
+	Phone     string
+	Active    bool
+	Role      enum.Role
+	PointCode string
 }
 
 func NewSession() *Session {
@@ -30,5 +31,10 @@ func (s *Session) SetRole(r enum.Role) *Session {
 
 func (s *Session) SetActive(a bool) *Session {
 	s.Active = a
+	return s
+}
+
+func (s *Session) SetPointCode(pc string) *Session {
+	s.PointCode = pc
 	return s
 }

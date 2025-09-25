@@ -8,10 +8,11 @@ type Auth struct {
 }
 
 type PayloadParams struct {
-	Phone   string
-	Role    string
-	Active  bool
-	Refresh bool
+	Phone     string
+	Role      string
+	Active    bool
+	Refresh   bool
+	PointCode string
 }
 
 func (p *PayloadParams) IsRefresh() bool {
@@ -33,7 +34,8 @@ func (p *PayloadParams) GetActive() bool {
 func (p *PayloadParams) ToSession() (*Session, error) {
 	ses := NewSession().
 		SetPhone(p.Phone).
-		SetActive(p.Active)
+		SetActive(p.Active).
+		SetPointCode(p.PointCode)
 	role, err := p.GetRole()
 	if err != nil {
 		return nil, err
