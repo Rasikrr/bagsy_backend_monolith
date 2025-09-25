@@ -111,6 +111,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.tgClient,
 		a.authCache,
 		a.usersService,
+		a.PostgresTXManager(),
 		int64(devSMSChatID),
 		authConfirmationURL,
 		jwtSecret,

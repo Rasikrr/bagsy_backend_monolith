@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Rasikrr/core/database"
 	"github.com/Rasikrr/core/log"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/hash"
 	"github.com/Rasikrr/core/version"
@@ -35,6 +37,7 @@ type service struct {
 	authCache   auth.Cache
 	tgClient    telegram.Client
 	userService users.Service
+	txManager   database.TXManager
 
 	tgChatID            int64
 	jwtSecret           string
@@ -46,17 +49,18 @@ func NewService(
 	tgClient telegram.Client,
 	authCache auth.Cache,
 	userService users.Service,
+	txManager database.TXManager,
 	tgChatID int64,
 	authConfirmationURL string,
 	jwtSecret string,
 ) Service {
 	return &service{
-		smsClient:   smsClient,
-		tgClient:    tgClient,
-		authCache:   authCache,
-		userService: userService,
-		tgChatID:    tgChatID,
-
+		smsClient:           smsClient,
+		tgClient:            tgClient,
+		authCache:           authCache,
+		userService:         userService,
+		tgChatID:            tgChatID,
+		txManager:           txManager,
 		authConfirmationURL: authConfirmationURL,
 		jwtSecret:           jwtSecret,
 	}
@@ -136,32 +140,51 @@ func (s *service) prepareMessage(phone, code string) string {
 func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {
 	log.Infof(ctx, "phone %v", phone)
 
-	user, err := s.userService.GetByPhone(ctx, phone)
-	if err != nil {
-		return nil, err
-	}
+	var result *entity.Auth
 
-	hashedPassword, err := hash.Password(password)
+	err := s.txManager.Transaction(ctx, pgx.TxOptions{}, func(txCtx context.Context) error {
+		user, err := s.userService.GetByPhone(txCtx, phone)
+		if err != nil {
+			return fmt.Errorf("get user: %w", err)
+		}
+
+		hashedPassword, err := hash.Password(password)
+		if err != nil {
+			return fmt.Errorf("hashing failed: %w", err)
+		}
+
+		err = s.userService.SetPasswordByPhone(txCtx, user.Phone, hashedPassword)
+		if err != nil {
+			return fmt.Errorf("set password: %w", err)
+		}
+
+		err = s.userService.SetActive(txCtx, phone)
+		if err != nil {
+			return fmt.Errorf("activate user: %w", err)
+		}
+
+		updatedUser, err := s.userService.GetByPhone(txCtx, phone)
+		if err != nil {
+			return fmt.Errorf("get updated user: %w", err)
+		}
+
+		accessToken, refreshToken, err := s.generateTokens(updatedUser)
+		if err != nil {
+			return fmt.Errorf("generate tokens: %w", err)
+		}
+
+		result = &entity.Auth{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("hashing failed: %w", err)
+		return nil, fmt.Errorf("registration confirm failed: %w", err)
 	}
-	// TODO: in transaction
-	err = s.userService.SetPasswordByPhone(ctx, phone, hashedPassword)
-	if err != nil {
-		return nil, err
-	}
-	err = s.userService.SetActive(ctx, phone)
-	if err != nil {
-		return nil, err
-	}
-	accessToken, refreshToken, err := s.generateTokens(user)
-	if err != nil {
-		return nil, fmt.Errorf("generate tokens: %w", err)
-	}
-	return &entity.Auth{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	return result, nil
 }
 
 func (s *service) ValidateToken(_ context.Context, token string) (bool, error) {
