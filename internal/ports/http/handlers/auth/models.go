@@ -85,10 +85,11 @@ func (l *loginRequest) validate() error {
 
 func (r *registerRequest) convert() *entity.User {
 	user := &entity.User{
-		Phone:   r.Phone,
-		Name:    r.Name,
-		Surname: r.Surname,
-		Role:    enum.RoleStaff,
+		Phone:     r.Phone,
+		Name:      r.Name,
+		Surname:   r.Surname,
+		Role:      enum.RoleStaff,
+		PointCode: r.PointCode,
 	}
 	if r.Role != nil {
 		role, _ := enum.RoleString(*r.Role)

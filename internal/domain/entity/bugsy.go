@@ -1,12 +1,11 @@
 package entity
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type Bagsy struct {
-	ID        uuid.UUID `json:"id"`
+	ID        string    `json:"id"`
 	Time      time.Time `json:"time"`
 	PointCode string    `json:"point_code"`
 	Phone     string    `json:"phone"`

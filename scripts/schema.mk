@@ -1,4 +1,4 @@
-MIGRATIONS_DIR := ./migrations
+MIGRATIONS_DIR := ./migrati.ons
 GOOSE := go run github.com/pressly/goose/v3/cmd/goose@v3.25.0
 
 migrate-up:
