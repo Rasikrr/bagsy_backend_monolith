@@ -28,6 +28,12 @@ func (m model) convert() (*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	var pointCode string
+	if m.PointCode != nil {
+		pointCode = *m.PointCode
+	}
+
 	return &entity.User{
 		Phone:     m.Phone,
 		Role:      role,
@@ -36,7 +42,7 @@ func (m model) convert() (*entity.User, error) {
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 		UpdatedBy: m.UpdatedBy,
-		PointCode: m.PointCode,
+		PointCode: pointCode,
 		Active:    m.Active,
 		Password:  m.Password,
 	}, nil
@@ -59,6 +65,7 @@ func convert(user *entity.User) (*model, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &model{
 		Phone:     user.Phone,
 		Role:      role.String(),
@@ -67,6 +74,6 @@ func convert(user *entity.User) (*model, error) {
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		UpdatedBy: user.UpdatedBy,
-		PointCode: user.PointCode,
+		PointCode: &user.PointCode,
 	}, nil
 }
