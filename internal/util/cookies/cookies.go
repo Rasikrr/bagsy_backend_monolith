@@ -29,6 +29,7 @@ func SetAccessToken(w http.ResponseWriter, token string) {
 		Path:     defaultPath,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 		MaxAge:   int(ttl.Seconds()),
 	})
 }
@@ -40,6 +41,7 @@ func SetRefreshToken(w http.ResponseWriter, token string) {
 		Path:     defaultPath,
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 		MaxAge:   int(ttl.Seconds()),
 	})
 }
