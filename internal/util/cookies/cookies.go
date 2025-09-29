@@ -2,6 +2,7 @@ package cookies
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 )
@@ -10,6 +11,10 @@ const (
 	accessTokenName  = "access_token"
 	refreshTokenName = "refresh_token"
 	defaultPath      = "/"
+)
+
+var (
+	ttl = time.Hour * 24 * 7
 )
 
 func SetAuthTokens(w http.ResponseWriter, tokens *entity.Auth) {
@@ -23,7 +28,8 @@ func SetAccessToken(w http.ResponseWriter, token string) {
 		Value:    token,
 		Path:     defaultPath,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
+		MaxAge:   int(ttl.Seconds()),
 	})
 }
 
@@ -33,7 +39,8 @@ func SetRefreshToken(w http.ResponseWriter, token string) {
 		Value:    token,
 		Path:     defaultPath,
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
+		MaxAge:   int(ttl.Seconds()),
 	})
 }
 
