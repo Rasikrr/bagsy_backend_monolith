@@ -27,6 +27,7 @@ func (c *Controller) Init(router *chi.Mux) {
 		r.Post("/register", c.register)
 		r.Post("/register/confirm", c.registerConfirm)
 		r.Post("/login", c.login)
+		r.Post("/logout", c.logout)
 		r.Post("/refresh", c.refresh)
 	})
 }

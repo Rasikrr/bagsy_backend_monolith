@@ -3,6 +3,7 @@ package http
 
 import (
 	"context"
+	"net/http"
 
 	docs "github.com/Rasikrr/bugsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http/handlers/auth"
@@ -10,7 +11,7 @@ import (
 	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
 	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/enum"
-	"github.com/Rasikrr/core/http"
+	coreHttp "github.com/Rasikrr/core/http"
 	"github.com/Rasikrr/core/log"
 	"github.com/Rasikrr/core/version"
 )
@@ -32,18 +33,19 @@ import (
 // @in header
 // @name Authorization
 func NewServer(
-	server *http.Server,
+	server *coreHttp.Server,
 	swaggerHost, swaggerScheme string,
 	authService authS.Service,
 	usersService usersS.Service,
 ) {
 	authController := auth.New(authService, usersService)
+	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(authController)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
 }
 
-func initSwagger(server *http.Server, swaggerHost, swaggerScheme string) {
+func initSwagger(server *coreHttp.Server, swaggerHost, swaggerScheme string) {
 	if version.GetVersion() != enum.EnvironmentProd {
 		docs.SwaggerInfo.Host = swaggerHost
 		docs.SwaggerInfo.Schemes = []string{swaggerScheme}
@@ -51,4 +53,13 @@ func initSwagger(server *http.Server, swaggerHost, swaggerScheme string) {
 		return
 	}
 	log.Warn(context.Background(), "version is not supported", log.String("version", version.GetVersion().String()))
+}
+
+func initCORSMiddleware() coreHttp.Middleware {
+	corsMiddleware := coreHttp.NewCORSMiddleware().
+		WithMethods(http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions).
+		WithCredentials(true).
+		WithOrigins("http://localhost:3000", "https://bagsy.kz", "https://www.app.bagsy.kz").
+		WithHeaders("Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization")
+	return corsMiddleware
 }
