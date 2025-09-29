@@ -1,4 +1,3 @@
-basePath: /api/v1
 definitions:
   auth.loginRequest:
     properties:
@@ -32,6 +31,8 @@ definitions:
       phone:
         maxLength: 15
         minLength: 10
+        type: string
+      point_code:
         type: string
       role:
         type: string

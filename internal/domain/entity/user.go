@@ -9,7 +9,7 @@ import (
 type User struct {
 	Phone     string     `json:"phone"`
 	Role      enum.Role  `json:"role"`
-	PointCode *string    `json:"point_code,omitempty"`
+	PointCode string     `json:"point_code"`
 	Name      string     `json:"name,omitempty"`
 	Surname   string     `json:"surname,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`

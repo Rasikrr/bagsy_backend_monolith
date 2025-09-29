@@ -35,15 +35,6 @@ func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
 			return
 		}
 		ctx := r.Context()
-		valid, err := a.authService.ValidateToken(ctx, token)
-		if err != nil {
-			api.SendError(w, err)
-			return
-		}
-		if !valid {
-			api.SendError(w, errors.New("invalid token"))
-			return
-		}
 		payload, err := a.authService.GetAuthTokenPayload(ctx, token)
 		if err != nil {
 			api.SendError(w, err)
