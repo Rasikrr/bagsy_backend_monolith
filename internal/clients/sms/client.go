@@ -72,7 +72,6 @@ func (c *client) Send(ctx context.Context, phone, message string) error {
 	if status.OneOf(errSmsStatuses...) {
 		return fmt.Errorf("%w: status: %d", errCheckStatus, status)
 	}
-
 	return c.smsSpamCache.Set(ctx, phone, message)
 }
 
@@ -82,32 +81,34 @@ func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response,
 		return nil, fmt.Errorf("marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, sendSMSURL, bytes.NewReader(bb))
-	if err != nil {
-		return nil, fmt.Errorf("build request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
 	var resp *http.Response
-
 	err = retry.Do(func() error {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, sendSMSURL, bytes.NewReader(bb))
+		if err != nil {
+			return fmt.Errorf("build request: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
 		resp, err = c.httpc.Do(req)
 		if err != nil {
 			return fmt.Errorf("send request: %w", err)
 		}
-		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			b, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			return fmt.Errorf("bad status %d: %s", resp.StatusCode, string(b))
+		}
 		return nil
-	}, retry.Attempts(3), retry.Delay(time.Millisecond*500))
-
+	}, retry.Attempts(3), retry.Delay(500*time.Millisecond))
 	if err != nil {
 		return nil, err
 	}
 
+	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
-
 	var sendResp response
-	if err = json.Unmarshal(respBody, &sendResp); err != nil {
-		return nil, fmt.Errorf("unmarshal response: %w", err)
+	if err := json.Unmarshal(respBody, &sendResp); err != nil {
+		return nil, fmt.Errorf("unmarshal response: %w; body=%q", err, string(respBody))
 	}
 	return &sendResp, nil
 }
