@@ -83,7 +83,8 @@ func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response,
 
 	var resp *http.Response
 	err = retry.Do(func() error {
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, sendSMSURL, bytes.NewReader(bb))
+		var req *http.Request
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, sendSMSURL, bytes.NewReader(bb))
 		if err != nil {
 			return fmt.Errorf("build request: %w", err)
 		}
@@ -107,7 +108,7 @@ func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response,
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
 	var sendResp response
-	if err := json.Unmarshal(respBody, &sendResp); err != nil {
+	if err = json.Unmarshal(respBody, &sendResp); err != nil {
 		return nil, fmt.Errorf("unmarshal response: %w; body=%q", err, string(respBody))
 	}
 	return &sendResp, nil
