@@ -7,8 +7,10 @@ import (
 	authC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
 	smsC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/forms"
 	usersR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/users"
 	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
+	formsS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/forms"
 	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/telegram"
 
@@ -26,8 +28,11 @@ type App struct {
 	smsClient sms.Client
 	tgClient  telegram.Client
 
-	usersRepo    usersR.Repository
+	usersRepo usersR.Repository
+	formsRepo forms.Repository
+
 	authService  authS.Service
+	formsService formsS.Service
 	usersService usersS.Service
 }
 
@@ -64,6 +69,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		swaggerHost,
 		swaggerScheme,
 		a.authService,
+		a.formsService,
 		a.usersService,
 	)
 	return nil
@@ -87,6 +93,7 @@ func (a *App) initCache(_ context.Context) error {
 
 func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
+	a.formsRepo = forms.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -117,6 +124,7 @@ func (a *App) initServices(_ context.Context) error {
 		jwtSecret,
 	)
 
+	a.formsService = formsS.NewService(a.formsRepo)
 	return nil
 }
 

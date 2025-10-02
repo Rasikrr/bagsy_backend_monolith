@@ -2,52 +2,12 @@
 package auth
 
 import (
-	"context"
-	"reflect"
-	"sync"
-
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/core/log"
-	"github.com/go-playground/validator/v10"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/validator"
 )
 
 //go:generate easyjson -all models.go
-
-var (
-	validate      = validator.New()
-	validatorOnce sync.Once
-)
-
-func getValidator() *validator.Validate {
-	validatorOnce.Do(func() {
-		validate.RegisterValidation("valid_role_not_admin", validRoleNotAdminValidator)
-	})
-	return validate
-}
-
-func validRoleNotAdminValidator(fl validator.FieldLevel) bool {
-	field := fl.Field()
-
-	// Validator автоматически разыменовывает указатели для кастомных валидаторов
-	// Поэтому мы работаем со строкой напрямую
-	if field.Kind() != reflect.String {
-		log.Infof(context.Background(), "field is not a string, kind: %v", field.Kind())
-		return false
-	}
-
-	value := field.String()
-
-	// Проверяем, что это валидная роль из enum
-	_, err := enum.RoleString(value)
-	if err != nil {
-		log.Infof(context.Background(), "role not found in enum: %s", value)
-		return false // роль не найдена в enum
-	}
-
-	// Проверяем, что это не admin
-	return value != "admin"
-}
 
 type sendCodeRequest struct {
 	Phone string `json:"phone" validate:"required,min=10,max=15"`
@@ -72,15 +32,15 @@ type loginResponse struct {
 }
 
 func (s *sendCodeRequest) validate() error {
-	return getValidator().Struct(s)
+	return validator.GetValidator().Struct(s)
 }
 
 func (r *registerRequest) validate() error {
-	return getValidator().Struct(r)
+	return validator.GetValidator().Struct(r)
 }
 
 func (l *loginRequest) validate() error {
-	return getValidator().Struct(l)
+	return validator.GetValidator().Struct(l)
 }
 
 func (r *registerRequest) convert() *entity.User {

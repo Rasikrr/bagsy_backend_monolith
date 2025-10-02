@@ -43,7 +43,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.loginRequest"
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginRequest"
                         }
                     }
                 ],
@@ -160,7 +160,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.registerRequest"
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerRequest"
                         }
                     }
                 ],
@@ -222,7 +222,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.registerConfirmRequest"
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerConfirmRequest"
                         }
                     }
                 ],
@@ -265,10 +265,69 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/forms": {
+            "post": {
+                "description": "Создает новую заявку на сотрудничество",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "forms"
+                ],
+                "summary": "Отправка формы для соотрдничества",
+                "parameters": [
+                    {
+                        "description": "Форма для создания заявки",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_form.clientFormRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешное создание заявки",
+                        "schema": {
+                            "$ref": "#/definitions/api.EmptySuccessResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "ошибка",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "auth.loginRequest": {
+        "api.EmptySuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.loginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -285,7 +344,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.registerConfirmRequest": {
+        "internal_ports_http_handlers_auth.registerConfirmRequest": {
             "type": "object",
             "required": [
                 "phone"
@@ -301,7 +360,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.registerRequest": {
+        "internal_ports_http_handlers_auth.registerRequest": {
             "type": "object",
             "required": [
                 "name",
@@ -329,6 +388,37 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 2
+                }
+            }
+        },
+        "internal_ports_http_handlers_form.clientFormRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "first_name",
+                "last_name",
+                "phone",
+                "role"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
                 }
             }
         }
