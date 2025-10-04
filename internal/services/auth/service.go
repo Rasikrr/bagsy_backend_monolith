@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/hash"
-	"github.com/Rasikrr/core/version"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
@@ -18,7 +17,6 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/jwt"
-	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/telegram"
 )
 
@@ -110,13 +108,6 @@ func (s *service) GenAuthConfirmationLink(_ context.Context, phone, pointCode st
 		return "", fmt.Errorf("generate registration token: %w", err)
 	}
 	return fmt.Sprintf("%s?token=%s", s.authConfirmationURL, token), nil
-}
-
-func (s *service) prepareMessage(phone, code string) string {
-	if version.GetVersion() != enum.EnvironmentProd {
-		return fmt.Sprintf("%s: %s - код для входа на bagsy.kz", phone, code)
-	}
-	return fmt.Sprintf("%s: Ваш код для входа в bagsy.kz", code)
 }
 
 func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {

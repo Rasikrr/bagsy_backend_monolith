@@ -12,7 +12,6 @@ metrics:
   prometheus:
     port: 9100
 
-
 http:
   host: 0.0.0.0
   port: 8080
@@ -39,7 +38,6 @@ redis:
 nats:
   required: false
   queue: example_queue # It is like load balancer, read more about it here: https://docs.nats.io/nats-concepts/core-nats/queue
-
 
 # If you not provide 'required' field or set it to false, then variable will be ignored
 # 'env_name' is name of variable in .env file.
@@ -129,7 +127,7 @@ env:
     env_name: "AUTH_CONFIRMATION_URL"
     value: "https://bagsy.kz/ru/invite"
     required: true
-  
+
   swagger_host:
     type: "string"
     env_name: "SWAGGER_HOST"
@@ -140,14 +138,30 @@ env:
     env_name: "SWAGGER_SCHEME"
     required: true
 
+  whatsapp_api_url:
+    type: "string"
+    env_name: "WHATSAPP_API_URL"
+    required: true
 
+  whatsapp_media_url:
+    type: "string"
+    env_name: "WHATSAPP_MEDIA_URL"
+    required: true
 
+  whatsapp_api_id_instance:
+    type: "string"
+    env_name: "WHATSAPP_API_ID_INSTANCE"
+    required: true
 
+  whatsapp_api_token:
+    type: "string"
+    env_name: "WHATSAPP_API_TOKEN"
+    required: true
 
-# This is example of variable that do not have value in config but in .env file.
-# by env_name you can get value from .env file
-# !!! IMPORTANT !!! if tou want to add .env variable, first you need to add it to config.yaml
-# Second: you need to declare env_name in config.yaml
+  # This is example of variable that do not have value in config but in .env file.
+  # by env_name you can get value from .env file
+  # !!! IMPORTANT !!! if tou want to add .env variable, first you need to add it to config.yaml
+  # Second: you need to declare env_name in config.yaml
   ex_string:
     type: "string"
     env_name: "EX_STRING"

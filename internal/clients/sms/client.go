@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/sms"
 	"github.com/avast/retry-go"
 )
 

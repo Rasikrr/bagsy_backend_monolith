@@ -3,7 +3,7 @@ package jwt
 import (
 	"testing"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 )
 
 func TestValidateToken(t *testing.T) {

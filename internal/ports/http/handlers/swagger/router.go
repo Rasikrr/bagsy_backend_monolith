@@ -4,7 +4,7 @@ package swagger
 import (
 	"fmt"
 
-	_ "github.com/Rasikrr/bugsy_backend_monolith/docs/swagger"
+	_ "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"
 )

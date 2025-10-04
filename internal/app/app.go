@@ -154,7 +154,7 @@ func (a *App) initClients(_ context.Context) error {
 
 	a.smsClient = sms.NewClient(smsClientLogin, smsClientPassword, a.smsCache)
 
-	whatsappApiURL, err := a.Config().Variables.GetString(appenv.WhatsAppApiURL)
+	whatsappAPIURL, err := a.Config().Variables.GetString(appenv.WhatsAppAPIURL)
 	if err != nil {
 		return err
 	}
@@ -169,11 +169,11 @@ func (a *App) initClients(_ context.Context) error {
 		return err
 	}
 
-	whatsappApiToken, err := a.Config().Variables.GetString(appenv.WhatsAppApiToken)
+	whatsappAPIToken, err := a.Config().Variables.GetString(appenv.WhatsAppAPIToken)
 	if err != nil {
 		return err
 	}
 
-	a.whatsAppClient = whatsapp.NewClient(whatsappApiURL, whatsappMediaURL, whatsappIDInstance, whatsappApiToken)
+	a.whatsAppClient = whatsapp.NewClient(whatsappAPIURL, whatsappMediaURL, whatsappIDInstance, whatsappAPIToken)
 	return nil
 }

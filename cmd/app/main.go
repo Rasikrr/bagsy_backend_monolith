@@ -5,7 +5,7 @@ import (
 
 	"github.com/Rasikrr/core/log"
 
-	app2 "github.com/Rasikrr/bugsy_backend_monolith/internal/app"
+	app2 "github.com/Rasikrr/bagsy_backend_monolith/internal/app"
 )
 
 func main() {

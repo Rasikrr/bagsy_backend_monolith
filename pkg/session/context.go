@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 )
 
 type ContextKey string

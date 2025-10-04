@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/sms"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
 

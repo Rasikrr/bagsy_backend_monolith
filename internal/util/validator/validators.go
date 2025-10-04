@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/core/log"
 	"github.com/go-playground/validator/v10"
 )

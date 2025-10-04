@@ -1,6 +1,6 @@
 package entity
 
-import "github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
+import "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 
 type Auth struct {
 	AccessToken  string
