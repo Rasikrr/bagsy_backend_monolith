@@ -15,7 +15,7 @@ var (
 )
 
 func TestSMSClient(t *testing.T) {
-	//t.Skip()
+	t.Skip()
 	ctx := context.Background()
 	godotenv.Load()
 	login, password := os.Getenv("LOGIN"), os.Getenv("PASSWORD")
