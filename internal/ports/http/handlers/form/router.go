@@ -1,7 +1,7 @@
 package form
 
 import (
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/forms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
 	"github.com/go-chi/chi/v5"
 )
 

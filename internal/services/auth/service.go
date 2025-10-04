@@ -9,21 +9,19 @@ import (
 	"github.com/Rasikrr/core/log"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/hash"
-	"github.com/Rasikrr/core/version"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/hash"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/codegen"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/jwt"
-	"github.com/Rasikrr/core/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/jwt"
 	"github.com/Rasikrr/core/telegram"
 )
 
 type Service interface {
-	SendCode(ctx context.Context, phone string) error
+	SendRegisterLink(ctx context.Context, phone, link string) error
 	RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error)
 	RefreshTokens(ctx context.Context, token string) (*entity.Auth, error)
 	ValidateToken(ctx context.Context, token string) (bool, error)
@@ -33,11 +31,12 @@ type Service interface {
 }
 
 type service struct {
-	smsClient   sms.Client
-	authCache   auth.Cache
-	tgClient    telegram.Client
-	userService users.Service
-	txManager   database.TXManager
+	smsClient      sms.Client
+	whatsAppClient whatsapp.Client
+	authCache      auth.Cache
+	tgClient       telegram.Client
+	userService    users.Service
+	txManager      database.TXManager
 
 	tgChatID            int64
 	jwtSecret           string
@@ -46,6 +45,7 @@ type service struct {
 
 func NewService(
 	smsClient sms.Client,
+	whatsAppClient whatsapp.Client,
 	tgClient telegram.Client,
 	authCache auth.Cache,
 	userService users.Service,
@@ -56,6 +56,7 @@ func NewService(
 ) Service {
 	return &service{
 		smsClient:           smsClient,
+		whatsAppClient:      whatsAppClient,
 		tgClient:            tgClient,
 		authCache:           authCache,
 		userService:         userService,
@@ -66,29 +67,8 @@ func NewService(
 	}
 }
 
-func (s *service) SendCode(ctx context.Context, phone string) (err error) {
-	spam, err := s.authCache.CheckSpam(ctx, phone)
-	if err != nil {
-		return fmt.Errorf("check spam: %w", err)
-	}
-	if spam {
-		return errSpam
-	}
-	code := codegen.GenerateAuthCode()
-	msg := s.prepareMessage(phone, code)
-
-	defer func() {
-		err = s.authCache.SetCode(ctx, phone, code)
-	}()
-
-	if version.GetVersion() != enum.EnvironmentProd {
-		return s.tgClient.SendText(ctx, s.tgChatID, msg)
-	}
-	err = s.smsClient.Send(ctx, phone, msg)
-	if err != nil {
-		return fmt.Errorf("send sms: %w", err)
-	}
-	return nil
+func (s *service) SendRegisterLink(ctx context.Context, phone, link string) error {
+	return s.whatsAppClient.SendMessage(ctx, phone, link)
 }
 
 func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
@@ -128,13 +108,6 @@ func (s *service) GenAuthConfirmationLink(_ context.Context, phone, pointCode st
 		return "", fmt.Errorf("generate registration token: %w", err)
 	}
 	return fmt.Sprintf("%s?token=%s", s.authConfirmationURL, token), nil
-}
-
-func (s *service) prepareMessage(phone, code string) string {
-	if version.GetVersion() != enum.EnvironmentProd {
-		return fmt.Sprintf("%s: %s - код для входа на bagsy.kz", phone, code)
-	}
-	return fmt.Sprintf("%s: Ваш код для входа в bagsy.kz", code)
 }
 
 func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {

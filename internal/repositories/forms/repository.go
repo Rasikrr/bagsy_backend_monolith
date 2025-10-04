@@ -3,7 +3,7 @@ package forms
 import (
 	"context"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/core/database"
 )
 

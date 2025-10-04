@@ -4,8 +4,8 @@ package users
 import (
 	"time"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 )
 
 type model struct {

@@ -2,9 +2,9 @@
 package auth
 
 import (
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/validator"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/validator"
 )
 
 //go:generate easyjson -all models.go

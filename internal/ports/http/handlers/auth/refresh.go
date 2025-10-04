@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/cookies"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/core/api"
 )
 

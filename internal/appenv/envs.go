@@ -14,5 +14,10 @@ const (
 	SwaggerHost   = "swagger_host"
 	SwaggerScheme = "swagger_scheme"
 
+	WhatsAppAPIURL     = "whatsapp_api_url"
+	WhatsAppMediaURL   = "whatsapp_media_url"
+	WhatsAppIDInstance = "whatsapp_api_id_instance"
+	WhatsAppAPIToken   = "whatsapp_api_token"
+
 	JWTSecret = "jwt_secret"
 )
