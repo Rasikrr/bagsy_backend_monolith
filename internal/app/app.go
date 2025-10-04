@@ -3,18 +3,19 @@ package app
 import (
 	"context"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/appenv"
-	authC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
-	smsC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/forms"
-	usersR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/users"
-	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
-	formsS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/forms"
-	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
+	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
+	smsC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
+	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
+	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/telegram"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 )
@@ -25,8 +26,9 @@ type App struct {
 	smsCache  smsC.Cache
 	authCache authC.Cache
 
-	smsClient sms.Client
-	tgClient  telegram.Client
+	smsClient      sms.Client
+	tgClient       telegram.Client
+	whatsAppClient whatsapp.Client
 
 	usersRepo usersR.Repository
 	formsRepo forms.Repository
@@ -115,6 +117,7 @@ func (a *App) initServices(_ context.Context) error {
 
 	a.authService = authS.NewService(
 		a.smsClient,
+		a.whatsAppClient,
 		a.tgClient,
 		a.authCache,
 		a.usersService,
@@ -133,6 +136,7 @@ func (a *App) initClients(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	a.tgClient, err = telegram.NewTelegramClient(token)
 	if err != nil {
 		return err
@@ -142,6 +146,7 @@ func (a *App) initClients(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	smsClientPassword, err := a.Config().Variables.GetString(appenv.SMSClientPassword)
 	if err != nil {
 		return err
@@ -149,5 +154,26 @@ func (a *App) initClients(_ context.Context) error {
 
 	a.smsClient = sms.NewClient(smsClientLogin, smsClientPassword, a.smsCache)
 
+	whatsappApiURL, err := a.Config().Variables.GetString(appenv.WhatsAppApiURL)
+	if err != nil {
+		return err
+	}
+
+	whatsappMediaURL, err := a.Config().Variables.GetString(appenv.WhatsAppMediaURL)
+	if err != nil {
+		return err
+	}
+
+	whatsappIDInstance, err := a.Config().Variables.GetString(appenv.WhatsAppIDInstance)
+	if err != nil {
+		return err
+	}
+
+	whatsappApiToken, err := a.Config().Variables.GetString(appenv.WhatsAppApiToken)
+	if err != nil {
+		return err
+	}
+
+	a.whatsAppClient = whatsapp.NewClient(whatsappApiURL, whatsappMediaURL, whatsappIDInstance, whatsappApiToken)
 	return nil
 }

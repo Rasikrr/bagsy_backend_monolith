@@ -4,10 +4,9 @@ package auth
 import (
 	"net/http"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/bugsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
-	"github.com/Rasikrr/core/log"
 )
 
 // Register godoc
@@ -60,9 +59,7 @@ func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, err)
 		return
 	}
-	// TODO: send temporary link to whatsapp
-	log.Infof(ctx, "registration link: %s", link)
-	err = c.authService.SendCode(ctx, link)
+	err = c.authService.SendRegisterLink(ctx, req.Phone, link)
 	if err != nil {
 		api.SendError(w, err)
 		return
