@@ -7,8 +7,10 @@ import (
 
 	docs "github.com/Rasikrr/bugsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http/handlers/auth"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http/handlers/form"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http/handlers/swagger"
 	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/forms"
 	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/enum"
 	coreHttp "github.com/Rasikrr/core/http"
@@ -36,11 +38,13 @@ func NewServer(
 	server *coreHttp.Server,
 	swaggerHost, swaggerScheme string,
 	authService authS.Service,
+	formsService forms.Service,
 	usersService usersS.Service,
 ) {
 	authController := auth.New(authService, usersService)
+	formsController := form.NewController(formsService)
 	server.WithMiddlewares(initCORSMiddleware())
-	server.WithControllers(authController)
+	server.WithControllers(authController, formsController)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
 }

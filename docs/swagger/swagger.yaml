@@ -1,5 +1,17 @@
 definitions:
-  auth.loginRequest:
+  api.EmptySuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.loginRequest:
     properties:
       password:
         type: string
@@ -11,7 +23,7 @@ definitions:
     - password
     - phone
     type: object
-  auth.registerConfirmRequest:
+  internal_ports_http_handlers_auth.registerConfirmRequest:
     properties:
       password:
         type: string
@@ -22,7 +34,7 @@ definitions:
     required:
     - phone
     type: object
-  auth.registerRequest:
+  internal_ports_http_handlers_auth.registerRequest:
     properties:
       name:
         maxLength: 50
@@ -44,6 +56,29 @@ definitions:
     - name
     - phone
     - surname
+    type: object
+  internal_ports_http_handlers_form.clientFormRequest:
+    properties:
+      description:
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    required:
+    - description
+    - first_name
+    - last_name
+    - phone
+    - role
     type: object
 host: localhost:8080
 info:
@@ -69,7 +104,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.loginRequest'
+          $ref: '#/definitions/internal_ports_http_handlers_auth.loginRequest'
       produces:
       - application/json
       responses:
@@ -146,7 +181,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.registerRequest'
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerRequest'
       produces:
       - application/json
       responses:
@@ -187,7 +222,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.registerConfirmRequest'
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerConfirmRequest'
       produces:
       - application/json
       responses:
@@ -218,6 +253,32 @@ paths:
       summary: Подтверждение регистрации
       tags:
       - auth
+  /api/v1/forms:
+    post:
+      consumes:
+      - application/json
+      description: Создает новую заявку на сотрудничество
+      parameters:
+      - description: Форма для создания заявки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_form.clientFormRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное создание заявки
+          schema:
+            $ref: '#/definitions/api.EmptySuccessResponse'
+        "500":
+          description: ошибка
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Отправка формы для соотрдничества
+      tags:
+      - forms
 securityDefinitions:
   ApiKeyAuth:
     in: header

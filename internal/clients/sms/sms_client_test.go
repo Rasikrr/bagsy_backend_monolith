@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	testPhone = "77783784148"
+	testPhone = "77068138354"
 	message   = "сырники"
 )
 
@@ -21,7 +21,7 @@ func TestSMSClient(t *testing.T) {
 	login, password := os.Getenv("LOGIN"), os.Getenv("PASSWORD")
 	cli := NewClient(login, password, nil)
 
-	err := cli.Send(ctx, message, testPhone)
+	err := cli.Send(ctx, testPhone, message)
 
 	require.NoError(t, err)
 }
