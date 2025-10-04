@@ -68,7 +68,8 @@ func NewService(
 }
 
 func (s *service) SendRegisterLink(ctx context.Context, phone, link string) error {
-	return s.whatsAppClient.SendMessage(ctx, phone, link)
+	message := fmt.Sprintf("Ваша ссылка на регистрацию на bagsy.kz: %s", link)
+	return s.whatsAppClient.SendMessage(ctx, phone, message)
 }
 
 func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
