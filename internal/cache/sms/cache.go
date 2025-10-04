@@ -13,6 +13,8 @@ const (
 	spamPrefix = "SMS_SPAM"
 )
 
+//go:generate mockgen -source=cache.go -destination=cache_mock.go -package=sms
+
 type Cache interface {
 	IsSpam(ctx context.Context, phone, message string) (bool, error)
 	Set(ctx context.Context, phone, message string) error

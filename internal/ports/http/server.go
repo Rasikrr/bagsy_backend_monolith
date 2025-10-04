@@ -61,9 +61,26 @@ func initSwagger(server *coreHttp.Server, swaggerHost, swaggerScheme string) {
 
 func initCORSMiddleware() coreHttp.Middleware {
 	corsMiddleware := coreHttp.NewCORSMiddleware().
-		WithMethods(http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions).
+		WithMethods(
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodDelete,
+			http.MethodOptions,
+		).
 		WithCredentials(true).
-		WithOrigins("http://localhost:3000", "https://bagsy.kz", "https://www.app.bagsy.kz").
-		WithHeaders("Accept", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization")
+		WithOrigins(
+			"http://localhost:3000",
+			"https://bagsy.kz",
+			"https://app.bagsy.kz",
+		).
+		WithHeaders(
+			"Accept",
+			"Content-Type",
+			"Content-Length",
+			"Accept-Encoding",
+			"X-CSRF-Token",
+			"Authorization",
+		)
 	return corsMiddleware
 }
