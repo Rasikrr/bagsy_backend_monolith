@@ -1,4 +1,4 @@
-module github.com/Rasikrr/bugsy_backend_monolith
+module github.com/Rasikrr/bagsy_backend_monolith
 
 go 1.25.1
 
