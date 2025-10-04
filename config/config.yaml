@@ -3,7 +3,7 @@
 name: bugsy_backend # name of application
 
 log:
-  level: info # debug, info, warn, error
+  level: debug # debug, info, warn, error
   add_source: true
 
 metrics:
