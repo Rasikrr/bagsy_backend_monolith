@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"errors"
+	"github.com/Rasikrr/core/log"
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
@@ -34,6 +35,10 @@ func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
 			api.SendError(w, errors.New("invalid token"))
 			return
 		}
+
+		token = r.Header.Get("Authorization")
+		log.Infof(r.Context(), "token in middleware = %v", token)
+
 		ctx := r.Context()
 		payload, err := a.authService.GetAuthTokenPayload(ctx, token)
 		if err != nil {
