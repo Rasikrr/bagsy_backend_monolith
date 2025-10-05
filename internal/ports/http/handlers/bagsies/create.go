@@ -1,7 +1,7 @@
 package bagsies
 
 import (
-	"github.com/Rasikrr/bugsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 	"net/http"
 )

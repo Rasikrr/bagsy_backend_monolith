@@ -1,9 +1,9 @@
 package bagsies
 
 import (
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/bagsies"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/go-chi/chi/v5"
 )
 

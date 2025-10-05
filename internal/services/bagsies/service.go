@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/bagsies"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/util/codegen"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/bagsies"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/codegen"
 )
 
 type Service interface {

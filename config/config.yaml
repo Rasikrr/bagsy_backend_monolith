@@ -1,6 +1,6 @@
 # !!! environment replaced to .env
 
-name: bugsy_backend # name of application
+name: bagsy_backend # name of application
 
 log:
   level: debug # debug, info, warn, error

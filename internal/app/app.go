@@ -2,23 +2,23 @@ package app
 
 import (
 	"context"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/whatsapp"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/forms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/appenv"
-	authC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
-	smsC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
-	bagsiesR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/bagsies"
-	usersR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/users"
-	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
-	bagsiesS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/bagsies"
-	formsS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/forms"
-	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
+	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
+	smsC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
+	bagsiesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/bagsies"
+	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
+	bagsiesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
+	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 
 	"github.com/Rasikrr/core/telegram"
 
-	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 )
