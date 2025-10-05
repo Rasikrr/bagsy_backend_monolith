@@ -1,7 +1,7 @@
 package bagsies
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/domain/entity"
 	"time"
 )
 
@@ -22,7 +22,7 @@ func (m model) convert() *entity.Bagsy {
 	return &entity.Bagsy{
 		ID:        m.ID,
 		PointCode: m.PointCode,
-		Phone:     m.Phone,
+		UserPhone: m.Phone,
 		StartAt:   m.StartAt,
 		EndAt:     m.EndAt,
 		CreatedAt: m.CreatedAt,
@@ -43,7 +43,7 @@ func convertToModel(b *entity.Bagsy) *model {
 	return &model{
 		ID:        b.ID,
 		PointCode: b.PointCode,
-		Phone:     b.Phone,
+		Phone:     b.UserPhone,
 		StartAt:   b.StartAt,
 		EndAt:     b.EndAt,
 		CreatedAt: b.CreatedAt,
