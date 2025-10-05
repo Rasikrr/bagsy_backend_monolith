@@ -23,4 +23,5 @@ type BagsyParams struct {
 	PointCode     string    `json:"point_code"`
 	StartAt       time.Time `json:"start_at,omitempty"`
 	EndAt         time.Time `json:"end_at,omitempty"`
+	Phone         string    `json:"phone"`
 }

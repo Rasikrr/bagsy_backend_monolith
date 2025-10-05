@@ -8,6 +8,7 @@ import (
 //go:generate easyjson -all models.go
 
 type createBagsyRequest struct {
+	Phone    string    `json:"phone"`
 	StartAt  time.Time `json:"start_at,omitempty" validate:"required"`
 	EndAt    time.Time `json:"end_at,omitempty"   validate:"required,gtfield=StartAt"`
 	Provider provider  `json:"provider"           validate:"required,dive"`
@@ -21,10 +22,10 @@ type provider struct {
 
 func (r createBagsyRequest) toParams() *entity.BagsyParams {
 	return &entity.BagsyParams{
-		PointCode: r.Provider.PointCode,
-		StartAt:   r.StartAt,
-		EndAt:     r.EndAt,
-		// Откуда телефон? (Пока что из контекста)
-		Phone: r.Provider.Phone,
+		PointCode:     r.Provider.PointCode,
+		StartAt:       r.StartAt,
+		EndAt:         r.EndAt,
+		ProviderPhone: r.Provider.Phone,
+		Phone:         r.Phone,
 	}
 }

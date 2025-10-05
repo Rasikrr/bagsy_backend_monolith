@@ -7,9 +7,12 @@ import (
 	authC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
 	smsC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
+	bagsiesR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/bagsies"
 	usersR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/users"
 	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
+	bagsiesS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/bagsies"
 	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+
 	"github.com/Rasikrr/core/telegram"
 
 	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http"
@@ -26,9 +29,11 @@ type App struct {
 	smsClient sms.Client
 	tgClient  telegram.Client
 
-	usersRepo    usersR.Repository
-	authService  authS.Service
-	usersService usersS.Service
+	usersRepo      usersR.Repository
+	bagsiesRepo    bagsiesR.Repository
+	authService    authS.Service
+	usersService   usersS.Service
+	bagsiesService bagsiesS.Service
 }
 
 func InitApp(ctx context.Context) *App {
@@ -87,6 +92,7 @@ func (a *App) initCache(_ context.Context) error {
 
 func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
+	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -115,6 +121,10 @@ func (a *App) initServices(_ context.Context) error {
 		int64(devSMSChatID),
 		authConfirmationURL,
 		jwtSecret,
+	)
+
+	a.bagsiesService = bagsiesS.NewService(
+		a.bagsiesRepo,
 	)
 
 	return nil

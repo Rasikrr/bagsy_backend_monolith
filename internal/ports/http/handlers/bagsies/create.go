@@ -25,8 +25,7 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Откуда берем телефон? Пока что не уверен
-	if by.PointCode == "" || by.Phone == "" {
+	if by.PointCode == "" {
 		api.SendError(w, err)
 		return
 	}
@@ -37,9 +36,12 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	params := createParams()
+	params := req.toParams()
 
-	c.bagsyService.Create(ctx, params)
+	err = c.bagsyService.Create(ctx, params)
+	if err != nil {
+		return
+	}
 
 	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
 }
