@@ -14,7 +14,7 @@ type createBagsyRequest struct {
 	Provider provider  `json:"provider"           validate:"required,dive"`
 }
 
-// Структура для исполнителя (телефон уникальный)
+// Структура для исполнителя (телефон уникальный).
 type provider struct {
 	PointCode string `json:"point_code" validate:"required"`
 	Phone     string `json:"phone"      validate:"required,min=10,max=15"`
