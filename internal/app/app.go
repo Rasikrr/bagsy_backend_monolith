@@ -78,6 +78,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.authService,
 		a.formsService,
 		a.usersService,
+		a.bagsiesService,
 	)
 	return nil
 }
