@@ -76,8 +76,8 @@ func (a *App) initHTTP(_ context.Context) error {
 		swaggerHost,
 		swaggerScheme,
 		a.authService,
-		a.usersService,
 		a.formsService,
+		a.usersService,
 	)
 	return nil
 }
