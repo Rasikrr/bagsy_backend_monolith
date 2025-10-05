@@ -2,20 +2,23 @@ package app
 
 import (
 	"context"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/whatsapp"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/forms"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
-	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
-	smsC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/sms"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
-	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
-	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
-	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
-	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/appenv"
+	authC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/auth"
+	smsC "github.com/Rasikrr/bugsy_backend_monolith/internal/cache/sms"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/clients/sms"
+	bagsiesR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/bagsies"
+	usersR "github.com/Rasikrr/bugsy_backend_monolith/internal/repositories/users"
+	authS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/auth"
+	bagsiesS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/bagsies"
+	formsS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/forms"
+	usersS "github.com/Rasikrr/bugsy_backend_monolith/internal/services/users"
+
 	"github.com/Rasikrr/core/telegram"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
+	"github.com/Rasikrr/bugsy_backend_monolith/internal/ports/http"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 )
@@ -30,8 +33,10 @@ type App struct {
 	tgClient       telegram.Client
 	whatsAppClient whatsapp.Client
 
-	usersRepo usersR.Repository
-	formsRepo forms.Repository
+	usersRepo      usersR.Repository
+	bagsiesRepo    bagsiesR.Repository
+	bagsiesService bagsiesS.Service
+	formsRepo      forms.Repository
 
 	authService  authS.Service
 	formsService formsS.Service
@@ -71,8 +76,8 @@ func (a *App) initHTTP(_ context.Context) error {
 		swaggerHost,
 		swaggerScheme,
 		a.authService,
-		a.formsService,
 		a.usersService,
+		a.formsService,
 	)
 	return nil
 }
@@ -95,7 +100,6 @@ func (a *App) initCache(_ context.Context) error {
 
 func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
-	a.formsRepo = forms.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -127,6 +131,10 @@ func (a *App) initServices(_ context.Context) error {
 		jwtSecret,
 	)
 
+	a.bagsiesService = bagsiesS.NewService(
+		a.bagsiesRepo,
+	)
+
 	a.formsService = formsS.NewService(a.formsRepo)
 	return nil
 }
@@ -136,7 +144,6 @@ func (a *App) initClients(_ context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	a.tgClient, err = telegram.NewTelegramClient(token)
 	if err != nil {
 		return err
