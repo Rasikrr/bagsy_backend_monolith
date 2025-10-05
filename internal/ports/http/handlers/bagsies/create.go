@@ -1,9 +1,10 @@
 package bagsies
 
 import (
+	"net/http"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
-	"net/http"
 )
 
 // Register godoc

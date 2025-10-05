@@ -1,8 +1,9 @@
 package bagsies
 
 import (
-	"github.com/Rasikrr/core/errors"
 	"net/http"
+
+	"github.com/Rasikrr/core/errors"
 )
 
 var (

@@ -1,8 +1,9 @@
 package bagsies
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"time"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 )
 
 //go:generate easyjson -all models.go
