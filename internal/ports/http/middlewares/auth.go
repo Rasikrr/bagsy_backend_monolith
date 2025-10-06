@@ -4,9 +4,10 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Rasikrr/core/log"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 )
@@ -19,8 +20,8 @@ type AuthMiddleware struct {
 func NewAuth(
 	authService auth.Service,
 	usersService users.Service,
-) *AuthMiddleware {
-	return &AuthMiddleware{
+) AuthMiddleware {
+	return AuthMiddleware{
 		authService:  authService,
 		usersService: usersService,
 	}
@@ -29,11 +30,9 @@ func NewAuth(
 // nolint: nonamedreturns
 func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := cookies.GetAccessToken(r)
-		if token == "" {
-			api.SendError(w, errors.New("invalid token"))
-			return
-		}
+		token := r.Header.Get("Authorization")
+		log.Infof(r.Context(), "token in middleware = %v", token)
+
 		ctx := r.Context()
 		payload, err := a.authService.GetAuthTokenPayload(ctx, token)
 		if err != nil {

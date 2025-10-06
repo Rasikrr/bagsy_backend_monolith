@@ -80,7 +80,7 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 	if err != nil {
 		return nil, err
 	}
-	// TODO: errors
+	// TODO: errorsw
 	if user.Password == nil {
 		return nil, errNoAccess
 	}

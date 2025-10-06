@@ -1,9 +1,9 @@
 # !!! environment replaced to .env
 
-name: bugsy_backend # name of application
+name: bagsy_backend # name of application
 
 log:
-  level: info # debug, info, warn, error
+  level: debug # debug, info, warn, error
   add_source: true
 
 metrics:

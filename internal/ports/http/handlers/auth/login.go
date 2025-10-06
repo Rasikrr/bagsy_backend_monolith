@@ -41,5 +41,8 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 
 	cookies.SetAuthTokens(w, tokens)
 
-	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
+	api.SendData(w, loginResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	}, http.StatusOK)
 }
