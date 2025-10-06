@@ -79,7 +79,7 @@ func initCORSMiddleware() coreHttp.Middleware {
 		).WithOrigins(
 		"https://app.bagsy.kz",
 		"https://stage-app.bagsy.kz",
-		"localhost:3000",
+		"http://localhost:3000",
 	).
 		WithHeaders(
 			"Accept",
