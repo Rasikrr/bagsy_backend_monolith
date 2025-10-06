@@ -3,8 +3,9 @@ package http
 
 import (
 	"context"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"net/http"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"

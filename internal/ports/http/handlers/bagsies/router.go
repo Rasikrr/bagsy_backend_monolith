@@ -1,12 +1,13 @@
 package bagsies
 
 import (
+	"net/http"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/go-chi/chi/v5"
-	"net/http"
 )
 
 type Controller struct {
