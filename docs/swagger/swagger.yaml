@@ -11,6 +11,12 @@ definitions:
       message:
         type: string
     type: object
+  api.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.loginRequest:
     properties:
       password:
@@ -57,9 +63,46 @@ definitions:
     - phone
     - surname
     type: object
+  internal_ports_http_handlers_bagsies.createBagsyRequest:
+    properties:
+      description:
+        type: string
+      end_at:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      provider:
+        $ref: '#/definitions/internal_ports_http_handlers_bagsies.provider'
+      service:
+        description: ДОБАВИТЬ ДОМЕЕНУЮ МОДЕЛЬ
+        type: string
+      start_at:
+        type: string
+    required:
+    - end_at
+    - provider
+    - start_at
+    type: object
+  internal_ports_http_handlers_bagsies.provider:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+      point_code:
+        type: string
+    required:
+    - phone
+    - point_code
+    type: object
   internal_ports_http_handlers_form.clientFormRequest:
     properties:
       description:
+        maxLength: 500
         type: string
       first_name:
         maxLength: 50
@@ -111,27 +154,19 @@ paths:
         "200":
           description: Успешная авторизация
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.SuccessResponse'
         "400":
           description: Неверные данные
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "401":
           description: Неверный логин или пароль
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Авторизация пользователя
       tags:
       - auth
@@ -152,21 +187,15 @@ paths:
         "200":
           description: Токены авторизации успешно обновлены
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.EmptySuccessResponse'
         "400":
           description: Неверный токен
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Обновление токенов авторизации
       tags:
       - auth
@@ -188,21 +217,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.EmptySuccessResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Регистрация пользователя
       tags:
       - auth
@@ -229,30 +252,58 @@ paths:
         "200":
           description: Регистрация успешно подтверждена
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.SuccessResponse'
         "400":
           description: Неверные данные
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "401":
+          description: Неверный или просроченный токен
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Подтверждение регистрации
+      tags:
+      - auth
+  /api/v1/bagsies/create:
+    post:
+      consumes:
+      - application/json
+      description: Создает запись к мастеру с определенным кодом точки
+      parameters:
+      - description: Данные для создания записи
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             additionalProperties:
               type: string
             type: object
-        "401":
-          description: Неверный или просроченный токен
+        "400":
+          description: Bad Request
           schema:
             additionalProperties:
               type: string
             type: object
         "500":
-          description: Внутренняя ошибка сервера
+          description: Internal Server Error
           schema:
             additionalProperties:
               type: string
             type: object
-      summary: Подтверждение регистрации
+      summary: Создание записи
       tags:
-      - auth
+      - bagsies
   /api/v1/forms:
     post:
       consumes:

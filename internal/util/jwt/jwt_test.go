@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateToken(t *testing.T) {
@@ -25,4 +26,19 @@ func TestValidateToken(t *testing.T) {
 	if !valid {
 		t.Errorf("expected valid, got %v", valid)
 	}
+}
+
+func TestGenTokens(t *testing.T) {
+	params := &entity.PayloadParams{
+		Phone:  "77777777777",
+		Role:   "admin",
+		Active: true,
+	}
+	secret := "secret"
+	access, err := GenerateAccessToken(params, secret)
+	require.NoError(t, err)
+	refresh, err := GenerateRefreshToken(params, secret)
+	require.NoError(t, err)
+	t.Log("Access token:", access)
+	t.Log("Refresh token:", refresh)
 }

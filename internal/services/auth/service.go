@@ -24,7 +24,7 @@ type Service interface {
 	SendRegisterLink(ctx context.Context, phone, link string) error
 	RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error)
 	RefreshTokens(ctx context.Context, token string) (*entity.Auth, error)
-	ValidateToken(ctx context.Context, token string) (bool, error)
+	ValidateRegisterToken(ctx context.Context, token string) (bool, error)
 	GetAuthTokenPayload(ctx context.Context, token string) (*entity.PayloadParams, error)
 	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
 	GenAuthConfirmationLink(ctx context.Context, phone, pointCode string) (string, error)
@@ -161,7 +161,7 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 	return result, nil
 }
 
-func (s *service) ValidateToken(_ context.Context, token string) (bool, error) {
+func (s *service) ValidateRegisterToken(_ context.Context, token string) (bool, error) {
 	return jwt.ValidateToken(token, s.jwtSecret)
 }
 

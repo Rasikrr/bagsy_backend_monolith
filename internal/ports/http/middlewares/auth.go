@@ -28,10 +28,14 @@ func NewAuth(
 }
 
 // nolint: nonamedreturns
-func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-		log.Infof(r.Context(), "token in middleware = %v", token)
+func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token, err := session.GetAuthHeader(r)
+		log.Debugf(r.Context(), "token in middleware = %v", token)
+		if err != nil {
+			api.SendError(w, err)
+			return
+		}
 
 		ctx := r.Context()
 		payload, err := a.authService.GetAuthTokenPayload(ctx, token)
@@ -50,5 +54,5 @@ func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
 		}
 		ctx = session.SetSession(ctx, ses)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	}
 }

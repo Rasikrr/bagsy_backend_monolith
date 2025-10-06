@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/cookies"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 )
 
@@ -15,16 +14,16 @@ import (
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Токен авторизации"
-// @Success 200 {object} map[string]string "Токены авторизации успешно обновлены"
-// @Failure 400 {object} map[string]string "Неверный токен"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Success 200 {object} api.EmptySuccessResponse "Токены авторизации успешно обновлены"
+// @Failure 400 {object} api.ErrorResponse "Неверный токен"
+// @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/auth/refresh [post]
 // nolint: godot
 func (c *Controller) refresh(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	token := cookies.GetRefreshToken(r)
-	if token == "" {
-		api.SendError(w, errors.New("token is required"))
+	token, err := session.GetAuthHeader(r)
+	if err != nil {
+		api.SendError(w, err)
 		return
 	}
 	tokens, err := c.authService.RefreshTokens(ctx, token)
@@ -32,6 +31,8 @@ func (c *Controller) refresh(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, err)
 		return
 	}
-	cookies.SetAuthTokens(w, tokens)
-	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
+	api.SendData(w, api.NewSuccessResponse(refreshTokensResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	}), http.StatusOK)
 }

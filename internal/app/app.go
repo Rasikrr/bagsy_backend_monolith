@@ -101,6 +101,7 @@ func (a *App) initCache(_ context.Context) error {
 
 func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
+	a.formsRepo = forms.NewRepository(a.Postgres())
 	return nil
 }
 

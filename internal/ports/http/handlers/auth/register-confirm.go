@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/cookies"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 )
 
@@ -17,21 +18,21 @@ import (
 // @Produce json
 // @Param Authorization header string true "Токен подтверждения регистрации"
 // @Param request body registerConfirmRequest true "Данные для подтверждения"
-// @Success 200 {object} map[string]string "Регистрация успешно подтверждена"
-// @Failure 400 {object} map[string]string "Неверные данные"
-// @Failure 401 {object} map[string]string "Неверный или просроченный токен"
-// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Success 200 {object} api.SuccessResponse "Регистрация успешно подтверждена"
+// @Failure 400 {object} api.ErrorResponse "Неверные данные"
+// @Failure 401 {object} api.ErrorResponse "Неверный или просроченный токен"
+// @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/auth/register/confirm [post]
 func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		api.SendError(w, errors.New("token is required"))
+	token, err := session.GetAuthHeader(r)
+	if err != nil {
+		api.SendError(w, err)
 		return
 	}
 
-	valid, err := c.authService.ValidateToken(ctx, token)
+	valid, err := c.authService.ValidateRegisterToken(ctx, token)
 	if err != nil {
 		api.SendError(w, err)
 		return
@@ -53,5 +54,8 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cookies.SetAuthTokens(w, tokens)
-	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
+	api.SendData(w, api.NewSuccessResponse(loginResponse{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	}), http.StatusOK)
 }

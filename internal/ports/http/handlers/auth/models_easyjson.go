@@ -4,7 +4,6 @@ package auth
 
 import (
 	json "encoding/json"
-
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -18,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(in *jlexer.Lexer, out *sendCodeRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth(in *jlexer.Lexer, out *sendCodeRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -49,7 +48,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(out *jwriter.Writer, in sendCodeRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth(out *jwriter.Writer, in sendCodeRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -64,27 +63,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v sendCodeRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v sendCodeRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *sendCodeRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *sendCodeRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(in *jlexer.Lexer, out *registerRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth1(in *jlexer.Lexer, out *registerRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -119,6 +118,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 				}
 				*out.Role = string(in.String())
 			}
+		case "point_code":
+			out.PointCode = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -129,7 +130,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(out *jwriter.Writer, in registerRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth1(out *jwriter.Writer, in registerRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -153,33 +154,38 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix)
 		out.String(string(*in.Role))
 	}
+	if in.PointCode != "" {
+		const prefix string = ",\"point_code\":"
+		out.RawString(prefix)
+		out.String(string(in.PointCode))
+	}
 	out.RawByte('}')
 }
 
 // MarshalJSON supports json.Marshaler interface
 func (v registerRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v registerRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *registerRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *registerRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth1(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth1(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth2(in *jlexer.Lexer, out *registerConfirmRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth2(in *jlexer.Lexer, out *registerConfirmRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -212,7 +218,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth2(out *jwriter.Writer, in registerConfirmRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth2(out *jwriter.Writer, in registerConfirmRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -232,27 +238,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v registerConfirmRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth2(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v registerConfirmRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth2(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *registerConfirmRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth2(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *registerConfirmRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth2(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth2(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth3(in *jlexer.Lexer, out *loginResponse) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth3(in *jlexer.Lexer, out *loginResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -285,7 +291,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth3(out *jwriter.Writer, in loginResponse) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth3(out *jwriter.Writer, in loginResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -305,27 +311,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v loginResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth3(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth3(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v loginResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth3(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth3(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *loginResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth3(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth3(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *loginResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth3(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth3(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth4(in *jlexer.Lexer, out *loginRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth4(in *jlexer.Lexer, out *loginRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -358,7 +364,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth4(out *jwriter.Writer, in loginRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth4(out *jwriter.Writer, in loginRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -378,23 +384,23 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v loginRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth4(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth4(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v loginRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth4(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth4(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *loginRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth4(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth4(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *loginRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersAuth4(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersAuth4(l, v)
 }
