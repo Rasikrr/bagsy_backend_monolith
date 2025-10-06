@@ -51,7 +51,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Успешная авторизация",
                         "schema": {
-                            "$ref": "#/definitions/api.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -101,7 +113,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Токены авторизации успешно обновлены",
                         "schema": {
-                            "$ref": "#/definitions/api.EmptySuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.EmptySuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -200,7 +224,19 @@ const docTemplate = `{
                     "200": {
                         "description": "Регистрация успешно подтверждена",
                         "schema": {
-                            "$ref": "#/definitions/api.SuccessResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -363,6 +399,28 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 15,
                     "minLength": 10
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.loginResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.refreshTokensResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
                 }
             }
         },

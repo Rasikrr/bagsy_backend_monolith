@@ -18,7 +18,7 @@ import (
 // @Produce json
 // @Param Authorization header string true "Токен подтверждения регистрации"
 // @Param request body registerConfirmRequest true "Данные для подтверждения"
-// @Success 200 {object} api.SuccessResponse "Регистрация успешно подтверждена"
+// @Success 200 {object} api.SuccessResponse{data=loginResponse} "Регистрация успешно подтверждена"
 // @Failure 400 {object} api.ErrorResponse "Неверные данные"
 // @Failure 401 {object} api.ErrorResponse "Неверный или просроченный токен"
 // @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"

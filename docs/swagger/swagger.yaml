@@ -29,6 +29,20 @@ definitions:
     - password
     - phone
     type: object
+  internal_ports_http_handlers_auth.loginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.refreshTokensResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.registerConfirmRequest:
     properties:
       password:
@@ -154,7 +168,12 @@ paths:
         "200":
           description: Успешная авторизация
           schema:
-            $ref: '#/definitions/api.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
+              type: object
         "400":
           description: Неверные данные
           schema:
@@ -187,7 +206,12 @@ paths:
         "200":
           description: Токены авторизации успешно обновлены
           schema:
-            $ref: '#/definitions/api.EmptySuccessResponse'
+            allOf:
+            - $ref: '#/definitions/api.EmptySuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse'
+              type: object
         "400":
           description: Неверный токен
           schema:
@@ -252,7 +276,12 @@ paths:
         "200":
           description: Регистрация успешно подтверждена
           schema:
-            $ref: '#/definitions/api.SuccessResponse'
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
+              type: object
         "400":
           description: Неверные данные
           schema:

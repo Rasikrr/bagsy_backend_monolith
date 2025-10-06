@@ -14,7 +14,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Токен авторизации"
-// @Success 200 {object} api.EmptySuccessResponse "Токены авторизации успешно обновлены"
+// @Success 200 {object} api.EmptySuccessResponse{data=refreshTokensResponse} "Токены авторизации успешно обновлены"
 // @Failure 400 {object} api.ErrorResponse "Неверный токен"
 // @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/auth/refresh [post]

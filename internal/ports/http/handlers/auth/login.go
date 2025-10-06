@@ -14,7 +14,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param request body loginRequest true "Данные для авторизации"
-// @Success 200 {object} api.SuccessResponse "Успешная авторизация"
+// @Success 200 {object} api.SuccessResponse{data=loginResponse} "Успешная авторизация"
 // @Failure 400 {object} api.ErrorResponse "Неверные данные"
 // @Failure 401 {object} api.ErrorResponse "Неверный логин или пароль"
 // @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
