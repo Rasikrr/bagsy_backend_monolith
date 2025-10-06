@@ -31,6 +31,8 @@ type loginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type refreshTokensResponse loginResponse
+
 func (s *sendCodeRequest) validate() error {
 	return validator.GetValidator().Struct(s)
 }

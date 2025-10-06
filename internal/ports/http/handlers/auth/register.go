@@ -16,9 +16,9 @@ import (
 // @Accept json
 // @Produce json
 // @Param request body registerRequest true "Данные для регистрации"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Success 200 {object} api.EmptySuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
 // @Router /api/v1/auth/register [post]
 func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

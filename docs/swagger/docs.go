@@ -51,37 +51,37 @@ const docTemplate = `{
                     "200": {
                         "description": "Успешная авторизация",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Неверные данные",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Неверный логин или пароль",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -113,28 +113,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Токены авторизации успешно обновлены",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.EmptySuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Неверный токен",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -168,28 +171,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.EmptySuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -230,14 +224,69 @@ const docTemplate = `{
                     "200": {
                         "description": "Регистрация успешно подтверждена",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Неверные данные",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный или просроченный токен",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies/create": {
+            "post": {
+                "description": "Создает запись к мастеру с определенным кодом точки",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Создание записи",
+                "parameters": [
+                    {
+                        "description": "Данные для создания записи",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -245,8 +294,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "401": {
-                        "description": "Неверный или просроченный токен",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -255,7 +304,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Внутренняя ошибка сервера",
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
@@ -327,6 +376,15 @@ const docTemplate = `{
                 }
             }
         },
+        "api.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_auth.loginRequest": {
             "type": "object",
             "required": [
@@ -341,6 +399,28 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 15,
                     "minLength": 10
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.loginResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.refreshTokensResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
                 }
             }
         },
@@ -391,6 +471,58 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_bagsies.createBagsyRequest": {
+            "type": "object",
+            "required": [
+                "end_at",
+                "provider",
+                "start_at"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "provider": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_bagsies.provider"
+                },
+                "service": {
+                    "description": "ДОБАВИТЬ ДОМЕЕНУЮ МОДЕЛЬ",
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.provider": {
+            "type": "object",
+            "required": [
+                "phone",
+                "point_code"
+            ],
+            "properties": {
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
+                },
+                "point_code": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_form.clientFormRequest": {
             "type": "object",
             "required": [
@@ -402,7 +534,8 @@ const docTemplate = `{
             ],
             "properties": {
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 500
                 },
                 "first_name": {
                     "type": "string",
