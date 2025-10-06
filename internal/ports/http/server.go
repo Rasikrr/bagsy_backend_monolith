@@ -3,13 +3,12 @@ package http
 
 import (
 	"context"
-	"net/http"
-
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
+	"net/http"
 
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/form"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
@@ -46,13 +45,13 @@ func NewServer(
 	usersService usersS.Service,
 	bagsiesService bagsiesS.Service,
 ) {
-	authController := auth.New(authService, usersService)
-	formsController := form.NewController(formsService)
-	bagsiesController := bagsies.New(bagsiesService, authService, usersService)
-
 	authMiddleware := middlewares.NewAuth(authService, usersService)
 
-	server.WithMiddlewares(initCORSMiddleware(), authMiddleware)
+	authController := auth.New(authService, usersService)
+	formsController := form.NewController(formsService)
+	bagsiesController := bagsies.New(bagsiesService, authService, usersService, authMiddleware)
+
+	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(authController, formsController, bagsiesController)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
