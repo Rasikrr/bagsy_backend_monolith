@@ -77,7 +77,6 @@ func initCORSMiddleware() coreHttp.Middleware {
 			http.MethodDelete,
 			http.MethodOptions,
 		).
-		WithCredentials(true).
 		WithOrigins(
 			"*",
 		).
