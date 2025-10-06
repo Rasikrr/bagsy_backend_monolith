@@ -3,7 +3,7 @@ module github.com/Rasikrr/bagsy_backend_monolith
 go 1.25.1
 
 require (
-	github.com/Rasikrr/core v0.0.53
+	github.com/Rasikrr/core v0.0.54
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // indirect
 )
@@ -11,6 +11,7 @@ require (
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.2
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/green-api/whatsapp-api-client-golang-v2 v1.0.3
