@@ -7,7 +7,6 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 )
@@ -30,13 +29,7 @@ func NewAuth(
 // nolint: nonamedreturns
 func (a *AuthMiddleware) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := cookies.GetAccessToken(r)
-		if token == "" {
-			api.SendError(w, errors.New("invalid token"))
-			return
-		}
-
-		token = r.Header.Get("Authorization")
+		token := r.Header.Get("Authorization")
 		log.Infof(r.Context(), "token in middleware = %v", token)
 
 		ctx := r.Context()
