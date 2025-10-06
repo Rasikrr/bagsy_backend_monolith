@@ -3,9 +3,9 @@ package http
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
+	"github.com/go-chi/cors"
 
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
@@ -69,24 +69,20 @@ func initSwagger(server *coreHttp.Server, swaggerHost, swaggerScheme string) {
 }
 
 func initCORSMiddleware() coreHttp.Middleware {
-	corsMiddleware := coreHttp.NewCORSMiddleware().
-		WithMethods(
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPut,
-			http.MethodDelete,
-			http.MethodOptions,
-		).
-		WithOrigins(
-			"*",
-		).
-		WithHeaders(
-			"Accept",
-			"Content-Type",
-			"Content-Length",
-			"Accept-Encoding",
-			"X-CSRF-Token",
-			"Authorization",
-		)
+	corsMiddleware := coreHttp.NewCORSMiddleware(
+		cors.Options{
+			AllowCredentials: false,
+			AllowedHeaders: []string{
+				"Accept",
+				"Content-Type",
+				"Content-Length",
+				"Accept-Encoding",
+				"X-CSRF-Token",
+				"Authorization",
+			},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedOrigins: []string{"*"},
+		},
+	)
 	return corsMiddleware
 }
