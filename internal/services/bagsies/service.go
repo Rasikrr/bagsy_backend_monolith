@@ -24,6 +24,8 @@ func NewService(repo bagsies.Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error {
+	// СОЗДАВАТЬ ЮЗЕРА ЕСЛИ НЕТУ ТАКОГО ПО НОМЕРУ
+
 	b := &entity.Bagsy{
 		ID:        codegen.GenerateBagsyID(),
 		PointCode: params.PointCode,

@@ -9,10 +9,21 @@ import (
 //go:generate easyjson -all models.go
 
 type createBagsyRequest struct {
-	Phone    string    `json:"phone"`
-	StartAt  time.Time `json:"start_at,omitempty" validate:"required"`
-	EndAt    time.Time `json:"end_at,omitempty"   validate:"required,gtfield=StartAt"`
-	Provider provider  `json:"provider"           validate:"required,dive"`
+	Phone       string    `json:"phone"`
+	FirstName   string    `json:"first_name"`
+	LastName    string    `json:"last_name"`
+	StartAt     time.Time `json:"start_at,omitempty" validate:"required"`
+	EndAt       time.Time `json:"end_at,omitempty"   validate:"required,gtfield=StartAt"`
+	Provider    provider  `json:"provider"           validate:"required,dive"`
+	Description string    `json:"description"`
+	// ДОБАВИТЬ ДОМЕЕНУЮ МОДЕЛЬ
+	Service string `json:"service"`
+}
+
+type Service struct {
+	Category    string `json:"category"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
 
 // Структура для исполнителя (телефон уникальный).
@@ -27,6 +38,6 @@ func (r createBagsyRequest) toParams() *entity.BagsyParams {
 		StartAt:       r.StartAt,
 		EndAt:         r.EndAt,
 		ProviderPhone: r.Provider.Phone,
-		Phone:         r.Phone,
+		UserPhone:     r.Phone,
 	}
 }
