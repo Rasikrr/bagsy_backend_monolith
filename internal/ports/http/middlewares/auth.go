@@ -52,6 +52,7 @@ func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			api.SendError(w, err)
 			return
 		}
+		log.Infof(ctx, "set session %+v", ses)
 		ctx = session.SetSession(ctx, ses)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}

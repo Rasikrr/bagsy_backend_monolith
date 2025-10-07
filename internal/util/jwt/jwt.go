@@ -30,9 +30,10 @@ func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, e
 
 func GenerateRefreshToken(params *entity.PayloadParams, secret string) (string, error) {
 	claims := jwt.MapClaims{
-		"phone":   params.Phone,
-		"refresh": params.Refresh,
-		"exp":     time.Now().Add(refreshTTL).Unix(),
+		"phone":      params.Phone,
+		"refresh":    params.Refresh,
+		"point_code": params.PointCode,
+		"exp":        time.Now().Add(refreshTTL).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -87,10 +88,15 @@ func ParseAuthToken(tokenString string, secret string) (*entity.PayloadParams, e
 		if !ok {
 			return nil, errInvalidToken
 		}
+		pointCode, ok := claims["point_code"].(string)
+		if !ok {
+			return nil, errInvalidToken
+		}
 		return &entity.PayloadParams{
-			Phone:   phone,
-			Role:    role,
-			Refresh: refresh,
+			Phone:     phone,
+			Role:      role,
+			Refresh:   refresh,
+			PointCode: pointCode,
 		}, nil
 	}
 

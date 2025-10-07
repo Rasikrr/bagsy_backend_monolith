@@ -213,10 +213,11 @@ func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken s
 	}
 
 	refreshParams := &entity.PayloadParams{
-		Phone:   user.Phone,
-		Role:    user.Role.String(),
-		Active:  user.Active,
-		Refresh: true,
+		Phone:     user.Phone,
+		PointCode: user.PointCode,
+		Role:      user.Role.String(),
+		Active:    user.Active,
+		Refresh:   true,
 	}
 
 	refreshToken, err = jwt.GenerateRefreshToken(refreshParams, s.jwtSecret)
