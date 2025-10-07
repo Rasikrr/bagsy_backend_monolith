@@ -27,12 +27,18 @@ func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error 
 	// СОЗДАВАТЬ ЮЗЕРА ЕСЛИ НЕТУ ТАКОГО ПО НОМЕРУ
 
 	b := &entity.Bagsy{
-		ID:        codegen.GenerateBagsyID(),
-		PointCode: params.PointCode,
-		StartAt:   params.StartAt,
-		EndAt:     params.EndAt,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:            codegen.GenerateBagsyID(),
+		PointCode:     params.PointCode,
+		StartAt:       params.StartAt,
+		EndAt:         params.EndAt,
+		ProviderPhone: params.ProviderPhone,
+		UserPhone:     params.UserPhone,
+		FirstName:     params.FirstName,
+		LastName:      params.LastName,
+		Description:   params.Description,
+		Service:       params.Service,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 	return s.repo.Create(ctx, b)
 }

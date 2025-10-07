@@ -31,7 +31,7 @@ func (r *repository) Create(ctx context.Context, b *entity.Bagsy) error {
 		createBagsy,
 		m.ID,
 		m.PointCode,
-		m.Phone,
+		m.UserPhone,
 		m.StartAt,
 		m.EndAt,
 		m.CreatedAt,

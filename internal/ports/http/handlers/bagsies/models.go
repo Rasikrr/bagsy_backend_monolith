@@ -16,8 +16,7 @@ type createBagsyRequest struct {
 	EndAt       time.Time `json:"end_at,omitempty"   validate:"required,gtfield=StartAt"`
 	Provider    provider  `json:"provider"           validate:"required,dive"`
 	Description string    `json:"description"`
-	// ДОБАВИТЬ ДОМЕЕНУЮ МОДЕЛЬ
-	Service string `json:"service"`
+	Service     string    `json:"service"`
 }
 
 type Service struct {
