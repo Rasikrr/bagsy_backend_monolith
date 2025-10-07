@@ -38,5 +38,9 @@ func (r createBagsyRequest) toParams() *entity.BagsyParams {
 		EndAt:         r.EndAt,
 		ProviderPhone: r.Provider.Phone,
 		UserPhone:     r.Phone,
+		FirstName:     r.FirstName,
+		LastName:      r.LastName,
+		Description:   r.Description,
+		Service:       r.Service,
 	}
 }

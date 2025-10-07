@@ -44,6 +44,7 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := req.toParams()
+	params.PointCode = by.PointCode
 
 	log.Info(ctx, "create")
 
