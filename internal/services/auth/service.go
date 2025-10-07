@@ -201,10 +201,11 @@ func (s *service) RefreshTokens(ctx context.Context, token string) (*entity.Auth
 // nolint: nonamedreturns
 func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken string, err error) {
 	accessParams := &entity.PayloadParams{
-		Phone:   user.Phone,
-		Role:    user.Role.String(),
-		Active:  user.Active,
-		Refresh: false,
+		Phone:     user.Phone,
+		Role:      user.Role.String(),
+		Active:    user.Active,
+		PointCode: user.PointCode,
+		Refresh:   false,
 	}
 
 	accessToken, err = jwt.GenerateAccessToken(accessParams, s.jwtSecret)
