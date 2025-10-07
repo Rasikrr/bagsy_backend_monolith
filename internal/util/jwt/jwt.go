@@ -17,11 +17,12 @@ const (
 
 func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, error) {
 	claims := jwt.MapClaims{
-		"phone":   params.Phone,
-		"role":    params.Role,
-		"active":  params.Active,
-		"refresh": params.Refresh,
-		"exp":     time.Now().Add(accessTTL).Unix(),
+		"phone":      params.Phone,
+		"role":       params.Role,
+		"active":     params.Active,
+		"refresh":    params.Refresh,
+		"point_code": params.PointCode,
+		"exp":        time.Now().Add(accessTTL).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
