@@ -66,7 +66,7 @@ func convert(user *entity.User) (*model, error) {
 		return nil, err
 	}
 
-	return &model{
+	out := &model{
 		Phone:     user.Phone,
 		Role:      role.String(),
 		Name:      user.Name,
@@ -75,5 +75,13 @@ func convert(user *entity.User) (*model, error) {
 		UpdatedAt: user.UpdatedAt,
 		UpdatedBy: user.UpdatedBy,
 		PointCode: &user.PointCode,
-	}, nil
+	}
+	now := time.Now().UTC()
+	if out.CreatedAt.IsZero() {
+		out.CreatedAt = now
+	}
+	if out.UpdatedAt != nil && out.UpdatedAt.IsZero() {
+		out.UpdatedAt = &now
+	}
+	return out, nil
 }

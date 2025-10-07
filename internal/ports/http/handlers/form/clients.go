@@ -4,7 +4,6 @@ package form
 import (
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/core/api"
 )
 
@@ -28,8 +27,7 @@ func (c *Controller) createClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	role, _ := enum.RoleString(req.Role)
-	err := c.formsService.CreateClient(ctx, req.FirstName, req.LastName, req.Phone, req.Description, role)
+	err := c.formsService.CreateClient(ctx, req.FirstName, req.LastName, req.Phone, req.Description, req.Role)
 	if err != nil {
 		api.SendError(w, err)
 		return
