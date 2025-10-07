@@ -47,6 +47,8 @@ func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error 
 		log.Any("bagsy", b),
 	)
 
+	log.Infof(ctx, "create service %+v", b)
+
 	return s.repo.Create(ctx, b)
 }
 

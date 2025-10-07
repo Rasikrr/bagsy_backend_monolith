@@ -29,7 +29,7 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info(ctx, "started")
+	log.Infof(ctx, "started %v", by.PointCode)
 
 	if by.PointCode == "" {
 		api.SendError(w, err)
@@ -44,14 +44,12 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 
 	params := req.toParams()
 
-	log.Info(ctx, "create",
-		log.Any("params", params),
-	)
+	log.Info(ctx, "create")
 
 	err = c.bagsyService.Create(ctx, params)
 	if err != nil {
 		api.SendError(w, err)
 	}
 
-	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
+	api.SendData(w, api.NewEmptySuccessResponse("ok"), http.StatusOK)
 }
