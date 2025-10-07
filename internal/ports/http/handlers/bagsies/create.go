@@ -1,6 +1,7 @@
 package bagsies
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Rasikrr/core/log"
@@ -32,7 +33,7 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 	log.Infof(ctx, "started %v", by.PointCode)
 
 	if by.PointCode == "" {
-		api.SendError(w, err)
+		api.SendError(w, errors.New("empty point code"))
 		return
 	}
 
