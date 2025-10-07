@@ -2,8 +2,9 @@ package bagsies
 
 import (
 	"context"
-	"github.com/Rasikrr/core/log"
 	"time"
+
+	"github.com/Rasikrr/core/log"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/bagsies"

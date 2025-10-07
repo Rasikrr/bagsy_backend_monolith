@@ -1,8 +1,9 @@
 package bagsies
 
 import (
-	"github.com/Rasikrr/core/log"
 	"net/http"
+
+	"github.com/Rasikrr/core/log"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 
