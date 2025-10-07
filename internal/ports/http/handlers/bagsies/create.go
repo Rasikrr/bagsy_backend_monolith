@@ -1,6 +1,7 @@
 package bagsies
 
 import (
+	"github.com/Rasikrr/core/log"
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
@@ -27,6 +28,8 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Info(ctx, "started")
+
 	if by.PointCode == "" {
 		api.SendError(w, err)
 		return
@@ -40,9 +43,13 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 
 	params := req.toParams()
 
+	log.Info(ctx, "create",
+		log.Any("params", params),
+	)
+
 	err = c.bagsyService.Create(ctx, params)
 	if err != nil {
-		return
+		api.SendError(w, err)
 	}
 
 	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)

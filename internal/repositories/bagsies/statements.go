@@ -3,9 +3,13 @@ package bagsies
 
 const (
 	createBagsy = `
-		INSERT INTO bagsies (id, time, point_code, phone, start_at, end_at, created_at, updated_at, updated_by)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-	`
+		INSERT INTO bagsies (
+		  id, point_code, provider_phone,user_phone, first_name, last_name, 
+		 description,service,start_at,end_at,created_at,updated_at, updated_by) 
+		VALUES (
+		  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+		)
+		`
 	getBagsyByParams = `
 		SELECT id, time, point_code, phone, start_at, end_at, created_at, updated_at, updated_by
 		FROM bagsies

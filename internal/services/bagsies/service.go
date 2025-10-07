@@ -2,6 +2,7 @@ package bagsies
 
 import (
 	"context"
+	"github.com/Rasikrr/core/log"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
@@ -40,6 +41,11 @@ func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error 
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
+
+	log.Info(ctx, "create service",
+		log.Any("bagsy", b),
+	)
+
 	return s.repo.Create(ctx, b)
 }
 

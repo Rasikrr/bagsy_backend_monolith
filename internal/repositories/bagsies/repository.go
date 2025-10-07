@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/Rasikrr/core/log"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/core/database"
@@ -26,12 +27,22 @@ func NewRepository(db *database.Postgres) Repository {
 
 func (r *repository) Create(ctx context.Context, b *entity.Bagsy) error {
 	m := convertToModel(b)
+
+	log.Info(ctx, "create repo",
+		log.Any("model", m),
+	)
+
 	_, err := r.db.Exec(
 		ctx,
 		createBagsy,
 		m.ID,
 		m.PointCode,
+		m.ProviderPhone,
 		m.UserPhone,
+		m.FirstName,
+		m.LastName,
+		m.Description,
+		m.Service,
 		m.StartAt,
 		m.EndAt,
 		m.CreatedAt,
