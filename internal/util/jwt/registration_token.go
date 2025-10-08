@@ -9,7 +9,7 @@ import (
 const (
 	phoneKey             = "phone"
 	code                 = "point_code"
-	registrationTokenTTL = 1 * time.Hour
+	registrationTokenTTL = 24 * time.Hour
 )
 
 func GenerateRegistrationToken(phone, pointCode string, secret string) (string, error) {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/cookies"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 )
@@ -53,7 +52,6 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, err)
 		return
 	}
-	cookies.SetAuthTokens(w, tokens)
 	api.SendData(w, api.NewSuccessResponse(loginResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
