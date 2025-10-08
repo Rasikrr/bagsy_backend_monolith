@@ -5,7 +5,7 @@ import (
 
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 // Update godoc
@@ -35,7 +35,12 @@ func (c *Controller) update(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, err)
 		return
 	}
-	err := c.usersService.Update(ctx, phone, req.toParams())
+	params, err := req.toParams()
+	if err != nil {
+		api.SendError(w, err)
+		return
+	}
+	err = c.usersService.Update(ctx, phone, params)
 	if err != nil {
 		api.SendError(w, err)
 		return
