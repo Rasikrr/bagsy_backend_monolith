@@ -125,7 +125,7 @@ env:
   auth_confirmation_url:
     type: "string"
     env_name: "AUTH_CONFIRMATION_URL"
-    value: "https://bagsy.kz/ru/invite"
+    value: "https://app.bagsy/ru/invite"
     required: true
 
   swagger_host:
