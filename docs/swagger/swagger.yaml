@@ -137,6 +137,36 @@ definitions:
     - phone
     - role
     type: object
+  users.updateRequest:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      surname:
+        type: string
+    type: object
+  users.userResponse:
+    properties:
+      created_at:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      phone:
+        type: string
+      point_code:
+        type: string
+      role:
+        type: string
+      surname:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -359,6 +389,84 @@ paths:
       summary: Отправка формы для соотрдничества
       tags:
       - forms
+  /api/v1/users/{phone}:
+    get:
+      description: Возвращает информацию о пользователе по его номеру телефона
+      parameters:
+      - description: Номер телефона пользователя
+        in: path
+        name: phone
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/users.userResponse'
+              type: object
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение пользователя по номеру телефона
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Обновляет имя, фамилию или пароль пользователя по номеру телефона
+      parameters:
+      - description: Номер телефона пользователя
+        in: path
+        name: phone
+        required: true
+        type: string
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/users.updateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пользователь успешно обновлен
+          schema:
+            $ref: '#/definitions/api.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление данных пользователя
+      tags:
+      - users
 securityDefinitions:
   ApiKeyAuth:
     in: header

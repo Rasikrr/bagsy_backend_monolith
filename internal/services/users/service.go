@@ -15,6 +15,7 @@ type Service interface {
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	SetPasswordByPhone(ctx context.Context, phone string, password string) error
 	SetActive(ctx context.Context, phone string) error
+	Update(ctx context.Context, phone string, params UpdateParams) error
 }
 
 type service struct {
@@ -67,6 +68,15 @@ func (s *service) SetActive(ctx context.Context, phone string) error {
 		SetPhones(phone).
 		SetActive(true).
 		Build()
+	err := s.usersRepo.Update(ctx, patch)
+	if err != nil {
+		return fmt.Errorf("update user: %w", err)
+	}
+	return nil
+}
+
+func (s *service) Update(ctx context.Context, phone string, params UpdateParams) error {
+	patch := params.ToPatch(phone)
 	err := s.usersRepo.Update(ctx, patch)
 	if err != nil {
 		return fmt.Errorf("update user: %w", err)
