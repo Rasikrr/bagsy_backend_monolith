@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 )
 
 // Register godoc
@@ -24,16 +26,17 @@ func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	by, err := session.GetSession(ctx)
 	if err != nil {
-		api.SendError(w, err)
+		api.SendError(w, errors.ErrSessionNotFound)
 		return
 	}
 
 	var req registerRequest
 	if err = api.GetData(r, &req); err != nil {
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 	if err = req.validate(); err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 

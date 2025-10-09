@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 )
 
 // @Summary Отправка формы для соотрдничества
@@ -17,20 +18,21 @@ import (
 // @Failure 500 {object} api.ErrorResponse "ошибка"
 // @Router /api/v1/forms [post]
 func (c *Controller) createClient(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	var req clientFormRequest
 	if err := api.GetData(r, &req); err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 	if err := req.validate(); err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
-	ctx := r.Context()
 	err := c.formsService.CreateClient(ctx, req.FirstName, req.LastName, req.Phone, req.Description, req.Role)
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
-	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
+	api.SendData(w, api.NewEmptySuccessResponse("application created"), http.StatusOK)
 }

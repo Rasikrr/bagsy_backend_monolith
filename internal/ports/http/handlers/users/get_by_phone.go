@@ -3,9 +3,8 @@ package users
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
 	"github.com/Rasikrr/core/api"
-	coreErr "github.com/Rasikrr/core/errors"
-	"github.com/Rasikrr/core/log"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -24,9 +23,8 @@ import (
 func (c *Controller) getByPhone(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	phone := chi.URLParam(r, "phone")
-	log.Infof(ctx, "phone: %s", phone)
 	if phone == "" {
-		api.SendError(w, coreErr.ErrBadRequest)
+		api.SendError(w, errors.ErrPhoneRequired)
 		return
 	}
 	user, err := c.usersService.GetByPhone(ctx, phone)

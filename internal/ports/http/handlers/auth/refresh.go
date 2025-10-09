@@ -5,6 +5,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 )
 
 // Refresh godoc
@@ -23,7 +24,7 @@ func (c *Controller) refresh(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	token, err := session.GetAuthHeader(r)
 	if err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequest.Wrap(err))
 		return
 	}
 	tokens, err := c.authService.RefreshTokens(ctx, token)

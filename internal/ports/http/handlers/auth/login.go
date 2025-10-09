@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 )
 
 // Login godoc
@@ -21,14 +22,13 @@ import (
 // @Router /api/v1/auth/login [post]
 func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
-
 	if err := api.GetData(r, &req); err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 
 	if err := req.validate(); err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 

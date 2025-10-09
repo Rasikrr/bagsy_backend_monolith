@@ -135,6 +135,7 @@ func (a *App) initServices(_ context.Context) error {
 
 	a.bagsiesService = bagsiesS.NewService(
 		a.bagsiesRepo,
+		a.usersRepo,
 	)
 
 	a.formsService = formsS.NewService(a.formsRepo)

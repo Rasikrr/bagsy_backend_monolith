@@ -288,28 +288,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.EmptySuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -391,7 +382,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/users.userResponse"
+                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userResponse"
                                         }
                                     }
                                 }
@@ -449,7 +440,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.updateRequest"
+                            "$ref": "#/definitions/internal_ports_http_handlers_users.updateRequest"
                         }
                     }
                 ],
@@ -681,7 +672,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.updateRequest": {
+        "internal_ports_http_handlers_users.updateRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -695,14 +686,14 @@ const docTemplate = `{
                 }
             }
         },
-        "users.userResponse": {
+        "internal_ports_http_handlers_users.userResponse": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "created_at": {
                     "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

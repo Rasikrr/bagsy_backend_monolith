@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Rasikrr/core/database"
@@ -75,8 +74,6 @@ func (s *service) SendRegisterLink(ctx context.Context, phone, link string) erro
 func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
 	user, err := s.userService.GetByPhone(ctx, phone)
 
-	log.Infof(ctx, "user %+v", user)
-
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +91,7 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 
 	accessToken, refreshToken, err := s.generateTokens(user)
 	if err != nil {
-		return nil, fmt.Errorf("generate tokens: %w", err)
+		return nil, errGenerateTokens.Wrap(err)
 	}
 
 	return &entity.Auth{
@@ -106,7 +103,7 @@ func (s *service) Login(ctx context.Context, phone string, password string) (*en
 func (s *service) GenAuthConfirmationLink(_ context.Context, phone, pointCode string) (string, error) {
 	token, err := jwt.GenerateRegistrationToken(phone, pointCode, s.jwtSecret)
 	if err != nil {
-		return "", fmt.Errorf("generate registration token: %w", err)
+		return "", errGenerateRegistrationURL.Wrap(err)
 	}
 	return fmt.Sprintf("%s?token=%s", s.authConfirmationURL, token), nil
 }
@@ -124,17 +121,17 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 
 		hashedPassword, err := hash.Password(password)
 		if err != nil {
-			return fmt.Errorf("hashing failed: %w", err)
+			return errHashingFailed.Wrap(err)
 		}
 
 		err = s.userService.SetPasswordByPhone(txCtx, user.Phone, hashedPassword)
 		if err != nil {
-			return fmt.Errorf("set password: %w", err)
+			return errSetPassword.Wrap(err)
 		}
 
 		err = s.userService.SetActive(txCtx, phone)
 		if err != nil {
-			return fmt.Errorf("activate user: %w", err)
+			return errActivateUser.Wrap(err)
 		}
 
 		updatedUser, err := s.userService.GetByPhone(txCtx, phone)
@@ -144,7 +141,7 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 
 		accessToken, refreshToken, err := s.generateTokens(updatedUser)
 		if err != nil {
-			return fmt.Errorf("generate tokens: %w", err)
+			return errGenerateTokens.Wrap(err)
 		}
 
 		result = &entity.Auth{
@@ -156,7 +153,7 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("registration confirm failed: %w", err)
+		return nil, errRegistrationConfirm.Wrap(err)
 	}
 	return result, nil
 }
@@ -172,25 +169,25 @@ func (s *service) GetAuthTokenPayload(_ context.Context, token string) (*entity.
 func (s *service) RefreshTokens(ctx context.Context, token string) (*entity.Auth, error) {
 	valid, err := jwt.ValidateToken(token, s.jwtSecret)
 	if err != nil {
-		return nil, fmt.Errorf("validate token: %w", err)
+		return nil, errInvalidToken.Wrap(err)
 	}
 	if !valid {
-		return nil, errors.New("invalid token")
+		return nil, errInvalidToken
 	}
 	payload, err := jwt.ParseRefreshToken(token, s.jwtSecret)
 	if err != nil {
-		return nil, fmt.Errorf("parse refresh token: %w", err)
+		return nil, errInvalidToken.Wrap(err)
 	}
 	if !payload.IsRefresh() {
-		return nil, errors.New("access token is not allowed")
+		return nil, errAccessTokenNotAllowed
 	}
 	user, err := s.userService.GetByPhone(ctx, payload.Phone)
 	if err != nil {
-		return nil, fmt.Errorf("get user by phone: %w", err)
+		return nil, err
 	}
 	accessToken, refreshToken, err := s.generateTokens(user)
 	if err != nil {
-		return nil, fmt.Errorf("generate tokens: %w", err)
+		return nil, errGenerateTokens.Wrap(err)
 	}
 	return &entity.Auth{
 		AccessToken:  accessToken,

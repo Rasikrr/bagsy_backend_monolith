@@ -3,7 +3,6 @@ package users
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
@@ -31,10 +30,10 @@ func NewService(usersRepo users.Repository) Service {
 func (s *service) Create(ctx context.Context, user *entity.User) error {
 	_, err := s.usersRepo.GetByPhone(ctx, user.Phone)
 	if err != nil && !errors.Is(err, users.ErrUserNotFound) {
-		return fmt.Errorf("get user by phone: %w", err)
+		return errGetUserByPhone.Wrap(err)
 	}
 	if createErr := s.usersRepo.Create(ctx, user); createErr != nil {
-		return fmt.Errorf("create user: %w", createErr)
+		return errCreateUser.Wrap(createErr)
 	}
 	return nil
 }
@@ -42,7 +41,7 @@ func (s *service) Create(ctx context.Context, user *entity.User) error {
 func (s *service) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {
 	user, err := s.usersRepo.GetByPhone(ctx, phone)
 	if err != nil {
-		return nil, fmt.Errorf("get user by phone: %w", err)
+		return nil, errGetUserByPhone.Wrap(err)
 	}
 	return user, nil
 }
@@ -54,7 +53,7 @@ func (s *service) SetPasswordByPhone(ctx context.Context, phone string, password
 		Build()
 	err := s.usersRepo.Update(ctx, patch)
 	if err != nil {
-		return fmt.Errorf("update user: %w", err)
+		return errSetPassword.Wrap(err)
 	}
 	return nil
 }
@@ -70,7 +69,7 @@ func (s *service) SetActive(ctx context.Context, phone string) error {
 		Build()
 	err := s.usersRepo.Update(ctx, patch)
 	if err != nil {
-		return fmt.Errorf("update user: %w", err)
+		return errActivateUser.Wrap(err)
 	}
 	return nil
 }
@@ -79,7 +78,7 @@ func (s *service) Update(ctx context.Context, phone string, params UpdateParams)
 	patch := params.ToPatch(phone)
 	err := s.usersRepo.Update(ctx, patch)
 	if err != nil {
-		return fmt.Errorf("update user: %w", err)
+		return errUpdateUser.Wrap(err)
 	}
 	return nil
 }
