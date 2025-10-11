@@ -8,16 +8,16 @@ import (
 )
 
 type Bagsy struct {
-	ID            string    `json:"id"`
-	Time          time.Time `json:"time"`
-	PointCode     string    `json:"point_code"`
-	ProviderPhone string    `json:"phone"`
-	UserPhone     string    `json:"user_phone"`
-	StartAt       time.Time `json:"start_at,omitempty"`
-	EndAt         time.Time `json:"end_at,omitempty"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
-	UpdatedBy     *string   `json:"updated_by,omitempty"`
+	ID          string    `json:"id"`
+	Service     Service   `json:"service"`
+	Point       Point     `json:"point"`
+	ClientPhone string    `json:"client_phone"`
+	MasterPhone string    `json:"master_phone"`
+	StartAt     time.Time `json:"start_at,omitempty"`
+	EndAt       time.Time `json:"end_at,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	UpdatedBy   *string   `json:"updated_by,omitempty"`
 }
 
 func NewBagsy(params *BagsyParams) (*Bagsy, error) {
