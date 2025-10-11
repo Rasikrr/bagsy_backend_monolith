@@ -40,8 +40,6 @@ func (r *repository) Create(ctx context.Context, b *entity.Bagsy) error {
 		m.PointCode,
 		m.ProviderPhone,
 		m.UserPhone,
-		m.FirstName,
-		m.LastName,
 		m.Description,
 		m.Service,
 		m.StartAt,
