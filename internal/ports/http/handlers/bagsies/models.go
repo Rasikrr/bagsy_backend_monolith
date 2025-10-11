@@ -19,6 +19,11 @@ type createBagsyRequest struct {
 	Service     string    `json:"service"`
 }
 
+type confirmBagsyRequest struct {
+	ServiceName string `json:"service_name"`
+	Phone       string `json:"phone"`
+}
+
 type Service struct {
 	Category    string `json:"category"`
 	Name        string `json:"name"`

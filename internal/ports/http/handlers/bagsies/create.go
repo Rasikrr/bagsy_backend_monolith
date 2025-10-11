@@ -1,57 +1,34 @@
 package bagsies
 
 import (
-	"errors"
 	"net/http"
 
-	"github.com/Rasikrr/core/log"
-
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
-
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 )
 
 // Register godoc
-// @Summary Создание записи
-// @Description Создает запись к мастеру с определенным кодом точки
+// @Summary Отправить код подтверждения для подтверждения записи
+// @Description Отправляет код подтверждения для подтверждения записи к мастеру на whatsapp
 // @Tags bagsies
 // @Accept json
 // @Produce json
-// @Param request body createBagsyRequest true "Данные для создания записи"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/bagsies/create [post]
+// @Param request body confirmBagsyRequest true "Данные о услуге и юзере"
+// @Success 200 {object} api.EmptySuccessResponse
+// @Failure 400 {object} api.ErrorResponse
+// @Failure 500 {object} api.ErrorResponse
+// @Router /api/v1/bagsies [post]
 func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	by, err := session.GetSession(ctx)
+	var req confirmBagsyRequest
+	if err := api.GetData(r, &req); err != nil {
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
+		return
+	}
+	err := c.bagsyService.SendConfirmationMessage(ctx, req.Phone, req.ServiceName)
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
-
-	log.Infof(ctx, "started %v", by.PointCode)
-
-	if by.PointCode == "" {
-		api.SendError(w, errors.New("empty point code"))
-		return
-	}
-
-	var req createBagsyRequest
-	if err = api.GetData(r, &req); err != nil {
-		api.SendError(w, err)
-		return
-	}
-
-	params := req.toParams()
-	params.PointCode = by.PointCode
-
-	log.Info(ctx, "create")
-
-	err = c.bagsyService.Create(ctx, params)
-	if err != nil {
-		api.SendError(w, err)
-	}
-
-	api.SendData(w, api.NewEmptySuccessResponse("ok"), http.StatusOK)
+	api.SendData(w, api.NewEmptySuccessResponse(), http.StatusOK)
 }

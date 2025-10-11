@@ -77,6 +77,13 @@ definitions:
     - phone
     - surname
     type: object
+  internal_ports_http_handlers_bagsies.confirmBagsyRequest:
+    properties:
+      phone:
+        type: string
+      service_name:
+        type: string
+    type: object
   internal_ports_http_handlers_bagsies.createBagsyRequest:
     properties:
       description:
@@ -137,7 +144,7 @@ definitions:
     - phone
     - role
     type: object
-  users.updateRequest:
+  internal_ports_http_handlers_users.updateRequest:
     properties:
       name:
         type: string
@@ -146,12 +153,12 @@ definitions:
       surname:
         type: string
     type: object
-  users.userResponse:
+  internal_ports_http_handlers_users.userResponse:
     properties:
+      active:
+        type: boolean
       created_at:
         type: string
-      is_active:
-        type: boolean
       name:
         type: string
       phone:
@@ -327,7 +334,38 @@ paths:
       summary: Подтверждение регистрации
       tags:
       - auth
-  /api/v1/bagsies/create:
+  /api/v1/bagsies:
+    post:
+      consumes:
+      - application/json
+      description: Отправляет код подтверждения для подтверждения записи к мастеру
+        на whatsapp
+      parameters:
+      - description: Данные о услуге и юзере
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.EmptySuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Отправить код подтверждения для подтверждения записи
+      tags:
+      - bagsies
+  /api/v1/bagsies/confirm:
     post:
       consumes:
       - application/json
@@ -345,21 +383,15 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.EmptySuccessResponse'
         "400":
           description: Bad Request
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Создание записи
       tags:
       - bagsies
@@ -408,7 +440,7 @@ paths:
             - $ref: '#/definitions/api.SuccessResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/users.userResponse'
+                  $ref: '#/definitions/internal_ports_http_handlers_users.userResponse'
               type: object
         "400":
           description: Неверный формат данных
@@ -442,7 +474,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/users.updateRequest'
+          $ref: '#/definitions/internal_ports_http_handlers_users.updateRequest'
       produces:
       - application/json
       responses:

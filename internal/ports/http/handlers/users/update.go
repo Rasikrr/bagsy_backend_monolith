@@ -3,6 +3,7 @@ package users
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 	"github.com/go-chi/chi/v5"
@@ -24,20 +25,21 @@ import (
 // @Security ApiKeyAuth
 func (c *Controller) update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	phone := chi.URLParam(r, "phone")
 	if phone == "" {
-		api.SendError(w, coreErr.ErrBadRequest)
+		api.SendError(w, errors.ErrPhoneRequired)
 		return
 	}
 	var req updateRequest
 
 	if err := api.GetData(r, &req); err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 	params, err := req.toParams()
 	if err != nil {
-		api.SendError(w, err)
+		api.SendError(w, coreErr.ErrInternalServerError.Wrap(err))
 		return
 	}
 	err = c.usersService.Update(ctx, phone, params)

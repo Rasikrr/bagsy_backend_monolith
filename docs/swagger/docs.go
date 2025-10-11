@@ -260,7 +260,53 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/bagsies/create": {
+        "/api/v1/bagsies": {
+            "post": {
+                "description": "Отправляет код подтверждения для подтверждения записи к мастеру на whatsapp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Отправить код подтверждения для подтверждения записи",
+                "parameters": [
+                    {
+                        "description": "Данные о услуге и юзере",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies/confirm": {
             "post": {
                 "description": "Создает запись к мастеру с определенным кодом точки",
                 "consumes": [
@@ -288,28 +334,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.EmptySuccessResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -391,7 +428,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/users.userResponse"
+                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userResponse"
                                         }
                                     }
                                 }
@@ -449,7 +486,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/users.updateRequest"
+                            "$ref": "#/definitions/internal_ports_http_handlers_users.updateRequest"
                         }
                     }
                 ],
@@ -597,6 +634,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_bagsies.confirmBagsyRequest": {
+            "type": "object",
+            "properties": {
+                "phone": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_bagsies.createBagsyRequest": {
             "type": "object",
             "required": [
@@ -681,7 +729,7 @@ const docTemplate = `{
                 }
             }
         },
-        "users.updateRequest": {
+        "internal_ports_http_handlers_users.updateRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -695,14 +743,14 @@ const docTemplate = `{
                 }
             }
         },
-        "users.userResponse": {
+        "internal_ports_http_handlers_users.userResponse": {
             "type": "object",
             "properties": {
+                "active": {
+                    "type": "boolean"
+                },
                 "created_at": {
                     "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

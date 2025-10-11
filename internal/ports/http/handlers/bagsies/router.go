@@ -1,8 +1,6 @@
 package bagsies
 
 import (
-	"net/http"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
@@ -33,6 +31,7 @@ func New(
 
 func (c *Controller) Init(router *chi.Mux) {
 	router.Route("/api/v1/bagsies", func(r chi.Router) {
-		r.Post("/create", c.authMW.Handle(http.HandlerFunc(c.create)).ServeHTTP)
+		r.Post("/", c.create)
+		r.Post("/confirm", c.createConfirm)
 	})
 }

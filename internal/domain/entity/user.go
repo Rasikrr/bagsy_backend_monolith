@@ -18,3 +18,12 @@ type User struct {
 	Active    bool       `json:"active"`
 	Password  *string    `json:"password"`
 }
+
+func NewCustomerUser(phone string) *User {
+	return &User{
+		Phone:     phone,
+		Role:      enum.RoleUser,
+		CreatedAt: time.Now(),
+		Active:    true,
+	}
+}

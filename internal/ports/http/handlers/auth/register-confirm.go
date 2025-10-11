@@ -2,11 +2,12 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 )
 
 // RegisterConfirm godoc
@@ -27,7 +28,7 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 
 	token, err := session.GetAuthHeader(r)
 	if err != nil {
-		api.SendError(w, err)
+		api.SendError(w, errors.ErrSessionNotFound)
 		return
 	}
 
@@ -37,13 +38,13 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !valid {
-		api.SendError(w, errors.New("invalid token"))
+		api.SendError(w, coreErr.NewError("invalid or expired token", http.StatusUnauthorized))
 		return
 	}
 
 	var req registerConfirmRequest
-	if getDataErr := api.GetData(r, &req); getDataErr != nil {
-		api.SendError(w, getDataErr)
+	if err = api.GetData(r, &req); err != nil {
+		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 

@@ -19,5 +19,9 @@ func NewService(formsRepo forms.Repository) Service {
 }
 
 func (s *service) CreateClient(ctx context.Context, firstName, lastName, phone, description string, role string) error {
-	return s.formsRepo.CreateClient(ctx, firstName, lastName, phone, description, role)
+	err := s.formsRepo.CreateClient(ctx, firstName, lastName, phone, description, role)
+	if err != nil {
+		return errCreateClient.Wrap(err)
+	}
+	return nil
 }
