@@ -4,7 +4,6 @@ package bagsies
 
 import (
 	json "encoding/json"
-
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -18,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies(in *jlexer.Lexer, out *provider) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies(in *jlexer.Lexer, out *provider) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -51,7 +50,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies(out *jwriter.Writer, in provider) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies(out *jwriter.Writer, in provider) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -71,27 +70,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v provider) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v provider) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *provider) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *provider) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies1(in *jlexer.Lexer, out *createBagsyRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies1(in *jlexer.Lexer, out *createBagsyRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -110,6 +109,12 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 			continue
 		}
 		switch key {
+		case "phone":
+			out.Phone = string(in.String())
+		case "first_name":
+			out.FirstName = string(in.String())
+		case "last_name":
+			out.LastName = string(in.String())
 		case "start_at":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.StartAt).UnmarshalJSON(data))
@@ -120,6 +125,10 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 			}
 		case "provider":
 			(out.Provider).UnmarshalEasyJSON(in)
+		case "description":
+			out.Description = string(in.String())
+		case "service":
+			out.Service = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -130,35 +139,49 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies1(out *jwriter.Writer, in createBagsyRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies1(out *jwriter.Writer, in createBagsyRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
+	{
+		const prefix string = ",\"phone\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Phone))
+	}
+	{
+		const prefix string = ",\"first_name\":"
+		out.RawString(prefix)
+		out.String(string(in.FirstName))
+	}
+	{
+		const prefix string = ",\"last_name\":"
+		out.RawString(prefix)
+		out.String(string(in.LastName))
+	}
 	if true {
 		const prefix string = ",\"start_at\":"
-		first = false
-		out.RawString(prefix[1:])
+		out.RawString(prefix)
 		out.Raw((in.StartAt).MarshalJSON())
 	}
 	if true {
 		const prefix string = ",\"end_at\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		out.Raw((in.EndAt).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"provider\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
+		out.RawString(prefix)
 		(in.Provider).MarshalEasyJSON(out)
+	}
+	{
+		const prefix string = ",\"description\":"
+		out.RawString(prefix)
+		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"service\":"
+		out.RawString(prefix)
+		out.String(string(in.Service))
 	}
 	out.RawByte('}')
 }
@@ -166,23 +189,176 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v createBagsyRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies1(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v createBagsyRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies1(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *createBagsyRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies1(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *createBagsyRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersBagsies1(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies1(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies2(in *jlexer.Lexer, out *confirmBagsyRequest) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "service_name":
+			out.ServiceName = string(in.String())
+		case "phone":
+			out.Phone = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies2(out *jwriter.Writer, in confirmBagsyRequest) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"service_name\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.ServiceName))
+	}
+	{
+		const prefix string = ",\"phone\":"
+		out.RawString(prefix)
+		out.String(string(in.Phone))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v confirmBagsyRequest) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies2(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v confirmBagsyRequest) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies2(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *confirmBagsyRequest) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies2(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *confirmBagsyRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies2(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies3(in *jlexer.Lexer, out *Service) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "category":
+			out.Category = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		case "description":
+			out.Description = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies3(out *jwriter.Writer, in Service) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"category\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Category))
+	}
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix)
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"description\":"
+		out.RawString(prefix)
+		out.String(string(in.Description))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v Service) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies3(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v Service) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies3(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *Service) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies3(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *Service) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersBagsies3(l, v)
 }

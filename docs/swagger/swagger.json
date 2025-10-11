@@ -253,7 +253,53 @@
                 }
             }
         },
-        "/api/v1/bagsies/create": {
+        "/api/v1/bagsies": {
+            "post": {
+                "description": "Отправляет код подтверждения для подтверждения записи к мастеру на whatsapp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Отправить код подтверждения для подтверждения записи",
+                "parameters": [
+                    {
+                        "description": "Данные о услуге и юзере",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies/confirm": {
             "post": {
                 "description": "Создает запись к мастеру с определенным кодом точки",
                 "consumes": [
@@ -578,6 +624,17 @@
                     "type": "string",
                     "maxLength": 50,
                     "minLength": 2
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.confirmBagsyRequest": {
+            "type": "object",
+            "properties": {
+                "phone": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
                 }
             }
         },

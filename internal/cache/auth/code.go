@@ -2,7 +2,10 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/Rasikrr/core/redis"
 )
 
 const (
@@ -15,6 +18,21 @@ func (c *cache) SetCode(ctx context.Context, phone, code string) error {
 		return fmt.Errorf("failed to set code to cache: %w", err)
 	}
 	return nil
+}
+
+func (c *cache) GetCode(ctx context.Context, phone string) (string, error) {
+	code, err := c.cli.Get(ctx, c.genKey(c.genCodeKey(phone)))
+	if err != nil {
+		if errors.Is(err, redis.ErrNotFound) {
+			return "", errors.New("code not found")
+		}
+		return "", errors.New("failed to get code from cache")
+	}
+	codeStr, ok := code.(string)
+	if !ok {
+		return "", errors.New("invalid code type")
+	}
+	return codeStr, nil
 }
 
 func (c *cache) CheckSpam(ctx context.Context, phone string) (bool, error) {

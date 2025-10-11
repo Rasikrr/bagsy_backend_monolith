@@ -26,8 +26,9 @@ import (
 type App struct {
 	application.App
 
-	smsCache  smsC.Cache
-	authCache authC.Cache
+	smsCache          smsC.Cache
+	authCache         authC.Cache
+	bagsiesCodeCacche authC.Cache
 
 	smsClient      sms.Client
 	tgClient       telegram.Client
@@ -95,7 +96,13 @@ func (a *App) initCache(_ context.Context) error {
 		return err
 	}
 
+	bagsiesCodeTTL, err := a.Config().Variables.GetDuration(appenv.BagsiesCodeTTL)
+	if err != nil {
+		return err
+	}
+
 	a.authCache = authC.NewCache(a.Redis(), authCodeTTL)
+	a.bagsiesCodeCacche = authC.NewCache(a.Redis(), bagsiesCodeTTL)
 	return nil
 }
 
@@ -134,8 +141,11 @@ func (a *App) initServices(_ context.Context) error {
 	)
 
 	a.bagsiesService = bagsiesS.NewService(
+		a.whatsAppClient,
+		a.bagsiesCodeCacche,
 		a.bagsiesRepo,
 		a.usersRepo,
+		a.PostgresTXManager(),
 	)
 
 	a.formsService = formsS.NewService(a.formsRepo)

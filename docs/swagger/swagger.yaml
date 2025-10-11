@@ -77,6 +77,13 @@ definitions:
     - phone
     - surname
     type: object
+  internal_ports_http_handlers_bagsies.confirmBagsyRequest:
+    properties:
+      phone:
+        type: string
+      service_name:
+        type: string
+    type: object
   internal_ports_http_handlers_bagsies.createBagsyRequest:
     properties:
       description:
@@ -327,7 +334,38 @@ paths:
       summary: Подтверждение регистрации
       tags:
       - auth
-  /api/v1/bagsies/create:
+  /api/v1/bagsies:
+    post:
+      consumes:
+      - application/json
+      description: Отправляет код подтверждения для подтверждения записи к мастеру
+        на whatsapp
+      parameters:
+      - description: Данные о услуге и юзере
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.EmptySuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Отправить код подтверждения для подтверждения записи
+      tags:
+      - bagsies
+  /api/v1/bagsies/confirm:
     post:
       consumes:
       - application/json

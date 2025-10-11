@@ -14,6 +14,7 @@ const (
 
 type Cache interface {
 	SetCode(ctx context.Context, phone, code string) error
+	GetCode(ctx context.Context, phone string) (string, error)
 	CheckSpam(ctx context.Context, phone string) (bool, error)
 }
 

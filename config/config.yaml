@@ -117,6 +117,12 @@ env:
     required: true
     value: "60s"
 
+  bagsies_code_ttl:
+    type: "duration"
+    env_name: "BAGSIES_CODE_TTL"
+    required: true
+    value: "600s"
+
   jwt_secret:
     type: "string"
     env_name: "JWT_SECRET"

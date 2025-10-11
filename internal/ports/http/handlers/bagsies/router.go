@@ -31,6 +31,7 @@ func New(
 
 func (c *Controller) Init(router *chi.Mux) {
 	router.Route("/api/v1/bagsies", func(r chi.Router) {
-		r.Post("/create", c.create)
+		r.Post("/", c.create)
+		r.Post("/confirm", c.createConfirm)
 	})
 }
