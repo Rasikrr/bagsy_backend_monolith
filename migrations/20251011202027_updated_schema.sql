@@ -6,12 +6,12 @@ CREATE TABLE IF NOT EXISTS point_categories (
     description TEXT,
     created_at  TIMESTAMPTZ DEFAULT now(),
     updated_at  TIMESTAMPTZ DEFAULT now()
-    );
+);
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 ALTER TABLE points
-    ADD COLUMN IF NOT EXISTS category_id BIGINT REFERENCES point_categories(id),
+    ADD COLUMN IF NOT EXISTS category_id TEXT,
     ADD COLUMN IF NOT EXISTS active      BOOLEAN DEFAULT TRUE,
     ADD COLUMN IF NOT EXISTS deleted_at  TIMESTAMPTZ;
 -- +goose StatementEnd
@@ -23,58 +23,58 @@ CREATE TABLE IF NOT EXISTS service_categories (
     description TEXT,
     created_at  TIMESTAMPTZ DEFAULT now(),
     updated_at  TIMESTAMPTZ DEFAULT now()
-    );
+);
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS service_subcategories (
     id          BIGSERIAL PRIMARY KEY,
-    category_id BIGINT REFERENCES service_categories(id) ON DELETE CASCADE,
+    category_id TEXT,
     name        TEXT NOT NULL,
     description TEXT,
     created_at  TIMESTAMPTZ DEFAULT now(),
     updated_at  TIMESTAMPTZ DEFAULT now()
-    );
+);
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS services (
     id               BIGSERIAL PRIMARY KEY,
-    point_code       TEXT REFERENCES points(code) ON DELETE CASCADE,
+    point_code       TEXT,
     name             TEXT NOT NULL,
     description      TEXT,
-    category_id      BIGINT REFERENCES service_categories(id),
-    subcategory_id   BIGINT REFERENCES service_subcategories(id),
+    category_id      TEXT,
+    subcategory_id   TEXT,
     duration_minutes TEXT,
     active           BOOLEAN DEFAULT TRUE,
     created_at       TIMESTAMPTZ DEFAULT now(),
     updated_at       TIMESTAMPTZ DEFAULT now()
-    );
+);
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS master_services (
     id               BIGSERIAL PRIMARY KEY,
-    master_phone     TEXT REFERENCES users(phone) ON DELETE CASCADE,
-    service_id       BIGINT REFERENCES services(id) ON DELETE CASCADE,
+    master_phone     TEXT,
+    service_id       TEXT,
     price            TEXT,
     duration_minutes TEXT,
     active           BOOLEAN DEFAULT TRUE,
     created_at       TIMESTAMPTZ DEFAULT now(),
     updated_at       TIMESTAMPTZ DEFAULT now()
-    );
+);
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 ALTER TABLE users
-    ADD CONSTRAINT fk_users_point FOREIGN KEY (point_code) REFERENCES points(code) ON DELETE SET NULL;
+    ADD COLUMN IF NOT EXISTS point_code TEXT;
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 ALTER TABLE bagsies
-    ADD COLUMN IF NOT EXISTS service_id BIGINT REFERENCES services(id),
-    ADD CONSTRAINT fk_bagsies_user FOREIGN KEY (user_phone) REFERENCES users(phone) ON DELETE CASCADE,
-    ADD CONSTRAINT fk_bagsies_provider FOREIGN KEY (provider_phone) REFERENCES users(phone) ON DELETE CASCADE;
+    ADD COLUMN IF NOT EXISTS service_id TEXT,
+    ADD COLUMN IF NOT EXISTS user_phone TEXT,
+    ADD COLUMN IF NOT EXISTS provider_phone TEXT;
 -- +goose StatementEnd
 
 -- +goose StatementBegin
@@ -89,14 +89,14 @@ CREATE INDEX IF NOT EXISTS idx_master_services_service_id ON master_services (se
 -- +goose Down
 -- +goose StatementBegin
 ALTER TABLE bagsies
-DROP CONSTRAINT IF EXISTS fk_bagsies_user,
-    DROP CONSTRAINT IF EXISTS fk_bagsies_provider,
-    DROP COLUMN IF EXISTS service_id;
+DROP COLUMN IF EXISTS service_id,
+    DROP COLUMN IF EXISTS user_phone,
+    DROP COLUMN IF EXISTS provider_phone;
 -- +goose StatementEnd
 
 -- +goose StatementBegin
 ALTER TABLE users
-DROP CONSTRAINT IF EXISTS fk_users_point;
+DROP COLUMN IF EXISTS point_code;
 -- +goose StatementEnd
 
 -- +goose StatementBegin
