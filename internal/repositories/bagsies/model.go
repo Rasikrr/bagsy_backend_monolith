@@ -11,8 +11,6 @@ type model struct {
 	PointCode     string    `db:"point_code"`
 	ProviderPhone string    `db:"provider_phone"`
 	UserPhone     string    `db:"user_phone"`
-	FirstName     string    `db:"first_name"`
-	LastName      string    `db:"last_name"`
 	Description   string    `db:"description"`
 	Service       string    `db:"service"`
 	StartAt       time.Time `db:"start_at"`
@@ -30,10 +28,6 @@ func (m model) convert() *entity.Bagsy {
 		PointCode:     m.PointCode,
 		ProviderPhone: m.ProviderPhone,
 		UserPhone:     m.UserPhone,
-		FirstName:     m.FirstName,
-		LastName:      m.LastName,
-		Description:   m.Description,
-		Service:       m.Service,
 		StartAt:       m.StartAt,
 		EndAt:         m.EndAt,
 		CreatedAt:     m.CreatedAt,
@@ -41,7 +35,7 @@ func (m model) convert() *entity.Bagsy {
 	}
 
 	if m.UpdatedBy != nil {
-		bagsy.UpdatedBy = *m.UpdatedBy
+		bagsy.UpdatedBy = m.UpdatedBy
 	}
 
 	return bagsy
@@ -61,14 +55,9 @@ func convertToModel(b *entity.Bagsy) *model {
 		PointCode:     b.PointCode,
 		ProviderPhone: b.ProviderPhone,
 		UserPhone:     b.UserPhone,
-		FirstName:     b.FirstName,
-		LastName:      b.LastName,
-		Description:   b.Description,
-		Service:       b.Service,
 		StartAt:       b.StartAt,
 		EndAt:         b.EndAt,
 		CreatedAt:     b.CreatedAt,
 		UpdatedAt:     b.UpdatedAt,
-		UpdatedBy:     &b.UpdatedBy,
 	}
 }

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Rasikrr/core/log"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
@@ -90,19 +88,6 @@ func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error 
 	return nil
 }
 
-	b := &entity.Bagsy{
-		ID:            codegen.GenerateBagsyID(),
-		PointCode:     params.PointCode,
-		StartAt:       params.StartAt,
-		EndAt:         params.EndAt,
-		ProviderPhone: params.ProviderPhone,
-		UserPhone:     params.UserPhone,
-		FirstName:     params.FirstName,
-		LastName:      params.LastName,
-		Description:   params.Description,
-		Service:       params.Service,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
 func (s *service) SendConfirmationMessage(ctx context.Context, phone, serviceName string) error {
 	code := codegen.GenerateAuthCode()
 	err := s.codeCache.SetCode(ctx, phone, code)
@@ -114,14 +99,6 @@ func (s *service) SendConfirmationMessage(ctx context.Context, phone, serviceNam
 		return errSendConfirmationMessage.Wrap(err)
 	}
 	return nil
-
-	log.Info(ctx, "create service",
-		log.Any("bagsy", b),
-	)
-
-	log.Infof(ctx, "create service %+v", b)
-
-	return s.repo.Create(ctx, b)
 }
 
 func (s *service) GetByParams(ctx context.Context, params *entity.BagsyParams) ([]*entity.Bagsy, error) {
