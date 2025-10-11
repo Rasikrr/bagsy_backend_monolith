@@ -36,12 +36,12 @@ type provider struct {
 	Phone     string `json:"phone"      validate:"required,min=10,max=15"`
 }
 
-func (r createBagsyRequest) toParams() *entity.BagsyParams {
-	return &entity.BagsyParams{
-		PointCode:     r.Provider.PointCode,
-		StartAt:       r.StartAt,
-		EndAt:         r.EndAt,
-		ProviderPhone: r.Provider.Phone,
-		UserPhone:     r.Phone,
+func (r createBagsyRequest) toParams() entity.BagsyParams {
+	return entity.BagsyParams{
+		PointCode:   r.Provider.PointCode,
+		StartAt:     r.StartAt,
+		EndAt:       r.EndAt,
+		MasterPhone: r.Provider.Phone,
+		UserPhone:   r.Phone,
 	}
 }

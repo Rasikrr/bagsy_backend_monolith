@@ -198,11 +198,13 @@ func (s *service) RefreshTokens(ctx context.Context, token string) (*entity.Auth
 // nolint: nonamedreturns
 func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken string, err error) {
 	accessParams := &entity.PayloadParams{
-		Phone:     user.Phone,
-		Role:      user.Role.String(),
-		Active:    user.Active,
-		PointCode: user.PointCode,
-		Refresh:   false,
+		Phone:   user.Phone,
+		Role:    user.Role.String(),
+		Active:  user.Active,
+		Refresh: false,
+	}
+	if user.PointCode != nil {
+		accessParams.PointCode = *user.PointCode
 	}
 
 	accessToken, err = jwt.GenerateAccessToken(accessParams, s.jwtSecret)
@@ -211,11 +213,13 @@ func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken s
 	}
 
 	refreshParams := &entity.PayloadParams{
-		Phone:     user.Phone,
-		PointCode: user.PointCode,
-		Role:      user.Role.String(),
-		Active:    user.Active,
-		Refresh:   true,
+		Phone:   user.Phone,
+		Role:    user.Role.String(),
+		Active:  user.Active,
+		Refresh: true,
+	}
+	if user.PointCode != nil {
+		refreshParams.PointCode = *user.PointCode
 	}
 
 	refreshToken, err = jwt.GenerateRefreshToken(refreshParams, s.jwtSecret)

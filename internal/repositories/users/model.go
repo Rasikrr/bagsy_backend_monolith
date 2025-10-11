@@ -10,15 +10,15 @@ import (
 
 type model struct {
 	Phone     string     `db:"phone"`
+	Password  *string    `db:"password"`
 	Role      string     `db:"role"`
-	Name      string     `db:"name"`
-	Surname   string     `db:"surname"`
+	Name      *string    `db:"name"`
+	Surname   *string    `db:"surname"`
+	Active    bool       `db:"active"`
+	PointCode *string    `db:"point_code"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
 	UpdatedBy *string    `db:"updated_by"`
-	PointCode *string    `db:"point_code"`
-	Active    bool       `db:"active"`
-	Password  *string    `db:"password"`
 }
 
 type models []model
@@ -29,11 +29,6 @@ func (m model) convert() (*entity.User, error) {
 		return nil, err
 	}
 
-	var pointCode string
-	if m.PointCode != nil {
-		pointCode = *m.PointCode
-	}
-
 	return &entity.User{
 		Phone:     m.Phone,
 		Role:      role,
@@ -42,7 +37,7 @@ func (m model) convert() (*entity.User, error) {
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 		UpdatedBy: m.UpdatedBy,
-		PointCode: pointCode,
+		PointCode: m.PointCode,
 		Active:    m.Active,
 		Password:  m.Password,
 	}, nil
@@ -74,7 +69,7 @@ func convert(user *entity.User) (*model, error) {
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		UpdatedBy: user.UpdatedBy,
-		PointCode: &user.PointCode,
+		PointCode: user.PointCode,
 	}
 	now := time.Now().UTC()
 	if out.CreatedAt.IsZero() {

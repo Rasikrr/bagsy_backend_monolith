@@ -8,15 +8,15 @@ import (
 
 type User struct {
 	Phone     string     `json:"phone"`
+	Password  *string    `json:"password,omitempty"`
 	Role      enum.Role  `json:"role"`
-	PointCode string     `json:"point_code"`
-	Name      string     `json:"name,omitempty"`
-	Surname   string     `json:"surname,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	UpdatedBy *string    `json:"updated_by,omitempty"`
+	Name      *string    `json:"name,omitempty"`
+	Surname   *string    `json:"surname,omitempty"`
 	Active    bool       `json:"active"`
-	Password  *string    `json:"password"`
+	PointCode *string    `json:"point_code,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	UpdatedBy *string    `json:"updated_by"`
 }
 
 func NewCustomerUser(phone string) *User {

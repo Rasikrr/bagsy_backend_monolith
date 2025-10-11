@@ -15,7 +15,7 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, params *entity.BagsyParams) error
+	Create(ctx context.Context, params entity.BagsyParams) error
 	SendConfirmationMessage(ctx context.Context, phone, serviceName string) error
 	GetByParams(ctx context.Context, params *entity.BagsyParams) ([]*entity.Bagsy, error)
 	Delete(ctx context.Context, id string) error
@@ -46,7 +46,7 @@ func NewService(
 }
 
 // nolint: govet
-func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error {
+func (s *service) Create(ctx context.Context, params entity.BagsyParams) error {
 	code, err := s.codeCache.GetCode(ctx, params.UserPhone)
 	if err != nil {
 		return errCreateBagsy.Wrap(err)
@@ -71,7 +71,7 @@ func (s *service) Create(ctx context.Context, params *entity.BagsyParams) error 
 				}
 			}
 
-			bagsy, err := entity.NewBagsy(params)
+			bagsy := entity.NewBagsy(params)
 			if err != nil {
 				return errCreateBagsy.Wrap(err)
 			}

@@ -38,10 +38,10 @@ func (r *repository) Create(ctx context.Context, b *entity.Bagsy) error {
 		createBagsy,
 		m.ID,
 		m.PointCode,
-		m.ProviderPhone,
 		m.UserPhone,
-		m.Description,
-		m.Service,
+		m.Status,
+		m.MasterPhone,
+		m.ServiceID,
 		m.StartAt,
 		m.EndAt,
 		m.CreatedAt,
@@ -68,7 +68,7 @@ func (r *repository) GetByParams(ctx context.Context, params *entity.BagsyParams
 		}
 		return nil, err
 	}
-	return ms.convert(), nil
+	return ms.convert()
 }
 
 func (r *repository) Delete(ctx context.Context, id string) error {

@@ -11,10 +11,10 @@ import (
 //go:generate easyjson -all models.go
 
 type userResponse struct {
-	Name      string     `json:"name"`
-	Surname   string     `json:"surname"`
+	Name      *string    `json:"name,omitempty"`
+	Surname   *string    `json:"surname,omitempty"`
 	Role      string     `json:"role"`
-	PointCode string     `json:"point_code"`
+	PointCode *string    `json:"point_code"`
 	Phone     string     `json:"phone"`
 	Active    bool       `json:"active"`
 	CreatedAt time.Time  `json:"created_at"`

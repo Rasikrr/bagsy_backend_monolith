@@ -38,13 +38,37 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		}
 		switch key {
 		case "name":
-			out.Name = string(in.String())
+			if in.IsNull() {
+				in.Skip()
+				out.Name = nil
+			} else {
+				if out.Name == nil {
+					out.Name = new(string)
+				}
+				*out.Name = string(in.String())
+			}
 		case "surname":
-			out.Surname = string(in.String())
+			if in.IsNull() {
+				in.Skip()
+				out.Surname = nil
+			} else {
+				if out.Surname == nil {
+					out.Surname = new(string)
+				}
+				*out.Surname = string(in.String())
+			}
 		case "role":
 			out.Role = string(in.String())
 		case "point_code":
-			out.PointCode = string(in.String())
+			if in.IsNull() {
+				in.Skip()
+				out.PointCode = nil
+			} else {
+				if out.PointCode == nil {
+					out.PointCode = new(string)
+				}
+				*out.PointCode = string(in.String())
+			}
 		case "phone":
 			out.Phone = string(in.String())
 		case "active":
@@ -89,25 +113,40 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	out.RawByte('{')
 	first := true
 	_ = first
-	{
+	if in.Name != nil {
 		const prefix string = ",\"name\":"
+		first = false
 		out.RawString(prefix[1:])
-		out.String(string(in.Name))
+		out.String(string(*in.Name))
 	}
-	{
+	if in.Surname != nil {
 		const prefix string = ",\"surname\":"
-		out.RawString(prefix)
-		out.String(string(in.Surname))
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(*in.Surname))
 	}
 	{
 		const prefix string = ",\"role\":"
-		out.RawString(prefix)
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
 		out.String(string(in.Role))
 	}
 	{
 		const prefix string = ",\"point_code\":"
 		out.RawString(prefix)
-		out.String(string(in.PointCode))
+		if in.PointCode == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.PointCode))
+		}
 	}
 	{
 		const prefix string = ",\"phone\":"
