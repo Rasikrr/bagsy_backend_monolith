@@ -3,6 +3,7 @@ package points
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/deref"
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 )
 
 //go:generate easyjson -all models.go
@@ -35,11 +36,6 @@ type CreatePointRequest struct {
 	City        string     `json:"city"`
 	Active      bool       `json:"active"`
 	Schedule    []Schedule `json:"schedule,omitempty"`
-	UpdatedBy   string     `json:"updated_by"`
-}
-
-type CreatePointResponse struct {
-	ID string `json:"id"`
 }
 
 // UpdatePointRequest запрашивает обновление точки
@@ -72,13 +68,13 @@ type PointResponse struct {
 	UpdatedBy   string     `json:"updated_by"`
 }
 
-func (req CreatePointRequest) ToEntity() *entity.Point {
+func (req CreatePointRequest) ToEntity(sessionPhone string) *entity.Point {
 	return &entity.Point{
 		Code:        req.Code,
 		Name:        req.Name,
 		Description: req.Description,
-		NetworkCode: &req.NetworkCode,
-		CategoryID:  &req.CategoryID,
+		NetworkCode: req.NetworkCode,
+		CategoryID:  req.CategoryID,
 		Address: entity.Address{
 			Coordinates: entity.Coordinates{
 				Latitude:  req.Address.Coordinates.Latitude,
@@ -90,7 +86,7 @@ func (req CreatePointRequest) ToEntity() *entity.Point {
 		City:      req.City,
 		Active:    req.Active,
 		Schedule:  convertSchedules(req.Schedule),
-		UpdatedBy: req.UpdatedBy,
+		UpdatedBy: sessionPhone,
 	}
 }
 
@@ -99,8 +95,8 @@ func (req UpdatePointRequest) ToEntity(code string) *entity.Point {
 		Code:        code,
 		Name:        deref.String(req.Name),
 		Description: req.Description,
-		NetworkCode: req.NetworkCode,
-		CategoryID:  req.CategoryID,
+		NetworkCode: deref.String(req.NetworkCode),
+		CategoryID:  deref.Int(req.CategoryID),
 		City:        deref.String(req.City),
 		Active:      deref.Bool(req.Active),
 		UpdatedBy:   req.UpdatedBy,
@@ -123,14 +119,15 @@ func (req UpdatePointRequest) ToEntity(code string) *entity.Point {
 
 func convertSchedules(s []Schedule) []entity.Schedule {
 	result := make([]entity.Schedule, len(s))
+
 	for i, v := range s {
 		result[i] = entity.Schedule{
-			WeekDay: v.WeekDay,
-			Open:    v.Open,
-			Close:   v.Close,
+			Open:    timeutil.ConvertStrToScheduleTime(v.Open),
+			Close:   timeutil.ConvertStrToScheduleTime(v.Close),
 			AllDay:  v.AllDay,
 			Comment: v.Comment,
 		}
 	}
+
 	return result
 }

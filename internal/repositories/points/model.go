@@ -2,9 +2,10 @@ package points
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/hashicorp/go-multierror"
-	"time"
 )
 
 type model struct {
@@ -31,12 +32,8 @@ func convert(e *entity.Point) (model, error) {
 	m.Code = e.Code
 	m.Name = e.Name
 	m.Description = e.Description
-	if e.NetworkCode != nil {
-		m.NetworkCode = *e.NetworkCode
-	}
-	if e.CategoryID != nil {
-		m.CategoryID = *e.CategoryID
-	}
+	m.NetworkCode = e.NetworkCode
+	m.CategoryID = e.CategoryID
 	m.City = e.City
 	m.Active = e.Active
 	m.CreatedAt = e.CreatedAt
@@ -58,8 +55,8 @@ func (m model) convert() *entity.Point {
 		Code:        m.Code,
 		Name:        m.Name,
 		Description: m.Description,
-		NetworkCode: &m.NetworkCode,
-		CategoryID:  &m.CategoryID,
+		NetworkCode: m.NetworkCode,
+		CategoryID:  m.CategoryID,
 		City:        m.City,
 		Active:      m.Active,
 		CreatedAt:   m.CreatedAt,

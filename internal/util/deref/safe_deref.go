@@ -12,3 +12,9 @@ func Bool(b *bool) bool {
 	}
 	return false
 }
+func Int(b *int) int {
+	if b != nil {
+		return *b
+	}
+	return 0
+}

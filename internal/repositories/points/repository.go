@@ -2,6 +2,7 @@ package points
 
 import (
 	"context"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/core/database"
 	"github.com/Rasikrr/core/log"

@@ -3,6 +3,9 @@ package points
 import (
 	"context"
 	"errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
+	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/points"
 	"github.com/jackc/pgx/v5"
@@ -16,11 +19,18 @@ type Service interface {
 }
 
 type service struct {
-	pointsRepo points.Repository
+	pointsRepo   points.Repository
+	networksRepo networks.Repository
 }
 
-func NewService(repo points.Repository) Service {
-	return &service{pointsRepo: repo}
+func NewService(
+	repo points.Repository,
+	networksRepo networks.Repository,
+) Service {
+	return &service{
+		pointsRepo:   repo,
+		networksRepo: networksRepo,
+	}
 }
 
 func (s *service) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
@@ -36,11 +46,23 @@ func (s *service) GetByCode(ctx context.Context, code string) (*entity.Point, er
 }
 
 func (s *service) Create(ctx context.Context, point *entity.Point) error {
-	// проверка на существование нетворка
+	// проверка на существование сети
+	_, err := s.networksRepo.GetByCode(ctx, point.NetworkCode)
+	if err != nil {
+		return networksS.ErrNetworkNotFound
+	}
 
 	// проверка на существование категории точки
 
-	// проверка на уникальность кода точки
+	// проверка на существование точки с таким же кодом
+	_, err = s.pointsRepo.GetByCode(ctx, point.Code)
+	if err == nil {
+		return errPointAlreadyExists
+	}
+
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return err
+	}
 
 	if err := s.pointsRepo.Create(ctx, point); err != nil {
 		return err
