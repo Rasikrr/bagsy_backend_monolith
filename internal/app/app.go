@@ -4,25 +4,28 @@ import (
 	"context"
 	"time"
 
+	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 	"github.com/Rasikrr/core/telegram"
 	"github.com/robfig/cron/v3"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/jobs"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
 	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
 	smsC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/jobs"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
 	bagsiesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/bagsies"
+	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
+	pointsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/points"
 	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	bagsiesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
+	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 )
 
@@ -37,14 +40,18 @@ type App struct {
 	tgClient       telegram.Client
 	whatsAppClient whatsapp.Client
 
-	usersRepo      usersR.Repository
-	bagsiesRepo    bagsiesR.Repository
-	bagsiesService bagsiesS.Service
-	formsRepo      forms.Repository
+	usersRepo    usersR.Repository
+	bagsiesRepo  bagsiesR.Repository
+	formsRepo    formsR.Repository
+	pointsRepo   pointsR.Repository
+	networksRepo networksR.Repository
 
-	authService  authS.Service
-	formsService formsS.Service
-	usersService usersS.Service
+	authService     authS.Service
+	formsService    formsS.Service
+	usersService    usersS.Service
+	pointsService   pointsS.Service
+	bagsiesService  bagsiesS.Service
+	networksService networksS.Service
 }
 
 func InitApp(ctx context.Context) *App {
@@ -84,6 +91,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.formsService,
 		a.usersService,
 		a.bagsiesService,
+		a.pointsService,
 	)
 	return nil
 }
@@ -113,7 +121,9 @@ func (a *App) initCache(_ context.Context) error {
 func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
-	a.formsRepo = forms.NewRepository(a.Postgres())
+	a.formsRepo = formsR.NewRepository(a.Postgres())
+	a.pointsRepo = pointsR.NewRepository(a.Postgres())
+	a.networksRepo = networksR.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -154,6 +164,11 @@ func (a *App) initServices(_ context.Context) error {
 	)
 
 	a.formsService = formsS.NewService(a.formsRepo)
+
+	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksRepo)
+
+	a.networksService = networksS.NewService(a.networksRepo)
+
 	return nil
 }
 

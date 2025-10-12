@@ -6,8 +6,8 @@ type Point struct {
 	Code        string     `json:"code"`
 	Name        string     `json:"name"`
 	Description *string    `json:"description,omitempty"`
-	NetworkCode *string    `json:"network_code,omitempty"`
-	CategoryID  *int       `json:"category_id,omitempty"`
+	NetworkCode string     `json:"network_code"`
+	CategoryID  int        `json:"category_id"`
 	Address     Address    `json:"address,omitempty"`
 	City        string     `json:"city,omitempty"`
 	Active      bool       `json:"active"`
@@ -30,9 +30,9 @@ type Coordinates struct {
 }
 
 type Schedule struct {
-	WeekDay int    `json:"week_day"`
-	Open    string `json:"open,omitempty"`
-	Close   string `json:"close,omitempty"`
-	AllDay  bool   `json:"all_day,omitempty"`
-	Comment string `json:"comment,omitempty"`
+	WeekDay int       `json:"week_day"`
+	Open    time.Time `json:"open,omitempty"`
+	Close   time.Time `json:"close,omitempty"`
+	AllDay  bool      `json:"all_day,omitempty"`
+	Comment string    `json:"comment,omitempty"`
 }

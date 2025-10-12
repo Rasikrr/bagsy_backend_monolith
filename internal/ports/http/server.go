@@ -4,6 +4,9 @@ package http
 import (
 	"context"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/points"
+	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/cors"
 
@@ -46,6 +49,7 @@ func NewServer(
 	formsService forms.Service,
 	usersService usersS.Service,
 	bagsiesService bagsiesS.Service,
+	pointsService pointsS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService, usersService)
 
@@ -53,9 +57,10 @@ func NewServer(
 	authController := auth.New(authService, usersService, authMiddleware)
 	formsController := form.NewController(formsService)
 	bagsiesController := bagsies.New(bagsiesService, authService, usersService, authMiddleware)
+	pointsController := points.NewController(pointsService)
 
 	server.WithMiddlewares(initCORSMiddleware())
-	server.WithControllers(authController, formsController, bagsiesController, usersController)
+	server.WithControllers(authController, formsController, bagsiesController, usersController, pointsController)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
 }
