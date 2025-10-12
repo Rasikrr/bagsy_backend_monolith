@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/points"
 
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
@@ -20,6 +21,7 @@ import (
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	bagsiesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 )
 
@@ -38,10 +40,12 @@ type App struct {
 	bagsiesRepo    bagsiesR.Repository
 	bagsiesService bagsiesS.Service
 	formsRepo      forms.Repository
+	pointsRepo     points.Repository
 
-	authService  authS.Service
-	formsService formsS.Service
-	usersService usersS.Service
+	authService   authS.Service
+	formsService  formsS.Service
+	usersService  usersS.Service
+	pointsService pointsS.Service
 }
 
 func InitApp(ctx context.Context) *App {
@@ -80,6 +84,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.formsService,
 		a.usersService,
 		a.bagsiesService,
+		a.pointsService,
 	)
 	return nil
 }
@@ -110,6 +115,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
 	a.formsRepo = forms.NewRepository(a.Postgres())
+	a.pointsRepo = points.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -150,6 +156,9 @@ func (a *App) initServices(_ context.Context) error {
 	)
 
 	a.formsService = formsS.NewService(a.formsRepo)
+
+	a.pointsService = pointsS.NewService(a.pointsRepo)
+
 	return nil
 }
 
