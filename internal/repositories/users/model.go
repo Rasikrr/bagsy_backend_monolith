@@ -9,16 +9,18 @@ import (
 )
 
 type model struct {
-	Phone     string     `db:"phone"`
-	Password  *string    `db:"password"`
-	Role      string     `db:"role"`
-	Name      *string    `db:"name"`
-	Surname   *string    `db:"surname"`
-	Active    bool       `db:"active"`
-	PointCode *string    `db:"point_code"`
-	CreatedAt time.Time  `db:"created_at"`
-	UpdatedAt *time.Time `db:"updated_at"`
-	UpdatedBy *string    `db:"updated_by"`
+	Phone       string     `db:"phone"`
+	Password    *string    `db:"password"`
+	Role        string     `db:"role"`
+	Name        *string    `db:"name"`
+	Surname     *string    `db:"surname"`
+	Active      bool       `db:"active"`
+	PointCode   *string    `db:"point_code"`
+	NetworkCode *string    `db:"network_code"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time `db:"updated_at"`
+	UpdatedBy   *string    `db:"updated_by"`
+	DeletedAt   *time.Time `db:"deleted_at"`
 }
 
 type models []model
@@ -30,16 +32,18 @@ func (m model) convert() (*entity.User, error) {
 	}
 
 	return &entity.User{
-		Phone:     m.Phone,
-		Role:      role,
-		Name:      m.Name,
-		Surname:   m.Surname,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
-		UpdatedBy: m.UpdatedBy,
-		PointCode: m.PointCode,
-		Active:    m.Active,
-		Password:  m.Password,
+		Phone:       m.Phone,
+		Role:        role,
+		Name:        m.Name,
+		Surname:     m.Surname,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+		UpdatedBy:   m.UpdatedBy,
+		PointCode:   m.PointCode,
+		NetworkCode: m.NetworkCode,
+		Active:      m.Active,
+		Password:    m.Password,
+		DeletedAt:   m.DeletedAt,
 	}, nil
 }
 
@@ -62,14 +66,16 @@ func convert(user *entity.User) (*model, error) {
 	}
 
 	out := &model{
-		Phone:     user.Phone,
-		Role:      role.String(),
-		Name:      user.Name,
-		Surname:   user.Surname,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		UpdatedBy: user.UpdatedBy,
-		PointCode: user.PointCode,
+		Phone:       user.Phone,
+		Role:        role.String(),
+		Password:    user.Password,
+		Name:        user.Name,
+		Surname:     user.Surname,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+		UpdatedBy:   user.UpdatedBy,
+		PointCode:   user.PointCode,
+		NetworkCode: user.NetworkCode,
 	}
 	now := time.Now().UTC()
 	if out.CreatedAt.IsZero() {

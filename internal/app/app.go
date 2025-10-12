@@ -225,12 +225,23 @@ func (a *App) initJobs(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	inactiveUserTTL, err := a.Config().Variables.GetDuration(appenv.InactiveUserTTL)
+	if err != nil {
+		return err
+	}
+	inactiveUserJobSchedule, err := a.Config().Variables.GetString(appenv.InactiveUserJobSchedule)
+	if err != nil {
+		return err
+	}
+
 	a.WithCronOptions(cron.WithSeconds(), cron.WithLocation(loc))
 	// 2 доавбляешь джобы (расписание: если использовал опцию с секундами "* * * * * *", если не использовал, то "* * * * *")
 	// ВАЖНО: если используешь секунды, то все джобы должны быть в секундном формате
+
 	a.WithCronJobs(
-		jobs.NewExampleJob("example_job", "*/5 * * * * *"),
 		jobs.NewExampleJob("example_job_2", "0 */1 * * * *"),
+		jobs.NewDeleteUnactivatedUsers("delete_inactive_users", inactiveUserJobSchedule, inactiveUserTTL, a.usersService),
 	)
 
 	return nil

@@ -15,56 +15,45 @@ const (
 	refreshTTL = 3 * 24 * time.Hour
 )
 
-func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, error) {
-	claims := jwt.MapClaims{
-		"phone":      params.Phone,
-		"role":       params.Role,
-		"active":     params.Active,
-		"refresh":    params.Refresh,
-		"point_code": params.PointCode,
-		"exp":        time.Now().Add(accessTTL).Unix(),
-	}
+var (
+	errInvalidClaims     = errors.New("unable to parse claims")
+	errTokenNotValid     = errors.New("token is not valid")
+	errUnexpectedSigning = errors.New("unexpected signing method")
+)
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+func GenerateAccessToken(params *entity.PayloadParams, secret string) (string, error) {
+	params.ExpiresAt = time.Now().Add(accessTTL).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, params)
 	return token.SignedString([]byte(secret))
 }
 
 func GenerateRefreshToken(params *entity.PayloadParams, secret string) (string, error) {
-	claims := jwt.MapClaims{
-		"phone":      params.Phone,
-		"refresh":    params.Refresh,
-		"point_code": params.PointCode,
-		"exp":        time.Now().Add(refreshTTL).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	params.ExpiresAt = time.Now().Add(refreshTTL).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, params)
 	return token.SignedString([]byte(secret))
 }
 
 func ValidateToken(token string, secret string) (bool, error) {
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-
+	parsedToken, err := parseToken(token, secret)
 	if err != nil {
 		return false, err
 	}
-
-	if !parsedToken.Valid {
-		return false, errors.New("token is not valid")
-	}
-
-	return true, nil
+	return parsedToken.Valid, nil
 }
 
-// nolint: govet
 func ParseAuthToken(tokenString string, secret string) (*entity.PayloadParams, error) {
+	return parseTokenWithClaims(tokenString, secret, true)
+}
+
+func ParseRefreshToken(tokenString string, secret string) (*entity.PayloadParams, error) {
+	return parseTokenWithClaims(tokenString, secret, false)
+}
+
+// parseToken - общая функция парсинга токена
+func parseToken(tokenString string, secret string) (*jwt.Token, error) {
 	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%w: %v", errUnexpectedSigning, token.Header["alg"])
 		}
 		return []byte(secret), nil
 	})
@@ -74,65 +63,71 @@ func ParseAuthToken(tokenString string, secret string) (*entity.PayloadParams, e
 	}
 
 	if !parsedToken.Valid {
-		return nil, errors.New("token is not valid")
+		return nil, errTokenNotValid
 	}
-	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
-		phone, ok := claims["phone"].(string)
-		if !ok {
-			return nil, errInvalidToken
-		}
-		role, ok := claims["role"].(string)
-		if !ok {
-			return nil, errInvalidToken
-		}
-		refresh, ok := claims["refresh"].(bool)
-		if !ok {
-			return nil, errInvalidToken
-		}
+
+	return parsedToken, nil
+}
+
+// parseTokenWithClaims - парсит токен и извлекает claims
+func parseTokenWithClaims(tokenString string, secret string, includePointData bool) (*entity.PayloadParams, error) {
+	parsedToken, err := parseToken(tokenString, secret)
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errInvalidClaims
+	}
+
+	return extractClaims(claims, includePointData)
+}
+
+// extractClaims - извлекает данные из claims
+func extractClaims(claims jwt.MapClaims, includePointData bool) (*entity.PayloadParams, error) {
+	phone, ok := claims["phone"].(string)
+	if !ok {
+		return nil, fmt.Errorf("%w: phone field missing or invalid", errInvalidToken)
+	}
+
+	role, ok := claims["role"].(string)
+	if !ok {
+		return nil, fmt.Errorf("%w: role field missing or invalid", errInvalidToken)
+	}
+
+	active, ok := claims["active"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("%w: active field missing or invalid", errInvalidToken)
+	}
+
+	refresh, ok := claims["refresh"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("%w: refresh field missing or invalid", errInvalidToken)
+	}
+
+	params := &entity.PayloadParams{
+		Phone:   phone,
+		Role:    role,
+		Active:  active,
+		Refresh: refresh,
+	}
+	// nolint: govet
+	// Для auth токена дополнительно извлекаем point и network
+	if includePointData {
 		pointCode, ok := claims["point_code"].(string)
 		if !ok {
-			return nil, errInvalidToken
+			return nil, fmt.Errorf("%w: point_code field missing or invalid", errInvalidToken)
 		}
-		return &entity.PayloadParams{
-			Phone:     phone,
-			Role:      role,
-			Refresh:   refresh,
-			PointCode: pointCode,
-		}, nil
-	}
 
-	return nil, errors.New("unable to parse claims")
-}
-
-// nolint: govet
-func ParseRefreshToken(tokenString string, secret string) (*entity.PayloadParams, error) {
-	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !parsedToken.Valid {
-		return nil, errors.New("token is not valid")
-	}
-	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok {
-		phone, ok := claims["phone"].(string)
+		networkCode, ok := claims["network_code"].(string)
 		if !ok {
-			return nil, errInvalidToken
+			return nil, fmt.Errorf("%w: network_code field missing or invalid", errInvalidToken)
 		}
-		refresh, ok := claims["refresh"].(bool)
-		if !ok {
-			return nil, errInvalidToken
-		}
-		return &entity.PayloadParams{
-			Phone:   phone,
-			Refresh: refresh,
-		}, nil
+
+		params.PointCode = pointCode
+		params.NetworkCode = networkCode
 	}
-	return nil, errors.New("unable to parse claims")
+
+	return params, nil
 }

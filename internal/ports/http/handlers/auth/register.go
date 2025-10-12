@@ -4,9 +4,6 @@ package auth
 import (
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 )
@@ -24,40 +21,24 @@ import (
 // @Router /api/v1/auth/register [post]
 func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	by, err := session.GetSession(ctx)
-	if err != nil {
-		api.SendError(w, errors.ErrSessionNotFound)
-		return
-	}
 
 	var req registerRequest
-	if err = api.GetData(r, &req); err != nil {
+	if err := api.GetData(r, &req); err != nil {
 		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
-	if err = req.validate(); err != nil {
+	if err := req.validate(); err != nil {
 		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
 
-	role, err := enum.RoleString(*req.Role)
+	err := c.usersService.Create(ctx, req.convert())
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
 
-	ok := by.Role.HasPermission(role)
-	if !ok {
-		api.SendError(w, err)
-		return
-	}
-
-	err = c.usersService.Create(r.Context(), req.convert())
-	if err != nil {
-		api.SendError(w, err)
-		return
-	}
-	link, err := c.authService.GenAuthConfirmationLink(r.Context(), req.Phone, by.PointCode)
+	link, err := c.authService.GenAuthConfirmationLink(r.Context(), req.Phone, req.PointCode)
 	if err != nil {
 		api.SendError(w, err)
 		return

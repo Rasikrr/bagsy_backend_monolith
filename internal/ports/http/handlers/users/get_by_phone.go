@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
+	coreErr "github.com/Rasikrr/core/errors"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -25,6 +27,15 @@ func (c *Controller) getByPhone(w http.ResponseWriter, r *http.Request) {
 	phone := chi.URLParam(r, "phone")
 	if phone == "" {
 		api.SendError(w, errors.ErrPhoneRequired)
+		return
+	}
+	by, err := session.GetSession(ctx)
+	if err != nil {
+		api.SendError(w, errors.ErrSessionNotFound)
+		return
+	}
+	if by.GetPhone() != phone {
+		api.SendError(w, coreErr.ErrForbidden)
 		return
 	}
 	user, err := c.usersService.GetByPhone(ctx, phone)

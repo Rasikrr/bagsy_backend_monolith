@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Rasikrr/core/database"
-	"github.com/Rasikrr/core/log"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/hash"
@@ -73,11 +72,9 @@ func (s *service) SendRegisterLink(ctx context.Context, phone, link string) erro
 
 func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
 	user, err := s.userService.GetByPhone(ctx, phone)
-
 	if err != nil {
-		return nil, err
+		return nil, errGetUser.Wrap(err)
 	}
-	// TODO: errorsw
 	if user.Password == nil {
 		return nil, errNoAccess
 	}
@@ -109,8 +106,6 @@ func (s *service) GenAuthConfirmationLink(_ context.Context, phone, pointCode st
 }
 
 func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {
-	log.Infof(ctx, "phone %v", phone)
-
 	var result *entity.Auth
 
 	err := s.txManager.Transaction(ctx, pgx.TxOptions{}, func(txCtx context.Context) error {
@@ -206,6 +201,9 @@ func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken s
 	if user.PointCode != nil {
 		accessParams.PointCode = *user.PointCode
 	}
+	if user.NetworkCode != nil {
+		accessParams.NetworkCode = *user.NetworkCode
+	}
 
 	accessToken, err = jwt.GenerateAccessToken(accessParams, s.jwtSecret)
 	if err != nil {
@@ -217,9 +215,6 @@ func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken s
 		Role:    user.Role.String(),
 		Active:  user.Active,
 		Refresh: true,
-	}
-	if user.PointCode != nil {
-		refreshParams.PointCode = *user.PointCode
 	}
 
 	refreshToken, err = jwt.GenerateRefreshToken(refreshParams, s.jwtSecret)

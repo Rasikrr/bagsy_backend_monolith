@@ -1,6 +1,9 @@
 package entity
 
-import "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/golang-jwt/jwt"
+)
 
 type Auth struct {
 	AccessToken  string
@@ -8,11 +11,14 @@ type Auth struct {
 }
 
 type PayloadParams struct {
-	Phone     string
-	Role      string
-	Active    bool
-	Refresh   bool
-	PointCode string
+	jwt.StandardClaims
+
+	Phone       string `json:"phone"`
+	Role        string `json:"role"`
+	Active      bool   `json:"active"`
+	Refresh     bool   `json:"refresh"`
+	PointCode   string `json:"point_code"`
+	NetworkCode string `json:"network_code"`
 }
 
 func (p *PayloadParams) IsRefresh() bool {

@@ -8,7 +8,7 @@ const (
 	RoleStaff
 	RoleManager
 	RoleNetManager
-	RoleSelfOwner
+	RoleSelfOwner Role = iota - 1
 	RoleAdmin
 )
 

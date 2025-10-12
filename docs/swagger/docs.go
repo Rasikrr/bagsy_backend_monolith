@@ -392,6 +392,72 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/users": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает юзеров по параметрам",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Получение пользователя по параметрам",
+                "parameters": [
+                    {
+                        "description": "Параметры для поиска",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_users.getByParamsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о пользователе",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/api.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/{phone}": {
             "get": {
                 "security": [
@@ -672,7 +738,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/internal_ports_http_handlers_bagsies.provider"
                 },
                 "service": {
-                    "description": "ДОБАВИТЬ ДОМЕЕНУЮ МОДЕЛЬ",
                     "type": "string"
                 },
                 "start_at": {
@@ -729,6 +794,29 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_users.getByParamsRequest": {
+            "type": "object",
+            "properties": {
+                "network_code": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "internal_ports_http_handlers_users.updateRequest": {
             "type": "object",
             "properties": {
@@ -743,6 +831,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_users.userListResponse": {
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_users.userResponse"
+                    }
+                }
+            }
+        },
         "internal_ports_http_handlers_users.userResponse": {
             "type": "object",
             "properties": {
@@ -753,6 +852,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "network_code": {
                     "type": "string"
                 },
                 "phone": {

@@ -33,7 +33,6 @@ func NewAuth(
 func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := session.GetAuthHeader(r)
-		log.Debugf(r.Context(), "token in middleware = %v", token)
 		if err != nil {
 			api.SendError(w, err)
 			return

@@ -53,7 +53,7 @@ func NewServer(
 ) {
 	authMiddleware := middlewares.NewAuth(authService, usersService)
 
-	usersController := users.NewController(usersService)
+	usersController := users.NewController(usersService, authMiddleware)
 	authController := auth.New(authService, usersService, authMiddleware)
 	formsController := form.NewController(formsService)
 	bagsiesController := bagsies.New(bagsiesService, authService, usersService, authMiddleware)

@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	errGetUser                 = coreErr.NewError("failed to get user", http.StatusInternalServerError)
 	errInvalidToken            = coreErr.NewError("invalid token", http.StatusUnauthorized)
 	errSpam                    = coreErr.NewError("spam detected", http.StatusTooManyRequests)
 	errNoAccess                = coreErr.NewError("no access", http.StatusForbidden)

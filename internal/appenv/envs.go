@@ -20,5 +20,8 @@ const (
 	WhatsAppIDInstance = "whatsapp_api_id_instance"
 	WhatsAppAPIToken   = "whatsapp_api_token"
 
+	InactiveUserTTL         = "inactive_user_ttl"
+	InactiveUserJobSchedule = "inactive_user_job_schedule"
+
 	JWTSecret = "jwt_secret"
 )

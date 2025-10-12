@@ -7,16 +7,18 @@ import (
 )
 
 type User struct {
-	Phone     string     `json:"phone"`
-	Password  *string    `json:"password,omitempty"`
-	Role      enum.Role  `json:"role"`
-	Name      *string    `json:"name,omitempty"`
-	Surname   *string    `json:"surname,omitempty"`
-	Active    bool       `json:"active"`
-	PointCode *string    `json:"point_code,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
-	UpdatedBy *string    `json:"updated_by"`
+	Phone       string     `json:"phone"`
+	Password    *string    `json:"password,omitempty"`
+	Role        enum.Role  `json:"role"`
+	Name        *string    `json:"name,omitempty"`
+	Surname     *string    `json:"surname,omitempty"`
+	Active      bool       `json:"active"`
+	PointCode   *string    `json:"point_code,omitempty"`
+	NetworkCode *string    `json:"network_code,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+	UpdatedBy   *string    `json:"updated_by"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
 }
 
 func NewCustomerUser(phone string) *User {

@@ -19,6 +19,7 @@ type UserUpdatePatch struct {
 	Name      *string
 	Surname   *string
 	PointCode *string
+	Network   *string
 	Active    *bool
 	Password  *string
 	UpdatedBy *string
@@ -52,6 +53,14 @@ func (p *UserUpdatePatch) ToSQL() (string, []any, error) {
 			query = query.Set("point_code", nil)
 		} else {
 			query = query.Set("point_code", *p.PointCode)
+		}
+	}
+
+	if p.Network != nil {
+		if *p.Network == "" {
+			query = query.Set("network", nil)
+		} else {
+			query = query.Set("network", *p.Network)
 		}
 	}
 

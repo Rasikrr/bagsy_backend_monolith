@@ -123,6 +123,18 @@ env:
     required: true
     value: "600s"
 
+  inactive_user_ttl:
+    type: "duration"
+    env_name: "INACTIVE_USER_TTL"
+    required: true
+    value: "86400s"
+
+  inactive_user_job_schedule:
+    type: "string"
+    env_name: "INACTIVE_USER_JOB_SCHEDULE"
+    required: true
+    value: "0 0 0 * * *"
+
   jwt_secret:
     type: "string"
     env_name: "JWT_SECRET"
