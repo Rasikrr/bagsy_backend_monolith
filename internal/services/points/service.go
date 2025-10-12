@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
+	"github.com/Rasikrr/core/log"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/points"
@@ -64,16 +65,18 @@ func (s *service) Create(ctx context.Context, point *entity.Point) error {
 		return err
 	}
 
-	if err := s.pointsRepo.Create(ctx, point); err != nil {
+	if err = s.pointsRepo.Create(ctx, point); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *service) UpdateByCode(ctx context.Context, code string, point *entity.Point) error {
+	log.Infof(ctx, "UpdateByCode %v %v", code, point)
 	return nil
 }
 
 func (s *service) DeleteByCode(ctx context.Context, code string) error {
+	log.Infof(ctx, "UpdateByCode %v %v", code)
 	return nil
 }

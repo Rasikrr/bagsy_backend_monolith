@@ -24,7 +24,7 @@ type model struct {
 	UpdatedBy   string     `db:"updated_by"`
 }
 
-type models []model
+// type models []model
 
 func convert(e *entity.Point) (model, error) {
 	var mErr *multierror.Error
@@ -65,8 +65,8 @@ func (m model) convert() *entity.Point {
 		UpdatedBy:   m.UpdatedBy,
 	}
 
-	json.Unmarshal(m.Address, &point.Address)
-	json.Unmarshal(m.Schedule, &point.Schedule)
+	_ = json.Unmarshal(m.Address, &point.Address)
+	_ = json.Unmarshal(m.Schedule, &point.Schedule)
 
 	return point
 }

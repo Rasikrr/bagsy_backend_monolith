@@ -16,7 +16,7 @@ type model struct {
 	UpdatedBy   string     `db:"updated_by"`
 }
 
-type models []model
+// type models []model
 
 func (m model) convert() *entity.Network {
 	return &entity.Network{

@@ -45,7 +45,7 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req CreatePointRequest
-	if err := api.GetData(r, &req); err != nil {
+	if err = api.GetData(r, &req); err != nil {
 		api.SendError(w, err)
 		return
 	}

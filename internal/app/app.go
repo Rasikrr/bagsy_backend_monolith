@@ -4,8 +4,6 @@ import (
 	"context"
 
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/points"
-
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 	"github.com/Rasikrr/core/telegram"
@@ -121,7 +119,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
 	a.formsRepo = formsR.NewRepository(a.Postgres())
-	a.pointsRepo = points.NewRepository(a.Postgres())
+	a.pointsRepo = pointsR.NewRepository(a.Postgres())
 	a.networksRepo = networksR.NewRepository(a.Postgres())
 	return nil
 }
