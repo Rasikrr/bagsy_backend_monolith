@@ -2,13 +2,16 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 	"github.com/Rasikrr/core/telegram"
+	"github.com/robfig/cron/v3"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/jobs"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
@@ -54,6 +57,7 @@ func InitApp(ctx context.Context) *App {
 		app.initRepositories,
 		app.initServices,
 		app.initHTTP,
+		app.initJobs,
 	} {
 		if err := initFn(ctx); err != nil {
 			log.Fatal(ctx, "app init", log.Err(err))
@@ -196,5 +200,23 @@ func (a *App) initClients(_ context.Context) error {
 	}
 
 	a.whatsAppClient = whatsapp.NewClient(whatsappAPIURL, whatsappMediaURL, whatsappIDInstance, whatsappAPIToken)
+	return nil
+}
+
+// nolint
+func (a *App) initJobs(_ context.Context) error {
+	//1 если хочешь добавить настройки (таймзону, кронджобы в секундах и т.д)
+	loc, err := time.LoadLocation("Asia/Almaty")
+	if err != nil {
+		return err
+	}
+	a.WithCronOptions(cron.WithSeconds(), cron.WithLocation(loc))
+	// 2 доавбляешь джобы (расписание: если использовал опцию с секундами "* * * * * *", если не использовал, то "* * * * *")
+	// ВАЖНО: если используешь секунды, то все джобы должны быть в секундном формате
+	a.WithCronJobs(
+		jobs.NewExampleJob("example_job", "*/5 * * * * *"),
+		jobs.NewExampleJob("example_job_2", "0 */1 * * * *"),
+	)
+
 	return nil
 }
