@@ -14,6 +14,7 @@ var (
 	errNoAccess                = coreErr.NewError("no access", http.StatusForbidden)
 	errInvalidPassword         = coreErr.NewError("invalid password", http.StatusUnauthorized)
 	errAccessTokenNotAllowed   = coreErr.NewError("access token is not allowed", http.StatusBadRequest)
+	errRefreshTokenNotAllowed  = coreErr.NewError("refresh token is not allowed", http.StatusBadRequest)
 	errGenerateTokens          = coreErr.NewError("failed to generate tokens", http.StatusInternalServerError)
 	errHashingFailed           = coreErr.NewError("hashing failed", http.StatusInternalServerError)
 	errSetPassword             = coreErr.NewError("failed to set password", http.StatusInternalServerError)

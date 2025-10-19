@@ -140,6 +140,18 @@ env:
     env_name: "JWT_SECRET"
     required: true
 
+  access_token_ttl:
+    type: "duration"
+    env_name: "ACCESS_TOKEN_TTL"
+    required: true
+    value: "900s"
+
+  refresh_token_ttl:
+    type: "duration"
+    env_name: "REFRESH_TOKEN_TTL"
+    required: true
+    value: "86400s"
+
   auth_confirmation_url:
     type: "string"
     env_name: "AUTH_CONFIRMATION_URL"

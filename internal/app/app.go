@@ -140,6 +140,14 @@ func (a *App) initServices(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+	accessTokenTTL, err := a.Config().Variables.GetDuration(appenv.AccessTokenTTL)
+	if err != nil {
+		return err
+	}
+	refreshTokenTTL, err := a.Config().Variables.GetDuration(appenv.RefreshTokenTTL)
+	if err != nil {
+		return err
+	}
 
 	a.usersService = usersS.NewService(a.usersRepo)
 
@@ -153,6 +161,8 @@ func (a *App) initServices(_ context.Context) error {
 		int64(devSMSChatID),
 		authConfirmationURL,
 		jwtSecret,
+		accessTokenTTL,
+		refreshTokenTTL,
 	)
 
 	a.bagsiesService = bagsiesS.NewService(

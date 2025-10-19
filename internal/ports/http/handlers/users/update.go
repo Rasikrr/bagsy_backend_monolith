@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/session"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
-	"github.com/go-chi/chi/v5"
 )
 
 // Update godoc
@@ -21,19 +21,18 @@ import (
 // @Failure 400 {object} api.ErrorResponse "Неверный формат данных"
 // @Failure 404 {object} api.ErrorResponse "Пользователь не найден"
 // @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
-// @Router /api/v1/users/{phone} [put]
+// @Router /api/v1/users [put]
 // @Security ApiKeyAuth
 func (c *Controller) update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	phone := chi.URLParam(r, "phone")
-	if phone == "" {
-		api.SendError(w, errors.ErrPhoneRequired)
+	by, err := session.GetSession(ctx)
+	if err != nil {
+		api.SendError(w, errors.ErrSessionNotFound)
 		return
 	}
-	var req updateRequest
 
-	if err := api.GetData(r, &req); err != nil {
+	var req updateRequest
+	if err = api.GetData(r, &req); err != nil {
 		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
 		return
 	}
@@ -42,7 +41,7 @@ func (c *Controller) update(w http.ResponseWriter, r *http.Request) {
 		api.SendError(w, coreErr.ErrInternalServerError.Wrap(err))
 		return
 	}
-	err = c.usersService.Update(ctx, phone, params)
+	err = c.usersService.Update(ctx, by.Phone(), params)
 	if err != nil {
 		api.SendError(w, err)
 		return

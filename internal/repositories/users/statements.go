@@ -17,8 +17,8 @@ const (
 			network_code = EXCLUDED.network_code,
 			active = EXCLUDED.active,
 			updated_at = NOW(),
-			updated_by = EXCLUDED.updated_by,
-			deleted_at = EXCLUDED.deleted_at`
+			updated_by = NOW(),
+			deleted_at = NULL`
 
 	getUserByPhone = `
 		SELECT phone, role, name, surname, created_at, updated_at, updated_by, point_code, active, password

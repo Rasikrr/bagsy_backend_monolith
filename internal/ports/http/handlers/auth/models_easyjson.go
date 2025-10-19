@@ -109,15 +109,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "surname":
 			out.Surname = string(in.String())
 		case "role":
-			if in.IsNull() {
-				in.Skip()
-				out.Role = nil
-			} else {
-				if out.Role == nil {
-					out.Role = new(string)
-				}
-				*out.Role = string(in.String())
-			}
+			out.Role = string(in.String())
 		case "point_code":
 			out.PointCode = string(in.String())
 		default:
@@ -149,10 +141,10 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix)
 		out.String(string(in.Surname))
 	}
-	if in.Role != nil {
+	if in.Role != "" {
 		const prefix string = ",\"role\":"
 		out.RawString(prefix)
-		out.String(string(*in.Role))
+		out.String(string(in.Role))
 	}
 	if in.PointCode != "" {
 		const prefix string = ",\"point_code\":"

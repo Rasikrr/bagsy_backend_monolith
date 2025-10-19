@@ -1,8 +1,9 @@
 package points
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"net/http"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 
 	"github.com/Rasikrr/core/api"
 	"github.com/go-chi/chi/v5"
@@ -50,7 +51,7 @@ func (c *Controller) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	point := req.ToEntity(sess.Phone)
+	point := req.ToEntity(sess.Phone())
 	err = c.service.Create(ctx, point)
 	if err != nil {
 		api.SendError(w, err)

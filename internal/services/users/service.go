@@ -8,19 +8,23 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	appErrors "github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/samber/lo"
 )
 
 type Service interface {
 	Create(ctx context.Context, user *entity.User) error
+
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
-	GetByParams(ctx context.Context, params GetParams) ([]*entity.User, error)
+	GetByPointCode(ctx context.Context, pointCode string) ([]*entity.User, error)
+	GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.User, error)
+
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
+
+	Update(ctx context.Context, phone string, params UpdateParams) error
 	SetPasswordByPhone(ctx context.Context, phone string, password string) error
 	SetActive(ctx context.Context, phone string) error
+
 	DeleteUnactivatedUsers(ctx context.Context, olderThan time.Duration) error
-	Update(ctx context.Context, phone string, params UpdateParams) error
 }
 
 type service struct {
@@ -34,18 +38,8 @@ func NewService(usersRepo users.Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, user *entity.User) error {
-	by, err := session.GetSession(ctx)
-	if err != nil {
-		return appErrors.ErrSessionNotFound
-	}
-	if !by.Role.HasPermission(user.Role) {
-		return errNoPermission
-	}
-	networkCode := by.GetNetworkCode()
-	user.NetworkCode = &networkCode
-
 	existingUser, err := s.usersRepo.GetByPhone(ctx, user.Phone)
-	if err != nil && errors.Is(err, appErrors.ErrUserNotFound) {
+	if err != nil && !errors.Is(err, appErrors.ErrUserNotFound) {
 		return errCreateUser.Wrap(err)
 	}
 	if existingUser.Active {
@@ -57,20 +51,24 @@ func (s *service) Create(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (s *service) GetByParams(ctx context.Context, params GetParams) ([]*entity.User, error) {
-	by, err := session.GetSession(ctx)
-	if err != nil {
-		return nil, appErrors.ErrSessionNotFound
-	}
-	err = params.validate(by)
-	if err != nil {
-		return nil, errValidateParams.Wrap(err)
-	}
-	user, err := s.usersRepo.GetByParams(ctx, params.convert())
+func (s *service) GetByPointCode(ctx context.Context, pointCode string) ([]*entity.User, error) {
+	out, err := s.usersRepo.GetByParams(ctx, users.GetParams{
+		PointCode: &pointCode,
+	})
 	if err != nil {
 		return nil, errGetUser.Wrap(err)
 	}
-	return user, nil
+	return out, nil
+}
+
+func (s *service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.User, error) {
+	out, err := s.usersRepo.GetByParams(ctx, users.GetParams{
+		NetworkCode: &networkCode,
+	})
+	if err != nil {
+		return nil, errGetUser.Wrap(err)
+	}
+	return out, nil
 }
 
 func (s *service) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {

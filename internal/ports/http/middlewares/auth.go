@@ -1,15 +1,14 @@
 package middlewares
 
 import (
-	"errors"
 	"net/http"
 
-	"github.com/Rasikrr/core/log"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/httputil"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/session"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 )
@@ -32,28 +31,17 @@ func NewAuth(
 // nolint: nonamedreturns
 func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		token, err := session.GetAuthHeader(r)
+		token, err := httputil.GetAuthHeader(r)
 		if err != nil {
 			api.SendError(w, err)
 			return
 		}
-
 		ctx := r.Context()
-		payload, err := a.authService.GetAuthTokenPayload(ctx, token)
+		ses, err := a.authService.CheckAccessToken(ctx, token)
 		if err != nil {
 			api.SendError(w, err)
 			return
 		}
-		if payload.IsRefresh() {
-			api.SendError(w, errors.New("refresh token is not allowed"))
-			return
-		}
-		ses, err := payload.ToSession()
-		if err != nil {
-			api.SendError(w, err)
-			return
-		}
-		log.Infof(ctx, "set session %+v", ses)
 		ctx = session.SetSession(ctx, ses)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
@@ -69,7 +57,7 @@ func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.HandlerFunc) 
 				return
 			}
 
-			if !ses.Role.OneOf(roles...) {
+			if !ses.Role().OneOf(roles...) {
 				api.SendError(w, coreErr.ErrForbidden)
 				return
 			}
@@ -89,7 +77,7 @@ func (a *AuthMiddleware) RequireMinRole(minRole enum.Role) func(http.HandlerFunc
 				return
 			}
 
-			if ses.Role < minRole {
+			if ses.Role() < minRole {
 				api.SendError(w, coreErr.ErrForbidden)
 				return
 			}

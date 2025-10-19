@@ -23,5 +23,7 @@ const (
 	InactiveUserTTL         = "inactive_user_ttl"
 	InactiveUserJobSchedule = "inactive_user_job_schedule"
 
-	JWTSecret = "jwt_secret"
+	JWTSecret       = "jwt_secret"
+	AccessTokenTTL  = "access_token_ttl"
+	RefreshTokenTTL = "refresh_token_ttl"
 )

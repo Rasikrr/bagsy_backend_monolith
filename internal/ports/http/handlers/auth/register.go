@@ -4,6 +4,8 @@ package auth
 import (
 	"net/http"
 
+	appErr "github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 )
@@ -21,7 +23,6 @@ import (
 // @Router /api/v1/auth/register [post]
 func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	var req registerRequest
 	if err := api.GetData(r, &req); err != nil {
 		api.SendError(w, coreErr.ErrBadRequestBody.Wrap(err))
@@ -32,18 +33,29 @@ func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := c.usersService.Create(ctx, req.convert())
+	by, err := session.GetSession(ctx)
+	if err != nil {
+		api.SendError(w, appErr.ErrSessionNotFound)
+	}
+	reqConv := req.convert(by)
+
+	if !by.Role().HasPermission(reqConv.Role) {
+		api.SendError(w, appErr.ErrNoPermission)
+		return
+	}
+
+	err = c.usersService.Create(ctx, reqConv)
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
 
-	link, err := c.authService.GenAuthConfirmationLink(r.Context(), req.Phone, req.PointCode)
+	link, err := c.authService.GenRegisterConfrimLink(r.Context(), req.Phone, req.PointCode, by.NetworkCode())
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
-	err = c.authService.SendRegisterLink(ctx, req.Phone, link)
+	err = c.authService.SendRegisterConfirmLink(ctx, req.Phone, link)
 	if err != nil {
 		api.SendError(w, err)
 		return

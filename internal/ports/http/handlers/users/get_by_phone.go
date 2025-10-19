@@ -4,41 +4,29 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/session"
 	"github.com/Rasikrr/core/api"
-	coreErr "github.com/Rasikrr/core/errors"
-	"github.com/go-chi/chi/v5"
 )
 
-// GetByPhone godoc
-// @Summary Получение пользователя по номеру телефона
+// getByPhone godoc
+// @Summary Получение пользователя по номеру телефона из сессии
 // @Description Возвращает информацию о пользователе по его номеру телефона
 // @Tags users
 // @Produce json
-// @Param phone path string true "Номер телефона пользователя"
 // @Success 200 {object} api.SuccessResponse{data=userResponse} "Информация о пользователе"
 // @Failure 400 {object} api.ErrorResponse "Неверный формат данных"
 // @Failure 404 {object} api.ErrorResponse "Пользователь не найден"
 // @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
-// @Router /api/v1/users/{phone} [get]
+// @Router /api/v1/users [get]
 // @Security ApiKeyAuth
 func (c *Controller) getByPhone(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	phone := chi.URLParam(r, "phone")
-	if phone == "" {
-		api.SendError(w, errors.ErrPhoneRequired)
-		return
-	}
 	by, err := session.GetSession(ctx)
 	if err != nil {
 		api.SendError(w, errors.ErrSessionNotFound)
 		return
 	}
-	if by.GetPhone() != phone {
-		api.SendError(w, coreErr.ErrForbidden)
-		return
-	}
-	user, err := c.usersService.GetByPhone(ctx, phone)
+	user, err := c.usersService.GetByPhone(ctx, by.Phone())
 	if err != nil {
 		api.SendError(w, err)
 		return

@@ -32,14 +32,14 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := c.authService.Login(r.Context(), req.Phone, req.Password)
+	accessToken, refreshToken, err := c.authService.Login(r.Context(), req.Phone, req.Password)
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
 
 	api.SendData(w, api.NewSuccessResponse(loginResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}), http.StatusOK)
 }

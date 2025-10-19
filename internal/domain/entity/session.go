@@ -5,72 +5,57 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO: remove to other place
 type Session struct {
-	ID          uuid.UUID
-	Phone       string
-	Active      bool
-	Role        enum.Role
-	PointCode   *string
-	NetworkCode *string
+	id          uuid.UUID
+	phone       string
+	role        enum.Role
+	pointCode   string
+	networkCode string
 }
 
 func NewSession() *Session {
 	return &Session{
-		ID: uuid.New(),
+		id: uuid.New(),
 	}
 }
 
 func (s *Session) SetPhone(p string) *Session {
-	s.Phone = p
+	s.phone = p
 	return s
 }
 
 func (s *Session) SetRole(r enum.Role) *Session {
-	s.Role = r
-	return s
-}
-
-func (s *Session) SetActive(a bool) *Session {
-	s.Active = a
+	s.role = r
 	return s
 }
 
 func (s *Session) SetPointCode(pc string) *Session {
-	s.PointCode = &pc
+	s.pointCode = pc
 	return s
 }
 
 func (s *Session) SetNetworkCode(nc string) *Session {
-	s.NetworkCode = &nc
+	s.networkCode = nc
 	return s
 }
 
-func (s *Session) GetPhone() string {
-	return s.Phone
+func (s *Session) Phone() string {
+	return s.phone
 }
 
-func (s *Session) GetRole() enum.Role {
-	return s.Role
+func (s *Session) Role() enum.Role {
+	return s.role
 }
 
-func (s *Session) GetActive() bool {
-	return s.Active
+func (s *Session) PointCode() string {
+	return s.pointCode
 }
 
-func (s *Session) GetPointCode() string {
-	if s.PointCode != nil {
-		return *s.PointCode
-	}
-	return ""
+func (s *Session) NetworkCode() string {
+	return s.networkCode
 }
 
-func (s *Session) GetNetworkCode() string {
-	if s.NetworkCode != nil {
-		return *s.NetworkCode
-	}
-	return ""
-}
-
-func (s *Session) GetID() uuid.UUID {
-	return s.ID
+func (s *Session) SessionID() uuid.UUID {
+	return s.id
 }

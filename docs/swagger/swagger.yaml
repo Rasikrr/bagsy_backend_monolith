@@ -143,21 +143,6 @@ definitions:
     - phone
     - role
     type: object
-  internal_ports_http_handlers_users.getByParamsRequest:
-    properties:
-      network_code:
-        type: string
-      phone:
-        items:
-          type: string
-        type: array
-      point_code:
-        type: string
-      role:
-        items:
-          type: string
-        type: array
-    type: object
   internal_ports_http_handlers_users.updateRequest:
     properties:
       name:
@@ -445,53 +430,8 @@ paths:
       tags:
       - forms
   /api/v1/users:
-    post:
-      description: Возвращает юзеров по параметрам
-      parameters:
-      - description: Параметры для поиска
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_ports_http_handlers_users.getByParamsRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Информация о пользователе
-          schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_users.userListResponse'
-              type: object
-        "400":
-          description: Неверный формат данных
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Пользователь не найден
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Получение пользователя по параметрам
-      tags:
-      - users
-  /api/v1/users/{phone}:
     get:
       description: Возвращает информацию о пользователе по его номеру телефона
-      parameters:
-      - description: Номер телефона пользователя
-        in: path
-        name: phone
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -518,7 +458,7 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Получение пользователя по номеру телефона
+      summary: Получение пользователя по номеру телефона из сессии
       tags:
       - users
     put:
@@ -561,6 +501,120 @@ paths:
       summary: Обновление данных пользователя
       tags:
       - users
+  /api/v1/users/admin/network/{network_code}:
+    get:
+      description: Возвращает пользователй по сети
+      parameters:
+      - description: код сети
+        in: path
+        name: network_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователях
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_ports_http_handlers_users.userListResponse'
+              type: object
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Пользователи не найден
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение пользователей по сети
+      tags:
+      - users_admin
+  /api/v1/users/admin/phone/{phone}:
+    get:
+      description: Возвращает информацию о пользователе по его номеру телефона
+      parameters:
+      - description: Номер телефона пользователя
+        in: path
+        name: phone
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователе
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_ports_http_handlers_users.userResponse'
+              type: object
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение пользователя по номеру телефона
+      tags:
+      - users_admin
+  /api/v1/users/admin/point/{point_code}:
+    get:
+      description: Возвращает пользователй по точке
+      parameters:
+      - description: код точки
+        in: path
+        name: point_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о пользователях
+          schema:
+            allOf:
+            - $ref: '#/definitions/api.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_ports_http_handlers_users.userListResponse'
+              type: object
+        "400":
+          description: Неверный формат данных
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Пользователи не найден
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение пользователей по точке
+      tags:
+      - users_admin
 securityDefinitions:
   ApiKeyAuth:
     in: header

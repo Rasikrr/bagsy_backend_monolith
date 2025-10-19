@@ -2,8 +2,8 @@ package points
 
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/deref"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/deref"
 )
 
 //go:generate easyjson -all models.go

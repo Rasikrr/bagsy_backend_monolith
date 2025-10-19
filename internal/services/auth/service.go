@@ -3,11 +3,12 @@ package auth
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/core/database"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/hash"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
@@ -19,13 +20,15 @@ import (
 )
 
 type Service interface {
-	SendRegisterLink(ctx context.Context, phone, link string) error
-	RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error)
-	RefreshTokens(ctx context.Context, token string) (*entity.Auth, error)
-	ValidateRegisterToken(ctx context.Context, token string) (bool, error)
-	GetAuthTokenPayload(ctx context.Context, token string) (*entity.PayloadParams, error)
-	Login(ctx context.Context, phone string, password string) (*entity.Auth, error)
-	GenAuthConfirmationLink(ctx context.Context, phone, pointCode string) (string, error)
+	Login(ctx context.Context, phone string, password string) (string, string, error)
+	CheckAccessToken(ctx context.Context, token string) (*entity.Session, error)
+	RefreshTokens(ctx context.Context, token string) (string, string, error)
+
+	GenRegisterConfrimLink(ctx context.Context, phone, pointCode, networkCode string) (string, error)
+	SendRegisterConfirmLink(ctx context.Context, phone, link string) error
+
+	RegisterConfirm(ctx context.Context, phone string, password string) (string, string, error)
+	ValidateRegisterToken(ctx context.Context, token string) error
 }
 
 type service struct {
@@ -38,6 +41,8 @@ type service struct {
 
 	tgChatID            int64
 	jwtSecret           string
+	accessTokenTTL      time.Duration
+	refreshTokenTTL     time.Duration
 	authConfirmationURL string
 }
 
@@ -51,6 +56,8 @@ func NewService(
 	tgChatID int64,
 	authConfirmationURL string,
 	jwtSecret string,
+	accessTokenTTL time.Duration,
+	refreshTokenTTL time.Duration,
 ) Service {
 	return &service{
 		smsClient:           smsClient,
@@ -62,52 +69,50 @@ func NewService(
 		txManager:           txManager,
 		authConfirmationURL: authConfirmationURL,
 		jwtSecret:           jwtSecret,
+		accessTokenTTL:      accessTokenTTL,
+		refreshTokenTTL:     refreshTokenTTL,
 	}
 }
 
-func (s *service) SendRegisterLink(ctx context.Context, phone, link string) error {
+func (s *service) SendRegisterConfirmLink(ctx context.Context, phone, link string) error {
 	message := fmt.Sprintf("Ваша ссылка на регистрацию на bagsy.kz: %s", link)
 	return s.whatsAppClient.SendMessage(ctx, phone, message)
 }
 
-func (s *service) Login(ctx context.Context, phone string, password string) (*entity.Auth, error) {
+func (s *service) Login(ctx context.Context, phone string, password string) (string, string, error) {
 	user, err := s.userService.GetByPhone(ctx, phone)
 	if err != nil {
-		return nil, errGetUser.Wrap(err)
+		return "", "", errGetUser.Wrap(err)
 	}
 	if user.Password == nil {
-		return nil, errNoAccess
+		return "", "", errNoAccess
 	}
 	if !user.Active {
-		return nil, errNoAccess
+		return "", "", errNoAccess
 	}
 	valid := hash.CheckPassword(*user.Password, password)
 	if !valid {
-		return nil, errInvalidPassword
+		return "", "", errInvalidPassword
 	}
-
 	accessToken, refreshToken, err := s.generateTokens(user)
 	if err != nil {
-		return nil, errGenerateTokens.Wrap(err)
+		return "", "", errGenerateTokens.Wrap(err)
 	}
-
-	return &entity.Auth{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	return accessToken, refreshToken, nil
 }
 
-func (s *service) GenAuthConfirmationLink(_ context.Context, phone, pointCode string) (string, error) {
-	token, err := jwt.GenerateRegistrationToken(phone, pointCode, s.jwtSecret)
+func (s *service) GenRegisterConfrimLink(_ context.Context, phone, pointCode, networkCode string) (string, error) {
+	token, err := jwt.GenerateRegistrationToken(phone, pointCode, networkCode, s.jwtSecret)
 	if err != nil {
 		return "", errGenerateRegistrationURL.Wrap(err)
 	}
 	return fmt.Sprintf("%s?token=%s", s.authConfirmationURL, token), nil
 }
 
-func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (*entity.Auth, error) {
-	var result *entity.Auth
-
+func (s *service) RegisterConfirm(ctx context.Context, phone string, password string) (string, string, error) {
+	var (
+		access, refresh string
+	)
 	err := s.txManager.Transaction(ctx, pgx.TxOptions{}, func(txCtx context.Context) error {
 		user, err := s.userService.GetByPhone(txCtx, phone)
 		if err != nil {
@@ -134,93 +139,65 @@ func (s *service) RegisterConfirm(ctx context.Context, phone string, password st
 			return fmt.Errorf("get updated user: %w", err)
 		}
 
-		accessToken, refreshToken, err := s.generateTokens(updatedUser)
+		access, refresh, err = s.generateTokens(updatedUser)
 		if err != nil {
 			return errGenerateTokens.Wrap(err)
 		}
-
-		result = &entity.Auth{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		}
-
 		return nil
 	})
 
 	if err != nil {
-		return nil, errRegistrationConfirm.Wrap(err)
+		return "", "", errRegistrationConfirm.Wrap(err)
 	}
-	return result, nil
+	return access, refresh, nil
 }
 
-func (s *service) ValidateRegisterToken(_ context.Context, token string) (bool, error) {
-	return jwt.ValidateToken(token, s.jwtSecret)
+func (s *service) ValidateRegisterToken(_ context.Context, token string) error {
+	return jwt.ValidateRegistrationToken(token, s.jwtSecret)
 }
 
-func (s *service) GetAuthTokenPayload(_ context.Context, token string) (*entity.PayloadParams, error) {
-	return jwt.ParseAuthToken(token, s.jwtSecret)
-}
-
-func (s *service) RefreshTokens(ctx context.Context, token string) (*entity.Auth, error) {
-	valid, err := jwt.ValidateToken(token, s.jwtSecret)
+func (s *service) CheckAccessToken(_ context.Context, token string) (*entity.Session, error) {
+	claims, err := jwt.ParseToken(token, s.jwtSecret)
 	if err != nil {
 		return nil, errInvalidToken.Wrap(err)
 	}
-	if !valid {
-		return nil, errInvalidToken
+	if claims.Refresh {
+		return nil, errRefreshTokenNotAllowed
 	}
-	payload, err := jwt.ParseRefreshToken(token, s.jwtSecret)
+	return claims.ToSession()
+}
+
+func (s *service) RefreshTokens(ctx context.Context, token string) (string, string, error) {
+	claims, err := jwt.ParseToken(token, s.jwtSecret)
 	if err != nil {
-		return nil, errInvalidToken.Wrap(err)
+		return "", "", errInvalidToken.Wrap(err)
 	}
-	if !payload.IsRefresh() {
-		return nil, errAccessTokenNotAllowed
+	if !claims.Refresh {
+		return "", "", errAccessTokenNotAllowed
 	}
-	user, err := s.userService.GetByPhone(ctx, payload.Phone)
+
+	user, err := s.userService.GetByPhone(ctx, claims.Phone)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 	accessToken, refreshToken, err := s.generateTokens(user)
 	if err != nil {
-		return nil, errGenerateTokens.Wrap(err)
+		return "", "", errGenerateTokens.Wrap(err)
 	}
-	return &entity.Auth{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	return accessToken, refreshToken, nil
 }
 
 // nolint: nonamedreturns
 func (s *service) generateTokens(user *entity.User) (accessToken, refreshToken string, err error) {
-	accessParams := &entity.PayloadParams{
-		Phone:   user.Phone,
-		Role:    user.Role.String(),
-		Active:  user.Active,
-		Refresh: false,
-	}
-	if user.PointCode != nil {
-		accessParams.PointCode = *user.PointCode
-	}
-	if user.NetworkCode != nil {
-		accessParams.NetworkCode = *user.NetworkCode
-	}
-
-	accessToken, err = jwt.GenerateAccessToken(accessParams, s.jwtSecret)
+	accessClaims := jwt.NewClaims(user, s.accessTokenTTL, false)
+	accessToken, err = jwt.GenerateToken(accessClaims, s.jwtSecret)
 	if err != nil {
-		return "", "", fmt.Errorf("generate access token: %w", err)
+		return "", "", errGenerateTokens.Wrap(err)
 	}
-
-	refreshParams := &entity.PayloadParams{
-		Phone:   user.Phone,
-		Role:    user.Role.String(),
-		Active:  user.Active,
-		Refresh: true,
-	}
-
-	refreshToken, err = jwt.GenerateRefreshToken(refreshParams, s.jwtSecret)
+	refreshClaims := jwt.NewClaims(user, s.refreshTokenTTL, true)
+	refreshToken, err = jwt.GenerateToken(refreshClaims, s.jwtSecret)
 	if err != nil {
-		return "", "", fmt.Errorf("generate refresh token: %w", err)
+		return "", "", errGenerateTokens.Wrap(err)
 	}
-
 	return accessToken, refreshToken, nil
 }

@@ -4,9 +4,8 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/hash"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
 	"github.com/samber/lo"
 )
 
@@ -69,33 +68,6 @@ func (u *updateRequest) toParams() (users.UpdateParams, error) {
 			return users.UpdateParams{}, err
 		}
 		params.Password = &hashedPassword
-	}
-	return params, nil
-}
-
-type getByParamsRequest struct {
-	PointCode   *string  `json:"point_code,omitempty"`
-	NetworkCode *string  `json:"network_code,omitempty"`
-	Roles       []string `json:"role,omitempty"`
-	Phones      []string `json:"phone,omitempty"`
-}
-
-func (g *getByParamsRequest) toParams() (users.GetParams, error) {
-	params := users.GetParams{
-		PointCode:   g.PointCode,
-		NetworkCode: g.NetworkCode,
-		Phones:      g.Phones,
-	}
-	if len(g.Roles) > 0 {
-		roles := make([]enum.Role, 0, len(g.Roles))
-		for _, r := range g.Roles {
-			role, err := enum.RoleString(r)
-			if err != nil {
-				return users.GetParams{}, err
-			}
-			roles = append(roles, role)
-		}
-		params.Roles = roles
 	}
 	return params, nil
 }

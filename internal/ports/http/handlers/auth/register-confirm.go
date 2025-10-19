@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/httputil"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 )
@@ -25,20 +25,15 @@ import (
 // @Router /api/v1/auth/register/confirm [post]
 func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	token, err := session.GetAuthHeader(r)
+	token, err := httputil.GetAuthHeader(r)
 	if err != nil {
 		api.SendError(w, errors.ErrSessionNotFound)
 		return
 	}
 
-	valid, err := c.authService.ValidateRegisterToken(ctx, token)
+	err = c.authService.ValidateRegisterToken(ctx, token)
 	if err != nil {
 		api.SendError(w, err)
-		return
-	}
-	if !valid {
-		api.SendError(w, coreErr.NewError("invalid or expired token", http.StatusUnauthorized))
 		return
 	}
 
@@ -48,13 +43,13 @@ func (c *Controller) registerConfirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := c.authService.RegisterConfirm(ctx, req.Phone, req.Password)
+	access, refresh, err := c.authService.RegisterConfirm(ctx, req.Phone, req.Password)
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
 	api.SendData(w, api.NewSuccessResponse(loginResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken:  access,
+		RefreshToken: refresh,
 	}), http.StatusOK)
 }

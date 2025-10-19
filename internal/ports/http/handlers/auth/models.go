@@ -2,9 +2,12 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/validator"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/ptr"
 )
 
 //go:generate easyjson -all models.go
@@ -14,11 +17,11 @@ type sendCodeRequest struct {
 }
 
 type registerRequest struct {
-	Phone     string  `json:"phone"          validate:"required,min=10,max=15"`
-	Name      string  `json:"name"           validate:"required,min=2,max=50"`
-	Surname   string  `json:"surname"        validate:"required,min=2,max=50"`
-	Role      *string `json:"role,omitempty" validate:"omitempty,valid_role_not_admin"`
-	PointCode string  `json:"point_code,omitempty"`
+	Phone     string `json:"phone"          validate:"required,min=10,max=15"`
+	Name      string `json:"name"           validate:"required,min=2,max=50"`
+	Surname   string `json:"surname"        validate:"required,min=2,max=50"`
+	Role      string `json:"role,omitempty" validate:"omitempty,valid_role_not_admin"`
+	PointCode string `json:"point_code,omitempty"`
 }
 
 type loginRequest struct {
@@ -45,16 +48,19 @@ func (l *loginRequest) validate() error {
 	return validator.GetValidator().Struct(l)
 }
 
-func (r *registerRequest) convert() *entity.User {
+func (r *registerRequest) convert(by *entity.Session) *entity.User {
 	user := &entity.User{
 		Phone:     r.Phone,
 		Name:      &r.Name,
 		Surname:   &r.Surname,
 		Role:      enum.RoleStaff,
 		PointCode: &r.PointCode,
+		CreatedAt: time.Now(),
+		UpdatedAt: ptr.Pointer(time.Now()),
+		UpdatedBy: ptr.Pointer(by.Phone()),
 	}
-	if r.Role != nil {
-		role, _ := enum.RoleString(*r.Role)
+	if r.Role != "" {
+		role, _ := enum.RoleString(r.Role)
 		user.Role = role
 	}
 	return user

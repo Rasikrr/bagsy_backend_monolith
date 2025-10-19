@@ -3,7 +3,7 @@ package auth
 import (
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/httputil"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 )
@@ -22,18 +22,18 @@ import (
 // nolint: godot
 func (c *Controller) refresh(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	token, err := session.GetAuthHeader(r)
+	token, err := httputil.GetAuthHeader(r)
 	if err != nil {
 		api.SendError(w, coreErr.ErrBadRequest.Wrap(err))
 		return
 	}
-	tokens, err := c.authService.RefreshTokens(ctx, token)
+	access, refresh, err := c.authService.RefreshTokens(ctx, token)
 	if err != nil {
 		api.SendError(w, err)
 		return
 	}
 	api.SendData(w, api.NewSuccessResponse(refreshTokensResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+		AccessToken:  access,
+		RefreshToken: refresh,
 	}), http.StatusOK)
 }
