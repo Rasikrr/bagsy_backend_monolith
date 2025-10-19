@@ -4,8 +4,9 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/session"
+
 	appErr "github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
 	"github.com/Rasikrr/core/api"
 	coreErr "github.com/Rasikrr/core/errors"
 )

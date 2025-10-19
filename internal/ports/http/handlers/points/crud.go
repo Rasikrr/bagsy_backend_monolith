@@ -3,7 +3,7 @@ package points
 import (
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/session"
 
 	"github.com/Rasikrr/core/api"
 	"github.com/go-chi/chi/v5"
