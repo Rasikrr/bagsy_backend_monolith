@@ -6,7 +6,8 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/deref"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -32,14 +33,14 @@ func NewClaims(user *entity.User, ttl time.Duration, isRefresh bool) Claims {
 	}
 	if !isRefresh {
 		c.Role = user.Role.String()
-		c.PointCode = deref.String(user.PointCode)
-		c.NetworkCode = deref.String(user.NetworkCode)
+		c.PointCode = util.Deref(user.PointCode)
+		c.NetworkCode = util.Deref(user.NetworkCode)
 	}
 	return c
 }
 
 // ToSession конвертирует Claims в доменную сущность Session
-func (c *Claims) ToSession() (*entity.Session, error) {
+func (c *Claims) ToSession() (*session.Session, error) {
 	if c.Refresh {
 		return nil, errors.New("refresh token cannot be converted to session")
 	}
@@ -49,17 +50,17 @@ func (c *Claims) ToSession() (*entity.Session, error) {
 		return nil, err
 	}
 
-	session := entity.NewSession().
+	sess := session.NewSession().
 		SetPhone(c.Phone).
 		SetRole(roleEnum)
 
 	if c.PointCode != "" {
-		session.SetPointCode(c.PointCode)
+		sess.SetPointCode(c.PointCode)
 	}
 
 	if c.NetworkCode != "" {
-		session.SetNetworkCode(c.NetworkCode)
+		sess.SetNetworkCode(c.NetworkCode)
 	}
 
-	return session, nil
+	return sess, nil
 }

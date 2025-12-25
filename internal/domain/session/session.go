@@ -1,11 +1,13 @@
-package entity
+package session
 
 import (
+	"context"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
 )
 
-// TODO: remove to other place
 type Session struct {
 	id          uuid.UUID
 	phone       string
@@ -56,6 +58,19 @@ func (s *Session) NetworkCode() string {
 	return s.networkCode
 }
 
-func (s *Session) SessionID() uuid.UUID {
+func (s *Session) ID() uuid.UUID {
 	return s.id
+}
+
+type sessionKey struct{}
+
+func GetSession(ctx context.Context) (*Session, error) {
+	if session, ok := ctx.Value(sessionKey{}).(*Session); ok {
+		return session, nil
+	}
+	return nil, errors.New("session not found")
+}
+
+func SetSession(ctx context.Context, session *Session) context.Context {
+	return context.WithValue(ctx, sessionKey{}, session)
 }

@@ -2,48 +2,42 @@ package users
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	appErr "github.com/Rasikrr/bagsy_backend_monolith/internal/errors"
-
-	"fmt"
-
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/core/database"
+	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5"
+	"github.com/lib/pq"
+	"github.com/samber/lo"
 )
 
-type Repository interface {
-	Create(ctx context.Context, user *entity.User) error
-	GetInactive(ctx context.Context, olderThan time.Duration) ([]*entity.User, error)
-	GetByParams(ctx context.Context, params GetParams) ([]*entity.User, error)
-	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
-	ExistsByPhone(ctx context.Context, phone string) (bool, error)
-	Update(ctx context.Context, patch *UserUpdatePatch) error
-	SoftDelete(ctx context.Context, phones ...string) error
-}
-
-type repository struct {
+type Repository struct {
 	db *database.Postgres
 }
 
-func NewRepository(db *database.Postgres) Repository {
-	return &repository{
-		db: db,
-	}
+func NewRepository(db *database.Postgres) *Repository {
+	return &Repository{db: db}
 }
 
-func (r *repository) Create(ctx context.Context, user *entity.User) error {
-	m, err := convert(user)
+func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {
+	var m model
+	err := pgxscan.Get(ctx, r.db, &m, getUserByPhone, phone)
 	if err != nil {
-		return err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrUserNotFound
+		}
+		return nil, err
 	}
+	return m.convert()
+}
 
-	_, err = r.db.Exec(
-		ctx,
-		createUser,
+func (r *Repository) Create(ctx context.Context, user *entity.User) error {
+	m := convert(user)
+	_, err := r.db.Exec(ctx, createUser,
 		m.Phone,
 		m.Password,
 		m.Role,
@@ -51,94 +45,72 @@ func (r *repository) Create(ctx context.Context, user *entity.User) error {
 		m.Surname,
 		m.PointCode,
 		m.NetworkCode,
-		m.Active,
-		m.CreatedAt,
-		m.UpdatedAt,
 		m.UpdatedBy,
-		m.DeletedAt,
 	)
 	return err
 }
 
-func (r *repository) GetByParams(ctx context.Context, params GetParams) ([]*entity.User, error) {
-	query, args, err := buildUserQuery(params)
+func (r *Repository) Update(ctx context.Context, user *entity.User) error {
+	m := convert(user)
+	_, err := r.db.Exec(ctx, updateUser,
+		m.Phone,
+		m.Password,
+		m.Role,
+		m.Name,
+		m.Surname,
+		m.PointCode,
+		m.NetworkCode,
+		m.UpdatedBy,
+	)
+	return err
+}
+
+func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
+	phones := lo.Map(users, func(item *entity.User, _ int) string {
+		return item.Phone
+	})
+	_, err := r.db.Exec(ctx, deleteUser, pq.Array(phones))
+	return err
+}
+
+func (r *Repository) GetByParams(ctx context.Context, filter query.UserFilter) ([]*entity.User, error) {
+	q, args, err := buildQuery(filter)
 	if err != nil {
 		return nil, err
 	}
+
 	var mm models
-	err = pgxscan.Select(ctx, r.db, &mm, query, args...)
+	err = pgxscan.Select(ctx, r.db, &mm, q, args...)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, appErr.ErrUserNotFound
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrUserNotFound
 		}
 		return nil, err
 	}
 	return mm.convert()
 }
 
-func (r *repository) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {
-	var m model
-	err := pgxscan.Get(ctx, r.db, &m, getUserByPhone, phone)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, appErr.ErrUserNotFound
-		}
-		return nil, err
-	}
-	return m.convert()
-}
+func buildQuery(filter query.UserFilter) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	builder := psql.Select("phone", "password", "role", "name", "surname", "point_code", "network_code", "created_at", "updated_at", "deleted_at", "updated_by").
+		From("users").
+		Where(sq.Eq{"deleted_at": nil})
 
-func (r *repository) SoftDelete(ctx context.Context, phones ...string) error {
-	_, err := r.db.Exec(ctx, softDeleteUser, phones)
-	return err
-}
-
-func (r *repository) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
-	var exists bool
-	err := pgxscan.Get(ctx, r.db, &exists, existsByPhone, phone)
-	return exists, err
-}
-
-func (r *repository) Update(ctx context.Context, patch *UserUpdatePatch) error {
-	if patch == nil || patch.IsEmpty() {
-		return errNothingToUpdate
+	if filter.NetworkCode != nil {
+		builder = builder.Where(sq.Eq{"network_code": *filter.NetworkCode})
 	}
 
-	sql, args, err := patch.ToSQL()
-	if err != nil {
-		return err
-	}
-	_, err = r.db.Exec(ctx, sql, args...)
-	return err
-}
-
-func (r *repository) GetInactive(ctx context.Context, olderThan time.Duration) ([]*entity.User, error) {
-	var mm models
-	interval := formatDurationToInterval(olderThan)
-
-	err := pgxscan.Select(ctx, r.db, &mm, getUsersInactive, interval)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, appErr.ErrUserNotFound
-		}
-		return nil, err
-	}
-	return mm.convert()
-}
-
-func formatDurationToInterval(d time.Duration) string {
-	hours := int(d.Hours())
-
-	if hours < 24 {
-		return fmt.Sprintf("%d hours", hours)
+	if filter.PointCode != nil {
+		builder = builder.Where(sq.Eq{"point_code": *filter.PointCode})
 	}
 
-	days := hours / 24
-	remainingHours := hours % 24
-
-	if remainingHours == 0 {
-		return fmt.Sprintf("%d days", days)
+	if len(filter.Roles) > 0 {
+		builder = builder.Where(sq.Eq{"role": filter.Roles})
 	}
 
-	return fmt.Sprintf("%d days %d hours", days, remainingHours)
+	if len(filter.Phones) > 0 {
+		builder = builder.Where(sq.Eq{"phone": filter.Phones})
+	}
+
+	return builder.ToSql()
 }

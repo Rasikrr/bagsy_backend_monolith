@@ -6,6 +6,7 @@ type BagsyStatus uint8
 
 const (
 	BagsyStatusCreated BagsyStatus = iota
+	BagsyStatusActive
 	BagsyStatusCompleted
 	BagsyStatusCanceled
 )

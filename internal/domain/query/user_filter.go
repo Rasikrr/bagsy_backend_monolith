@@ -1,6 +1,6 @@
-package users
+package query
 
-type GetParams struct {
+type UserFilter struct {
 	NetworkCode *string
 	PointCode   *string
 	Roles       []string
