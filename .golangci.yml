@@ -202,6 +202,10 @@ linters:
               desc: Use github.com/google/uuid instead, satori's package is not maintained
             - pkg: github.com/gofrs/uuid$
               desc: Use github.com/gofrs/uuid/v5 or later, it was not a go module before v5
+            - pkg: "errors$"
+              desc: "Please use 'github.com/cockroachdb/errors' instead of the standard 'errors' package to support stack traces."
+            - pkg: "github.com/pkg/errors$"
+              desc: "Please use 'github.com/cockroachdb/errors' as the project standard."
         "non-test files":
           files:
             - "!$test"

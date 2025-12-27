@@ -3,7 +3,7 @@ module github.com/Rasikrr/bagsy_backend_monolith
 go 1.25.1
 
 require (
-	github.com/Rasikrr/core v0.0.72
+	github.com/Rasikrr/core v0.0.73
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // indirect
 )

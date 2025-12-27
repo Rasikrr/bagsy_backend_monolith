@@ -28,7 +28,7 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 	err := pgxscan.Get(ctx, r.db, &m, getUserByPhone, phone)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrUserNotFound
+			return nil, domainErr.ErrUserNotFound.WithError(err)
 		}
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (r *Repository) GetByParams(ctx context.Context, filter query.UserFilter) (
 	err = pgxscan.Select(ctx, r.db, &mm, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrUserNotFound
+			return nil, domainErr.ErrUserNotFound.WithError(err)
 		}
 		return nil, err
 	}

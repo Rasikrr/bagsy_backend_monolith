@@ -27,7 +27,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Service
 	err := pgxscan.Get(ctx, r.db, &m, getServiceByID, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrServiceNotFound
+			return nil, domainErr.ErrServiceNotFound.WithError(err)
 		}
 		return nil, err
 	}

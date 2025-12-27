@@ -26,7 +26,7 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*entity.ServiceSubcat
 	err := pgxscan.Get(ctx, r.db, &m, getServiceSubcategoryByID, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrServiceSubcategoryNotFound
+			return nil, domainErr.ErrServiceSubcategoryNotFound.WithError(err)
 		}
 		return nil, err
 	}

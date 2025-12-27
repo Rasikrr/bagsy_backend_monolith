@@ -33,7 +33,7 @@ func (r *repository) GetByID(ctx context.Context, id int) (*entity.PointCategory
 	err := pgxscan.Get(ctx, r.db, &m, getPointCategoryByID, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrPointCategoryNotFound
+			return nil, domainErr.ErrPointCategoryNotFound.WithError(err)
 		}
 		return nil, err
 	}

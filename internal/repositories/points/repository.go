@@ -78,7 +78,7 @@ func (r *repository) GetByCode(ctx context.Context, code string) (*entity.Point,
 	err := pgxscan.Get(ctx, r.db, &m, getPointByCode, code)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrPointNotFound
+			return nil, domainErr.ErrPointNotFound.WithError(err)
 		}
 		return nil, err
 	}

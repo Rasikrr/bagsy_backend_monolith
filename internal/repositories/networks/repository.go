@@ -33,7 +33,7 @@ func (r *repository) GetByCode(ctx context.Context, code string) (*entity.Networ
 	err := pgxscan.Get(ctx, r.db, &m, getNetworkByCode, code)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrNetworkNotFound
+			return nil, domainErr.ErrNetworkNotFound.WithError(err)
 		}
 		return nil, err
 	}
