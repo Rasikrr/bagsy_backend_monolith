@@ -1,48 +1,46 @@
 package errors
 
-import "github.com/cockroachdb/errors"
-
 // Bagsies errors
 var (
-	ErrBagsyNotFound = errors.New("bagsy(ies) not found")
+	ErrBagsyNotFound = NewNotFoundError("bagsy(ies) not found", nil)
 )
 
 // Users errors
 var (
-	ErrUserNotFound = errors.New("user(s) not found")
+	ErrUserNotFound = NewNotFoundError("user(s) not found", nil)
 )
 
 // Networks errors
 var (
-	ErrNetworkNotFound = errors.New("network(s) not found")
+	ErrNetworkNotFound = NewNotFoundError("network(s) not found", nil)
 )
 
 // Point Categories errors
 var (
-	ErrPointCategoryNotFound = errors.New("point category(ies) not found")
+	ErrPointCategoryNotFound = NewNotFoundError("point category(ies) not found", nil)
 )
 
 // Service categories errors
 var (
-	ErrServiceCategoryNotFound = errors.New("service category(ies) not found")
+	ErrServiceCategoryNotFound = NewNotFoundError("service category(ies) not found", nil)
 )
 
 // Service sub-categories errors
 var (
-	ErrServiceSubcategoryNotFound = errors.New("service subcategory(ies) not found")
+	ErrServiceSubcategoryNotFound = NewNotFoundError("service subcategory(ies) not found", nil)
 )
 
 // Points errors
 var (
-	ErrPointNotFound = errors.New("point(s) not found")
+	ErrPointNotFound = NewNotFoundError("point(s) not found", nil)
 )
 
 // Services errors
 var (
-	ErrServiceNotFound = errors.New("service(s) not found")
+	ErrServiceNotFound = NewNotFoundError("service(s) not found", nil)
 )
 
 // Master Services errors
 var (
-	ErrMasterServiceNotFound = errors.New("master service(s) not found")
+	ErrMasterServiceNotFound = NewNotFoundError("master service(s) not found", nil)
 )

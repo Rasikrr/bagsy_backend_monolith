@@ -13,22 +13,15 @@ import (
 	"github.com/samber/lo"
 )
 
-type Repository interface {
-	GetByCode(ctx context.Context, code string) (*entity.Network, error)
-	Create(ctx context.Context, network *entity.Network) error
-	Update(ctx context.Context, network *entity.Network) error
-	Delete(ctx context.Context, networks ...*entity.Network) error
-}
-
-type repository struct {
+type Repository struct {
 	db *database.Postgres
 }
 
-func NewRepository(db *database.Postgres) Repository {
-	return &repository{db: db}
+func NewRepository(db *database.Postgres) *Repository {
+	return &Repository{db: db}
 }
 
-func (r *repository) GetByCode(ctx context.Context, code string) (*entity.Network, error) {
+func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Network, error) {
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getNetworkByCode, code)
 	if err != nil {
@@ -40,19 +33,19 @@ func (r *repository) GetByCode(ctx context.Context, code string) (*entity.Networ
 	return m.convert(), nil
 }
 
-func (r *repository) Create(ctx context.Context, network *entity.Network) error {
+func (r *Repository) Create(ctx context.Context, network *entity.Network) error {
 	m := convert(network)
 	_, err := r.db.Exec(ctx, createNetwork, m.Code, m.Name, m.Description, m.UpdatedBy)
 	return err
 }
 
-func (r *repository) Update(ctx context.Context, network *entity.Network) error {
+func (r *Repository) Update(ctx context.Context, network *entity.Network) error {
 	m := convert(network)
 	_, err := r.db.Exec(ctx, updateNetwork, m.Code, m.Name, m.Description, m.UpdatedBy)
 	return err
 }
 
-func (r *repository) Delete(ctx context.Context, networks ...*entity.Network) error {
+func (r *Repository) Delete(ctx context.Context, networks ...*entity.Network) error {
 	codes := lo.Map(networks, func(item *entity.Network, _ int) string {
 		return item.Code
 	})

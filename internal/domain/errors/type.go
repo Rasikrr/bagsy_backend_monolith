@@ -49,18 +49,26 @@ func (e *DomainError) WithDetail(key string, value interface{}) *DomainError {
 
 // Constructors
 func NewNotFoundError(message string, cause error) *DomainError {
-	return &DomainError{Type: TypeNotFound, Message: message, Cause: cause}
+	return &DomainError{
+		Type:    TypeNotFound,
+		Message: message,
+		Cause:   cause,
+	}
 }
 
 func NewInvalidInputError(message string, cause error) *DomainError {
-	return &DomainError{Type: TypeInvalidInput, Message: message, Cause: cause}
+	return &DomainError{
+		Type:    TypeInvalidInput,
+		Message: message,
+		Cause:   cause,
+	}
 }
 
 func NewValidationError(message string, keyVals ...string) *DomainError {
 	err := &DomainError{Type: TypeValidation, Message: message}
 	if len(keyVals) > 0 {
 		if len(keyVals)%2 != 0 {
-			keyVals = append(keyVals, "")
+			keyVals = append(keyVals, "no description")
 		}
 		err.Details = make(map[string]interface{})
 		for i := 0; i < len(keyVals); i += 2 {
@@ -71,19 +79,33 @@ func NewValidationError(message string, keyVals ...string) *DomainError {
 }
 
 func NewUnauthorizedError(message string) *DomainError {
-	return &DomainError{Type: TypeUnauthorized, Message: message}
+	return &DomainError{
+		Type:    TypeUnauthorized,
+		Message: message,
+	}
 }
 
 func NewForbiddenError(message string) *DomainError {
-	return &DomainError{Type: TypeForbidden, Message: message}
+	return &DomainError{
+		Type:    TypeForbidden,
+		Message: message,
+	}
 }
 
 func NewConflictError(message string, cause error) *DomainError {
-	return &DomainError{Type: TypeConflict, Message: message, Cause: cause}
+	return &DomainError{
+		Type:    TypeConflict,
+		Message: message,
+		Cause:   cause,
+	}
 }
 
 func NewInternalError(message string, cause error) *DomainError {
-	return &DomainError{Type: TypeInternal, Message: message, Cause: cause}
+	return &DomainError{
+		Type:    TypeInternal,
+		Message: message,
+		Cause:   errors.WithStack(cause),
+	}
 }
 
 // Helpers

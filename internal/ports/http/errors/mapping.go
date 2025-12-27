@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"fmt"
 	"net/http"
 
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -42,7 +41,7 @@ func toHTTPResponse(err error) ErrorResponse {
 		}
 	}
 	return ErrorResponse{
-		Message: fmt.Errorf("unknown error: %v", err).Error(),
+		Message: "internal server error",
 		Code:    http.StatusInternalServerError,
 	}
 

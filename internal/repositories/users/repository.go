@@ -5,6 +5,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/core/database"
@@ -105,7 +106,11 @@ func buildQuery(filter query.UserFilter) (string, []any, error) {
 	}
 
 	if len(filter.Roles) > 0 {
-		builder = builder.Where(sq.Eq{"role": filter.Roles})
+		// Конвертируем []enum.Role в []string для SQL запроса
+		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
+			return role.String()
+		})
+		builder = builder.Where(sq.Eq{"role": roleStrings})
 	}
 
 	if len(filter.Phones) > 0 {

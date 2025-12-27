@@ -14,22 +14,15 @@ import (
 	"github.com/samber/lo"
 )
 
-type Repository interface {
-	Create(ctx context.Context, point *entity.Point) error
-	GetByCode(ctx context.Context, code string) (*entity.Point, error)
-	Update(ctx context.Context, point *entity.Point) error
-	Delete(ctx context.Context, points ...*entity.Point) error
-}
-
-type repository struct {
+type Repository struct {
 	db *database.Postgres
 }
 
-func NewRepository(db *database.Postgres) Repository {
-	return &repository{db: db}
+func NewRepository(db *database.Postgres) *Repository {
+	return &Repository{db: db}
 }
 
-func (r *repository) Create(ctx context.Context, point *entity.Point) error {
+func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 	m, err := convert(point)
 	if err != nil {
 		return err
@@ -52,7 +45,7 @@ func (r *repository) Create(ctx context.Context, point *entity.Point) error {
 	return err
 }
 
-func (r *repository) Update(ctx context.Context, point *entity.Point) error {
+func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
 	m, err := convert(point)
 	if err != nil {
 		return err
@@ -73,7 +66,7 @@ func (r *repository) Update(ctx context.Context, point *entity.Point) error {
 	return err
 }
 
-func (r *repository) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
+func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getPointByCode, code)
 	if err != nil {
@@ -86,7 +79,7 @@ func (r *repository) GetByCode(ctx context.Context, code string) (*entity.Point,
 	return p, nil
 }
 
-func (r *repository) Delete(ctx context.Context, points ...*entity.Point) error {
+func (r *Repository) Delete(ctx context.Context, points ...*entity.Point) error {
 	codes := lo.Map(points, func(item *entity.Point, _ int) string {
 		return item.Code
 	})
