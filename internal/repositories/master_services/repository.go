@@ -29,7 +29,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.MasterS
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrMasterServiceNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get master service from db", err)
 	}
 	return m.convert(), nil
 }
@@ -37,13 +37,19 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.MasterS
 func (r *Repository) Create(ctx context.Context, masterService *entity.MasterService) error {
 	m := convert(masterService)
 	err := r.db.QueryRow(ctx, createMasterService, m.MasterPhone, m.ServiceID, m.Price, m.Active, m.UpdatedBy).Scan(&masterService.ID)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create master service in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, masterService *entity.MasterService) error {
 	m := convert(masterService)
 	_, err := r.db.Exec(ctx, updateMasterService, m.ID, m.MasterPhone, m.ServiceID, m.Price, m.Active, m.UpdatedBy)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update master service in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, masterServices ...*entity.MasterService) error {
@@ -51,5 +57,8 @@ func (r *Repository) Delete(ctx context.Context, masterServices ...*entity.Maste
 		return item.ID
 	})
 	_, err := r.db.Exec(ctx, deleteMasterService, pq.Array(ids))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete master services from db", err)
+	}
+	return nil
 }

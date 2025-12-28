@@ -30,9 +30,13 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Bagsy, 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrBagsyNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get bagsy from db", err)
 	}
-	return m.convert()
+	out, err := m.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert bagsy model", err)
+	}
+	return out, nil
 }
 
 func (r *Repository) Create(ctx context.Context, b *entity.Bagsy) error {
@@ -54,7 +58,10 @@ func (r *Repository) Create(ctx context.Context, b *entity.Bagsy) error {
 		m.UpdatedAt,
 		m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create bagsy in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, b *entity.Bagsy) error {
@@ -75,7 +82,10 @@ func (r *Repository) Update(ctx context.Context, b *entity.Bagsy) error {
 		m.UpdatedAt,
 		m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update bagsy in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, bagsies ...*entity.Bagsy) error {
@@ -83,5 +93,8 @@ func (r *Repository) Delete(ctx context.Context, bagsies ...*entity.Bagsy) error
 		return item.ID
 	})
 	_, err := r.db.Exec(ctx, deleteByIDs, pq.Array(ids))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete bagsies from db", err)
+	}
+	return nil
 }

@@ -28,7 +28,7 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*entity.PointCategory
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrPointCategoryNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get point category from db", err)
 	}
 	return m.convert(), nil
 }
@@ -36,13 +36,19 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*entity.PointCategory
 func (r *Repository) Create(ctx context.Context, category *entity.PointCategory) error {
 	m := convert(category)
 	err := r.db.QueryRow(ctx, createPointCategory, m.Name, m.Description, m.UpdatedBy).Scan(&category.ID)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create point category in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, category *entity.PointCategory) error {
 	m := convert(category)
 	_, err := r.db.Exec(ctx, updatePointCategory, m.ID, m.Name, m.Description, m.UpdatedBy)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update point category in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, categories ...*entity.PointCategory) error {
@@ -50,5 +56,8 @@ func (r *Repository) Delete(ctx context.Context, categories ...*entity.PointCate
 		return item.ID
 	})
 	_, err := r.db.Exec(ctx, deletePointCategory, pq.Array(ids))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete point categories from db", err)
+	}
+	return nil
 }

@@ -28,7 +28,7 @@ func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Networ
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrNetworkNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get network from db", err)
 	}
 	return m.convert(), nil
 }
@@ -36,13 +36,19 @@ func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Networ
 func (r *Repository) Create(ctx context.Context, network *entity.Network) error {
 	m := convert(network)
 	_, err := r.db.Exec(ctx, createNetwork, m.Code, m.Name, m.Description, m.UpdatedBy)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create network in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, network *entity.Network) error {
 	m := convert(network)
 	_, err := r.db.Exec(ctx, updateNetwork, m.Code, m.Name, m.Description, m.UpdatedBy)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update network in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, networks ...*entity.Network) error {
@@ -50,5 +56,8 @@ func (r *Repository) Delete(ctx context.Context, networks ...*entity.Network) er
 		return item.Code
 	})
 	_, err := r.db.Exec(ctx, deleteNetwork, pq.Array(codes))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete networks from db", err)
+	}
+	return nil
 }

@@ -29,7 +29,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Service
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrServiceNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get service from db", err)
 	}
 	return m.convert(), nil
 }
@@ -40,7 +40,10 @@ func (r *Repository) Create(ctx context.Context, service *entity.Service) error 
 		m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
 		m.Description, m.DurationMinutes, m.Active, m.UpdatedBy,
 	).Scan(&service.ID)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create service in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, service *entity.Service) error {
@@ -49,7 +52,10 @@ func (r *Repository) Update(ctx context.Context, service *entity.Service) error 
 		m.ID, m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
 		m.Description, m.DurationMinutes, m.Active, m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update service in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, services ...*entity.Service) error {
@@ -57,5 +63,8 @@ func (r *Repository) Delete(ctx context.Context, services ...*entity.Service) er
 		return item.ID
 	})
 	_, err := r.db.Exec(ctx, deleteService, pq.Array(ids))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete services from db", err)
+	}
+	return nil
 }

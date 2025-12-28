@@ -25,7 +25,7 @@ func NewRepository(db *database.Postgres) *Repository {
 func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 	m, err := convert(point)
 	if err != nil {
-		return err
+		return domainErr.NewInternalError("failed to convert point entity", err)
 	}
 
 	log.Infof(ctx, "Creating point with code: %+v", m)
@@ -42,13 +42,16 @@ func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 		string(m.Schedule),
 		m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create point in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
 	m, err := convert(point)
 	if err != nil {
-		return err
+		return domainErr.NewInternalError("failed to convert point entity", err)
 	}
 
 	_, err = r.db.Exec(ctx, updatePoint,
@@ -63,7 +66,10 @@ func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
 		string(m.Schedule),
 		m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update point in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
@@ -73,7 +79,7 @@ func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point,
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrPointNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get point from db", err)
 	}
 	p := m.convert()
 	return p, nil
@@ -84,5 +90,8 @@ func (r *Repository) Delete(ctx context.Context, points ...*entity.Point) error 
 		return item.Code
 	})
 	_, err := r.db.Exec(ctx, deletePoint, pq.Array(codes))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete points from db", err)
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package forms
 import (
 	"context"
 
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/core/database"
 )
 
@@ -16,5 +17,8 @@ func NewRepository(db *database.Postgres) *Repository {
 
 func (r *Repository) CreateClient(ctx context.Context, firstName, lastName, phone, description string, role string) error {
 	_, err := r.db.Exec(ctx, insertForm, firstName, lastName, phone, description, role)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create client form in db", err)
+	}
+	return nil
 }

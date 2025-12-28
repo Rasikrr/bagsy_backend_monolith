@@ -28,7 +28,7 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*entity.ServiceSubcat
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrServiceSubcategoryNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get service subcategory from db", err)
 	}
 	return m.convert(), nil
 }
@@ -36,13 +36,19 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*entity.ServiceSubcat
 func (r *Repository) Create(ctx context.Context, subcategory *entity.ServiceSubcategory) error {
 	m := convert(subcategory)
 	err := r.db.QueryRow(ctx, createServiceSubcategory, m.ServiceCategoryID, m.Name, m.Description, m.UpdatedBy).Scan(&subcategory.ID)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create service subcategory in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, subcategory *entity.ServiceSubcategory) error {
 	m := convert(subcategory)
 	_, err := r.db.Exec(ctx, updateServiceSubcategory, m.ID, m.ServiceCategoryID, m.Name, m.Description, m.UpdatedBy)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update service subcategory in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, subcategories ...*entity.ServiceSubcategory) error {
@@ -50,5 +56,8 @@ func (r *Repository) Delete(ctx context.Context, subcategories ...*entity.Servic
 		return item.ID
 	})
 	_, err := r.db.Exec(ctx, deleteServiceSubcategory, pq.Array(ids))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete service subcategories from db", err)
+	}
+	return nil
 }

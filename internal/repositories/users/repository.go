@@ -31,9 +31,13 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domainErr.ErrUserNotFound.WithError(err)
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get user from db", err)
 	}
-	return m.convert()
+	out, err := m.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert user model", err)
+	}
+	return out, nil
 }
 
 func (r *Repository) Create(ctx context.Context, user *entity.User) error {
@@ -48,7 +52,10 @@ func (r *Repository) Create(ctx context.Context, user *entity.User) error {
 		m.NetworkCode,
 		m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to create user in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Update(ctx context.Context, user *entity.User) error {
@@ -63,7 +70,10 @@ func (r *Repository) Update(ctx context.Context, user *entity.User) error {
 		m.NetworkCode,
 		m.UpdatedBy,
 	)
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to update user in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
@@ -71,24 +81,31 @@ func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
 		return item.Phone
 	})
 	_, err := r.db.Exec(ctx, deleteUser, pq.Array(phones))
-	return err
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete users from db", err)
+	}
+	return nil
 }
 
 func (r *Repository) GetByParams(ctx context.Context, filter query.UserFilter) ([]*entity.User, error) {
 	q, args, err := buildQuery(filter)
 	if err != nil {
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to build query", err)
 	}
 
 	var mm models
 	err = pgxscan.Select(ctx, r.db, &mm, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrUserNotFound.WithError(err)
+			return []*entity.User{}, nil
 		}
-		return nil, err
+		return nil, domainErr.NewInternalError("failed to get users from db", err)
 	}
-	return mm.convert()
+	out, err := mm.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert user models", err)
+	}
+	return out, nil
 }
 
 func buildQuery(filter query.UserFilter) (string, []any, error) {
