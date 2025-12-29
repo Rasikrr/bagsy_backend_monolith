@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS users (
     surname    TEXT,
     point_code TEXT,
     network_code TEXT,
+    active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
     updated_by TEXT NOT NULL DEFAULT 'system',

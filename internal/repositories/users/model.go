@@ -15,6 +15,7 @@ type model struct {
 	Surname     string     `db:"surname"`
 	PointCode   *string    `db:"point_code"`
 	NetworkCode *string    `db:"network_code"`
+	Active      bool       `db:"active"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at"`
@@ -30,6 +31,7 @@ func convert(e *entity.User) model {
 		Surname:     e.Surname,
 		PointCode:   e.PointCode,
 		NetworkCode: e.NetworkCode,
+		Active:      e.Active,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
 		DeletedAt:   e.DeletedAt,
@@ -51,6 +53,7 @@ func (m model) convert() (*entity.User, error) {
 		Surname:     m.Surname,
 		PointCode:   m.PointCode,
 		NetworkCode: m.NetworkCode,
+		Active:      m.Active,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		DeletedAt:   m.DeletedAt,

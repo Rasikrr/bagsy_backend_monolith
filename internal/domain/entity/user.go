@@ -14,6 +14,7 @@ type User struct {
 	Surname     string
 	PointCode   *string
 	NetworkCode *string
+	Active      bool
 	CreatedAt   time.Time
 	UpdatedAt   *time.Time
 	DeletedAt   *time.Time
