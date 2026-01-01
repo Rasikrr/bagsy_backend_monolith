@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	coreCtx "github.com/Rasikrr/core/context"
+	coreHttp "github.com/Rasikrr/core/http"
 	"github.com/Rasikrr/core/log"
 	"github.com/cockroachdb/errors"
 )
@@ -13,8 +15,13 @@ import (
 func HandleError(ctx context.Context, w http.ResponseWriter, err error) {
 	logError(ctx, err)
 
+	traceID, ok := coreCtx.TraceID(ctx)
+	if ok {
+		w.Header().Set(coreHttp.TraceIDHeader, traceID)
+	}
 	resp := toHTTPResponse(err)
-	w.Header().Set("Content-Type", "application/json")
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(resp.Code)
 	bb, _ := json.Marshal(resp)
 	w.Write(bb)

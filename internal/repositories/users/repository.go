@@ -8,7 +8,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
-	"github.com/Rasikrr/core/database"
+	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -17,11 +17,30 @@ import (
 )
 
 type Repository struct {
-	db *database.Postgres
+	db *postgres.Postgres
 }
 
-func NewRepository(db *database.Postgres) *Repository {
+func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
+}
+
+func (r *Repository) Create(ctx context.Context, user *entity.User) error {
+	m := convert(user)
+	_, err := r.db.Exec(ctx, createUser,
+		m.Phone,
+		m.Password,
+		m.Role,
+		m.Name,
+		m.Surname,
+		m.PointCode,
+		m.NetworkCode,
+		m.Active,
+		m.UpdatedBy,
+	)
+	if err != nil {
+		return domainErr.NewInternalError("failed to create user in db", err)
+	}
+	return nil
 }
 
 func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {
@@ -38,53 +57,6 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 		return nil, domainErr.NewInternalError("failed to convert user model", err)
 	}
 	return out, nil
-}
-
-func (r *Repository) Create(ctx context.Context, user *entity.User) error {
-	m := convert(user)
-	_, err := r.db.Exec(ctx, createUser,
-		m.Phone,
-		m.Password,
-		m.Role,
-		m.Name,
-		m.Surname,
-		m.PointCode,
-		m.NetworkCode,
-		m.UpdatedBy,
-	)
-	if err != nil {
-		return domainErr.NewInternalError("failed to create user in db", err)
-	}
-	return nil
-}
-
-func (r *Repository) Update(ctx context.Context, user *entity.User) error {
-	m := convert(user)
-	_, err := r.db.Exec(ctx, updateUser,
-		m.Phone,
-		m.Password,
-		m.Role,
-		m.Name,
-		m.Surname,
-		m.PointCode,
-		m.NetworkCode,
-		m.UpdatedBy,
-	)
-	if err != nil {
-		return domainErr.NewInternalError("failed to update user in db", err)
-	}
-	return nil
-}
-
-func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
-	phones := lo.Map(users, func(item *entity.User, _ int) string {
-		return item.Phone
-	})
-	_, err := r.db.Exec(ctx, deleteUser, pq.Array(phones))
-	if err != nil {
-		return domainErr.NewInternalError("failed to delete users from db", err)
-	}
-	return nil
 }
 
 func (r *Repository) GetByParams(ctx context.Context, filter query.UserFilter) ([]*entity.User, error) {
@@ -108,9 +80,48 @@ func (r *Repository) GetByParams(ctx context.Context, filter query.UserFilter) (
 	return out, nil
 }
 
+func (r *Repository) Update(ctx context.Context, user *entity.User) error {
+	m := convert(user)
+	_, err := r.db.Exec(ctx, updateUser,
+		m.Phone,
+		m.Password,
+		m.Role,
+		m.Name,
+		m.Surname,
+		m.PointCode,
+		m.NetworkCode,
+		m.Active,
+		m.UpdatedBy,
+	)
+	if err != nil {
+		return domainErr.NewInternalError("failed to update user in db", err)
+	}
+	return nil
+}
+
+func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
+	phones := lo.Map(users, func(item *entity.User, _ int) string {
+		return item.Phone
+	})
+	_, err := r.db.Exec(ctx, deleteUser, pq.Array(phones))
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete users from db", err)
+	}
+	return nil
+}
+
+func (r *Repository) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
+	var out bool
+	err := pgxscan.Get(ctx, r.db, &out, existsByPhone, phone)
+	if err != nil {
+		return false, domainErr.NewInternalError("failed to get user from db", err)
+	}
+	return out, nil
+}
+
 func buildQuery(filter query.UserFilter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	builder := psql.Select("phone", "password", "role", "name", "surname", "point_code", "network_code", "created_at", "updated_at", "deleted_at", "updated_by").
+	builder := psql.Select("phone", "password", "role", "name", "surname", "point_code", "network_code", "active", "created_at", "updated_at", "deleted_at", "updated_by").
 		From("users").
 		Where(sq.Eq{"deleted_at": nil})
 

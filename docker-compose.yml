@@ -19,13 +19,5 @@ services:
     ports:
       - "6379:6379"
 
-  nats:
-    image: nats:2.10
-    container_name: bugsy_nats
-    ports:
-      - "4222:4222"
-      - "8222:8222" # HTTP-админка, можно открыть в браузере
-    command: ["-js"] # включаем JetStream
-
 volumes:
   postgres_data:

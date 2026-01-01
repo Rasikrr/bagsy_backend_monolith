@@ -1,47 +1,48 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/httputil"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/session"
-	"github.com/Rasikrr/core/api"
-	coreErr "github.com/Rasikrr/core/errors"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/errors"
+	httputil "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
 
-type AuthMiddleware struct {
-	authService  auth.Service
-	usersService users.Service
+// Определен здесь согласно DIP - интерфейс определяется где используется
+type authService interface {
+	VerifyAccessToken(ctx context.Context, tokenStr string) (*session.Session, error)
 }
 
-func NewAuth(
-	authService auth.Service,
-	usersService users.Service,
-) AuthMiddleware {
+type AuthMiddleware struct {
+	authService authService
+}
+
+func NewAuth(authService authService) AuthMiddleware {
 	return AuthMiddleware{
-		authService:  authService,
-		usersService: usersService,
+		authService: authService,
 	}
 }
 
-// nolint: nonamedreturns
+// Handle базовый middleware для проверки токена
 func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		token, err := httputil.GetAuthHeader(r)
 		if err != nil {
-			api.SendError(w, err)
+			errors.HandleError(ctx, w, err)
 			return
 		}
-		ctx := r.Context()
-		ses, err := a.authService.CheckAccessToken(ctx, token)
+
+		ses, err := a.authService.VerifyAccessToken(ctx, token)
 		if err != nil {
-			api.SendError(w, err)
+			errors.HandleError(ctx, w, err)
 			return
 		}
+		// Устанавливаем сессию в контекст
 		ctx = session.SetSession(ctx, ses)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
@@ -51,34 +52,16 @@ func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return a.Handle(func(w http.ResponseWriter, r *http.Request) {
-			ses, err := session.GetSession(r.Context())
+			ctx := r.Context()
+
+			ses, err := session.GetSession(ctx)
 			if err != nil {
-				api.SendError(w, err)
+				errors.HandleError(ctx, w, err)
 				return
 			}
 
 			if !ses.Role().OneOf(roles...) {
-				api.SendError(w, coreErr.ErrForbidden)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-// RequireMinRole проверяет что пользователь имеет минимальный уровень роли
-func (a *AuthMiddleware) RequireMinRole(minRole enum.Role) func(http.HandlerFunc) http.HandlerFunc {
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return a.Handle(func(w http.ResponseWriter, r *http.Request) {
-			ses, err := session.GetSession(r.Context())
-			if err != nil {
-				api.SendError(w, err)
-				return
-			}
-
-			if ses.Role() < minRole {
-				api.SendError(w, coreErr.ErrForbidden)
+				errors.HandleError(ctx, w, domainErr.NewForbiddenError("insufficient permissions"))
 				return
 			}
 

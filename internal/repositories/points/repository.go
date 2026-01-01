@@ -5,7 +5,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-	"github.com/Rasikrr/core/database"
+	"github.com/Rasikrr/core/database/postgres"
 	"github.com/Rasikrr/core/log"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -15,10 +15,10 @@ import (
 )
 
 type Repository struct {
-	db *database.Postgres
+	db *postgres.Postgres
 }
 
-func NewRepository(db *database.Postgres) *Repository {
+func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
@@ -48,6 +48,28 @@ func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 	return nil
 }
 
+func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
+	var m model
+	err := pgxscan.Get(ctx, r.db, &m, getPointByCode, code)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrPointNotFound.WithError(err)
+		}
+		return nil, domainErr.NewInternalError("failed to get point from db", err)
+	}
+	p := m.convert()
+	return p, nil
+}
+
+func (r *Repository) ExistsByCode(ctx context.Context, code string) (bool, error) {
+	var out bool
+	err := pgxscan.Get(ctx, r.db, &out, existByCode, code)
+	if err != nil {
+		return false, domainErr.NewInternalError("failed to check if point exists by code", err)
+	}
+	return out, nil
+}
+
 func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
 	m, err := convert(point)
 	if err != nil {
@@ -70,19 +92,6 @@ func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
 		return domainErr.NewInternalError("failed to update point in db", err)
 	}
 	return nil
-}
-
-func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
-	var m model
-	err := pgxscan.Get(ctx, r.db, &m, getPointByCode, code)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrPointNotFound.WithError(err)
-		}
-		return nil, domainErr.NewInternalError("failed to get point from db", err)
-	}
-	p := m.convert()
-	return p, nil
 }
 
 func (r *Repository) Delete(ctx context.Context, points ...*entity.Point) error {

@@ -3,23 +3,23 @@ package bagsies
 import (
 	"context"
 
+	"github.com/Rasikrr/core/database/postgres"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/samber/lo"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-	"github.com/Rasikrr/core/database"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 )
 
 type Repository struct {
-	db *database.Postgres
+	db *postgres.Postgres
 }
 
-func NewRepository(db *database.Postgres) *Repository {
+func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 

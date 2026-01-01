@@ -2,32 +2,24 @@ package networks
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
-	"github.com/jackc/pgx/v5"
 )
 
-type Service interface {
+type networksRepository interface {
 	GetByCode(ctx context.Context, code string) (*entity.Network, error)
 }
 
-type service struct {
-	networksRepo networks.Repository
+type Service struct {
+	networksRepo networksRepository
 }
 
-func NewService(repo networks.Repository) Service {
-	return &service{networksRepo: repo}
-}
-
-func (s *service) GetByCode(ctx context.Context, code string) (*entity.Network, error) {
-	network, err := s.networksRepo.GetByCode(ctx, code)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNetworkNotFound
-		}
-		return nil, err
+func NewService(networksRepo networksRepository) *Service {
+	return &Service{
+		networksRepo: networksRepo,
 	}
-	return network, nil
+}
+
+func (s *Service) GetByCode(ctx context.Context, code string) (*entity.Network, error) {
+	return s.networksRepo.GetByCode(ctx, code)
 }

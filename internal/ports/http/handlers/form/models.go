@@ -1,6 +1,9 @@
 package form
 
-import "github.com/Rasikrr/bagsy_backend_monolith/internal/util/validator"
+import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+)
 
 //go:generate easyjson -all models.go
 
@@ -12,6 +15,19 @@ type clientFormRequest struct {
 	Description string `json:"description" validate:"required,max=500"`
 }
 
-func (c *clientFormRequest) validate() error {
-	return validator.GetValidator().Struct(c)
+func (c *clientFormRequest) Validate() error {
+	if err := request.GetValidator().Struct(c); err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (c *clientFormRequest) toEntity() *entity.Form {
+	return &entity.Form{
+		FirstName:   c.FirstName,
+		LastName:    c.LastName,
+		Role:        c.Role,
+		Phone:       c.Phone,
+		Description: c.Description,
+	}
 }

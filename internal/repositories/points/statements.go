@@ -23,3 +23,10 @@ const getPointByCode = `
 const deletePoint = `
 	UPDATE points SET deleted_at = now() WHERE code = ANY($1)
 	`
+
+const existByCode = `
+	SELECT EXISTS (
+	    SELECT 1 
+	    FROM points WHERE code = ANY($1)
+	)
+	`

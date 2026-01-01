@@ -5,7 +5,17 @@ import (
 	"os"
 	"testing"
 
+	domainErrors "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+const (
+	testAPIURL     = "https://7103.api.greenapi.com"
+	testMediaURL   = "https://7103.media.greenapi.com"
+	testInstanceID = "test_id"
+	testAPIToken   = "test_token"
 )
 
 func TestFormatPhoneNumber(t *testing.T) {
@@ -34,23 +44,198 @@ func TestFormatPhoneNumber(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := formatPhoneNumber(tt.phone)
-			if result != tt.expected {
-				t.Errorf("formatPhoneNumber(%q) = %q, want %q", tt.phone, result, tt.expected)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestClient_SendMessage_Validation(t *testing.T) {
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+
+	tests := []struct {
+		name        string
+		phoneNumber string
+		message     string
+		expectedErr error
+	}{
+		{
+			name:        "empty phone number",
+			phoneNumber: "",
+			message:     "Test message",
+			expectedErr: domainErrors.ErrWhatsAppPhoneRequired,
+		},
+		{
+			name:        "empty message",
+			phoneNumber: "77001234567",
+			message:     "",
+			expectedErr: domainErrors.ErrWhatsAppMessageRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := client.SendMessage(context.Background(), tt.phoneNumber, tt.message)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestClient_SendFileByURL_Validation(t *testing.T) {
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+
+	tests := []struct {
+		name        string
+		phoneNumber string
+		fileURL     string
+		expectedErr error
+	}{
+		{
+			name:        "empty phone number",
+			phoneNumber: "",
+			fileURL:     "https://example.com/file.jpg",
+			expectedErr: domainErrors.ErrWhatsAppPhoneRequired,
+		},
+		{
+			name:        "empty file URL",
+			phoneNumber: "77001234567",
+			fileURL:     "",
+			expectedErr: domainErrors.ErrWhatsAppFileRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := client.SendFileByURL(context.Background(), tt.phoneNumber, tt.fileURL, "")
+			require.Error(t, err)
+			assert.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestClient_SendFileByUpload_Validation(t *testing.T) {
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+
+	tests := []struct {
+		name        string
+		phoneNumber string
+		filePath    string
+		expectedErr error
+	}{
+		{
+			name:        "empty phone number",
+			phoneNumber: "",
+			filePath:    "/path/to/file.jpg",
+			expectedErr: domainErrors.ErrWhatsAppPhoneRequired,
+		},
+		{
+			name:        "empty file path",
+			phoneNumber: "77001234567",
+			filePath:    "",
+			expectedErr: domainErrors.ErrWhatsAppFileRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := client.SendFileByUpload(context.Background(), tt.phoneNumber, tt.filePath, "")
+			require.Error(t, err)
+			assert.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestClient_SendLocation_Validation(t *testing.T) {
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+
+	err := client.SendLocation(context.Background(), "", 51.5074, -0.1278, "London")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, domainErrors.ErrWhatsAppPhoneRequired)
+}
+
+func TestClient_SendContact_Validation(t *testing.T) {
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+
+	tests := []struct {
+		name        string
+		phoneNumber string
+		contact     Contact
+		wantErr     bool
+	}{
+		{
+			name:        "empty phone number",
+			phoneNumber: "",
+			contact: Contact{
+				PhoneContact: 77001234567,
+				FirstName:    "John",
+			},
+			wantErr: true,
+		},
+		{
+			name:        "empty contact phone",
+			phoneNumber: "77001234567",
+			contact: Contact{
+				PhoneContact: 0,
+				FirstName:    "John",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := client.SendContact(context.Background(), tt.phoneNumber, tt.contact)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
 }
 
-func TestClient_SendMessage(t *testing.T) {
-	// Этот тест требует реальные credentials для работы
-	// Раскомментируйте и добавьте свои данные для интеграционного теста
+func TestClient_DownloadFile_Validation(t *testing.T) {
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+
+	tests := []struct {
+		name        string
+		chatID      string
+		messageID   string
+		expectedErr string
+	}{
+		{
+			name:        "empty chat ID",
+			chatID:      "",
+			messageID:   "msg123",
+			expectedErr: "chat ID is required",
+		},
+		{
+			name:        "empty message ID",
+			chatID:      "77001234567@c.us",
+			messageID:   "",
+			expectedErr: "message ID is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := client.DownloadFile(context.Background(), tt.chatID, tt.messageID)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.expectedErr)
+		})
+	}
+}
+
+// Integration tests (требуют реальных credentials)
+
+func TestClient_SendMessage_Integration(t *testing.T) {
 	t.Skip("Skip integration test - requires real credentials")
 
 	_ = godotenv.Load()
 
 	apiURL := os.Getenv("WHATSAPP_API_URL")
 	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
-	instanceID := os.Getenv("WHATSAPP_INSTANCE_ID")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
 	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
 	testPhone := os.Getenv("WHATSAPP_TEST_PHONE")
 
@@ -60,26 +245,149 @@ func TestClient_SendMessage(t *testing.T) {
 
 	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
 
-	err := client.SendMessage(context.Background(), testPhone, "Test message")
-	if err != nil {
-		t.Errorf("SendMessage() error = %v", err)
-	}
+	err := client.SendMessage(context.Background(), testPhone, "Test message from automated test")
+	require.NoError(t, err)
 }
 
-func TestClient_SendMessage_EmptyPhone(t *testing.T) {
-	client := NewClient("https://7105.api.greenapi.com", "https://7105.media.greenapi.com", "test_id", "test_token")
+func TestClient_SendFileByURL_Integration(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 
-	err := client.SendMessage(context.Background(), "", "Test message")
-	if err == nil {
-		t.Error("SendMessage() expected error for empty phone, got nil")
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("WHATSAPP_API_URL")
+	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
+	testPhone := os.Getenv("WHATSAPP_TEST_PHONE")
+
+	if apiURL == "" || mediaURL == "" || instanceID == "" || apiToken == "" || testPhone == "" {
+		t.Skip("Skip integration test - missing environment variables")
 	}
+
+	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
+
+	// Example image URL
+	imageURL := "https://avatars.githubusercontent.com/u/1?v=4"
+	err := client.SendFileByURL(context.Background(), testPhone, imageURL, "Test image caption")
+	require.NoError(t, err)
 }
 
-func TestClient_SendMessage_EmptyMessage(t *testing.T) {
-	client := NewClient("https://7105.api.greenapi.com", "https://7105.media.greenapi.com", "test_id", "test_token")
+func TestClient_SendLocation_Integration(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 
-	err := client.SendMessage(context.Background(), "77001234567", "")
-	if err == nil {
-		t.Error("SendMessage() expected error for empty message, got nil")
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("WHATSAPP_API_URL")
+	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
+	testPhone := os.Getenv("WHATSAPP_TEST_PHONE")
+
+	if apiURL == "" || mediaURL == "" || instanceID == "" || apiToken == "" || testPhone == "" {
+		t.Skip("Skip integration test - missing environment variables")
 	}
+
+	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
+
+	// London coordinates
+	err := client.SendLocation(context.Background(), testPhone, 51.5074, -0.1278, "London")
+	require.NoError(t, err)
+}
+
+func TestClient_SendContact_Integration(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
+
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("WHATSAPP_API_URL")
+	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
+	testPhone := os.Getenv("WHATSAPP_TEST_PHONE")
+
+	if apiURL == "" || mediaURL == "" || instanceID == "" || apiToken == "" || testPhone == "" {
+		t.Skip("Skip integration test - missing environment variables")
+	}
+
+	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
+
+	contact := Contact{
+		PhoneContact: 77001234567,
+		FirstName:    "John",
+		LastName:     "Doe",
+		Company:      "Test Company",
+	}
+
+	err := client.SendContact(context.Background(), testPhone, contact)
+	require.NoError(t, err)
+}
+
+func TestClient_GetStateInstance_Integration(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
+
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("WHATSAPP_API_URL")
+	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
+
+	if apiURL == "" || mediaURL == "" || instanceID == "" || apiToken == "" {
+		t.Skip("Skip integration test - missing environment variables")
+	}
+
+	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
+
+	state, err := client.GetStateInstance(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, state)
+	assert.NotEmpty(t, state.StateInstance)
+	t.Logf("Instance state: %s", state.StateInstance)
+}
+
+func TestClient_GetSettings_Integration(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
+
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("WHATSAPP_API_URL")
+	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
+
+	if apiURL == "" || mediaURL == "" || instanceID == "" || apiToken == "" {
+		t.Skip("Skip integration test - missing environment variables")
+	}
+
+	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
+
+	settings, err := client.GetSettings(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, settings)
+	t.Logf("Settings: %+v", settings)
+}
+
+func TestClient_SetSettings_Integration(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
+
+	_ = godotenv.Load()
+
+	apiURL := os.Getenv("WHATSAPP_API_URL")
+	mediaURL := os.Getenv("WHATSAPP_MEDIA_URL")
+	instanceID := os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	apiToken := os.Getenv("WHATSAPP_API_TOKEN")
+
+	if apiURL == "" || mediaURL == "" || instanceID == "" || apiToken == "" {
+		t.Skip("Skip integration test - missing environment variables")
+	}
+
+	client := NewClient(apiURL, mediaURL, instanceID, apiToken)
+
+	settings := Settings{
+		IncomingWebhook: true,
+		OutgoingWebhook: true,
+	}
+
+	err := client.SetSettings(context.Background(), settings)
+	require.NoError(t, err)
 }

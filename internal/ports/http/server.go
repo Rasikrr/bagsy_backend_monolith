@@ -2,28 +2,19 @@
 package http
 
 import (
-	"context"
-
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/points"
-	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
+	"github.com/Rasikrr/core/environment"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/cors"
 
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/form"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/users"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
-	bagsiesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
-	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/enum"
 	coreHttp "github.com/Rasikrr/core/http"
-	"github.com/Rasikrr/core/log"
-	"github.com/Rasikrr/core/version"
 )
 
 // @title Bagsy API
@@ -45,34 +36,27 @@ import (
 func NewServer(
 	server *coreHttp.Server,
 	swaggerHost, swaggerScheme string,
-	authService authS.Service,
-	formsService forms.Service,
-	usersService usersS.Service,
-	bagsiesService bagsiesS.Service,
-	pointsService pointsS.Service,
+	authService *authS.Service,
+	formsService *forms.Service,
 ) {
-	authMiddleware := middlewares.NewAuth(authService, usersService)
+	authMiddleware := middlewares.NewAuth(authService)
 
-	usersController := users.NewController(usersService, authMiddleware)
-	authController := auth.New(authService, usersService, authMiddleware)
-	formsController := form.NewController(formsService)
-	bagsiesController := bagsies.New(bagsiesService, authService, usersService, authMiddleware)
-	pointsController := points.NewController(pointsService)
+	authController := auth.New(authService, authMiddleware)
+	formsController := form.New(formsService)
 
 	server.WithMiddlewares(initCORSMiddleware())
-	server.WithControllers(authController, formsController, bagsiesController, usersController, pointsController)
+	server.WithControllers(authController, formsController)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
 }
 
 func initSwagger(server *coreHttp.Server, swaggerHost, swaggerScheme string) {
-	if version.GetVersion() != enum.EnvironmentProd {
+	if environment.GetEnv() != enum.EnvironmentProd {
 		docs.SwaggerInfo.Host = swaggerHost
 		docs.SwaggerInfo.Schemes = []string{swaggerScheme}
 		server.WithControllers(swagger.New(swaggerScheme, swaggerHost))
 		return
 	}
-	log.Warn(context.Background(), "version is not supported", log.String("version", version.GetVersion().String()))
 }
 
 func initCORSMiddleware() coreHttp.Middleware {
@@ -86,6 +70,7 @@ func initCORSMiddleware() coreHttp.Middleware {
 				"Accept-Encoding",
 				"X-CSRF-Token",
 				"Authorization",
+				coreHttp.TraceIDHeader,
 			},
 			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedOrigins: []string{"*"},

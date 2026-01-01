@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
-	"github.com/cockroachdb/errors"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/google/uuid"
 )
 
@@ -68,7 +68,7 @@ func GetSession(ctx context.Context) (*Session, error) {
 	if session, ok := ctx.Value(sessionKey{}).(*Session); ok {
 		return session, nil
 	}
-	return nil, errors.New("session not found")
+	return nil, domainErr.NewUnauthorizedError("session not found")
 }
 
 func SetSession(ctx context.Context, session *Session) context.Context {

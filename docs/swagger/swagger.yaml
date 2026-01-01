@@ -1,19 +1,16 @@
 definitions:
-  api.EmptySuccessResponse:
-    properties:
-      message:
-        type: string
-    type: object
-  api.ErrorResponse:
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse:
     properties:
       code:
         type: integer
+      details:
+        additionalProperties: {}
+        type: object
       message:
         type: string
     type: object
-  api.SuccessResponse:
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse:
     properties:
-      data: {}
       message:
         type: string
     type: object
@@ -36,6 +33,11 @@ definitions:
       refresh_token:
         type: string
     type: object
+  internal_ports_http_handlers_auth.refreshTokensRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.refreshTokensResponse:
     properties:
       access_token:
@@ -45,69 +47,30 @@ definitions:
     type: object
   internal_ports_http_handlers_auth.registerConfirmRequest:
     properties:
+      name:
+        minLength: 2
+        type: string
       password:
         type: string
-      phone:
-        maxLength: 15
-        minLength: 10
-        type: string
-    required:
-    - phone
-    type: object
-  internal_ports_http_handlers_auth.registerRequest:
-    properties:
-      name:
-        maxLength: 50
-        minLength: 2
-        type: string
-      phone:
-        maxLength: 15
-        minLength: 10
-        type: string
-      point_code:
-        type: string
-      role:
-        type: string
       surname:
-        maxLength: 50
         minLength: 2
+        type: string
+      token:
         type: string
     required:
     - name
-    - phone
+    - password
     - surname
+    - token
     type: object
-  internal_ports_http_handlers_bagsies.confirmBagsyRequest:
+  internal_ports_http_handlers_auth.registerConfirmResponse:
     properties:
-      phone:
+      access_token:
         type: string
-      service_name:
+      refresh_token:
         type: string
     type: object
-  internal_ports_http_handlers_bagsies.createBagsyRequest:
-    properties:
-      description:
-        type: string
-      end_at:
-        type: string
-      first_name:
-        type: string
-      last_name:
-        type: string
-      phone:
-        type: string
-      provider:
-        $ref: '#/definitions/internal_ports_http_handlers_bagsies.provider'
-      service:
-        type: string
-      start_at:
-        type: string
-    required:
-    - end_at
-    - provider
-    - start_at
-    type: object
-  internal_ports_http_handlers_bagsies.provider:
+  internal_ports_http_handlers_auth.registerStaffRequest:
     properties:
       phone:
         maxLength: 15
@@ -143,45 +106,6 @@ definitions:
     - phone
     - role
     type: object
-  internal_ports_http_handlers_users.updateRequest:
-    properties:
-      name:
-        type: string
-      password:
-        type: string
-      surname:
-        type: string
-    type: object
-  internal_ports_http_handlers_users.userListResponse:
-    properties:
-      users:
-        items:
-          $ref: '#/definitions/internal_ports_http_handlers_users.userResponse'
-        type: array
-    type: object
-  internal_ports_http_handlers_users.userResponse:
-    properties:
-      active:
-        type: boolean
-      created_at:
-        type: string
-      name:
-        type: string
-      network_code:
-        type: string
-      phone:
-        type: string
-      point_code:
-        type: string
-      role:
-        type: string
-      surname:
-        type: string
-      updated_at:
-        type: string
-      updated_by:
-        type: string
-    type: object
 host: localhost:8080
 info:
   contact:
@@ -213,24 +137,19 @@ paths:
         "200":
           description: Успешная авторизация
           schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
-              type: object
+            $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
         "400":
           description: Неверные данные
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "401":
           description: Неверный логин или пароль
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
       summary: Авторизация пользователя
       tags:
       - auth
@@ -241,74 +160,71 @@ paths:
       description: Обновляет токены авторизации
       parameters:
       - description: Токен авторизации
-        in: header
-        name: Authorization
+        in: body
+        name: request
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Токены авторизации успешно обновлены
           schema:
-            allOf:
-            - $ref: '#/definitions/api.EmptySuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse'
-              type: object
+            $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse'
         "400":
           description: Неверный токен
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
       summary: Обновление токенов авторизации
       tags:
       - auth
-  /api/v1/auth/register:
+  /api/v1/auth/staff/register:
     post:
       consumes:
       - application/json
-      description: Создает нового пользователя в системе
+      description: Создает нового пользователя (работника) привязанного к точке. Менеджер
+        точки может создавать только в своей точке, менеджер сети - в любой точке
+        своей сети.
       parameters:
       - description: Данные для регистрации
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_ports_http_handlers_auth.registerRequest'
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerStaffRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.EmptySuccessResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
         "400":
-          description: Bad Request
+          description: Неверный формат запроса
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для создания работника в указанной точке
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Регистрация пользователя
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Регистрация работника на точке
       tags:
       - auth
-  /api/v1/auth/register/confirm:
+  /api/v1/auth/staff/register/confirm:
     post:
       consumes:
       - application/json
-      description: Подтверждает регистрацию пользователя и устанавливает пароль
+      description: Подтверждает регистрацию пользователя(работника)
       parameters:
-      - description: Токен подтверждения регистрации
-        in: header
-        name: Authorization
-        required: true
-        type: string
       - description: Данные для подтверждения
         in: body
         name: request
@@ -321,88 +237,22 @@ paths:
         "200":
           description: Регистрация успешно подтверждена
           schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
-              type: object
+            $ref: '#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse'
         "400":
           description: Неверные данные
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "401":
           description: Неверный или просроченный токен
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "500":
           description: Внутренняя ошибка сервера
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Подтверждение регистрации
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Подтверждение регистрации работника
       tags:
       - auth
-  /api/v1/bagsies:
-    post:
-      consumes:
-      - application/json
-      description: Отправляет код подтверждения для подтверждения записи к мастеру
-        на whatsapp
-      parameters:
-      - description: Данные о услуге и юзере
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.EmptySuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Отправить код подтверждения для подтверждения записи
-      tags:
-      - bagsies
-  /api/v1/bagsies/confirm:
-    post:
-      consumes:
-      - application/json
-      description: Создает запись к мастеру с определенным кодом точки
-      parameters:
-      - description: Данные для создания записи
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.EmptySuccessResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Создание записи
-      tags:
-      - bagsies
   /api/v1/forms:
     post:
       consumes:
@@ -421,200 +271,14 @@ paths:
         "200":
           description: Успешное создание заявки
           schema:
-            $ref: '#/definitions/api.EmptySuccessResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
         "500":
           description: ошибка
           schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Отправка формы для соотрдничества
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Отправка формы для сотрудничества
       tags:
       - forms
-  /api/v1/users:
-    get:
-      description: Возвращает информацию о пользователе по его номеру телефона
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Информация о пользователе
-          schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_users.userResponse'
-              type: object
-        "400":
-          description: Неверный формат данных
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Пользователь не найден
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Получение пользователя по номеру телефона из сессии
-      tags:
-      - users
-    put:
-      consumes:
-      - application/json
-      description: Обновляет имя, фамилию или пароль пользователя по номеру телефона
-      parameters:
-      - description: Номер телефона пользователя
-        in: path
-        name: phone
-        required: true
-        type: string
-      - description: Данные для обновления
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_ports_http_handlers_users.updateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Пользователь успешно обновлен
-          schema:
-            $ref: '#/definitions/api.EmptySuccessResponse'
-        "400":
-          description: Неверный формат данных
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Пользователь не найден
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Обновление данных пользователя
-      tags:
-      - users
-  /api/v1/users/admin/network/{network_code}:
-    get:
-      description: Возвращает пользователй по сети
-      parameters:
-      - description: код сети
-        in: path
-        name: network_code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Информация о пользователях
-          schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_users.userListResponse'
-              type: object
-        "400":
-          description: Неверный формат данных
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Пользователи не найден
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Получение пользователей по сети
-      tags:
-      - users_admin
-  /api/v1/users/admin/phone/{phone}:
-    get:
-      description: Возвращает информацию о пользователе по его номеру телефона
-      parameters:
-      - description: Номер телефона пользователя
-        in: path
-        name: phone
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Информация о пользователе
-          schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_users.userResponse'
-              type: object
-        "400":
-          description: Неверный формат данных
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Пользователь не найден
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Получение пользователя по номеру телефона
-      tags:
-      - users_admin
-  /api/v1/users/admin/point/{point_code}:
-    get:
-      description: Возвращает пользователй по точке
-      parameters:
-      - description: код точки
-        in: path
-        name: point_code
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Информация о пользователях
-          schema:
-            allOf:
-            - $ref: '#/definitions/api.SuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_ports_http_handlers_users.userListResponse'
-              type: object
-        "400":
-          description: Неверный формат данных
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "404":
-          description: Пользователи не найден
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-        "500":
-          description: Внутренняя ошибка сервера
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Получение пользователей по точке
-      tags:
-      - users_admin
 securityDefinitions:
   ApiKeyAuth:
     in: header

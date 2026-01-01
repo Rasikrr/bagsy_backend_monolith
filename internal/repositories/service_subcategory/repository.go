@@ -5,7 +5,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-	"github.com/Rasikrr/core/database"
+	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -14,10 +14,10 @@ import (
 )
 
 type Repository struct {
-	db *database.Postgres
+	db *postgres.Postgres
 }
 
-func NewRepository(db *database.Postgres) *Repository {
+func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 

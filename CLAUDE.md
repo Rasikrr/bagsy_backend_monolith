@@ -1,7 +1,12 @@
+
+
+Ты — ведущий Backend-разработчик проекта Bagsy. 
+Твоя цель — писать поддерживаемый, типобезопасный код на Go, следуя принципам Clean Architecture
+
 # Руководство по разработке Bagsy
 
 **Язык:** Go 1.23+ | **Архитектура:** Clean Architecture | **БД:** PostgreSQL (pgx/v5) | **Router:** chi/v5
-**Core пакет:** `/home/rassulturtulov/Desktop/Programming/core`
+**Core пакет:** `/home/rassulturtulov/Desktop/Programming/core`. Ссылка на репозиторий: `https://github.com/Rasikrr/core`
 
 **Важные файлы:** `./notion_doc.pdf`, `./Makefile`, `./docs/swagger/`, `./.env.example`
 
@@ -19,7 +24,7 @@ HTTP Handlers → Services → Repositories → Domain
 - Services импортируют HTTP handlers
 - Domain entities содержат db-теги
 
-### DIP: Интерфейсы определяются где используются, НЕ где реализуются
+### DIP: Интерфейсы определяются где используются, ни где реализуются
 
 **❌ НЕПРАВИЛЬНО:**
 ```go
@@ -30,7 +35,7 @@ type repository struct { ... }
 
 **✅ ПРАВИЛЬНО:**
 ```go
-// services/users/service.go
+// services/users/Service.go
 type UserRepository interface { GetByPhone(...) }
 type Service struct { repo UserRepository }
 
@@ -173,7 +178,7 @@ func buildQuery(filter query.UserFilter) (string, []any, error) {
 ### Service (`internal/services/`)
 ```
 services/users/
-├── service.go  # БЕЗ интерфейса Service!
+├── Service.go  # БЕЗ интерфейса Service!
 └── models.go   # Опционально
 ```
 
@@ -381,7 +386,7 @@ if err != nil && !domainErr.IsNotFound(err) {
 
 **Handler:** Преобразуем в HTTP
 ```go
-user, err := h.service.GetByPhone(ctx, phone)
+user, err := h.Service.GetByPhone(ctx, phone)
 if err != nil {
     errors.HandleError(ctx, w, err)  // Автоматический маппинг
     return
@@ -442,7 +447,7 @@ func InitApp(ctx context.Context) (*App, error) {
     // Repositories (конкретные типы)
     usersRepo := usersRepo.NewRepository(db)
 
-    // Services (конкретные типы, удовлетворяют интерфейсам из service)
+    // Services (конкретные типы, удовлетворяют интерфейсам из Service)
     userSvc := usersService.NewService(usersRepo, txManager)
     authSvc := authService.NewService(usersRepo, redis, jwt)
 
@@ -460,7 +465,7 @@ func InitApp(ctx context.Context) (*App, error) {
 
 ## 6. СОГЛАШЕНИЯ
 
-**Файлы:** `snake_case.go`, стандартные: `repository.go`, `service.go`, `router.go`, `model.go`, `statements.go`
+**Файлы:** `snake_case.go`, стандартные: `repository.go`, `Service.go`, `router.go`, `model.go`, `statements.go`
 
 **Пакеты:** lowercase, множественное число: `users`, `points`, `bagsies`
 ❌ `users.UserService` → ✅ `users.Service`
@@ -502,7 +507,7 @@ make migrate-up    # Применить миграции
 - [ ] Миграции применены
 - [ ] Интерфейсы определены где используются (Service НЕ определяет для себя, Handler определяет минимальный)
 - [ ] DB модели ≠ domain entities
-- [ ] Инфраструктурные ошибки → доменные (repo), пробрасываются (service), → HTTP (handler через `errors.HandleError`)
+- [ ] Инфраструктурные ошибки → доменные (repo), пробрасываются (Service), → HTTP (handler через `errors.HandleError`)
 - [ ] Транзакции через `database.TXOptions`
 - [ ] SQL в `statements.go`, soft delete
 - [ ] Swagger добавлен → `make swagger`
