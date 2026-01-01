@@ -11,6 +11,7 @@ import (
 	"github.com/Rasikrr/core/log"
 )
 
+// nolint: errcheck
 func SendData(ctx context.Context, w http.ResponseWriter, data interface{}, status int) {
 	traceID, ok := coreCtx.TraceID(ctx)
 	if ok {

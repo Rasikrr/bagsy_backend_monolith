@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
@@ -30,8 +29,7 @@ type pointsService interface {
 }
 
 type notificationService interface {
-	SendWhatsApp(ctx context.Context, phone, message string) error
-	SendSMS(ctx context.Context, phone, message string) error
+	SendRegistrationLink(ctx context.Context, phone, token string) error
 }
 
 type tokenManager interface {
@@ -76,7 +74,6 @@ type Service struct {
 	accessTTL              time.Duration
 	refreshTTL             time.Duration
 	registrationTTL        time.Duration
-	registrationConfirmURL string
 }
 
 func NewService(
@@ -90,7 +87,6 @@ func NewService(
 	accessTTL time.Duration,
 	refreshTTL time.Duration,
 	registrationTTL time.Duration,
-	registrationConfirmURL string,
 ) *Service {
 	return &Service{
 		txManager:              txManager,
@@ -103,7 +99,6 @@ func NewService(
 		accessTTL:              accessTTL,
 		refreshTTL:             refreshTTL,
 		registrationTTL:        registrationTTL,
-		registrationConfirmURL: registrationConfirmURL,
 	}
 }
 
@@ -171,17 +166,9 @@ func (s *Service) RegisterStaff(ctx context.Context, phone, pointCode string) er
 		return domainErr.NewInternalError("failed to generate registration token", err)
 	}
 
-	// 4. Формируем ссылку для подтверждения
-	link := fmt.Sprintf("%s?token=%s", s.registrationConfirmURL, token)
-
-	// 5. Отправляем уведомление (WhatsApp с fallback на SMS)
-	message := fmt.Sprintf("Добро пожаловать в Bagsy! Завершите регистрацию по ссылке: %s", link)
-
-	if err := s.notificationService.SendWhatsApp(ctx, phone, message); err != nil {
-		// Fallback на SMS если WhatsApp недоступен
-		if err := s.notificationService.SendSMS(ctx, phone, message); err != nil {
-			return err
-		}
+	// 4. Отправляем уведомление (WhatsApp с fallback на SMS)
+	if err := s.notificationService.SendRegistrationLink(ctx, phone, token); err != nil {
+		return err
 	}
 	return nil
 }

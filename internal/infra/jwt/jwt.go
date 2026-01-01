@@ -60,7 +60,7 @@ func (t *TokenManager) ParseAccessToken(accessToken string) (*dto.AccessTokenPay
 				return nil, ErrInvalidSignature
 			}
 		}
-		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
 	}
 	if !token.Valid {
 		return nil, ErrTokenNotValid
@@ -154,7 +154,7 @@ func (t *TokenManager) ParseRegistrationToken(tokenString string) (*dto.Registra
 				return nil, ErrInvalidSignature
 			}
 		}
-		return nil, fmt.Errorf("%w: %v", ErrInvalidRegistrationToken, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidRegistrationToken, err)
 	}
 	if !token.Valid {
 		return nil, ErrInvalidRegistrationToken

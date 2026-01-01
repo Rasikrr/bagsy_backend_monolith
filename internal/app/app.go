@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 
@@ -24,6 +27,9 @@ import (
 type App struct {
 	application.App
 
+	smsClient      *sms.Client
+	whatsappClient *whatsapp.Client
+
 	tokensCache *tokens.Cache
 
 	usersRepo    *usersR.Repository
@@ -31,34 +37,14 @@ type App struct {
 	networksRepo *networksR.Repository
 	formsRepo    *formsR.Repository
 
-	usersService    *usersS.Service
-	pointsService   *pointsS.Service
-	networksService *networksS.Service
-	authService     *authS.Service
-	formsService    *formsS.Service
+	usersService         *usersS.Service
+	pointsService        *pointsS.Service
+	networksService      *networksS.Service
+	authService          *authS.Service
+	formsService         *formsS.Service
+	notificationsService *notifications.Service
 
 	tokenManager *jwt.TokenManager
-
-	//smsCache          smsC.Cache
-	//authCache         authC.Cache
-	//bagsiesCodeCache authC.Cache
-	//
-	//smsClient      sms.Client
-	//tgClient       telegram.Client
-	//whatsAppClient whatsapp.Client
-	//
-	//usersRepo    usersR.Repository
-	//bagsiesRepo  bagsiesR.Repository
-	//formsRepo    formsR.Repository
-	//pointsRepo   pointsR.Repository
-	//networksRepo networksR.Repository
-	//
-	//authService     authS.Service
-	//formsService    formsS.Service
-	//usersService    usersS.Service
-	//pointsService   pointsS.Service
-	//bagsiesService  bagsiesS.Service
-	//networksService networksS.Service
 }
 
 func InitApp(ctx context.Context) *App {
@@ -148,25 +134,58 @@ func (a *App) initServices(_ context.Context) error {
 	a.networksService = networksS.NewService(a.networksRepo)
 	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService)
 	a.formsService = formsS.NewService(a.formsRepo)
+	a.notificationsService = notifications.NewService(a.smsClient, a.whatsappClient, registerConfirmationURL)
 
 	a.authService = authS.NewService(
 		a.PostgresTXManager(),
 		a.usersService,
 		a.pointsService,
-		nil,
+		a.notificationsService,
 		a.tokenManager,
 		a.tokensCache,
 		a.tokensCache,
 		accessTokenTTL,
 		refreshTokenTTL,
 		registrationTokenTTL,
-		registerConfirmationURL,
 	)
 
 	return nil
 }
 
 func (a *App) initClients(_ context.Context) error {
+	smsLogin, err := a.Config().Variables.GetString(appenv.SMSClientLogin)
+	if err != nil {
+		return err
+	}
+	smsPassword, err := a.Config().Variables.GetString(appenv.SMSClientPassword)
+	if err != nil {
+		return err
+	}
+	a.smsClient = sms.NewClient(smsLogin, smsPassword)
+
+	whatsappAPIURL, err := a.Config().Variables.GetString(appenv.WhatsAppAPIURL)
+	if err != nil {
+		return err
+	}
+	whatsappAPIMediaURL, err := a.Config().Variables.GetString(appenv.WhatsAppMediaURL)
+	if err != nil {
+		return err
+	}
+	whatsappAPIIDInstance, err := a.Config().Variables.GetString(appenv.WhatsAppIDInstance)
+	if err != nil {
+		return err
+	}
+	whatsappAPIToken, err := a.Config().Variables.GetString(appenv.WhatsAppAPIToken)
+	if err != nil {
+		return err
+	}
+
+	a.whatsappClient = whatsapp.NewClient(
+		whatsappAPIURL,
+		whatsappAPIMediaURL,
+		whatsappAPIIDInstance,
+		whatsappAPIToken,
+	)
 	return nil
 }
 

@@ -1,148 +1,186 @@
 package sms
 
-//import (
-//	"bytes"
-//	"context"
-//	"encoding/json"
-//	"fmt"
-//	"io"
-//	"net/http"
-//	"strconv"
-//	"time"
-//
-//	"github.com/avast/retry-go"
-//)
-//
-//const (
-//	sendSMSURL     = "https://smsc.kz/rest/send/"
-//	checkStatusURL = "https://smsc.kz/sys/status.php"
-//)
-//
-//type Client interface {
-//	Send(ctx context.Context, phone, message string) error
-//}
-//
-//type client struct {
-//	login        string
-//	password     string
-//	smsSpamCache sms.Cache
-//	httpc        *http.Client
-//}
-//
-//func NewClient(login, password string, cache sms.Cache) Client {
-//	return &client{
-//		login:    login,
-//		password: password,
-//		httpc: &http.Client{
-//			Timeout: 10 * time.Second,
-//		},
-//		smsSpamCache: cache,
-//	}
-//}
-//
-//func (c *client) Send(ctx context.Context, phone, message string) error {
-//	if message == "" {
-//		return errEmptyMessage
-//	}
-//	if len(phone) == 0 {
-//		return errEmptyPhones
-//	}
-//
-//	spam, err := c.smsSpamCache.IsSpam(ctx, phone, message)
-//	if err != nil {
-//		return fmt.Errorf("sms spam cache: %w", err)
-//	}
-//	if spam {
-//		return errSpam
-//	}
-//
-//	reqBody := createRequestBody(c.login, c.password, message, phone)
-//	resp, err := c.sendWithRetry(ctx, reqBody)
-//	if err != nil {
-//		return err
-//	}
-//	if err = resp.getError(); err != nil {
-//		return err
-//	}
-//	status, err := c.getStatus(ctx, phone, resp.MessageID)
-//	if err != nil {
-//		return err
-//	}
-//	if status.OneOf(errSmsStatuses...) {
-//		return fmt.Errorf("%w: status: %d", errCheckStatus, status)
-//	}
-//	return c.smsSpamCache.Set(ctx, phone, message)
-//}
-//
-//func (c *client) sendWithRetry(ctx context.Context, reqBody request) (*response, error) {
-//	bb, err := json.Marshal(reqBody)
-//	if err != nil {
-//		return nil, fmt.Errorf("marshal request: %w", err)
-//	}
-//
-//	var resp *http.Response
-//	err = retry.Do(func() error {
-//		var req *http.Request
-//		req, err = http.NewRequestWithContext(ctx, http.MethodPost, sendSMSURL, bytes.NewReader(bb))
-//		if err != nil {
-//			return fmt.Errorf("build request: %w", err)
-//		}
-//		req.Header.Set("Content-Type", "application/json")
-//
-//		resp, err = c.httpc.Do(req)
-//		if err != nil {
-//			return fmt.Errorf("send request: %w", err)
-//		}
-//		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-//			b, _ := io.ReadAll(resp.Body)
-//			_ = resp.Body.Close()
-//			return fmt.Errorf("bad status %d: %s", resp.StatusCode, string(b))
-//		}
-//		return nil
-//	}, retry.Attempts(3), retry.Delay(500*time.Millisecond))
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	defer resp.Body.Close()
-//	respBody, _ := io.ReadAll(resp.Body)
-//	var sendResp response
-//	if err = json.Unmarshal(respBody, &sendResp); err != nil {
-//		return nil, fmt.Errorf("unmarshal response: %w; body=%q", err, string(respBody))
-//	}
-//	return &sendResp, nil
-//}
-//
-//func (c *client) getStatus(ctx context.Context, phone string, messageID int) (smsStatus, error) {
-//	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checkStatusURL, nil)
-//	if err != nil {
-//		return smsStatusNotFound, fmt.Errorf("build request: %w", err)
-//	}
-//
-//	q := req.URL.Query()
-//	q.Add("login", c.login)
-//	q.Add("psw", c.password)
-//	q.Add("phone", phone)
-//	q.Add("charset", "utf-8")
-//	q.Add("fmt", strconv.Itoa(int(responseFormatJSON)))
-//	q.Add("id", strconv.Itoa(messageID))
-//
-//	req.URL.RawQuery = q.Encode()
-//
-//	resp, err := c.httpc.Do(req)
-//	if err != nil {
-//		return smsStatusNotFound, fmt.Errorf("send request: %w", err)
-//	}
-//	defer func() {
-//		if resp != nil {
-//			_ = resp.Body.Close()
-//		}
-//	}()
-//	respBody, _ := io.ReadAll(resp.Body)
-//
-//	var statusResp response
-//	if err = json.Unmarshal(respBody, &statusResp); err != nil {
-//		return smsStatusNotFound, fmt.Errorf("unmarshal response: %w", err)
-//	}
-//	return statusResp.Status, nil
-//}
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
+
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/avast/retry-go"
+)
+
+const (
+	sendSMSURL     = "https://smsc.kz/rest/send/"
+	checkStatusURL = "https://smsc.kz/sys/status.php"
+	defaultCharset = "utf-8"
+)
+
+type Client struct {
+	login      string
+	password   string
+	httpClient *http.Client
+}
+
+// NewClient создает новый экземпляр клиента SMSC.KZ
+func NewClient(login, password string) *Client {
+	return &Client{
+		login:    login,
+		password: password,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+	}
+}
+
+// Send отправляет SMS на указанный номер телефона
+func (c *Client) Send(ctx context.Context, phone, message string) error {
+	if message == "" {
+		return domainErr.ErrSMSEmptyMessage
+	}
+	if phone == "" {
+		return domainErr.ErrSMSEmptyPhone
+	}
+
+	req := sendRequest{
+		Login:    c.login,
+		Password: c.password,
+		Phones:   phone,
+		Message:  message,
+		Format:   ResponseFormatJSON,
+		Charset:  defaultCharset,
+	}
+
+	resp, err := c.sendWithRetry(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	if resp.HasError() {
+		return resp.GetError()
+	}
+
+	return nil
+}
+
+// SendWithOptions отправляет SMS с дополнительными параметрами
+func (c *Client) sendWithRetry(ctx context.Context, req sendRequest) (*sendResponse, error) {
+	var resp *sendResponse
+	err := retry.Do(func() error {
+		r, err := c.sendRequest(ctx, req)
+		if err != nil {
+			return err
+		}
+		resp = r
+		return nil
+	},
+		retry.Attempts(3),
+		retry.Delay(500*time.Millisecond),
+		retry.DelayType(retry.BackOffDelay),
+		retry.Context(ctx),
+	)
+
+	if err != nil {
+		return nil, domainErr.ErrSMSSendFailed.WithError(err)
+	}
+
+	return resp, nil
+}
+
+// sendRequest выполняет HTTP запрос на отправку SMS
+func (c *Client) sendRequest(ctx context.Context, reqBody sendRequest) (*sendResponse, error) {
+	payload, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to marshal SMS request", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, sendSMSURL, bytes.NewReader(payload))
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to create SMS request", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+	httpResp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to send SMS request", err)
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		body, _ := io.ReadAll(httpResp.Body)
+		return nil, domainErr.NewInternalError("unexpected SMS API status code", nil).
+			WithDetail("status_code", httpResp.StatusCode).
+			WithDetail("body", string(body))
+	}
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to read SMS response body", err)
+	}
+
+	var resp sendResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, domainErr.NewInternalError("failed to unmarshal SMS response", err).
+			WithDetail("body", string(body))
+	}
+
+	return &resp, nil
+}
+
+// GetStatus проверяет статус отправленного SMS
+func (c *Client) GetStatus(ctx context.Context, phone string, messageID int) (*statusResponse, error) {
+	if phone == "" {
+		return nil, domainErr.ErrSMSEmptyPhone
+	}
+	if messageID == 0 {
+		return nil, domainErr.NewInvalidInputError("invalid message ID", nil)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checkStatusURL, nil)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to create status request", err)
+	}
+
+	q := req.URL.Query()
+	q.Add("login", c.login)
+	q.Add("psw", c.password)
+	q.Add("phone", phone)
+	q.Add("id", fmt.Sprintf("%d", messageID))
+	q.Add("fmt", "3") // JSON format
+	q.Add("charset", defaultCharset)
+	req.URL.RawQuery = q.Encode()
+
+	httpResp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to send status request", err)
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		body, _ := io.ReadAll(httpResp.Body)
+		return nil, domainErr.NewInternalError("unexpected status API response code", nil).
+			WithDetail("status_code", httpResp.StatusCode).
+			WithDetail("body", string(body))
+	}
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to read status response body", err)
+	}
+
+	var resp statusResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, domainErr.NewInternalError("failed to unmarshal status response", err).
+			WithDetail("body", string(body))
+	}
+
+	if resp.HasError() {
+		return nil, resp.GetError()
+	}
+
+	return &resp, nil
+}

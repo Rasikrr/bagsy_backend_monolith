@@ -5,18 +5,27 @@ import (
 	"os"
 	"testing"
 
-	domainErrors "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	testAPIURL     = "https://7103.api.greenapi.com"
-	testMediaURL   = "https://7103.media.greenapi.com"
-	testInstanceID = "test_id"
-	testAPIToken   = "test_token"
+	testAPIURL     = "https://7105.api.greenapi.com"
+	testMediaURL   = "https://7105.media.greenapi.com"
+	testInstanceID = "7105335616"
+	testAPIToken   = "4caa49e67772405eaeb99ec4f97124bdf605d90e7e53409489"
 )
+
+func TestSendMessage(t *testing.T) {
+	ctx := context.Background()
+	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
+	err := client.Reboot(ctx)
+	require.NoError(t, err)
+	err = client.SendMessage(ctx, "77715275251", "test message")
+	require.NoError(t, err)
+}
 
 func TestFormatPhoneNumber(t *testing.T) {
 	tests := []struct {
@@ -62,13 +71,13 @@ func TestClient_SendMessage_Validation(t *testing.T) {
 			name:        "empty phone number",
 			phoneNumber: "",
 			message:     "Test message",
-			expectedErr: domainErrors.ErrWhatsAppPhoneRequired,
+			expectedErr: domainErr.ErrWhatsAppEmptyPhone,
 		},
 		{
 			name:        "empty message",
 			phoneNumber: "77001234567",
 			message:     "",
-			expectedErr: domainErrors.ErrWhatsAppMessageRequired,
+			expectedErr: domainErr.ErrWhatsAppEmptyMessage,
 		},
 	}
 
@@ -94,13 +103,13 @@ func TestClient_SendFileByURL_Validation(t *testing.T) {
 			name:        "empty phone number",
 			phoneNumber: "",
 			fileURL:     "https://example.com/file.jpg",
-			expectedErr: domainErrors.ErrWhatsAppPhoneRequired,
+			expectedErr: domainErr.ErrWhatsAppEmptyPhone,
 		},
 		{
 			name:        "empty file URL",
 			phoneNumber: "77001234567",
 			fileURL:     "",
-			expectedErr: domainErrors.ErrWhatsAppFileRequired,
+			expectedErr: domainErr.ErrWhatsAppEmptyFile,
 		},
 	}
 
@@ -126,13 +135,13 @@ func TestClient_SendFileByUpload_Validation(t *testing.T) {
 			name:        "empty phone number",
 			phoneNumber: "",
 			filePath:    "/path/to/file.jpg",
-			expectedErr: domainErrors.ErrWhatsAppPhoneRequired,
+			expectedErr: domainErr.ErrWhatsAppEmptyPhone,
 		},
 		{
 			name:        "empty file path",
 			phoneNumber: "77001234567",
 			filePath:    "",
-			expectedErr: domainErrors.ErrWhatsAppFileRequired,
+			expectedErr: domainErr.ErrWhatsAppEmptyFile,
 		},
 	}
 
@@ -150,7 +159,7 @@ func TestClient_SendLocation_Validation(t *testing.T) {
 
 	err := client.SendLocation(context.Background(), "", 51.5074, -0.1278, "London")
 	require.Error(t, err)
-	assert.ErrorIs(t, err, domainErrors.ErrWhatsAppPhoneRequired)
+	assert.ErrorIs(t, err, domainErr.ErrWhatsAppEmptyPhone)
 }
 
 func TestClient_SendContact_Validation(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
+// nolint: errcheck
 func HandleError(ctx context.Context, w http.ResponseWriter, err error) {
 	logError(ctx, err)
 
