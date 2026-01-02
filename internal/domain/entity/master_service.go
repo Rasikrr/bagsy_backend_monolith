@@ -4,14 +4,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type MasterService struct {
-	ID          uuid.UUID  `json:"id"`
-	MasterPhone string     `json:"master_phone"`
-	ServiceID   uuid.UUID  `json:"service_id"`
-	Price       float64    `json:"price"`
-	Active      bool       `json:"active"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+	ID          uuid.UUID
+	MasterPhone string
+	ServiceID   uuid.UUID
+	Price       decimal.Decimal
+	Active      bool
+	CreatedAt   time.Time
+	UpdatedAt   *time.Time
+	UpdatedBy   *string
 }

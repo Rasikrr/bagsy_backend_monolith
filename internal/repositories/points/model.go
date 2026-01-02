@@ -5,9 +5,24 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/hashicorp/go-multierror"
 )
 
+/*
+code         TEXT PRIMARY KEY,
+name         TEXT NOT NULL,
+description  TEXT,
+network_code TEXT NOT NULL,
+category_id  INTEGER NOT NULL,
+address      JSONB NOT NULL DEFAULT '{}',
+city         TEXT NOT NULL,
+active       BOOLEAN NOT NULL DEFAULT false,
+schedule     JSONB NOT NULL DEFAULT '{}',
+created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+updated_at   TIMESTAMPTZ DEFAULT now(),
+deleted_at   TIMESTAMPTZ,
+updated_by   TEXT NOT NULL DEFAULT 'system',
+CONSTRAINT point_code_network_code_unique UNIQUE (code, network_code)
+*/
 type model struct {
 	Code        string     `db:"code"`
 	Name        string     `db:"name"`
@@ -24,30 +39,35 @@ type model struct {
 	UpdatedBy   string     `db:"updated_by"`
 }
 
-// type models []model
-
 func convert(e *entity.Point) (model, error) {
-	var mErr *multierror.Error
-	var m model
-	m.Code = e.Code
-	m.Name = e.Name
-	m.Description = e.Description
-	m.NetworkCode = e.NetworkCode
-	m.CategoryID = e.CategoryID
-	m.City = e.City
-	m.Active = e.Active
-	m.CreatedAt = e.CreatedAt
-	m.UpdatedAt = e.UpdatedAt
-	m.DeletedAt = e.DeletedAt
-	m.UpdatedBy = e.UpdatedBy
-	var err error
-	if m.Address, err = json.Marshal(e.Address); err != nil {
-		mErr = multierror.Append(mErr, err)
+	out := model{
+		Code:        e.Code,
+		Name:        e.Name,
+		Description: e.Description,
+		NetworkCode: e.NetworkCode,
+		CategoryID:  e.CategoryID,
+		City:        e.City,
+		Active:      e.Active,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
+		DeletedAt:   e.DeletedAt,
+		UpdatedBy:   e.UpdatedBy,
 	}
-	if m.Schedule, err = json.Marshal(e.Schedule); err != nil {
-		mErr = multierror.Append(mErr, err)
+
+	addressDto := addressToDTO(e.Address)
+	bb, err := json.Marshal(addressDto)
+	if err != nil {
+		return out, err
 	}
-	return m, mErr.ErrorOrNil()
+	out.Address = bb
+
+	schedulesDto := schedulesToDTO(e.Schedule)
+	bb, err = json.Marshal(schedulesDto)
+	if err != nil {
+		return out, err
+	}
+	out.Schedule = bb
+	return out, nil
 }
 
 func (m model) convert() *entity.Point {
@@ -65,8 +85,15 @@ func (m model) convert() *entity.Point {
 		UpdatedBy:   m.UpdatedBy,
 	}
 
-	_ = json.Unmarshal(m.Address, &point.Address)
-	_ = json.Unmarshal(m.Schedule, &point.Schedule)
+	var addrDTO addressDTO
+	if err := json.Unmarshal(m.Address, &addrDTO); err == nil {
+		point.Address = addrDTO.toEntity()
+	}
+
+	var scheduleDTOs schedulesDTO
+	if err := json.Unmarshal(m.Schedule, &scheduleDTOs); err == nil {
+		point.Schedule = scheduleDTOs.toEntity()
+	}
 
 	return point
 }

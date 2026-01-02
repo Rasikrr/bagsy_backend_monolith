@@ -51,37 +51,68 @@ const docTemplate = `{
                     "200": {
                         "description": "Успешная авторизация",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
                         }
                     },
                     "400": {
                         "description": "Неверные данные",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Неверный логин или пароль",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "Выполняет выход пользователя из системы и инвалидирует refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Выход из системы",
+                "parameters": [
+                    {
+                        "description": "Refresh token для выхода",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshTokensRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный выход"
+                    },
+                    "400": {
+                        "description": "Неверные данные",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     }
                 }
@@ -102,50 +133,40 @@ const docTemplate = `{
                 "summary": "Обновление токенов авторизации",
                 "parameters": [
                     {
-                        "type": "string",
                         "description": "Токен авторизации",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshTokensRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Токены авторизации успешно обновлены",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.EmptySuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse"
                         }
                     },
                     "400": {
                         "description": "Неверный токен",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/auth/register": {
+        "/api/v1/auth/staff/register": {
             "post": {
-                "description": "Создает нового пользователя в системе",
+                "description": "Создает нового пользователя (работника) привязанного к точке. Менеджер точки может создавать только в своей точке, менеджер сети - в любой точке своей сети.",
                 "consumes": [
                     "application/json"
                 ],
@@ -155,7 +176,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Регистрация пользователя",
+                "summary": "Регистрация работника на точке",
                 "parameters": [
                     {
                         "description": "Данные для регистрации",
@@ -163,7 +184,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerRequest"
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerStaffRequest"
                         }
                     }
                 ],
@@ -171,27 +192,33 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.EmptySuccessResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Неверный формат запроса",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав для создания работника в указанной точке",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/api/v1/auth/register/confirm": {
+        "/api/v1/auth/staff/register/confirm": {
             "post": {
-                "description": "Подтверждает регистрацию пользователя и устанавливает пароль",
+                "description": "Подтверждает регистрацию пользователя(работника)",
                 "consumes": [
                     "application/json"
                 ],
@@ -201,15 +228,8 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Подтверждение регистрации",
+                "summary": "Подтверждение регистрации работника",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Токен подтверждения регистрации",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
                     {
                         "description": "Данные для подтверждения",
                         "name": "request",
@@ -224,129 +244,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Регистрация успешно подтверждена",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_auth.loginResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse"
                         }
                     },
                     "400": {
                         "description": "Неверные данные",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Неверный или просроченный токен",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Внутренняя ошибка сервера",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/bagsies": {
-            "post": {
-                "description": "Отправляет код подтверждения для подтверждения записи к мастеру на whatsapp",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "bagsies"
-                ],
-                "summary": "Отправить код подтверждения для подтверждения записи",
-                "parameters": [
-                    {
-                        "description": "Данные о услуге и юзере",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.EmptySuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/bagsies/confirm": {
-            "post": {
-                "description": "Создает запись к мастеру с определенным кодом точки",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "bagsies"
-                ],
-                "summary": "Создание записи",
-                "parameters": [
-                    {
-                        "description": "Данные для создания записи",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.EmptySuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     }
                 }
@@ -364,7 +280,7 @@ const docTemplate = `{
                 "tags": [
                     "forms"
                 ],
-                "summary": "Отправка формы для соотрдничества",
+                "summary": "Отправка формы для сотрудничества",
                 "parameters": [
                     {
                         "description": "Форма для создания заявки",
@@ -380,322 +296,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Успешное создание заявки",
                         "schema": {
-                            "$ref": "#/definitions/api.EmptySuccessResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
                         }
                     },
                     "500": {
                         "description": "ошибка",
                         "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/users": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Возвращает информацию о пользователе по его номеру телефона",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Получение пользователя по номеру телефона из сессии",
-                "responses": {
-                    "200": {
-                        "description": "Информация о пользователе",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный формат данных",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Пользователь не найден",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка сервера",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Обновляет имя, фамилию или пароль пользователя по номеру телефона",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Обновление данных пользователя",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Номер телефона пользователя",
-                        "name": "phone",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Данные для обновления",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_users.updateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Пользователь успешно обновлен",
-                        "schema": {
-                            "$ref": "#/definitions/api.EmptySuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный формат данных",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Пользователь не найден",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка сервера",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/users/admin/network/{network_code}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Возвращает пользователй по сети",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users_admin"
-                ],
-                "summary": "Получение пользователей по сети",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "код сети",
-                        "name": "network_code",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Информация о пользователях",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userListResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный формат данных",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Пользователи не найден",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка сервера",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/users/admin/phone/{phone}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Возвращает информацию о пользователе по его номеру телефона",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users_admin"
-                ],
-                "summary": "Получение пользователя по номеру телефона",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Номер телефона пользователя",
-                        "name": "phone",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Информация о пользователе",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный формат данных",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Пользователь не найден",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка сервера",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/users/admin/point/{point_code}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Возвращает пользователй по точке",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users_admin"
-                ],
-                "summary": "Получение пользователей по точке",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "код точки",
-                        "name": "point_code",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Информация о пользователях",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/api.SuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_ports_http_handlers_users.userListResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Неверный формат данных",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Пользователи не найден",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Внутренняя ошибка сервера",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     }
                 }
@@ -703,29 +310,24 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api.EmptySuccessResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.ErrorResponse": {
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
                 },
                 "message": {
                     "type": "string"
                 }
             }
         },
-        "api.SuccessResponse": {
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse": {
             "type": "object",
             "properties": {
-                "data": {},
                 "message": {
                     "type": "string"
                 }
@@ -759,6 +361,14 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_auth.refreshTokensRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_auth.refreshTokensResponse": {
             "type": "object",
             "properties": {
@@ -773,96 +383,40 @@ const docTemplate = `{
         "internal_ports_http_handlers_auth.registerConfirmRequest": {
             "type": "object",
             "required": [
-                "phone"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 15,
-                    "minLength": 10
-                }
-            }
-        },
-        "internal_ports_http_handlers_auth.registerRequest": {
-            "type": "object",
-            "required": [
                 "name",
-                "phone",
-                "surname"
+                "password",
+                "surname",
+                "token"
             ],
             "properties": {
                 "name": {
                     "type": "string",
-                    "maxLength": 50,
                     "minLength": 2
                 },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 15,
-                    "minLength": 10
-                },
-                "point_code": {
-                    "type": "string"
-                },
-                "role": {
+                "password": {
                     "type": "string"
                 },
                 "surname": {
                     "type": "string",
-                    "maxLength": 50,
                     "minLength": 2
+                },
+                "token": {
+                    "type": "string"
                 }
             }
         },
-        "internal_ports_http_handlers_bagsies.confirmBagsyRequest": {
+        "internal_ports_http_handlers_auth.registerConfirmResponse": {
             "type": "object",
             "properties": {
-                "phone": {
+                "access_token": {
                     "type": "string"
                 },
-                "service_name": {
+                "refresh_token": {
                     "type": "string"
                 }
             }
         },
-        "internal_ports_http_handlers_bagsies.createBagsyRequest": {
-            "type": "object",
-            "required": [
-                "end_at",
-                "provider",
-                "start_at"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "end_at": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "provider": {
-                    "$ref": "#/definitions/internal_ports_http_handlers_bagsies.provider"
-                },
-                "service": {
-                    "type": "string"
-                },
-                "start_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_ports_http_handlers_bagsies.provider": {
+        "internal_ports_http_handlers_auth.registerStaffRequest": {
             "type": "object",
             "required": [
                 "phone",
@@ -907,66 +461,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_ports_http_handlers_users.updateRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "surname": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_ports_http_handlers_users.userListResponse": {
-            "type": "object",
-            "properties": {
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_ports_http_handlers_users.userResponse"
-                    }
-                }
-            }
-        },
-        "internal_ports_http_handlers_users.userResponse": {
-            "type": "object",
-            "properties": {
-                "active": {
-                    "type": "boolean"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "network_code": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "point_code": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "surname": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "updated_by": {
                     "type": "string"
                 }
             }

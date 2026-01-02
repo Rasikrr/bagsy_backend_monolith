@@ -5,6 +5,7 @@
 -- СПРАВОЧНИКИ (DICTIONARIES)
 -- ============================================
 
+-- CHECKED (RASSUL)
 -- Сети заведений
 CREATE TABLE IF NOT EXISTS networks (
     code        TEXT PRIMARY KEY,
@@ -16,38 +17,45 @@ CREATE TABLE IF NOT EXISTS networks (
     updated_by  TEXT NOT NULL DEFAULT 'system'
 );
 
+-- CHECKED (RASSUL)
 -- Категории точек (Салон красоты, Барбершоп, СПА и т.д.)
 CREATE TABLE IF NOT EXISTS point_categories (
     id          SERIAL PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at  TIMESTAMPTZ DEFAULT now()
+    updated_at  TIMESTAMPTZ DEFAULT now(),
+    updated_by  TEXT NOT NULL DEFAULT 'system'
 );
 
+-- CHECKED (RASSUL)
 -- Категории услуг (Стрижки, Окрашивание, Маникюр и т.д.)
 CREATE TABLE IF NOT EXISTS service_categories (
     id          SERIAL PRIMARY KEY,
     name        TEXT NOT NULL,
     description TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at  TIMESTAMPTZ DEFAULT now()
+    updated_at  TIMESTAMPTZ DEFAULT now(),
+    updated_by  TEXT NOT NULL DEFAULT 'system'
 );
 
+-- CHECKED (RASSUL)
 -- Подкатегории услуг
 CREATE TABLE IF NOT EXISTS service_subcategories (
     id          SERIAL PRIMARY KEY,
-    category_id INTEGER NOT NULL,
+    service_category_id INTEGER NOT NULL, -- FK service_categories
     name        TEXT NOT NULL,
     description TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at  TIMESTAMPTZ DEFAULT now()
+    updated_at  TIMESTAMPTZ DEFAULT now(),
+    updated_by  TEXT NOT NULL DEFAULT 'system'
 );
 
 -- ============================================
 -- ОСНОВНЫЕ СУЩНОСТИ (CORE ENTITIES)
 -- ============================================
 
+-- CHECKED (RASSUL)
 -- Точки обслуживания
 CREATE TABLE IF NOT EXISTS points (
     code         TEXT PRIMARY KEY,
@@ -66,6 +74,7 @@ CREATE TABLE IF NOT EXISTS points (
     CONSTRAINT point_code_network_code_unique UNIQUE (code, network_code)
 );
 
+-- CHECKED (RASSUL)
 -- Пользователи (клиенты, мастера, администраторы)
 CREATE TABLE IF NOT EXISTS users (
     phone      TEXT PRIMARY KEY,
@@ -73,13 +82,16 @@ CREATE TABLE IF NOT EXISTS users (
     role       TEXT NOT NULL,
     name       TEXT,
     surname    TEXT,
-    active     BOOLEAN NOT NULL DEFAULT false,
     point_code TEXT,
+    network_code TEXT,
+    active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
-    updated_by TEXT NOT NULL DEFAULT 'system'
+    updated_by TEXT NOT NULL DEFAULT 'system',
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
+-- CONTINUE HERE !! CHECK updated_by field in all tables
 -- Услуги (привязаны к конкретной точке)
 CREATE TABLE IF NOT EXISTS services (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -92,6 +104,7 @@ CREATE TABLE IF NOT EXISTS services (
     active           BOOLEAN DEFAULT false,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ DEFAULT now(),
+    updated_by TEXT NOT NULL DEFAULT 'system',
     CONSTRAINT services_point_code_cat_subcat_unique UNIQUE (point_code, category_id, subcategory_id)
 );
 
@@ -108,17 +121,19 @@ CREATE TABLE IF NOT EXISTS master_services (
     active       BOOLEAN DEFAULT false,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ DEFAULT now(),
+    updated_by   TEXT NOT NULL DEFAULT 'system',
     UNIQUE(master_phone, service_id)
 );
 
 -- Брони (bagsies)
 CREATE TABLE IF NOT EXISTS bagsies (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    point_code   TEXT NOT NULL,
-    user_phone   TEXT NOT NULL,
-    status       TEXT NOT NULL,
-    master_phone TEXT NOT NULL,
     service_id   UUID NOT NULL,
+    point_code   TEXT NOT NULL,
+    client_phone TEXT NOT NULL,
+    master_phone TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    price DECIMAL(19, 4) NOT NULL DEFAULT 0.0000,
     start_at     TIMESTAMPTZ NOT NULL,
     end_at       TIMESTAMPTZ NOT NULL,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),

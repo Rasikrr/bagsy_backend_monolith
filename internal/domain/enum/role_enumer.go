@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-const _RoleName = "userstaffmanagernet_manageradmin"
+const _RoleName = "userstaffmanagernet_managerself_owneradmin"
 
-var _RoleIndex = [...]uint8{0, 4, 9, 16, 27, 32}
+var _RoleIndex = [...]uint8{0, 4, 9, 16, 27, 37, 42}
 
-const _RoleLowerName = "userstaffmanagernet_manageradmin"
+const _RoleLowerName = "userstaffmanagernet_managerself_owneradmin"
 
 func (i Role) String() string {
 	if i < 0 || i >= Role(len(_RoleIndex)-1) {
@@ -29,10 +29,11 @@ func _RoleNoOp() {
 	_ = x[RoleStaff-(1)]
 	_ = x[RoleManager-(2)]
 	_ = x[RoleNetManager-(3)]
-	_ = x[RoleAdmin-(4)]
+	_ = x[RoleSelfOwner-(4)]
+	_ = x[RoleAdmin-(5)]
 }
 
-var _RoleValues = []Role{RoleUser, RoleStaff, RoleManager, RoleNetManager, RoleAdmin}
+var _RoleValues = []Role{RoleUser, RoleStaff, RoleManager, RoleNetManager, RoleSelfOwner, RoleAdmin}
 
 var _RoleNameToValueMap = map[string]Role{
 	_RoleName[0:4]:        RoleUser,
@@ -43,8 +44,10 @@ var _RoleNameToValueMap = map[string]Role{
 	_RoleLowerName[9:16]:  RoleManager,
 	_RoleName[16:27]:      RoleNetManager,
 	_RoleLowerName[16:27]: RoleNetManager,
-	_RoleName[27:32]:      RoleAdmin,
-	_RoleLowerName[27:32]: RoleAdmin,
+	_RoleName[27:37]:      RoleSelfOwner,
+	_RoleLowerName[27:37]: RoleSelfOwner,
+	_RoleName[37:42]:      RoleAdmin,
+	_RoleLowerName[37:42]: RoleAdmin,
 }
 
 var _RoleNames = []string{
@@ -52,7 +55,8 @@ var _RoleNames = []string{
 	_RoleName[4:9],
 	_RoleName[9:16],
 	_RoleName[16:27],
-	_RoleName[27:32],
+	_RoleName[27:37],
+	_RoleName[37:42],
 }
 
 // RoleString retrieves an enum value from the enum constants string name.

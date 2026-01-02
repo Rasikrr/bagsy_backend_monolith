@@ -5,12 +5,24 @@ name: bagsy_backend # name of application
 log:
   level: debug # debug, info, warn, error
   add_source: true
+  format: json
 
 metrics:
   enabled: false
-  namespace: core
+  namespace: bagsy_backend
   prometheus:
     port: 9100
+
+sentry:
+  enabled: false
+  sample_rate: 1.0 # [0.0, 1.0]
+  tracing: false # don't use tracing. use OTel
+  traces_sample_rate: 0.0 # [0.0, 1.0]
+  debug: false
+  enable_logs: false # for logs collecting (info, warn, debug). don't use, use loki, elk etc.
+
+tracing:
+  enabled: false
 
 http:
   host: 0.0.0.0
@@ -45,7 +57,7 @@ nats:
 # Available variable types: 'string', 'int', 'float', 'bool', 'duration'
 
 env:
-  environment: #dev, prod
+  environment: #dev, stage, prod
     type: "string"
     env_name: "ENVIRONMENT"
     required: true
@@ -55,10 +67,13 @@ env:
     env_name: "CONFIG_PATH"
     required: true
 
+
   postgres_dsn:
     type: "string"
     env_name: "POSTGRES_DSN"
     required: true
+
+
 
   redis_host:
     type: "string"
@@ -85,21 +100,7 @@ env:
     env_name: "REDIS_DB"
     required: true
 
-  dev_sms_bot_token:
-    type: "string"
-    env_name: "DEV_SMS_BOT_TOKEN"
-    required: true
 
-  dev_sms_chat_id:
-    type: "int"
-    env_name: "DEV_SMS_CHAT_ID"
-    required: true
-
-  sms_spam_ttl:
-    type: "duration"
-    env_name: "SMS_SPAM_TTL"
-    required: true
-    value: "86400s"
 
   sms_client_login:
     type: "string"
@@ -111,62 +112,19 @@ env:
     env_name: "SMS_CLIENT_PASSWORD"
     required: true
 
-  auth_code_ttl:
-    type: "duration"
-    env_name: "AUTH_CODE_TTL"
-    required: true
-    value: "60s"
 
-  bagsies_code_ttl:
-    type: "duration"
-    env_name: "BAGSIES_CODE_TTL"
-    required: true
-    value: "600s"
 
-  inactive_user_ttl:
-    type: "duration"
-    env_name: "INACTIVE_USER_TTL"
-    required: true
-    value: "86400s"
 
-  inactive_user_job_schedule:
+  dev_sms_bot_token:
     type: "string"
-    env_name: "INACTIVE_USER_JOB_SCHEDULE"
-    required: true
-    value: "0 0 0 * * *"
-
-  jwt_secret:
-    type: "string"
-    env_name: "JWT_SECRET"
+    env_name: "DEV_SMS_BOT_TOKEN"
     required: true
 
-  access_token_ttl:
-    type: "duration"
-    env_name: "ACCESS_TOKEN_TTL"
-    required: true
-    value: "900s"
-
-  refresh_token_ttl:
-    type: "duration"
-    env_name: "REFRESH_TOKEN_TTL"
-    required: true
-    value: "86400s"
-
-  auth_confirmation_url:
-    type: "string"
-    env_name: "AUTH_CONFIRMATION_URL"
-    value: "https://app.bagsy/ru/invite"
+  dev_sms_chat_id:
+    type: "int"
+    env_name: "DEV_SMS_CHAT_ID"
     required: true
 
-  swagger_host:
-    type: "string"
-    env_name: "SWAGGER_HOST"
-    required: true
-
-  swagger_scheme:
-    type: "string"
-    env_name: "SWAGGER_SCHEME"
-    required: true
 
   whatsapp_api_url:
     type: "string"
@@ -188,11 +146,49 @@ env:
     env_name: "WHATSAPP_API_TOKEN"
     required: true
 
-  # This is example of variable that do not have value in config but in .env file.
-  # by env_name you can get value from .env file
-  # !!! IMPORTANT !!! if tou want to add .env variable, first you need to add it to config.yaml
-  # Second: you need to declare env_name in config.yaml
-  ex_string:
+
+
+  jwt_secret:
     type: "string"
-    env_name: "EX_STRING"
-    required: false
+    env_name: "JWT_SECRET"
+    required: true
+
+  jwt_issuer:
+    type: "string"
+    env_name: "JWT_ISSUER"
+    required: true
+
+  access_token_ttl:
+    type: "duration"
+    env_name: "ACCESS_TOKEN_TTL"
+    required: true
+    value: "900s"
+
+  refresh_token_ttl:
+    type: "duration"
+    env_name: "REFRESH_TOKEN_TTL"
+    required: true
+    value: "86400s"
+
+  registration_token_ttl:
+    type: "duration"
+    env_name: "REGISTRATION_TOKEN_TTL"
+    required: true
+    value: "86400s"
+
+  register_confirmation_url:
+    type: "string"
+    env_name: "REGISTER_CONFIRMATION_URL"
+    value: "https://app.bagsy/ru/invite"
+    required: true
+
+
+  swagger_host:
+    type: "string"
+    env_name: "SWAGGER_HOST"
+    required: true
+
+  swagger_scheme:
+    type: "string"
+    env_name: "SWAGGER_SCHEME"
+    required: true

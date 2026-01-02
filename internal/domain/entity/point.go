@@ -3,36 +3,36 @@ package entity
 import "time"
 
 type Point struct {
-	Code        string     `json:"code"`
-	Name        string     `json:"name"`
-	Description *string    `json:"description,omitempty"`
-	NetworkCode string     `json:"network_code"`
-	CategoryID  int        `json:"category_id"`
-	Address     Address    `json:"address,omitempty"`
-	City        string     `json:"city,omitempty"`
-	Active      bool       `json:"active"`
-	Schedule    []Schedule `json:"schedule,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
-	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
-	UpdatedBy   string     `json:"updated_by"`
+	Code        string
+	Name        string
+	Description *string
+	NetworkCode string
+	CategoryID  int
+	Address     Address
+	City        string
+	Active      bool
+	Schedule    []Schedule
+	CreatedAt   time.Time
+	UpdatedAt   *time.Time
+	DeletedAt   *time.Time
+	UpdatedBy   string
 }
 
 type Address struct {
-	Coordinates Coordinates `json:"coordinates"`
-	Street      string      `json:"street"`
-	City        string      `json:"city"`
+	Coordinates Coordinates
+	Street      string
+	City        string
 }
 
 type Coordinates struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  float64
+	Longitude float64
 }
 
 type Schedule struct {
-	WeekDay int       `json:"week_day"`
-	Open    time.Time `json:"open,omitempty"`
-	Close   time.Time `json:"close,omitempty"`
-	AllDay  bool      `json:"all_day,omitempty"`
-	Comment string    `json:"comment,omitempty"`
+	WeekDay int
+	Open    time.Time
+	Close   time.Time
+	AllDay  bool
+	Comment string
 }

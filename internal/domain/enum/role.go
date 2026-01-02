@@ -8,7 +8,7 @@ const (
 	RoleStaff
 	RoleManager
 	RoleNetManager
-	RoleSelfOwner Role = iota - 1
+	RoleSelfOwner
 	RoleAdmin
 )
 
@@ -19,8 +19,4 @@ func (r Role) OneOf(roles ...Role) bool {
 		}
 	}
 	return false
-}
-
-func (r Role) HasPermission(child Role) bool {
-	return child < r
 }

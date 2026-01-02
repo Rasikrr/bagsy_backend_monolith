@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-const _BagsyStatusName = "createdcompletedcanceled"
+const _BagsyStatusName = "createdactivecompletedcanceled"
 
-var _BagsyStatusIndex = [...]uint8{0, 7, 16, 24}
+var _BagsyStatusIndex = [...]uint8{0, 7, 13, 22, 30}
 
-const _BagsyStatusLowerName = "createdcompletedcanceled"
+const _BagsyStatusLowerName = "createdactivecompletedcanceled"
 
 func (i BagsyStatus) String() string {
 	if i >= BagsyStatus(len(_BagsyStatusIndex)-1) {
@@ -26,25 +26,29 @@ func (i BagsyStatus) String() string {
 func _BagsyStatusNoOp() {
 	var x [1]struct{}
 	_ = x[BagsyStatusCreated-(0)]
-	_ = x[BagsyStatusCompleted-(1)]
-	_ = x[BagsyStatusCanceled-(2)]
+	_ = x[BagsyStatusActive-(1)]
+	_ = x[BagsyStatusCompleted-(2)]
+	_ = x[BagsyStatusCanceled-(3)]
 }
 
-var _BagsyStatusValues = []BagsyStatus{BagsyStatusCreated, BagsyStatusCompleted, BagsyStatusCanceled}
+var _BagsyStatusValues = []BagsyStatus{BagsyStatusCreated, BagsyStatusActive, BagsyStatusCompleted, BagsyStatusCanceled}
 
 var _BagsyStatusNameToValueMap = map[string]BagsyStatus{
 	_BagsyStatusName[0:7]:        BagsyStatusCreated,
 	_BagsyStatusLowerName[0:7]:   BagsyStatusCreated,
-	_BagsyStatusName[7:16]:       BagsyStatusCompleted,
-	_BagsyStatusLowerName[7:16]:  BagsyStatusCompleted,
-	_BagsyStatusName[16:24]:      BagsyStatusCanceled,
-	_BagsyStatusLowerName[16:24]: BagsyStatusCanceled,
+	_BagsyStatusName[7:13]:       BagsyStatusActive,
+	_BagsyStatusLowerName[7:13]:  BagsyStatusActive,
+	_BagsyStatusName[13:22]:      BagsyStatusCompleted,
+	_BagsyStatusLowerName[13:22]: BagsyStatusCompleted,
+	_BagsyStatusName[22:30]:      BagsyStatusCanceled,
+	_BagsyStatusLowerName[22:30]: BagsyStatusCanceled,
 }
 
 var _BagsyStatusNames = []string{
 	_BagsyStatusName[0:7],
-	_BagsyStatusName[7:16],
-	_BagsyStatusName[16:24],
+	_BagsyStatusName[7:13],
+	_BagsyStatusName[13:22],
+	_BagsyStatusName[22:30],
 }
 
 // BagsyStatusString retrieves an enum value from the enum constants string name.

@@ -1,15 +1,21 @@
 package form
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	"context"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/go-chi/chi/v5"
 )
 
-type Controller struct {
-	formsService forms.Service
+type formsService interface {
+	Create(ctx context.Context, form *entity.Form) error
 }
 
-func NewController(formsService forms.Service) *Controller {
+type Controller struct {
+	formsService formsService
+}
+
+func New(formsService formsService) *Controller {
 	return &Controller{
 		formsService: formsService,
 	}

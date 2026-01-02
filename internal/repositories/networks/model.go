@@ -16,7 +16,17 @@ type model struct {
 	UpdatedBy   string     `db:"updated_by"`
 }
 
-// type models []model
+func convert(e *entity.Network) model {
+	return model{
+		Code:        e.Code,
+		Name:        e.Name,
+		Description: e.Description,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
+		DeletedAt:   e.DeletedAt,
+		UpdatedBy:   e.UpdatedBy,
+	}
+}
 
 func (m model) convert() *entity.Network {
 	return &entity.Network{
@@ -28,4 +38,14 @@ func (m model) convert() *entity.Network {
 		DeletedAt:   m.DeletedAt,
 		UpdatedBy:   m.UpdatedBy,
 	}
+}
+
+type models []model
+
+func (m models) convert() []*entity.Network {
+	out := make([]*entity.Network, len(m))
+	for i, m := range m {
+		out[i] = m.convert()
+	}
+	return out
 }

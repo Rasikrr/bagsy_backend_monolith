@@ -4,7 +4,6 @@ package form
 
 import (
 	json "encoding/json"
-
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -18,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersForm(in *jlexer.Lexer, out *clientFormRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersForm(in *jlexer.Lexer, out *clientFormRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -57,7 +56,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersForm(out *jwriter.Writer, in clientFormRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersForm(out *jwriter.Writer, in clientFormRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -92,23 +91,23 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v clientFormRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersForm(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersForm(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v clientFormRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersForm(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersForm(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *clientFormRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersForm(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersForm(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *clientFormRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBugsyBackendMonolithInternalPortsHttpHandlersForm(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersForm(l, v)
 }

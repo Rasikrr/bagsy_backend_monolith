@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/httputil"
-	"github.com/Rasikrr/core/api"
-	coreErr "github.com/Rasikrr/core/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
 )
 
 // Refresh godoc
@@ -14,26 +14,27 @@ import (
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param Authorization header string true "Токен авторизации"
-// @Success 200 {object} api.EmptySuccessResponse{data=refreshTokensResponse} "Токены авторизации успешно обновлены"
-// @Failure 400 {object} api.ErrorResponse "Неверный токен"
-// @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
+// @Param request body refreshTokensRequest true "Токен авторизации"
+// @Success 200 {object} refreshTokensResponse "Токены авторизации успешно обновлены"
+// @Failure 400 {object} errors.ErrorResponse "Неверный токен"
+// @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/auth/refresh [post]
-// nolint: godot
 func (c *Controller) refresh(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	token, err := httputil.GetAuthHeader(r)
-	if err != nil {
-		api.SendError(w, coreErr.ErrBadRequest.Wrap(err))
+
+	var req refreshTokensRequest
+	if err := request.GetAndValidateData(r, &req); err != nil {
+		errors.HandleError(ctx, w, err)
 		return
 	}
-	access, refresh, err := c.authService.RefreshTokens(ctx, token)
+
+	access, refresh, err := c.authService.Refresh(ctx, req.RefreshToken)
 	if err != nil {
-		api.SendError(w, err)
+		errors.HandleError(ctx, w, err)
 		return
 	}
-	api.SendData(w, api.NewSuccessResponse(refreshTokensResponse{
+	response.SendData(ctx, w, refreshTokensResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
-	}), http.StatusOK)
+	}, http.StatusOK)
 }

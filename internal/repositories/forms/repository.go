@@ -3,22 +3,24 @@ package forms
 import (
 	"context"
 
-	"github.com/Rasikrr/core/database"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/core/database/postgres"
 )
 
-type Repository interface {
-	CreateClient(ctx context.Context, firstName, lastName, phone, description string, role string) error
+type Repository struct {
+	db *postgres.Postgres
 }
 
-type repository struct {
-	db *database.Postgres
+func NewRepository(db *postgres.Postgres) *Repository {
+	return &Repository{db: db}
 }
 
-func NewRepository(db *database.Postgres) Repository {
-	return &repository{db: db}
-}
-
-func (r *repository) CreateClient(ctx context.Context, firstName, lastName, phone, description string, role string) error {
-	_, err := r.db.Exec(ctx, insertForm, firstName, lastName, phone, description, role)
-	return err
+func (r *Repository) Create(ctx context.Context, form *entity.Form) error {
+	m := toModel(form)
+	_, err := r.db.Exec(ctx, insertForm, m.FirstName, m.LastName, m.Phone, m.Description, m.Role)
+	if err != nil {
+		return domainErr.NewInternalError("failed to create client form in db", err)
+	}
+	return nil
 }

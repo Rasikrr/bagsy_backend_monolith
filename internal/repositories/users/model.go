@@ -1,4 +1,3 @@
-// nolint: unused
 package users
 
 import (
@@ -10,20 +9,35 @@ import (
 
 type model struct {
 	Phone       string     `db:"phone"`
-	Password    *string    `db:"password"`
+	Password    string     `db:"password"`
 	Role        string     `db:"role"`
-	Name        *string    `db:"name"`
-	Surname     *string    `db:"surname"`
-	Active      bool       `db:"active"`
+	Name        string     `db:"name"`
+	Surname     string     `db:"surname"`
 	PointCode   *string    `db:"point_code"`
 	NetworkCode *string    `db:"network_code"`
+	Active      bool       `db:"active"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at"`
-	UpdatedBy   *string    `db:"updated_by"`
 	DeletedAt   *time.Time `db:"deleted_at"`
+	UpdatedBy   string     `db:"updated_by"`
 }
 
-type models []model
+func convert(e *entity.User) model {
+	return model{
+		Phone:       e.Phone,
+		Password:    e.Password,
+		Role:        e.Role.String(),
+		Name:        e.Name,
+		Surname:     e.Surname,
+		PointCode:   e.PointCode,
+		NetworkCode: e.NetworkCode,
+		Active:      e.Active,
+		CreatedAt:   e.CreatedAt,
+		UpdatedAt:   e.UpdatedAt,
+		DeletedAt:   e.DeletedAt,
+		UpdatedBy:   e.UpdatedBy,
+	}
+}
 
 func (m model) convert() (*entity.User, error) {
 	role, err := enum.RoleString(m.Role)
@@ -33,19 +47,21 @@ func (m model) convert() (*entity.User, error) {
 
 	return &entity.User{
 		Phone:       m.Phone,
+		Password:    m.Password,
 		Role:        role,
 		Name:        m.Name,
 		Surname:     m.Surname,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-		UpdatedBy:   m.UpdatedBy,
 		PointCode:   m.PointCode,
 		NetworkCode: m.NetworkCode,
 		Active:      m.Active,
-		Password:    m.Password,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
 		DeletedAt:   m.DeletedAt,
+		UpdatedBy:   m.UpdatedBy,
 	}, nil
 }
+
+type models []model
 
 func (m models) convert() ([]*entity.User, error) {
 	users := make([]*entity.User, len(m))
@@ -57,32 +73,4 @@ func (m models) convert() ([]*entity.User, error) {
 		users[i] = user
 	}
 	return users, nil
-}
-
-func convert(user *entity.User) (*model, error) {
-	role, err := enum.RoleString(user.Role.String())
-	if err != nil {
-		return nil, err
-	}
-
-	out := &model{
-		Phone:       user.Phone,
-		Role:        role.String(),
-		Password:    user.Password,
-		Name:        user.Name,
-		Surname:     user.Surname,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
-		UpdatedBy:   user.UpdatedBy,
-		PointCode:   user.PointCode,
-		NetworkCode: user.NetworkCode,
-	}
-	now := time.Now().UTC()
-	if out.CreatedAt.IsZero() {
-		out.CreatedAt = now
-	}
-	if out.UpdatedAt != nil && out.UpdatedAt.IsZero() {
-		out.UpdatedAt = &now
-	}
-	return out, nil
 }

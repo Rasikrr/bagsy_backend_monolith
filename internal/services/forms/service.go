@@ -3,25 +3,21 @@ package forms
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 )
 
-type Service interface {
-	CreateClient(ctx context.Context, firstName, lastName, phone, description string, role string) error
+type formsRepository interface {
+	Create(ctx context.Context, form *entity.Form) error
 }
 
-type service struct {
-	formsRepo forms.Repository
+type Service struct {
+	formsRepo formsRepository
 }
 
-func NewService(formsRepo forms.Repository) Service {
-	return &service{formsRepo: formsRepo}
+func NewService(formsRepo formsRepository) *Service {
+	return &Service{formsRepo: formsRepo}
 }
 
-func (s *service) CreateClient(ctx context.Context, firstName, lastName, phone, description string, role string) error {
-	err := s.formsRepo.CreateClient(ctx, firstName, lastName, phone, description, role)
-	if err != nil {
-		return errCreateClient.Wrap(err)
-	}
-	return nil
+func (s *Service) Create(ctx context.Context, form *entity.Form) error {
+	return s.formsRepo.Create(ctx, form)
 }

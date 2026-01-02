@@ -6,20 +6,22 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type model struct {
-	ID          uuid.UUID  `db:"id"`
-	PointCode   string     `db:"point_code"`
-	UserPhone   string     `db:"user_phone"`
-	Status      string     `db:"status"`
-	MasterPhone string     `db:"master_phone"`
-	ServiceID   uuid.UUID  `db:"service_id"`
-	StartAt     time.Time  `db:"start_at"`
-	EndAt       time.Time  `db:"end_at"`
-	CreatedAt   time.Time  `db:"created_at"`
-	UpdatedAt   *time.Time `db:"updated_at"`
-	UpdatedBy   *string    `db:"updated_by"`
+	ID          uuid.UUID       `db:"id"`
+	PointCode   string          `db:"point_code"`
+	ClientPhone string          `db:"client_phone"`
+	Status      string          `db:"status"`
+	MasterPhone string          `db:"master_phone"`
+	Price       decimal.Decimal `db:"price"`
+	ServiceID   uuid.UUID       `db:"service_id"`
+	StartAt     time.Time       `db:"start_at"`
+	EndAt       time.Time       `db:"end_at"`
+	CreatedAt   time.Time       `db:"created_at"`
+	UpdatedAt   *time.Time      `db:"updated_at"`
+	UpdatedBy   string          `db:"updated_by"`
 }
 
 type models []model
@@ -35,7 +37,8 @@ func (m model) convert() (*entity.Bagsy, error) {
 		MasterPhone: m.MasterPhone,
 		Status:      status,
 		ServiceID:   m.ServiceID,
-		UserPhone:   m.UserPhone,
+		ClientPhone: m.ClientPhone,
+		Price:       m.Price,
 		StartAt:     m.StartAt,
 		EndAt:       m.EndAt,
 		CreatedAt:   m.CreatedAt,
@@ -62,7 +65,8 @@ func convertToModel(b *entity.Bagsy) *model {
 		ID:          b.ID,
 		Status:      b.Status.String(),
 		PointCode:   b.PointCode,
-		UserPhone:   b.UserPhone,
+		ClientPhone: b.ClientPhone,
+		Price:       b.Price,
 		ServiceID:   b.ServiceID,
 		MasterPhone: b.MasterPhone,
 		StartAt:     b.StartAt,
