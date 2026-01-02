@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-	"github.com/Rasikrr/core/log"
 	greenapi "github.com/green-api/whatsapp-api-client-golang-v2"
 )
 
@@ -235,10 +234,6 @@ func (c *Client) Reboot(_ context.Context) error {
 	if err != nil {
 		return domainErr.NewInternalError("failed to reboot instance", err)
 	}
-	log.Infof(context.Background(), "resp: %+v", resp.Body)
-	bb, _ := resp.Body.MarshalJSON()
-	log.Infof(context.Background(), "resp body: %s", string(bb))
-
 	if resp == nil {
 		return domainErr.ErrWhatsAppEmptyResponse
 	}
