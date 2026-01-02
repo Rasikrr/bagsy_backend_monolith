@@ -1,12 +1,10 @@
 package users
 
 import (
-	"context"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/core/log"
 )
 
 type model struct {
@@ -46,7 +44,6 @@ func (m model) convert() (*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Infof(context.Background(), "user model:%+v", m)
 
 	return &entity.User{
 		Phone:       m.Phone,
