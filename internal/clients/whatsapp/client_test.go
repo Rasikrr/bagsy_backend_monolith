@@ -14,11 +14,12 @@ import (
 const (
 	testAPIURL     = "https://7105.api.greenapi.com"
 	testMediaURL   = "https://7105.media.greenapi.com"
-	testInstanceID = "7105335616"
-	testAPIToken   = "4caa49e67772405eaeb99ec4f97124bdf605d90e7e53409489"
+	testInstanceID = ""
+	testAPIToken   = ""
 )
 
 func TestSendMessage(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	ctx := context.Background()
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 	err := client.Reboot(ctx)
@@ -59,6 +60,7 @@ func TestFormatPhoneNumber(t *testing.T) {
 }
 
 func TestClient_SendMessage_Validation(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 
 	tests := []struct {
@@ -91,6 +93,7 @@ func TestClient_SendMessage_Validation(t *testing.T) {
 }
 
 func TestClient_SendFileByURL_Validation(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 
 	tests := []struct {
@@ -123,6 +126,7 @@ func TestClient_SendFileByURL_Validation(t *testing.T) {
 }
 
 func TestClient_SendFileByUpload_Validation(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 
 	tests := []struct {
@@ -155,6 +159,7 @@ func TestClient_SendFileByUpload_Validation(t *testing.T) {
 }
 
 func TestClient_SendLocation_Validation(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 
 	err := client.SendLocation(context.Background(), "", 51.5074, -0.1278, "London")
@@ -163,6 +168,7 @@ func TestClient_SendLocation_Validation(t *testing.T) {
 }
 
 func TestClient_SendContact_Validation(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 
 	tests := []struct {
@@ -204,6 +210,7 @@ func TestClient_SendContact_Validation(t *testing.T) {
 }
 
 func TestClient_DownloadFile_Validation(t *testing.T) {
+	t.Skip("Skip integration test - requires real credentials")
 	client := NewClient(testAPIURL, testMediaURL, testInstanceID, testAPIToken)
 
 	tests := []struct {

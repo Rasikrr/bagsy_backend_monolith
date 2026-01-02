@@ -7,11 +7,9 @@ import (
 
 func TestClient_Send(t *testing.T) {
 	// Skip в CI или если нет реальных credentials
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	t.Skip("Skip integration test - requires real credentials")
 
-	client := NewClient("dbagsy25", "bJwwe5@B!mdZ3Bz")
+	client := NewClient("", "")
 
 	tests := []struct {
 		name    string
@@ -49,46 +47,46 @@ func TestClient_Send(t *testing.T) {
 	}
 }
 
-func TestSMSStatus_IsError(t *testing.T) {
+func TestStatus_IsError(t *testing.T) {
 	tests := []struct {
 		name   string
-		status SMSStatus
+		status Status
 		want   bool
 	}{
-		{"not found", SMSStatusNotFound, true},
-		{"stopped", SMSStatusStopped, true},
-		{"delivered", SMSStatusDelivered, false},
-		{"passed to operator", SMSStatusPassedToOperator, false},
-		{"expired", SMSStatusExpired, true},
-		{"invalid number", SMSStatusInvalidNumber, true},
+		{"not found", StatusNotFound, true},
+		{"stopped", StatusStopped, true},
+		{"delivered", StatusDelivered, false},
+		{"passed to operator", StatusPassedToOperator, false},
+		{"expired", StatusExpired, true},
+		{"invalid number", StatusInvalidNumber, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.status.IsError(); got != tt.want {
-				t.Errorf("SMSStatus.IsError() = %v, want %v", got, tt.want)
+				t.Errorf("Status.IsError() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestSMSStatus_IsSuccess(t *testing.T) {
+func TestStatus_IsSuccess(t *testing.T) {
 	tests := []struct {
 		name   string
-		status SMSStatus
+		status Status
 		want   bool
 	}{
-		{"delivered", SMSStatusDelivered, true},
-		{"read", SMSStatusRead, true},
-		{"clicked", SMSStatusClicked, true},
-		{"pending", SMSStatusPending, false},
-		{"not found", SMSStatusNotFound, false},
+		{"delivered", StatusDelivered, true},
+		{"read", StatusRead, true},
+		{"clicked", StatusClicked, true},
+		{"pending", StatusPending, false},
+		{"not found", StatusNotFound, false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.status.IsSuccess(); got != tt.want {
-				t.Errorf("SMSStatus.IsSuccess() = %v, want %v", got, tt.want)
+				t.Errorf("Status.IsSuccess() = %v, want %v", got, tt.want)
 			}
 		})
 	}
