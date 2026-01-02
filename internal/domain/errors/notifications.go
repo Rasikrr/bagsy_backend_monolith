@@ -16,6 +16,7 @@ var (
 	ErrSMSTooManyRequests = NewInternalError("too many SMS requests", nil)
 	ErrSMSSpam            = NewConflictError("spam detected, try again later", nil)
 	ErrSMSSendFailed      = NewInternalError("failed to send SMS", nil)
+	ErrSMSRequestFailed   = NewInternalError("failed to send request to SMS client", nil)
 )
 
 // WhatsApp errors

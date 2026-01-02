@@ -10,6 +10,10 @@ const (
 	ResponseFormatJSON                            // 3 - JSON
 )
 
+func (r ResponseFormat) Int() int {
+	return int(r)
+}
+
 // ErrorCode коды ошибок от SMSC.KZ API
 type ErrorCode int
 
