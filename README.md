@@ -2,16 +2,35 @@
 
 Для запуска нужен .env файл с переменными окружения:
 ```
-ENVIRONMENT=dev, prod
-CONFIG_PATH=./config/твой_файл.yaml
+ENVIRONMENT=[dev, stage, prod]
 
-POSTGRES_DSN=postgres://postgres:rasik1234@localhost:5432/test?sslmode=disable
+CONFIG_PATH=./config/config.yaml
 
-REDIS_PORT=6379
-REDIS_USER=
-REDIS_HOST=localhost
-REDIS_PASSWORD=
-REDIS_DB=0
+POSTGRES_DSN=*****
 
-NATS_DSN=nats://localhost:4222
+REDIS_HOST=*****
+REDIS_PORT=*****
+REDIS_USER=*****
+REDIS_PASSWORD=*****
+REDIS_DB=*****
+
+
+SMS_CLIENT_LOGIN=*****
+SMS_CLIENT_PASSWORD=*****
+
+DEV_SMS_BOT_TOKEN=*****
+DEV_SMS_CHAT_ID=*****
+
+
+WHATSAPP_API_URL=*****
+WHATSAPP_MEDIA_URL=*****
+WHATSAPP_API_ID_INSTANCE=*****
+WHATSAPP_API_TOKEN=*****
+
+
+JWT_SECRET=*****
+JWT_ISSUER=*****
+
+SWAGGER_HOST=*****
+SWAGGER_SCHEME=*****
 ```
