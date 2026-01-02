@@ -27,8 +27,8 @@ func GetAndValidateData(r *http.Request, data interface{}) error {
 	}
 
 	if r.Body != nil {
-		if err := fillFromBody(r, data); err != nil {
-			return err
+		if bodyErr := fillFromBody(r, data); bodyErr != nil {
+			return bodyErr
 		}
 	}
 
@@ -65,14 +65,14 @@ func fillFromBody(r *http.Request, data interface{}) error {
 	}
 
 	if unmarshaler, ok := data.(json.Unmarshaler); ok {
-		if err := unmarshaler.UnmarshalJSON(bb); err != nil {
-			return domainErr.NewInvalidInputError("failed to unmarshal request body", err)
+		if unmarshalErr := unmarshaler.UnmarshalJSON(bb); unmarshalErr != nil {
+			return domainErr.NewInvalidInputError("failed to unmarshal request body", unmarshalErr)
 		}
 		return nil
 	}
 
-	if err := json.Unmarshal(bb, data); err != nil {
-		return domainErr.NewInvalidInputError("failed to unmarshal request body", err)
+	if unmarshalErr := json.Unmarshal(bb, data); unmarshalErr != nil {
+		return domainErr.NewInvalidInputError("failed to unmarshal request body", unmarshalErr)
 	}
 	return nil
 }

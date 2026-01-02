@@ -47,7 +47,7 @@ func (e *DomainError) WithDetail(key string, value interface{}) *DomainError {
 	return e
 }
 
-// Constructors
+// NewNotFoundError creates a new not found domain error
 func NewNotFoundError(message string, cause error) *DomainError {
 	return &DomainError{
 		Type:    TypeNotFound,
@@ -108,7 +108,7 @@ func NewInternalError(message string, cause error) *DomainError {
 	}
 }
 
-// Helpers
+// IsNotFound checks if the error is a not found error
 func IsNotFound(err error) bool {
 	var domainErr *DomainError
 	if errors.As(err, &domainErr) {

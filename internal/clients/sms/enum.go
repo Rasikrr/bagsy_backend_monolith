@@ -25,36 +25,36 @@ const (
 	ErrorCodeTooManyRequests  ErrorCode = 9 // Слишком много запросов
 )
 
-// SMSStatus статусы SMS сообщения
-type SMSStatus int
+// Status статусы SMS сообщения
+type Status int
 
 const (
-	SMSStatusNotFound          SMSStatus = -3 // Не найдено
-	SMSStatusStopped           SMSStatus = -2 // Остановлено
-	SMSStatusPending           SMSStatus = -1 // Ожидает отправки
-	SMSStatusPassedToOperator  SMSStatus = 0  // Передано оператору
-	SMSStatusDelivered         SMSStatus = 1  // Доставлено
-	SMSStatusRead              SMSStatus = 2  // Прочитано
-	SMSStatusExpired           SMSStatus = 3  // Срок истек
-	SMSStatusClicked           SMSStatus = 4  // Нажат переход по ссылке
-	SMSStatusImpossibleDeliver SMSStatus = 20 // Невозможно доставить
-	SMSStatusInvalidNumber     SMSStatus = 21 // Неправильный номер
-	SMSStatusForbidden         SMSStatus = 22 // Запрещено
-	SMSStatusInsufficientFunds SMSStatus = 23 // Недостаточно средств
-	SMSStatusUnavailableNumber SMSStatus = 24 // Номер недоступен
+	StatusNotFound          Status = -3 // Не найдено
+	StatusStopped           Status = -2 // Остановлено
+	StatusPending           Status = -1 // Ожидает отправки
+	StatusPassedToOperator  Status = 0  // Передано оператору
+	StatusDelivered         Status = 1  // Доставлено
+	StatusRead              Status = 2  // Прочитано
+	StatusExpired           Status = 3  // Срок истек
+	StatusClicked           Status = 4  // Нажат переход по ссылке
+	StatusImpossibleDeliver Status = 20 // Невозможно доставить
+	StatusInvalidNumber     Status = 21 // Неправильный номер
+	StatusForbidden         Status = 22 // Запрещено
+	StatusInsufficientFunds Status = 23 // Недостаточно средств
+	StatusUnavailableNumber Status = 24 // Номер недоступен
 )
 
 // IsError проверяет, является ли статус ошибочным
-func (s SMSStatus) IsError() bool {
-	errorStatuses := []SMSStatus{
-		SMSStatusNotFound,
-		SMSStatusStopped,
-		SMSStatusExpired,
-		SMSStatusImpossibleDeliver,
-		SMSStatusInvalidNumber,
-		SMSStatusForbidden,
-		SMSStatusInsufficientFunds,
-		SMSStatusUnavailableNumber,
+func (s Status) IsError() bool {
+	errorStatuses := []Status{
+		StatusNotFound,
+		StatusStopped,
+		StatusExpired,
+		StatusImpossibleDeliver,
+		StatusInvalidNumber,
+		StatusForbidden,
+		StatusInsufficientFunds,
+		StatusUnavailableNumber,
 	}
 
 	for _, status := range errorStatuses {
@@ -66,6 +66,6 @@ func (s SMSStatus) IsError() bool {
 }
 
 // IsSuccess проверяет, успешно ли доставлено сообщение
-func (s SMSStatus) IsSuccess() bool {
-	return s == SMSStatusDelivered || s == SMSStatusRead || s == SMSStatusClicked
+func (s Status) IsSuccess() bool {
+	return s == StatusDelivered || s == StatusRead || s == StatusClicked
 }

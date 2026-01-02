@@ -1,4 +1,4 @@
-package service_categories
+package servicecategories
 
 const getServiceCategoryByID = `
 	SELECT id, name, description, created_at, updated_at, updated_by

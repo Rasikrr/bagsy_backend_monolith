@@ -13,7 +13,7 @@ import (
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
 )
@@ -136,22 +136,22 @@ func (s *Service) RegisterStaff(ctx context.Context, phone, pointCode string) er
 		return err
 	}
 	// 1. Валидация прав доступа
-	if err := s.validateStaffRegistrationPermissions(ctx, pointCode, createdBy); err != nil {
-		return err
+	if validErr := s.validateStaffRegistrationPermissions(ctx, pointCode, createdBy); validErr != nil {
+		return validErr
 	}
 
 	// 2. Создаем user (неактивный, без пароля)
 	user := &entity.User{
 		Phone:       phone,
 		PointCode:   &pointCode,
-		NetworkCode: util.Pointer(createdBy.NetworkCode()),
+		NetworkCode: ptr.Pointer(createdBy.NetworkCode()),
 		Role:        enum.RoleStaff,
 		Active:      false, // Будет активирован после подтверждения
 		UpdatedBy:   createdBy.Phone(),
 	}
 
-	if err := s.usersService.Create(ctx, user); err != nil {
-		return err
+	if createErr := s.usersService.Create(ctx, user); createErr != nil {
+		return createErr
 	}
 
 	// 3. Генерируем registration token
@@ -167,11 +167,13 @@ func (s *Service) RegisterStaff(ctx context.Context, phone, pointCode string) er
 	}
 
 	// 4. Отправляем уведомление (WhatsApp с fallback на SMS)
-	if err := s.notificationService.SendRegistrationLink(ctx, phone, token); err != nil {
-		return err
+	if sendErr := s.notificationService.SendRegistrationLink(ctx, phone, token); sendErr != nil {
+		return sendErr
 	}
 	return nil
 }
+
+// nolint: govet
 func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmRequest) (access, refresh string, err error) {
 	// 1. Парсим и валидируем токен
 	tokenPayload, err := s.tokenManager.ParseRegistrationToken(req.Token)
@@ -191,9 +193,9 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 		},
 		func(txCtx context.Context) error {
 			// 3. Проверяем и помечаем токен использованным (атомарно через SET NX)
-			alreadyUsed, err := s.registrationTokenCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
-			if err != nil {
-				return err
+			alreadyUsed, markErr := s.registrationTokenCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
+			if markErr != nil {
+				return markErr
 			}
 			if alreadyUsed {
 				return domainErr.NewConflictError("registration token already used", nil)
@@ -205,7 +207,7 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 				return err
 			}
 
-			// 5. Defense in depth: проверка что пользователь еще не активирован
+			// 5. Defense in depth: проверка, что пользователь еще не активирован
 			if user.Active {
 				return domainErr.ErrUserActivated
 			}
@@ -289,7 +291,7 @@ func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 // VerifyAccessToken парсит access токен и создает domain.Session
 // Это метод согласно Clean Architecture (JWT → DTO → Session)
 // Service не зависит от конкретных ошибок JWT - просто оборачивает любую ошибку
-func (s *Service) VerifyAccessToken(ctx context.Context, tokenStr string) (*session.Session, error) {
+func (s *Service) VerifyAccessToken(_ context.Context, tokenStr string) (*session.Session, error) {
 	// 1. Парсим токен через JWT (получаем DTO из domain)
 	parsed, err := s.tokenManager.ParseAccessToken(tokenStr)
 	if err != nil {
@@ -316,7 +318,7 @@ func (s *Service) VerifyAccessToken(ctx context.Context, tokenStr string) (*sess
 	return sess, nil
 }
 
-// RefreshTokens обновляет пару токенов по refresh токену
+// Refresh обновляет пару токенов по refresh токену
 // Использует hash-based подход:
 // 1. Хэширует raw токен от клиента
 // 2. Ищет hash в cache → получает phone
@@ -336,8 +338,8 @@ func (s *Service) Refresh(ctx context.Context, rawToken string) (string, string,
 
 	// 3. Удаляем старый refresh токен (ротация для безопасности)
 	// Делаем это ДО получения пользователя, чтобы токен нельзя было использовать повторно
-	if err := s.refreshTokenRepository.DeleteRefreshToken(ctx, tokenHash); err != nil {
-		return "", "", domainErr.NewInternalError("failed to delete old refresh token", err)
+	if delErr := s.refreshTokenRepository.DeleteRefreshToken(ctx, tokenHash); delErr != nil {
+		return "", "", domainErr.NewInternalError("failed to delete old refresh token", delErr)
 	}
 
 	// 4. Получаем актуальные данные пользователя из БД
@@ -374,8 +376,8 @@ func (s *Service) generateTokens(ctx context.Context, user *entity.User) (access
 	}
 
 	// Сохраняем hash refresh токена в cache (tokenHash → phone)
-	if err := s.refreshTokenRepository.SaveRefreshToken(ctx, refreshHash, user.Phone, s.refreshTTL); err != nil {
-		return "", "", domainErr.NewInternalError("failed to save refresh token", err)
+	if saveErr := s.refreshTokenRepository.SaveRefreshToken(ctx, refreshHash, user.Phone, s.refreshTTL); saveErr != nil {
+		return "", "", domainErr.NewInternalError("failed to save refresh token", saveErr)
 	}
 
 	return access, refresh, nil

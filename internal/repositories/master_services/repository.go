@@ -1,4 +1,4 @@
-package master_services
+package masterservices
 
 import (
 	"context"

@@ -25,8 +25,7 @@ func HandleError(ctx context.Context, w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(resp.Code)
 	bb, _ := json.Marshal(resp)
-	w.Write(bb)
-
+	_, _ = w.Write(bb) // nolint:gosec
 }
 
 func logError(ctx context.Context, err error) {

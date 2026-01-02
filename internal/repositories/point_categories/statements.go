@@ -1,4 +1,4 @@
-package point_categories
+package pointcategories
 
 const getPointCategoryByID = `
 	SELECT id, name, description, created_at, updated_at, updated_by

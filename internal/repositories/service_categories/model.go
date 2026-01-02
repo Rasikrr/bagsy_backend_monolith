@@ -1,4 +1,4 @@
-package service_categories
+package servicecategories
 
 import (
 	"time"

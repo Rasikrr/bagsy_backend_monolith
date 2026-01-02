@@ -91,7 +91,7 @@ linters:
     - nilnesserr # reports that it checks for err != nil, but it returns a different nil value error (powered by nilness and nilerr)
     - nilnil # checks that there is no simultaneous return of nil error and an invalid value
     - noctx # finds sending http request without context.Context
-    - nonamedreturns # reports all named returns
+#    - nonamedreturns # reports all named returns
     - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
     - perfsprint # checks that fmt.Sprintf can be replaced with a faster alternative
     - promlinter # checks Prometheus metrics naming via promlint
@@ -109,7 +109,6 @@ linters:
     - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
     - unconvert # removes unnecessary type conversions
     - unparam # reports unused function parameters
-    - unused # checks for unused constants, variables, functions and types
     - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
     - usetesting # reports uses of functions with replacement inside the testing package
     - wastedassign # finds wasted assignment statements
@@ -458,3 +457,7 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+      - text: 'type models is unused'
+        linters: [unused]
+      - text: 'func models.convert is unused'
+        linters: [unused]

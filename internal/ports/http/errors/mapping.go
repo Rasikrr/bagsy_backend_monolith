@@ -44,5 +44,4 @@ func toHTTPResponse(err error) ErrorResponse {
 		Message: "internal server error",
 		Code:    http.StatusInternalServerError,
 	}
-
 }

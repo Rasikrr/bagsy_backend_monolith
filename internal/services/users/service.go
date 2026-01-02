@@ -11,6 +11,7 @@ type usersRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
+	Update(ctx context.Context, user *entity.User) error
 }
 
 type Service struct {
@@ -50,5 +51,5 @@ func (s *Service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 }
 
 func (s *Service) Update(ctx context.Context, user *entity.User) error {
-	return nil
+	return s.usersRepo.Update(ctx, user)
 }

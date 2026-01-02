@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -123,8 +123,8 @@ func (c *Client) sendRequest(ctx context.Context, reqBody sendRequest) (*sendRes
 	}
 
 	var resp sendResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, domainErr.NewInternalError("failed to unmarshal SMS response", err).
+	if unmarshalErr := json.Unmarshal(body, &resp); unmarshalErr != nil {
+		return nil, domainErr.NewInternalError("failed to unmarshal SMS response", unmarshalErr).
 			WithDetail("body", string(body))
 	}
 
@@ -132,7 +132,7 @@ func (c *Client) sendRequest(ctx context.Context, reqBody sendRequest) (*sendRes
 }
 
 // GetStatus проверяет статус отправленного SMS
-func (c *Client) GetStatus(ctx context.Context, phone string, messageID int) (*statusResponse, error) {
+func (c *Client) GetStatus(ctx context.Context, phone string, messageID int) (*StatusResponse, error) {
 	if phone == "" {
 		return nil, domainErr.ErrSMSEmptyPhone
 	}
@@ -149,7 +149,7 @@ func (c *Client) GetStatus(ctx context.Context, phone string, messageID int) (*s
 	q.Add("login", c.login)
 	q.Add("psw", c.password)
 	q.Add("phone", phone)
-	q.Add("id", fmt.Sprintf("%d", messageID))
+	q.Add("id", strconv.Itoa(messageID))
 	q.Add("fmt", "3") // JSON format
 	q.Add("charset", defaultCharset)
 	req.URL.RawQuery = q.Encode()
@@ -172,9 +172,9 @@ func (c *Client) GetStatus(ctx context.Context, phone string, messageID int) (*s
 		return nil, domainErr.NewInternalError("failed to read status response body", err)
 	}
 
-	var resp statusResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, domainErr.NewInternalError("failed to unmarshal status response", err).
+	var resp StatusResponse
+	if unmarshalErr := json.Unmarshal(body, &resp); unmarshalErr != nil {
+		return nil, domainErr.NewInternalError("failed to unmarshal status response", unmarshalErr).
 			WithDetail("body", string(body))
 	}
 

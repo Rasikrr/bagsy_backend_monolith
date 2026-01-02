@@ -43,7 +43,7 @@ func (c *Cache) GetRefreshToken(ctx context.Context, tokenHash string) (string, 
 	return phone, nil
 }
 
-// DeleteToken удаляет токен (logout)
+// DeleteRefreshToken удаляет токен (logout)
 func (c *Cache) DeleteRefreshToken(ctx context.Context, tokenHash string) error {
 	key := c.refreshTokenKey(tokenHash)
 	if err := c.cli.Delete(ctx, key); err != nil {

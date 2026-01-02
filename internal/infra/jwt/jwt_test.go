@@ -6,7 +6,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,8 +23,8 @@ func TestAccessToken(t *testing.T) {
 		Role:        enum.RoleStaff,
 		Name:        "Rassul",
 		Surname:     "Turtulov",
-		PointCode:   util.Pointer("test_point"),
-		NetworkCode: util.Pointer("test_network"),
+		PointCode:   ptr.Pointer("test_point"),
+		NetworkCode: ptr.Pointer("test_network"),
 		Active:      true,
 	}
 	token, err := mgr.NewAccessToken(user, ttl)

@@ -87,7 +87,7 @@ func (a *App) initHTTP(_ context.Context) error {
 	return nil
 }
 
-func (a *App) initInfra(ctx context.Context) error {
+func (a *App) initInfra(_ context.Context) error {
 	jwtSecret, err := a.Config().Variables.GetString(appenv.JWTSecret)
 	if err != nil {
 		return err

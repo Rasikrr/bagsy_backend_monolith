@@ -3,6 +3,7 @@ package whatsapp
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	greenapi "github.com/green-api/whatsapp-api-client-golang-v2"
@@ -67,7 +68,7 @@ func (c *Client) SendFileByURL(_ context.Context, phoneNumber, fileURL, caption 
 		return domainErr.ErrWhatsAppSendFailed.WithError(err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return domainErr.ErrWhatsAppEmptyResponse
 	}
 
@@ -94,7 +95,7 @@ func (c *Client) SendFileByUpload(_ context.Context, phoneNumber, filePath, capt
 		return domainErr.ErrWhatsAppSendFailed.WithError(err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return domainErr.ErrWhatsAppEmptyResponse
 	}
 
@@ -118,7 +119,7 @@ func (c *Client) SendLocation(_ context.Context, phoneNumber string, latitude, l
 		return domainErr.ErrWhatsAppSendFailed.WithError(err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return domainErr.ErrWhatsAppEmptyResponse
 	}
 
@@ -148,7 +149,7 @@ func (c *Client) SendContact(_ context.Context, phoneNumber string, contact Cont
 		return domainErr.ErrWhatsAppSendFailed.WithError(err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return domainErr.ErrWhatsAppEmptyResponse
 	}
 
@@ -162,13 +163,13 @@ func (c *Client) GetStateInstance(_ context.Context) (*StateInstance, error) {
 		return nil, domainErr.NewInternalError("failed to get state instance", err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return nil, domainErr.ErrWhatsAppEmptyResponse
 	}
 
 	var state StateInstance
-	if err := json.Unmarshal(resp.Body, &state); err != nil {
-		return nil, domainErr.NewInternalError("failed to unmarshal state response", err)
+	if unmarshalErr := json.Unmarshal(resp.Body, &state); unmarshalErr != nil {
+		return nil, domainErr.NewInternalError("failed to unmarshal state response", unmarshalErr)
 	}
 
 	return &state, nil
@@ -181,13 +182,13 @@ func (c *Client) GetSettings(_ context.Context) (*Settings, error) {
 		return nil, domainErr.NewInternalError("failed to get settings", err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return nil, domainErr.ErrWhatsAppEmptyResponse
 	}
 
 	var settings Settings
-	if err := json.Unmarshal(resp.Body, &settings); err != nil {
-		return nil, domainErr.NewInternalError("failed to unmarshal settings response", err)
+	if unmarshalErr := json.Unmarshal(resp.Body, &settings); unmarshalErr != nil {
+		return nil, domainErr.NewInternalError("failed to unmarshal settings response", unmarshalErr)
 	}
 
 	return &settings, nil
@@ -221,7 +222,7 @@ func (c *Client) SetSettings(_ context.Context, settings Settings) error {
 		return domainErr.NewInternalError("failed to set settings", err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return domainErr.ErrWhatsAppEmptyResponse
 	}
 
@@ -269,7 +270,7 @@ func (c *Client) DownloadFile(_ context.Context, chatID, messageID string) ([]by
 		return nil, domainErr.NewInternalError("failed to download file", err)
 	}
 
-	if resp == nil || resp.StatusCode != 200 {
+	if resp == nil || resp.StatusCode != http.StatusOK {
 		return nil, domainErr.ErrWhatsAppEmptyResponse
 	}
 

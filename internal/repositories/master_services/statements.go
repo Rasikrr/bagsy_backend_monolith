@@ -1,4 +1,4 @@
-package master_services
+package masterservices
 
 const getMasterServiceByID = `
 	SELECT id, master_phone, service_id, price, active, created_at, updated_at, updated_by

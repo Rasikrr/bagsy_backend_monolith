@@ -59,9 +59,9 @@ func (r *sendResponse) GetError() error {
 	}
 }
 
-// statusResponse структура ответа на проверку статуса
-type statusResponse struct {
-	Status        SMSStatus `json:"status"`                   // Статус сообщения
+// StatusResponse структура ответа на проверку статуса
+type StatusResponse struct {
+	Status        Status    `json:"status"`                   // Статус сообщения
 	LastDate      string    `json:"last_date,omitempty"`      // Дата последнего изменения
 	LastTimestamp int64     `json:"last_timestamp,omitempty"` // Unix timestamp
 	Flag          int       `json:"flag,omitempty"`           // Дополнительный флаг
@@ -70,12 +70,12 @@ type statusResponse struct {
 }
 
 // HasError проверяет наличие ошибки в ответе
-func (r *statusResponse) HasError() bool {
+func (r *StatusResponse) HasError() bool {
 	return r.Error != "" || r.ErrorCode != 0
 }
 
 // GetError возвращает ошибку из ответа и конвертирует в доменную
-func (r *statusResponse) GetError() error {
+func (r *StatusResponse) GetError() error {
 	if !r.HasError() {
 		return nil
 	}

@@ -1,4 +1,4 @@
-package util
+package ptr
 
 func Deref[T any](val *T) T {
 	if val != nil {

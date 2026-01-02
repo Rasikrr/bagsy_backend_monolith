@@ -27,7 +27,7 @@ func SendData(ctx context.Context, w http.ResponseWriter, data interface{}, stat
 			errors.HandleError(ctx, w, err)
 			return
 		}
-		w.Write(bb)
+		_, _ = w.Write(bb) // nolint:gosec
 		logSuccessResponse(ctx, len(bb), status)
 		return
 	}
@@ -37,7 +37,7 @@ func SendData(ctx context.Context, w http.ResponseWriter, data interface{}, stat
 		errors.HandleError(ctx, w, err)
 		return
 	}
-	w.Write(bb)
+	_, _ = w.Write(bb) // nolint:gosec
 	logSuccessResponse(ctx, len(bb), status)
 }
 

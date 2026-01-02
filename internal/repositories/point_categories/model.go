@@ -1,4 +1,4 @@
-package point_categories
+package pointcategories
 
 import (
 	"time"

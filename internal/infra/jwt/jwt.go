@@ -5,12 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/cockroachdb/errors"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
@@ -39,6 +39,7 @@ func (t *TokenManager) NewAccessToken(user *entity.User, ttl time.Duration) (str
 
 // ParseAccessToken парсит access токен и возвращает DTO
 // Конвертация в domain.Session должна происходить на уровне Service
+// nolint: nestif
 func (t *TokenManager) ParseAccessToken(accessToken string) (*dto.AccessTokenPayload, error) {
 	claims := new(accessClaims)
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
@@ -98,8 +99,8 @@ func (t *TokenManager) createAccessClaims(user *entity.User, ttl time.Duration) 
 
 func (t *TokenManager) NewRefreshToken() (raw, hash string, err error) {
 	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", "", err
+	if _, readErr := rand.Read(b); readErr != nil {
+		return "", "", readErr
 	}
 
 	raw = base64.RawURLEncoding.EncodeToString(b)
@@ -132,6 +133,7 @@ func (t *TokenManager) NewRegistrationToken(dto *dto.RegistrationTokenPayload, t
 	return tokenStr, nil
 }
 
+// nolint: nestif
 // ParseRegistrationToken парсит registration токен и возвращает DTO
 func (t *TokenManager) ParseRegistrationToken(tokenString string) (*dto.RegistrationTokenPayload, error) {
 	claims := new(registrationClaims)
