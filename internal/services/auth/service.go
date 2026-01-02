@@ -24,7 +24,7 @@ type Service interface {
 	CheckAccessToken(ctx context.Context, token string) (*entity.Session, error)
 	RefreshTokens(ctx context.Context, token string) (string, string, error)
 
-	GenRegisterConfrimLink(ctx context.Context, phone, pointCode, networkCode string) (string, error)
+	GenRegisterConfirmLink(ctx context.Context, phone, pointCode, networkCode string) (string, error)
 	SendRegisterConfirmLink(ctx context.Context, phone, link string) error
 
 	RegisterConfirm(ctx context.Context, phone string, password string) (string, string, error)
@@ -101,7 +101,7 @@ func (s *service) Login(ctx context.Context, phone string, password string) (str
 	return accessToken, refreshToken, nil
 }
 
-func (s *service) GenRegisterConfrimLink(_ context.Context, phone, pointCode, networkCode string) (string, error) {
+func (s *service) GenRegisterConfirmLink(_ context.Context, phone, pointCode, networkCode string) (string, error) {
 	token, err := jwt.GenerateRegistrationToken(phone, pointCode, networkCode, s.jwtSecret)
 	if err != nil {
 		return "", errGenerateRegistrationURL.Wrap(err)

@@ -51,7 +51,7 @@ func (c *Controller) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := c.authService.GenRegisterConfrimLink(r.Context(), req.Phone, req.PointCode, by.NetworkCode())
+	link, err := c.authService.GenRegisterConfirmLink(r.Context(), req.Phone, req.PointCode, by.NetworkCode())
 	if err != nil {
 		api.SendError(w, err)
 		return
