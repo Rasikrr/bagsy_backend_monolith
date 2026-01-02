@@ -12,6 +12,7 @@ import (
 type authService interface {
 	Login(ctx context.Context, phone, password string) (access, refresh string, err error)
 	Refresh(ctx context.Context, refreshToken string) (access, refresh string, err error)
+	Logout(ctx context.Context, refreshToken string) error
 	RegisterStaff(ctx context.Context, phone, pointCode string) error
 	RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmRequest) (access, refresh string, err error)
 }
@@ -45,5 +46,8 @@ func (c *Controller) Init(router *chi.Mux) {
 		r.Post("/login", c.login)
 
 		r.Post("/refresh", c.refresh)
+
+		r.Post("/logout", c.logout)
+
 	})
 }
