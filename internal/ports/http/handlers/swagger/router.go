@@ -24,5 +24,21 @@ func New(scheme, host string) *Controller {
 func (c *Controller) Init(router *chi.Mux) {
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL(fmt.Sprintf("%s://%s/swagger/doc.json", c.scheme, c.host)),
+		httpSwagger.BeforeScript(`
+			window.onload = function() {
+				// Переопределяем метод авторизации для автоматической подстановки Bearer
+				const originalAuthorize = window.ui.authActions.authorize;
+				window.ui.authActions.authorize = function(payload) {
+					if (payload.Bearer && payload.Bearer.value) {
+						// Добавляем Bearer префикс если его нет
+						const token = payload.Bearer.value.trim();
+						if (!token.toLowerCase().startsWith('bearer ')) {
+							payload.Bearer.value = 'Bearer ' + token;
+						}
+					}
+					return originalAuthorize.call(this, payload);
+				};
+			}
+		`),
 	))
 }

@@ -83,6 +83,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		swaggerScheme,
 		a.authService,
 		a.formsService,
+		a.usersService,
 	)
 	return nil
 }
@@ -108,6 +109,7 @@ func (a *App) initCache(_ context.Context) error {
 func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
 	a.pointsRepo = pointsR.NewRepository(a.Postgres())
+	a.networksRepo = networksR.NewRepository(a.Postgres())
 	a.formsRepo = formsR.NewRepository(a.Postgres())
 	return nil
 }
@@ -130,9 +132,9 @@ func (a *App) initServices(_ context.Context) error {
 		return err
 	}
 
-	a.usersService = usersS.NewService(a.usersRepo)
 	a.networksService = networksS.NewService(a.networksRepo)
 	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService)
+	a.usersService = usersS.NewService(a.usersRepo, a.pointsService)
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(a.smsClient, a.whatsappClient, registerConfirmationURL)
 

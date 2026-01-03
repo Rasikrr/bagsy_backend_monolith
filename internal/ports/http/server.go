@@ -2,6 +2,8 @@
 package http
 
 import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/users"
+	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/environment"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
@@ -38,14 +40,16 @@ func NewServer(
 	swaggerHost, swaggerScheme string,
 	authService *authS.Service,
 	formsService *forms.Service,
+	usersService *usersS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
 
 	authController := auth.New(authService, authMiddleware)
 	formsController := form.New(formsService)
+	usersController := users.New(usersService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
-	server.WithControllers(authController, formsController)
+	server.WithControllers(authController, formsController, usersController)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
 }

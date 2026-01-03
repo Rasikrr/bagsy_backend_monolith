@@ -7,4 +7,8 @@ type UserFilter struct {
 	PointCode   *string
 	Roles       []enum.Role
 	Phones      []string
+	Limit       uint64
+	Offset      uint64
+	SortBy      string
+	SortOrder   enum.SortOrder
 }
