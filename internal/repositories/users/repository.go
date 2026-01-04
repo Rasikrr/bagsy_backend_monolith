@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
@@ -14,6 +15,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 	"github.com/samber/lo"
+)
+
+var (
+	columns = []string{"phone", "password", "role", "name", "surname", "point_code", "network_code", "active", "created_at", "updated_at", "deleted_at", "updated_by"}
 )
 
 type Repository struct {
@@ -59,7 +64,7 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 	return out, nil
 }
 
-func (r *Repository) GetByParams(ctx context.Context, filter query.UserFilter) ([]*entity.User, error) {
+func (r *Repository) GetByParams(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error) {
 	q, args, err := buildQuery(filter)
 	if err != nil {
 		return nil, domainErr.NewInternalError("failed to build query", err)
@@ -119,12 +124,13 @@ func (r *Repository) ExistsByPhone(ctx context.Context, phone string) (bool, err
 	return out, nil
 }
 
-func buildQuery(filter query.UserFilter) (string, []any, error) {
+func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	builder := psql.Select("phone", "password", "role", "name", "surname", "point_code", "network_code", "active", "created_at", "updated_at", "deleted_at", "updated_by").
+	builder := psql.Select(columns...).
 		From("users").
 		Where(sq.Eq{"deleted_at": nil})
 
+	// Фильтры
 	if filter.NetworkCode != nil {
 		builder = builder.Where(sq.Eq{"network_code": *filter.NetworkCode})
 	}
@@ -134,7 +140,6 @@ func buildQuery(filter query.UserFilter) (string, []any, error) {
 	}
 
 	if len(filter.Roles) > 0 {
-		// Конвертируем []enum.Role в []string для SQL запроса
 		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
 			return role.String()
 		})
@@ -145,5 +150,10 @@ func buildQuery(filter query.UserFilter) (string, []any, error) {
 		builder = builder.Where(sq.Eq{"phone": filter.Phones})
 	}
 
+	builder = builder.OrderBy(
+		fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder.String()),
+	)
+	builder = builder.Limit(filter.Limit)
+	builder = builder.Offset(filter.Offset)
 	return builder.ToSql()
 }

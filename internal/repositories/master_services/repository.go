@@ -34,6 +34,17 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.MasterS
 	return m.convert(), nil
 }
 
+func (r *Repository) GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*entity.MasterService, error) {
+	var m model
+	err := pgxscan.Get(ctx, r.db, &m, getByMasterPhoneAndServiceID, phone, serviceID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrMasterServiceNotFound.WithError(err)
+		}
+	}
+	return m.convert(), nil
+}
+
 func (r *Repository) Create(ctx context.Context, masterService *entity.MasterService) error {
 	m := convert(masterService)
 	err := r.db.QueryRow(ctx, createMasterService, m.MasterPhone, m.ServiceID, m.Price, m.Active, m.UpdatedBy).Scan(&masterService.ID)

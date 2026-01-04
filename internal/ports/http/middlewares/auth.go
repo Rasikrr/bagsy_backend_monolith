@@ -26,11 +26,9 @@ func NewAuth(authService authService) AuthMiddleware {
 	}
 }
 
-// Handle базовый middleware для проверки токена
-func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (a *AuthMiddleware) Handle(next http.Handler) http.Handler { // Изменено здесь
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { // Приводим к HandlerFunc внутри
 		ctx := r.Context()
-
 		token, err := httputil.GetAuthHeader(r)
 		if err != nil {
 			errors.HandleError(ctx, w, err)
@@ -42,18 +40,16 @@ func (a *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			errors.HandleError(ctx, w, err)
 			return
 		}
-		// Устанавливаем сессию в контекст
+
 		ctx = session.SetSession(ctx, ses)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	}
+	})
 }
 
-// RequireRole проверяет что пользователь имеет одну из указанных ролей
-func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.HandlerFunc) http.HandlerFunc {
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return a.Handle(func(w http.ResponseWriter, r *http.Request) {
+func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return a.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-
 			ses, err := session.GetSession(ctx)
 			if err != nil {
 				errors.HandleError(ctx, w, err)
@@ -66,6 +62,14 @@ func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.HandlerFunc) 
 			}
 
 			next.ServeHTTP(w, r)
-		})
+		}))
 	}
+}
+
+func (a *AuthMiddleware) AuthorizeManagement() func(http.Handler) http.Handler {
+	return a.RequireRole(
+		enum.RoleManager,
+		enum.RoleNetManager,
+		enum.RoleSelfOwner,
+	)
 }
