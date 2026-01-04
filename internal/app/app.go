@@ -3,19 +3,26 @@ package app
 import (
 	"context"
 
+	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
+	bagsiesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/bagsies"
+	masterServicesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/master_services"
 	pointsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/points"
+	servicesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/services"
 	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
@@ -30,19 +37,26 @@ type App struct {
 	smsClient      *sms.Client
 	whatsappClient *whatsapp.Client
 
-	tokensCache *tokens.Cache
+	tokensCache       *tokens.Cache
+	bagsyConfirmCache *bagsyconfirm.Cache
 
-	usersRepo    *usersR.Repository
-	pointsRepo   *pointsR.Repository
-	networksRepo *networksR.Repository
-	formsRepo    *formsR.Repository
+	usersRepo          *usersR.Repository
+	pointsRepo         *pointsR.Repository
+	networksRepo       *networksR.Repository
+	formsRepo          *formsR.Repository
+	bagsiesRepo        *bagsiesR.Repository
+	masterServicesRepo *masterServicesR.Repository
+	servicesRepo       *servicesR.Repository
 
-	usersService         *usersS.Service
-	pointsService        *pointsS.Service
-	networksService      *networksS.Service
-	authService          *authS.Service
-	formsService         *formsS.Service
-	notificationsService *notifications.Service
+	usersService          *usersS.Service
+	pointsService         *pointsS.Service
+	networksService       *networksS.Service
+	authService           *authS.Service
+	formsService          *formsS.Service
+	notificationsService  *notifications.Service
+	bagsiesService        *bagsies.Service
+	masterServicesService *masterservices.Service
+	servicesService       *services.Service
 
 	tokenManager *jwt.TokenManager
 }
@@ -84,6 +98,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.authService,
 		a.formsService,
 		a.usersService,
+		a.bagsiesService,
 	)
 	return nil
 }
@@ -103,6 +118,12 @@ func (a *App) initInfra(_ context.Context) error {
 
 func (a *App) initCache(_ context.Context) error {
 	a.tokensCache = tokens.New(a.Redis())
+
+	bagsyConfirmTTL, err := a.Config().Variables.GetDuration(appenv.BagsyConfirmTTL)
+	if err != nil {
+		return err
+	}
+	a.bagsyConfirmCache = bagsyconfirm.NewCache(a.Redis(), bagsyConfirmTTL)
 	return nil
 }
 
@@ -111,6 +132,9 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.pointsRepo = pointsR.NewRepository(a.Postgres())
 	a.networksRepo = networksR.NewRepository(a.Postgres())
 	a.formsRepo = formsR.NewRepository(a.Postgres())
+	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
+	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
+	a.servicesRepo = servicesR.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -137,6 +161,8 @@ func (a *App) initServices(_ context.Context) error {
 	a.usersService = usersS.NewService(a.usersRepo, a.pointsService)
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(a.smsClient, a.whatsappClient, registerConfirmationURL)
+	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
+	a.servicesService = services.NewService(a.servicesRepo)
 
 	a.authService = authS.NewService(
 		a.PostgresTXManager(),
@@ -149,6 +175,16 @@ func (a *App) initServices(_ context.Context) error {
 		accessTokenTTL,
 		refreshTokenTTL,
 		registrationTokenTTL,
+	)
+
+	a.bagsiesService = bagsies.NewService(
+		a.PostgresTXManager(),
+		a.bagsiesRepo,
+		a.masterServicesService,
+		a.servicesService,
+		a.usersService,
+		a.notificationsService,
+		a.bagsyConfirmCache,
 	)
 
 	return nil

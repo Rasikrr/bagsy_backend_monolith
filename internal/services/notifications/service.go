@@ -35,7 +35,16 @@ func (s *Service) SendRegistrationLink(ctx context.Context, phone, token string)
 	link := fmt.Sprintf("%s?token=%s", s.registrationConfirmURL, token)
 	// TODO: format message (markdown)
 	message := fmt.Sprintf("Добро пожаловать в Bagsy! Завершите регистрацию по ссылке: %s", link)
+	return s.send(ctx, phone, message)
+}
 
+func (s *Service) SendBagsyConfirmCode(ctx context.Context, phone, code string) error {
+	// TODO: format message, add link, name of service etc. (markdown)
+	message := fmt.Sprintf("%s - Ваш код подтверждения на запись", code)
+	return s.send(ctx, phone, message)
+}
+
+func (s *Service) send(ctx context.Context, phone, message string) error {
 	err := s.whatsApp.SendMessage(ctx, phone, message)
 	if err != nil {
 		err = s.smsClient.Send(ctx, phone, message)

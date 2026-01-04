@@ -192,3 +192,9 @@ env:
     type: "string"
     env_name: "SWAGGER_SCHEME"
     required: true
+
+  bagsy_confirm_ttl:
+    type: "duration"
+    env_name: "BAGSY_CONFIRM_TTL"
+    value: "300s"
+    required: true

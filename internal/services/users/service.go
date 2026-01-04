@@ -61,6 +61,10 @@ func (s *Service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 	return user, nil
 }
 
+func (s *Service) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
+	return s.usersRepo.ExistsByPhone(ctx, phone)
+}
+
 // GetByFilter возвращает список пользователей с пагинацией и учетом прав доступа
 // Применяет ограничения на основе роли текущего пользователя
 func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFilter) ([]*entity.User, error) {

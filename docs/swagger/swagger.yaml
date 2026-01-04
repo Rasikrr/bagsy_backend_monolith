@@ -82,6 +82,55 @@ definitions:
     - phone
     - point_code
     type: object
+  internal_ports_http_handlers_bagsies.confirmBagsyRequest:
+    properties:
+      code:
+        type: string
+      service_id:
+        type: string
+    required:
+    - code
+    - service_id
+    type: object
+  internal_ports_http_handlers_bagsies.createBagsyRequest:
+    properties:
+      client_phone:
+        type: string
+      comment:
+        type: string
+      master_phone:
+        type: string
+      name:
+        type: string
+      service_id:
+        type: string
+      start_at:
+        type: string
+      surname:
+        type: string
+    required:
+    - client_phone
+    - comment
+    - master_phone
+    - name
+    - service_id
+    - start_at
+    - surname
+    type: object
+  internal_ports_http_handlers_bagsies.createBagsyResponse:
+    properties:
+      bagsy_id:
+        type: string
+    required:
+    - bagsy_id
+    type: object
+  internal_ports_http_handlers_bagsies.resentCodeRequest:
+    properties:
+      bagsy_id:
+        type: string
+    required:
+    - bagsy_id
+    type: object
   internal_ports_http_handlers_form.clientFormRequest:
     properties:
       description:
@@ -139,7 +188,7 @@ definitions:
 host: localhost:8080
 info:
   contact:
-    email: support@bagsy.com
+    email: support@bagsies.com
     name: API Support
   description: API для приложения Bagsy
   license:
@@ -312,6 +361,124 @@ paths:
       summary: Подтверждение регистрации работника
       tags:
       - auth
+  /api/v1/bagsies:
+    post:
+      consumes:
+      - application/json
+      description: Создает новую бронь на услугу у мастера. Если клиент с указанным
+        номером не существует, создается автоматически. Отправляется SMS/WhatsApp
+        с кодом подтверждения.
+      parameters:
+      - description: Данные для создания брони
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Бронь успешно создана
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Услуга или мастер не найдены
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Выбранное время уже занято у данного мастера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Создание брони на услугу
+      tags:
+      - bagsies
+  /api/v1/bagsies/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает созданную бронь с помощью кода, отправленного клиенту
+        по SMS/WhatsApp
+      parameters:
+      - description: Данные для подтверждения брони
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Бронь успешно подтверждена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Неверный или просроченный код подтверждения
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Бронь не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Подтверждение брони
+      tags:
+      - bagsies
+  /api/v1/bagsies/resent:
+    post:
+      consumes:
+      - application/json
+      description: Повторно отправляет код подтверждения брони клиенту по SMS/WhatsApp.
+        Используется если клиент не получил код или код истек.
+      parameters:
+      - description: Данные для повторной отправки кода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.resentCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Код успешно отправлен повторно
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Бронь не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "429":
+          description: Превышен лимит запросов на отправку кода
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Повторная отправка кода подтверждения
+      tags:
+      - bagsies
   /api/v1/forms:
     post:
       consumes:

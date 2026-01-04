@@ -2,7 +2,8 @@ package errors
 
 // Bagsies errors
 var (
-	ErrBagsyNotFound = NewNotFoundError("bagsy(ies) not found", nil)
+	ErrBagsyNotFound              = NewNotFoundError("bagsies(ies) not found", nil)
+	ErrBagsyTimeIsAlreadyOccupied = NewConflictError("time is already occupied", nil)
 )
 
 // Users errors

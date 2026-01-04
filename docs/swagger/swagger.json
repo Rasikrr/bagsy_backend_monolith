@@ -6,7 +6,7 @@
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "email": "support@bagsy.com"
+            "email": "support@bagsies.com"
         },
         "license": {
             "name": "MIT",
@@ -248,6 +248,180 @@
                     },
                     "401": {
                         "description": "Неверный или просроченный токен",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies": {
+            "post": {
+                "description": "Создает новую бронь на услугу у мастера. Если клиент с указанным номером не существует, создается автоматически. Отправляется SMS/WhatsApp с кодом подтверждения.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Создание брони на услугу",
+                "parameters": [
+                    {
+                        "description": "Данные для создания брони",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Бронь успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.createBagsyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или валидация не пройдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Услуга или мастер не найдены",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Выбранное время уже занято у данного мастера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies/confirm": {
+            "post": {
+                "description": "Подтверждает созданную бронь с помощью кода, отправленного клиенту по SMS/WhatsApp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Подтверждение брони",
+                "parameters": [
+                    {
+                        "description": "Данные для подтверждения брони",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Бронь успешно подтверждена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или валидация не пройдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный или просроченный код подтверждения",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Бронь не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies/resent": {
+            "post": {
+                "description": "Повторно отправляет код подтверждения брони клиенту по SMS/WhatsApp. Используется если клиент не получил код или код истек.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Повторная отправка кода подтверждения",
+                "parameters": [
+                    {
+                        "description": "Данные для повторной отправки кода",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.resentCodeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Код успешно отправлен повторно",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или валидация не пройдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Бронь не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Превышен лимит запросов на отправку кода",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -553,6 +727,78 @@
                     "minLength": 10
                 },
                 "point_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.confirmBagsyRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "service_id"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.createBagsyRequest": {
+            "type": "object",
+            "required": [
+                "client_phone",
+                "comment",
+                "master_phone",
+                "name",
+                "service_id",
+                "start_at",
+                "surname"
+            ],
+            "properties": {
+                "client_phone": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "surname": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.createBagsyResponse": {
+            "type": "object",
+            "required": [
+                "bagsy_id"
+            ],
+            "properties": {
+                "bagsy_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.resentCodeRequest": {
+            "type": "object",
+            "required": [
+                "bagsy_id"
+            ],
+            "properties": {
+                "bagsy_id": {
                     "type": "string"
                 }
             }

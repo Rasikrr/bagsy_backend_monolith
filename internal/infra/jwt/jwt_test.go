@@ -12,7 +12,7 @@ import (
 
 const (
 	testSecret = "bagsy123"
-	testIssuer = "bagsy-test"
+	testIssuer = "bagsies-test"
 )
 
 func TestAccessToken(t *testing.T) {

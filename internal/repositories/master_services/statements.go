@@ -21,3 +21,8 @@ const updateMasterService = `
 const deleteMasterService = `
 	DELETE FROM master_services WHERE id = ANY($1)
 `
+
+const getByMasterPhoneAndServiceID = `
+	SELECT id, master_phone, service_id, price, active, created_at, updated_at, updated_by
+		FROM master_services WHERE master_phone = $1 AND service_id = $2
+`

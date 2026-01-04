@@ -11,9 +11,11 @@ import (
 
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/form"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
+	bagsiesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
 	"github.com/Rasikrr/core/enum"
 	coreHttp "github.com/Rasikrr/core/http"
@@ -25,7 +27,7 @@ import (
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
-// @contact.email support@bagsy.com
+// @contact.email support@bagsies.com
 
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
@@ -41,15 +43,22 @@ func NewServer(
 	authService *authS.Service,
 	formsService *forms.Service,
 	usersService *usersS.Service,
+	bagsiesService *bagsiesS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
 
 	authController := auth.New(authService, authMiddleware)
 	formsController := form.New(formsService)
 	usersController := users.New(usersService, authMiddleware)
+	bagsiesController := bagsies.New(bagsiesService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
-	server.WithControllers(authController, formsController, usersController)
+	server.WithControllers(
+		authController,
+		formsController,
+		usersController,
+		bagsiesController,
+	)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
 }

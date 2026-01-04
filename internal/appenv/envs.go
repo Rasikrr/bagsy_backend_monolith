@@ -22,4 +22,6 @@ const (
 	AccessTokenTTL       = "access_token_ttl"
 	RefreshTokenTTL      = "refresh_token_ttl"
 	RegistrationTokenTTL = "registration_token_ttl"
+
+	BagsyConfirmTTL = "bagsy_confirm_ttl"
 )

@@ -5,7 +5,8 @@ package enum
 type BagsyStatus uint8
 
 const (
-	BagsyStatusCreated BagsyStatus = iota
+	BagsyStatusPending BagsyStatus = iota
+	BagsyStatusCreated
 	BagsyStatusActive
 	BagsyStatusCompleted
 	BagsyStatusCanceled
