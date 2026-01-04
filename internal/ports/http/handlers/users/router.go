@@ -29,8 +29,9 @@ func New(
 }
 
 func (c *Controller) Init(router *chi.Mux) {
-	router.Route("/api/v1/users", func(r chi.Router) {
-		// Требуется авторизация для всех методов
-		r.Get("/", c.authMiddleware.Handle(c.getUsers))
+	management := c.authMiddleware.AuthorizeManagement()
+	router.Route("/api/v1/staff", func(r chi.Router) {
+		managersRoutes := r.With(management)
+		managersRoutes.Get("/", c.getUsers)
 	})
 }

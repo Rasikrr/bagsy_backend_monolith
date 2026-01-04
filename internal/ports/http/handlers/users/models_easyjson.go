@@ -357,8 +357,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.Limit = uint64(in.Uint64())
 		case "Offset":
 			out.Offset = uint64(in.Uint64())
-		case "SortBy":
-			out.SortBy = string(in.String())
+		case "OrderBy":
+			out.OrderBy = string(in.String())
 		case "SortOrder":
 			out.SortOrder = string(in.String())
 		default:
@@ -436,9 +436,9 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.Uint64(uint64(in.Offset))
 	}
 	{
-		const prefix string = ",\"SortBy\":"
+		const prefix string = ",\"OrderBy\":"
 		out.RawString(prefix)
-		out.String(string(in.SortBy))
+		out.String(string(in.OrderBy))
 	}
 	{
 		const prefix string = ",\"SortOrder\":"

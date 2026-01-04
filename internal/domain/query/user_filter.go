@@ -9,6 +9,6 @@ type UserFilter struct {
 	Phones      []string
 	Limit       uint64
 	Offset      uint64
-	SortBy      string
+	OrderBy     string
 	SortOrder   enum.SortOrder
 }

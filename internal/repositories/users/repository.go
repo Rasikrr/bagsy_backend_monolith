@@ -151,7 +151,7 @@ func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	}
 
 	builder = builder.OrderBy(
-		fmt.Sprintf("%s %s", filter.SortBy, filter.SortOrder.String()),
+		fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder.String()),
 	)
 	builder = builder.Limit(filter.Limit)
 	builder = builder.Offset(filter.Offset)

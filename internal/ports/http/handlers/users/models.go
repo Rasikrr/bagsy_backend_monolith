@@ -3,7 +3,6 @@ package users
 import (
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
@@ -17,11 +16,11 @@ import (
 type getUsersRequest struct {
 	PointCode   *string  `query:"point_code" validate:""`
 	NetworkCode *string  `query:"network_code"`
-	Roles       []string `query:"roles"`
-	Phones      []string `query:"phones"`
+	Roles       []string `query:"role"`
+	Phones      []string `query:"phone"`
 	Limit       uint64   `query:"limit" validate:"max=100"`
 	Offset      uint64   `query:"offset" validate:"min=0"`
-	SortBy      string   `query:"sort_by" validate:"oneof=phone name surname point_code network_code created_at updated_at"`
+	OrderBy     string   `query:"order_by" validate:"oneof=phone name surname point_code network_code created_at updated_at"`
 	SortOrder   string   `query:"sort_order" validate:"oneof=asc desc"`
 }
 
@@ -36,11 +35,11 @@ func (r *getUsersRequest) GetQueryParameters(req *http.Request) error {
 		r.NetworkCode = &networkCode
 	}
 
-	if len(q.Get("roles")) > 0 {
-		r.Roles = strings.Split(q.Get("roles"), ",")
+	if roles := q["role"]; len(roles) > 0 {
+		r.Roles = roles
 	}
 
-	if phones := q["phones"]; len(phones) > 0 {
+	if phones := q["phone"]; len(phones) > 0 {
 		r.Phones = phones
 	}
 
@@ -58,9 +57,9 @@ func (r *getUsersRequest) GetQueryParameters(req *http.Request) error {
 		}
 	}
 
-	r.SortBy = "created_at"
+	r.OrderBy = "created_at"
 	if sortBy := q.Get("sort_by"); sortBy != "" {
-		r.SortBy = sortBy
+		r.OrderBy = sortBy
 	}
 
 	r.SortOrder = "asc"
@@ -86,7 +85,7 @@ func (r *getUsersRequest) toFilter() (*query.UserFilter, error) {
 		Phones:      r.Phones,
 		Limit:       r.Limit,
 		Offset:      r.Offset,
-		SortBy:      r.SortBy,
+		OrderBy:     r.OrderBy,
 	}
 	sortOrder, err := enum.SortOrderString(r.SortOrder)
 	if err != nil {
@@ -97,8 +96,8 @@ func (r *getUsersRequest) toFilter() (*query.UserFilter, error) {
 
 	roles := make([]enum.Role, len(r.Roles))
 	for i, role := range r.Roles {
-		roleEnum, err := enum.RoleString(role)
-		if err != nil {
+		roleEnum, enumErr := enum.RoleString(role)
+		if enumErr != nil {
 			return nil, domainErr.NewValidationError("roles contains invalid item").
 				WithDetail("role", role)
 		}

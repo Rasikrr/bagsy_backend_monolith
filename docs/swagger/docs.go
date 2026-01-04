@@ -308,14 +308,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users": {
+        "/api/v1/staff": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Возвращает список пользователей с offset-based пагинацией и учетом прав доступа.\n- Admin: все пользователи любой сети/точки\n- NetManager/SelfOwner: пользователи только своей сети\n- Manager: пользователи только своей точки\n- Staff/User: доступ запрещен (403)",
+                "description": "Возвращает список пользователей с offset-based пагинацией и учетом прав доступа.\n- NetManager/SelfOwner: пользователи только своей сети\n- Manager: пользователи только своей точки\n- Staff/User: доступ запрещен (403)",
                 "consumes": [
                     "application/json"
                 ],
@@ -343,18 +343,16 @@ const docTemplate = `{
                         "type": "array",
                         "items": {
                             "enum": [
-                                "user",
                                 "staff",
                                 "manager",
                                 "net_manager",
-                                "self_owner",
-                                "admin"
+                                "self_owner"
                             ],
                             "type": "string"
                         },
-                        "collectionFormat": "csv",
-                        "description": "Фильтр по ролям (может быть несколько)",
-                        "name": "roles",
+                        "collectionFormat": "multi",
+                        "description": "Фильтр по ролям",
+                        "name": "role",
                         "in": "query"
                     },
                     {
@@ -362,9 +360,9 @@ const docTemplate = `{
                         "items": {
                             "type": "string"
                         },
-                        "collectionFormat": "csv",
-                        "description": "Фильтр по номерам телефонов (может быть несколько)",
-                        "name": "phones",
+                        "collectionFormat": "multi",
+                        "description": "Фильтр по номерам телефонов",
+                        "name": "phone",
                         "in": "query"
                     },
                     {
@@ -392,7 +390,7 @@ const docTemplate = `{
                         "type": "string",
                         "default": "created_at",
                         "description": "Поле для сортировки",
-                        "name": "sort_by",
+                        "name": "order_by",
                         "in": "query"
                     },
                     {

@@ -338,13 +338,12 @@ paths:
       summary: Отправка формы для сотрудничества
       tags:
       - forms
-  /api/v1/users:
+  /api/v1/staff:
     get:
       consumes:
       - application/json
       description: |-
         Возвращает список пользователей с offset-based пагинацией и учетом прав доступа.
-        - Admin: все пользователи любой сети/точки
         - NetManager/SelfOwner: пользователи только своей сети
         - Manager: пользователи только своей точки
         - Staff/User: доступ запрещен (403)
@@ -357,26 +356,24 @@ paths:
         in: query
         name: network_code
         type: string
-      - collectionFormat: csv
-        description: Фильтр по ролям (может быть несколько)
+      - collectionFormat: multi
+        description: Фильтр по ролям
         in: query
         items:
           enum:
-          - user
           - staff
           - manager
           - net_manager
           - self_owner
-          - admin
           type: string
-        name: roles
+        name: role
         type: array
-      - collectionFormat: csv
-        description: Фильтр по номерам телефонов (может быть несколько)
+      - collectionFormat: multi
+        description: Фильтр по номерам телефонов
         in: query
         items:
           type: string
-        name: phones
+        name: phone
         type: array
       - description: 'Количество записей на странице (default: 20, max: 100)'
         in: query
@@ -397,7 +394,7 @@ paths:
         - created_at
         - updated_at
         in: query
-        name: sort_by
+        name: order_by
         type: string
       - default: asc
         description: Направление сортировки

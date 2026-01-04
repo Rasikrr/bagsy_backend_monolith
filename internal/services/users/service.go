@@ -8,6 +8,7 @@ import (
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 )
 
 type usersRepository interface {
@@ -90,7 +91,6 @@ func (s *Service) authorizeFilter(
 ) (*query.UserFilter, error) {
 	switch userSession.Role() {
 	case enum.RoleAdmin:
-		// Админ может запросить любые данные - возвращаем фильтр как есть
 		return requestedFilter, nil
 
 	case enum.RoleNetManager, enum.RoleSelfOwner:
@@ -133,12 +133,10 @@ func (s *Service) authorizeFilter(
 
 		// Принудительно устанавливаем свою точку и сеть
 		requestedFilter.PointCode = &userPointCode
-		networkCode := userSession.NetworkCode()
-		requestedFilter.NetworkCode = &networkCode
+		requestedFilter.NetworkCode = ptr.Pointer(userSession.NetworkCode())
 		return requestedFilter, nil
 
 	case enum.RoleStaff, enum.RoleUser:
-		// Обычные пользователи не могут получать списки пользователей
 		return nil, domainErr.NewForbiddenError("insufficient permissions to list users").
 			WithDetail("role", userSession.Role().String())
 
