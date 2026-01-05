@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	columns = []string{"phone", "password", "role", "name", "surname", "point_code", "network_code", "active", "created_at", "updated_at", "deleted_at", "updated_by"}
+	columns = []string{"phone", "password", "role", "name", "surname", "point_code", "network_code", "active", "schedule", "created_at", "updated_at", "deleted_at", "updated_by"}
 )
 
 type Repository struct {
@@ -30,8 +30,11 @@ func NewRepository(db *postgres.Postgres) *Repository {
 }
 
 func (r *Repository) Create(ctx context.Context, user *entity.User) error {
-	m := convert(user)
-	_, err := r.db.Exec(ctx, createUser,
+	m, err := convert(user)
+	if err != nil {
+		return domainErr.NewInternalError("failed to convert user entity", err)
+	}
+	_, err = r.db.Exec(ctx, createUser,
 		m.Phone,
 		m.Password,
 		m.Role,
@@ -40,6 +43,7 @@ func (r *Repository) Create(ctx context.Context, user *entity.User) error {
 		m.PointCode,
 		m.NetworkCode,
 		m.Active,
+		m.Schedule,
 		m.UpdatedBy,
 	)
 	if err != nil {
@@ -86,8 +90,11 @@ func (r *Repository) GetByParams(ctx context.Context, filter *query.UserFilter) 
 }
 
 func (r *Repository) Update(ctx context.Context, user *entity.User) error {
-	m := convert(user)
-	_, err := r.db.Exec(ctx, updateUser,
+	m, err := convert(user)
+	if err != nil {
+		return domainErr.NewInternalError("failed to convert user entity", err)
+	}
+	_, err = r.db.Exec(ctx, updateUser,
 		m.Phone,
 		m.Password,
 		m.Role,
@@ -96,6 +103,7 @@ func (r *Repository) Update(ctx context.Context, user *entity.User) error {
 		m.PointCode,
 		m.NetworkCode,
 		m.Active,
+		m.Schedule,
 		m.UpdatedBy,
 	)
 	if err != nil {

@@ -170,3 +170,4 @@ DROP TABLE IF EXISTS point_categories;
 DROP TABLE IF EXISTS networks;
 
 -- +goose StatementEnd
+

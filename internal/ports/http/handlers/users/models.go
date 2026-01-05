@@ -108,16 +108,35 @@ func (r *getUsersRequest) toFilter() (*query.UserFilter, error) {
 	return &q, nil
 }
 
+type staffScheduleDTO struct {
+	WeekDay int    `json:"week_day"`
+	Open    string `json:"open"`
+	Close   string `json:"close"`
+	AllDay  bool   `json:"all_day"`
+	Comment string `json:"comment"`
+}
+
 type userDTO struct {
-	Phone       string  `json:"phone"`
-	Role        string  `json:"role"`
-	Name        string  `json:"name"`
-	Surname     string  `json:"surname"`
-	PointCode   *string `json:"point_code,omitempty"`
-	NetworkCode *string `json:"network_code,omitempty"`
-	Active      bool    `json:"active"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   *string `json:"updated_at,omitempty"`
+	Phone       string             `json:"phone"`
+	Role        string             `json:"role"`
+	Name        string             `json:"name"`
+	Surname     string             `json:"surname"`
+	PointCode   *string            `json:"point_code,omitempty"`
+	NetworkCode *string            `json:"network_code,omitempty"`
+	Active      bool               `json:"active"`
+	Schedule    []staffScheduleDTO `json:"schedule,omitempty"`
+	CreatedAt   string             `json:"created_at"`
+	UpdatedAt   *string            `json:"updated_at,omitempty"`
+}
+
+func toStaffScheduleDTO(schedule entity.StaffSchedule) staffScheduleDTO {
+	return staffScheduleDTO{
+		WeekDay: schedule.WeekDay,
+		Open:    schedule.Open.Format("15:04:05"),
+		Close:   schedule.Close.Format("15:04:05"),
+		AllDay:  schedule.AllDay,
+		Comment: schedule.Comment,
+	}
 }
 
 func toUserDTO(user *entity.User) userDTO {
@@ -135,6 +154,14 @@ func toUserDTO(user *entity.User) userDTO {
 	if user.UpdatedAt != nil {
 		updatedAt := user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
 		dto.UpdatedAt = &updatedAt
+	}
+
+	if len(user.Schedule) > 0 {
+		schedules := make([]staffScheduleDTO, 0, len(user.Schedule))
+		for _, s := range user.Schedule {
+			schedules = append(schedules, toStaffScheduleDTO(s))
+		}
+		dto.Schedule = schedules
 	}
 
 	return dto

@@ -15,8 +15,17 @@ type User struct {
 	PointCode   *string
 	NetworkCode *string
 	Active      bool
+	Schedule    []StaffSchedule
 	CreatedAt   time.Time
 	UpdatedAt   *time.Time
 	DeletedAt   *time.Time
 	UpdatedBy   string
+}
+
+type StaffSchedule struct {
+	WeekDay int
+	Open    time.Time
+	Close   time.Time
+	AllDay  bool
+	Comment string
 }

@@ -1,10 +1,12 @@
 package users
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/cockroachdb/errors"
 )
 
 type model struct {
@@ -16,14 +18,15 @@ type model struct {
 	PointCode   *string    `db:"point_code"`
 	NetworkCode *string    `db:"network_code"`
 	Active      bool       `db:"active"`
+	Schedule    []byte     `db:"schedule"`
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at"`
 	UpdatedBy   string     `db:"updated_by"`
 }
 
-func convert(e *entity.User) model {
-	return model{
+func convert(e *entity.User) (model, error) {
+	m := model{
 		Phone:       e.Phone,
 		Password:    e.Password,
 		Role:        e.Role.String(),
@@ -37,6 +40,16 @@ func convert(e *entity.User) model {
 		DeletedAt:   e.DeletedAt,
 		UpdatedBy:   e.UpdatedBy,
 	}
+
+	// Serialize Schedule to JSON via DTO
+	schedulesDTO := schedulesToDTO(e.Schedule)
+	bb, err := json.Marshal(schedulesDTO)
+	if err != nil {
+		return m, errors.Wrap(err, "failed to marshal schedule to json")
+	}
+	m.Schedule = bb
+
+	return m, nil
 }
 
 func (m model) convert() (*entity.User, error) {
@@ -45,7 +58,7 @@ func (m model) convert() (*entity.User, error) {
 		return nil, err
 	}
 
-	return &entity.User{
+	user := &entity.User{
 		Phone:       m.Phone,
 		Password:    m.Password,
 		Role:        role,
@@ -58,7 +71,15 @@ func (m model) convert() (*entity.User, error) {
 		UpdatedAt:   m.UpdatedAt,
 		DeletedAt:   m.DeletedAt,
 		UpdatedBy:   m.UpdatedBy,
-	}, nil
+	}
+
+	// Deserialize Schedule from JSON via DTO
+	var scheduleDTOs schedulesDTO
+	if err = json.Unmarshal(m.Schedule, &scheduleDTOs); err == nil {
+		user.Schedule = scheduleDTOs.toEntity()
+	}
+
+	return user, nil
 }
 
 type models []model
