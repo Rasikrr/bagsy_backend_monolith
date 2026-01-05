@@ -2,25 +2,22 @@ package telegram
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/Rasikrr/core/telegram"
 )
 
 type Client struct {
-	cli telegram.Client
+	cli    telegram.Client
+	chatID int64
 }
 
-func NewClient(cli telegram.Client) *Client {
+func NewClient(cli telegram.Client, chatID int64) *Client {
 	return &Client{
-		cli: cli,
+		cli:    cli,
+		chatID: chatID,
 	}
 }
 
-func (c *Client) Send(ctx context.Context, chatID, token string) error {
-	chatIDInt, err := strconv.ParseInt(chatID, 10, 64)
-	if err != nil {
-		return err
-	}
-	return c.cli.SendText(ctx, chatIDInt, token)
+func (c *Client) SendMessage(ctx context.Context, message string) error {
+	return c.cli.SendText(ctx, c.chatID, message)
 }
