@@ -85,7 +85,7 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 		func(ctx context.Context) error {
 			clientExists, usersErr := s.usersService.ExistsByPhone(ctx, req.ClientPhone)
 			if usersErr != nil {
-				return err
+				return usersErr
 			}
 			if !clientExists {
 				log.Infof(ctx, "creating new client user: phone=%s, name=%s %s",
@@ -106,12 +106,12 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 
 			service, serviceErr := s.servicesService.GetByID(ctx, req.ServiceID)
 			if serviceErr != nil {
-				return err
+				return serviceErr
 			}
 
 			masterService, masterServErr := s.masterServicesService.GetByMasterPhoneAndServiceID(ctx, req.MasterPhone, req.ServiceID)
 			if masterServErr != nil {
-				return err
+				return masterServErr
 			}
 
 			endAt := req.StartAt.Add(time.Minute * time.Duration(service.DurationMinutes))

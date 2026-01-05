@@ -17,9 +17,9 @@ const (
 
 	create = `
 		INSERT INTO bagsies (
-		  id, point_code, client_phone, status, price, master_phone, service_id, start_at, end_at, comment, reject_reason, created_at, updated_at, updated_by)
+		  point_code, client_phone, status, price, master_phone, service_id, start_at, end_at, comment, reject_reason, created_at, updated_at, updated_by)
 		VALUES (
-		  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+		  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
 		) RETURNING id
 		`
 

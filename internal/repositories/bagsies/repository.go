@@ -70,7 +70,6 @@ func (r *Repository) Create(ctx context.Context, b *entity.Bagsy) (uuid.UUID, er
 
 	var newID uuid.UUID
 	err := pgxscan.Get(ctx, r.db, &newID, create,
-		m.ID,
 		m.PointCode,
 		m.ClientPhone,
 		m.Status,
