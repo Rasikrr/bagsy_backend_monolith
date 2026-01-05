@@ -20,7 +20,7 @@ import (
 // @Failure 404 {object} errors.ErrorResponse "Бронь не найдена"
 // @Failure 429 {object} errors.ErrorResponse "Превышен лимит запросов на отправку кода"
 // @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
-// @Router /api/v1/bagsies/resent [post]
+// @Router /api/v1/bagsies/resend [post]
 func (c *Controller) resendCode(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
