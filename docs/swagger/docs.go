@@ -384,7 +384,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/bagsies/resent": {
+        "/api/v1/bagsies/resend": {
             "post": {
                 "description": "Повторно отправляет код подтверждения брони клиенту по SMS/WhatsApp. Используется если клиент не получил код или код истек.",
                 "consumes": [
@@ -741,14 +741,14 @@ const docTemplate = `{
         "internal_ports_http_handlers_bagsies.confirmBagsyRequest": {
             "type": "object",
             "required": [
-                "code",
-                "service_id"
+                "bagsy_id",
+                "code"
             ],
             "properties": {
-                "code": {
+                "bagsy_id": {
                     "type": "string"
                 },
-                "service_id": {
+                "code": {
                     "type": "string"
                 }
             }

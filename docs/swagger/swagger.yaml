@@ -84,13 +84,13 @@ definitions:
     type: object
   internal_ports_http_handlers_bagsies.confirmBagsyRequest:
     properties:
+      bagsy_id:
+        type: string
       code:
         type: string
-      service_id:
-        type: string
     required:
+    - bagsy_id
     - code
-    - service_id
     type: object
   internal_ports_http_handlers_bagsies.createBagsyRequest:
     properties:
@@ -440,7 +440,7 @@ paths:
       summary: Подтверждение брони
       tags:
       - bagsies
-  /api/v1/bagsies/resent:
+  /api/v1/bagsies/resend:
     post:
       consumes:
       - application/json

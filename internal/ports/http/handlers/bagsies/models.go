@@ -50,8 +50,8 @@ func newCreateBagsyResponse(bagsyID uuid.UUID) *createBagsyResponse {
 }
 
 type confirmBagsyRequest struct {
-	ServiceID uuid.UUID `json:"service_id" validate:"required"`
-	Code      string    `json:"code" validate:"required"`
+	BagsyID uuid.UUID `json:"bagsy_id" validate:"required"`
+	Code    string    `json:"code" validate:"required"`
 }
 
 func (c *confirmBagsyRequest) Validate() error {

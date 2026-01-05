@@ -296,9 +296,9 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			continue
 		}
 		switch key {
-		case "service_id":
+		case "bagsy_id":
 			if data := in.UnsafeBytes(); in.Ok() {
-				in.AddError((out.ServiceID).UnmarshalText(data))
+				in.AddError((out.BagsyID).UnmarshalText(data))
 			}
 		case "code":
 			out.Code = string(in.String())
@@ -317,9 +317,9 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"service_id\":"
+		const prefix string = ",\"bagsy_id\":"
 		out.RawString(prefix[1:])
-		out.RawText((in.ServiceID).MarshalText())
+		out.RawText((in.BagsyID).MarshalText())
 	}
 	{
 		const prefix string = ",\"code\":"

@@ -30,7 +30,7 @@ func (c *Controller) confirmBagsy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := c.bagsiesService.Confirm(ctx, req.ServiceID, req.Code)
+	err := c.bagsiesService.Confirm(ctx, req.BagsyID, req.Code)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return
