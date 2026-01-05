@@ -15,6 +15,7 @@ type User struct {
 	PointCode   *string
 	NetworkCode *string
 	Active      bool
+	Schedule    *StaffSchedule
 	CreatedAt   time.Time
 	UpdatedAt   *time.Time
 	DeletedAt   *time.Time
