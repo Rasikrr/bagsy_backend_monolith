@@ -10,6 +10,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
+	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
@@ -40,13 +41,14 @@ type App struct {
 	tokensCache       *tokens.Cache
 	bagsyConfirmCache *bagsyconfirm.Cache
 
-	usersRepo          *usersR.Repository
-	pointsRepo         *pointsR.Repository
-	networksRepo       *networksR.Repository
-	formsRepo          *formsR.Repository
-	bagsiesRepo        *bagsiesR.Repository
-	masterServicesRepo *masterServicesR.Repository
-	servicesRepo       *servicesR.Repository
+	usersRepo           *usersR.Repository
+	pointsRepo          *pointsR.Repository
+	networksRepo        *networksR.Repository
+	pointCategoriesRepo *pointCategoriesR.Repository
+	formsRepo           *formsR.Repository
+	bagsiesRepo         *bagsiesR.Repository
+	masterServicesRepo  *masterServicesR.Repository
+	servicesRepo        *servicesR.Repository
 
 	usersService          *usersS.Service
 	pointsService         *pointsS.Service
@@ -99,6 +101,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.formsService,
 		a.usersService,
 		a.bagsiesService,
+		a.pointsService,
 	)
 	return nil
 }
@@ -131,6 +134,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.usersRepo = usersR.NewRepository(a.Postgres())
 	a.pointsRepo = pointsR.NewRepository(a.Postgres())
 	a.networksRepo = networksR.NewRepository(a.Postgres())
+	a.pointCategoriesRepo = pointCategoriesR.NewRepository(a.Postgres())
 	a.formsRepo = formsR.NewRepository(a.Postgres())
 	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
@@ -157,7 +161,7 @@ func (a *App) initServices(_ context.Context) error {
 	}
 
 	a.networksService = networksS.NewService(a.networksRepo)
-	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService)
+	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService, a.pointCategoriesRepo)
 	a.usersService = usersS.NewService(a.usersRepo, a.pointsService)
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(a.smsClient, a.whatsappClient, registerConfirmationURL)

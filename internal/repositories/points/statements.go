@@ -27,6 +27,6 @@ const deletePoint = `
 const existByCode = `
 	SELECT EXISTS (
 	    SELECT 1 
-	    FROM points WHERE code = ANY($1)
+	    FROM points WHERE code = $1
 	)
 	`

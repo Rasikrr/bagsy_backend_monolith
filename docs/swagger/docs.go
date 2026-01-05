@@ -482,6 +482,142 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/points": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт новую точку обслуживания с указанными параметрами",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "points"
+                ],
+                "summary": "Создать точку обслуживания",
+                "parameters": [
+                    {
+                        "description": "Данные для создания точки",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_points.createPointRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Точка успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав для создания точки",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Точка с таким кодом уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/points/{code}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает информацию о точке обслуживания по её коду",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "points"
+                ],
+                "summary": "Получить точку обслуживания",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код точки обслуживания",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о точке",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав для доступа",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Точка не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/staff": {
             "get": {
                 "security": [
@@ -842,6 +978,152 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_points.addressDTO": {
+            "type": "object",
+            "required": [
+                "city",
+                "coordinates",
+                "street"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "coordinates": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_points.coordinatesDTO"
+                },
+                "street": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_points.coordinatesDTO": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_points.createPointRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "category_id",
+                "city",
+                "code",
+                "name",
+                "network_code"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "address": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_points.addressDTO"
+                },
+                "category_id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "city": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_code": {
+                    "type": "string"
+                },
+                "schedule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_points.scheduleDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_points.pointResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "address": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_points.addressDTO"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_code": {
+                    "type": "string"
+                },
+                "schedule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_points.scheduleDTO"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_points.scheduleDTO": {
+            "type": "object",
+            "required": [
+                "close",
+                "open",
+                "week_day"
+            ],
+            "properties": {
+                "all_day": {
+                    "type": "boolean"
+                },
+                "close": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "open": {
+                    "type": "string"
+                },
+                "week_day": {
+                    "type": "integer",
+                    "maximum": 6,
+                    "minimum": 0
+                }
+            }
+        },
         "internal_ports_http_handlers_users.getUsersResponse": {
             "type": "object",
             "properties": {
@@ -853,6 +1135,26 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/internal_ports_http_handlers_users.userDTO"
                     }
+                }
+            }
+        },
+        "internal_ports_http_handlers_users.staffScheduleDTO": {
+            "type": "object",
+            "properties": {
+                "all_day": {
+                    "type": "boolean"
+                },
+                "close": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "open": {
+                    "type": "string"
+                },
+                "week_day": {
+                    "type": "integer"
                 }
             }
         },
@@ -879,6 +1181,12 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "schedule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_users.staffScheduleDTO"
+                    }
                 },
                 "surname": {
                     "type": "string"

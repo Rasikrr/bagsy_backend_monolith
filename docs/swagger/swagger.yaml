@@ -155,6 +155,106 @@ definitions:
     - phone
     - role
     type: object
+  internal_ports_http_handlers_points.addressDTO:
+    properties:
+      city:
+        type: string
+      coordinates:
+        $ref: '#/definitions/internal_ports_http_handlers_points.coordinatesDTO'
+      street:
+        type: string
+    required:
+    - city
+    - coordinates
+    - street
+    type: object
+  internal_ports_http_handlers_points.coordinatesDTO:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  internal_ports_http_handlers_points.createPointRequest:
+    properties:
+      active:
+        type: boolean
+      address:
+        $ref: '#/definitions/internal_ports_http_handlers_points.addressDTO'
+      category_id:
+        minimum: 1
+        type: integer
+      city:
+        type: string
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      network_code:
+        type: string
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_points.scheduleDTO'
+        type: array
+    required:
+    - address
+    - category_id
+    - city
+    - code
+    - name
+    - network_code
+    type: object
+  internal_ports_http_handlers_points.pointResponse:
+    properties:
+      active:
+        type: boolean
+      address:
+        $ref: '#/definitions/internal_ports_http_handlers_points.addressDTO'
+      category_id:
+        type: integer
+      city:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      network_code:
+        type: string
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_points.scheduleDTO'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_points.scheduleDTO:
+    properties:
+      all_day:
+        type: boolean
+      close:
+        type: string
+      comment:
+        type: string
+      open:
+        type: string
+      week_day:
+        maximum: 6
+        minimum: 0
+        type: integer
+    required:
+    - close
+    - open
+    - week_day
+    type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
       count:
@@ -163,6 +263,19 @@ definitions:
         items:
           $ref: '#/definitions/internal_ports_http_handlers_users.userDTO'
         type: array
+    type: object
+  internal_ports_http_handlers_users.staffScheduleDTO:
+    properties:
+      all_day:
+        type: boolean
+      close:
+        type: string
+      comment:
+        type: string
+      open:
+        type: string
+      week_day:
+        type: integer
     type: object
   internal_ports_http_handlers_users.userDTO:
     properties:
@@ -180,6 +293,10 @@ definitions:
         type: string
       role:
         type: string
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_users.staffScheduleDTO'
+        type: array
       surname:
         type: string
       updated_at:
@@ -505,6 +622,93 @@ paths:
       summary: Отправка формы для сотрудничества
       tags:
       - forms
+  /api/v1/points:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую точку обслуживания с указанными параметрами
+      parameters:
+      - description: Данные для создания точки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_points.createPointRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Точка успешно создана
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_points.pointResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для создания точки
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Точка с таким кодом уже существует
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создать точку обслуживания
+      tags:
+      - points
+  /api/v1/points/{code}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о точке обслуживания по её коду
+      parameters:
+      - description: Код точки обслуживания
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о точке
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_points.pointResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для доступа
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Точка не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получить точку обслуживания
+      tags:
+      - points
   /api/v1/staff:
     get:
       consumes:

@@ -20,6 +20,7 @@ var (
 // Point Categories errors
 var (
 	ErrPointCategoryNotFound = NewNotFoundError("point category(ies) not found", nil)
+	ErrPointAlreadyExists    = NewInvalidInputError("point with same code already exists", nil)
 )
 
 // Service categories errors

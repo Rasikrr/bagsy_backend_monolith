@@ -2,6 +2,7 @@ package points
 
 import (
 	"context"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 
 	"github.com/Rasikrr/core/log"
 
@@ -12,6 +13,10 @@ type networksService interface {
 	GetByCode(cxt context.Context, code string) (*entity.Network, error)
 }
 
+type pointCategoriesRepository interface {
+	GetByID(ctx context.Context, id int) (*entity.PointCategory, error)
+}
+
 type pointsRepository interface {
 	Create(ctx context.Context, entity *entity.Point) error
 	GetByCode(ctx context.Context, code string) (*entity.Point, error)
@@ -20,17 +25,20 @@ type pointsRepository interface {
 }
 
 type Service struct {
-	pointsRepo      pointsRepository
-	networksService networksService
+	pointsRepo          pointsRepository
+	networksService     networksService
+	pointCategoriesRepo pointCategoriesRepository
 }
 
 func NewService(
 	repo pointsRepository,
 	networksService networksService,
+	pointCategoriesRepo pointCategoriesRepository,
 ) *Service {
 	return &Service{
-		pointsRepo:      repo,
-		networksService: networksService,
+		pointsRepo:          repo,
+		networksService:     networksService,
+		pointCategoriesRepo: pointCategoriesRepo,
 	}
 }
 
@@ -50,7 +58,10 @@ func (s *Service) Create(ctx context.Context, point *entity.Point) error {
 	}
 
 	// проверка на существование категории точки
-	// TODO
+	_, err = s.pointCategoriesRepo.GetByID(ctx, point.CategoryID)
+	if err != nil {
+		return err
+	}
 
 	// проверка на существование точки с таким же кодом
 	exist, err := s.pointsRepo.ExistsByCode(ctx, point.Code)
@@ -58,7 +69,7 @@ func (s *Service) Create(ctx context.Context, point *entity.Point) error {
 		return err
 	}
 	if exist {
-		return err // TODO: domainErr
+		return domainErr.ErrPointAlreadyExists
 	}
 
 	if err = s.pointsRepo.Create(ctx, point); err != nil {

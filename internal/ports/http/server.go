@@ -2,7 +2,9 @@
 package http
 
 import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/points"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/users"
+	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/environment"
 
@@ -44,6 +46,7 @@ func NewServer(
 	formsService *forms.Service,
 	usersService *usersS.Service,
 	bagsiesService *bagsiesS.Service,
+	pointsService *pointsS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
 
@@ -51,6 +54,7 @@ func NewServer(
 	formsController := form.New(formsService)
 	usersController := users.New(usersService, authMiddleware)
 	bagsiesController := bagsies.New(bagsiesService, authMiddleware)
+	pointsController := points.New(pointsService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(
@@ -58,6 +62,7 @@ func NewServer(
 		formsController,
 		usersController,
 		bagsiesController,
+		pointsController,
 	)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
