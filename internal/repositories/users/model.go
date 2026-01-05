@@ -77,7 +77,7 @@ func (m model) convert() (*entity.User, error) {
 	// Deserialize Schedule from JSON if not empty
 	if len(m.Schedule) > 0 {
 		var schedule entity.StaffSchedule
-		if err := json.Unmarshal(m.Schedule, &schedule); err != nil {
+		if err = json.Unmarshal(m.Schedule, &schedule); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal schedule from json")
 		}
 		user.Schedule = &schedule
