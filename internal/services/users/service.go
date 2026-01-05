@@ -78,7 +78,7 @@ func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFi
 	if err != nil {
 		return nil, err
 	}
-	
+
 	users, err := s.usersRepo.GetByParams(ctx, authorizedFilter)
 	if err != nil {
 		return nil, err

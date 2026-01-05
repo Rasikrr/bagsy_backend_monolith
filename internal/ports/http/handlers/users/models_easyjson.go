@@ -66,6 +66,29 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			}
 		case "active":
 			out.Active = bool(in.Bool())
+		case "schedule":
+			if in.IsNull() {
+				in.Skip()
+				out.Schedule = nil
+			} else {
+				in.Delim('[')
+				if out.Schedule == nil {
+					if !in.IsDelim(']') {
+						out.Schedule = make([]staffScheduleDTO, 0, 1)
+					} else {
+						out.Schedule = []staffScheduleDTO{}
+					}
+				} else {
+					out.Schedule = (out.Schedule)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v1 staffScheduleDTO
+					(v1).UnmarshalEasyJSON(in)
+					out.Schedule = append(out.Schedule, v1)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		case "created_at":
 			out.CreatedAt = string(in.String())
 		case "updated_at":
@@ -127,6 +150,20 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix)
 		out.Bool(bool(in.Active))
 	}
+	if len(in.Schedule) != 0 {
+		const prefix string = ",\"schedule\":"
+		out.RawString(prefix)
+		{
+			out.RawByte('[')
+			for v2, v3 := range in.Schedule {
+				if v2 > 0 {
+					out.RawByte(',')
+				}
+				(v3).MarshalEasyJSON(out)
+			}
+			out.RawByte(']')
+		}
+	}
 	{
 		const prefix string = ",\"created_at\":"
 		out.RawString(prefix)
@@ -163,7 +200,101 @@ func (v *userDTO) UnmarshalJSON(data []byte) error {
 func (v *userDTO) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(in *jlexer.Lexer, out *getUsersResponse) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(in *jlexer.Lexer, out *staffScheduleDTO) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "week_day":
+			out.WeekDay = int(in.Int())
+		case "open":
+			out.Open = string(in.String())
+		case "close":
+			out.Close = string(in.String())
+		case "all_day":
+			out.AllDay = bool(in.Bool())
+		case "comment":
+			out.Comment = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(out *jwriter.Writer, in staffScheduleDTO) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"week_day\":"
+		out.RawString(prefix[1:])
+		out.Int(int(in.WeekDay))
+	}
+	{
+		const prefix string = ",\"open\":"
+		out.RawString(prefix)
+		out.String(string(in.Open))
+	}
+	{
+		const prefix string = ",\"close\":"
+		out.RawString(prefix)
+		out.String(string(in.Close))
+	}
+	{
+		const prefix string = ",\"all_day\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.AllDay))
+	}
+	{
+		const prefix string = ",\"comment\":"
+		out.RawString(prefix)
+		out.String(string(in.Comment))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v staffScheduleDTO) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v staffScheduleDTO) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *staffScheduleDTO) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *staffScheduleDTO) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(in *jlexer.Lexer, out *getUsersResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -198,9 +329,9 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 					out.Users = (out.Users)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 userDTO
-					(v1).UnmarshalEasyJSON(in)
-					out.Users = append(out.Users, v1)
+					var v4 userDTO
+					(v4).UnmarshalEasyJSON(in)
+					out.Users = append(out.Users, v4)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -217,7 +348,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(out *jwriter.Writer, in getUsersResponse) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(out *jwriter.Writer, in getUsersResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -228,11 +359,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v2, v3 := range in.Users {
-				if v2 > 0 {
+			for v5, v6 := range in.Users {
+				if v5 > 0 {
 					out.RawByte(',')
 				}
-				(v3).MarshalEasyJSON(out)
+				(v6).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
 		}
@@ -248,27 +379,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v getUsersResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v getUsersResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *getUsersResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *getUsersResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers1(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(in *jlexer.Lexer, out *getUsersRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers3(in *jlexer.Lexer, out *getUsersRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -323,9 +454,9 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 					out.Roles = (out.Roles)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v4 string
-					v4 = string(in.String())
-					out.Roles = append(out.Roles, v4)
+					var v7 string
+					v7 = string(in.String())
+					out.Roles = append(out.Roles, v7)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -346,9 +477,9 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 					out.Phones = (out.Phones)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v5 string
-					v5 = string(in.String())
-					out.Phones = append(out.Phones, v5)
+					var v8 string
+					v8 = string(in.String())
+					out.Phones = append(out.Phones, v8)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -371,7 +502,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(out *jwriter.Writer, in getUsersRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers3(out *jwriter.Writer, in getUsersRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -400,11 +531,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v6, v7 := range in.Roles {
-				if v6 > 0 {
+			for v9, v10 := range in.Roles {
+				if v9 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v7))
+				out.String(string(v10))
 			}
 			out.RawByte(']')
 		}
@@ -416,11 +547,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v8, v9 := range in.Phones {
-				if v8 > 0 {
+			for v11, v12 := range in.Phones {
+				if v11 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v9))
+				out.String(string(v12))
 			}
 			out.RawByte(']')
 		}
@@ -451,23 +582,23 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v getUsersRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers3(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v getUsersRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers3(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *getUsersRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers3(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *getUsersRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers2(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers3(l, v)
 }

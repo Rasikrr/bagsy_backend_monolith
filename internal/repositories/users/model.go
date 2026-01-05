@@ -41,14 +41,13 @@ func convert(e *entity.User) (model, error) {
 		UpdatedBy:   e.UpdatedBy,
 	}
 
-	// Serialize Schedule to JSON if not nil
-	if e.Schedule != nil {
-		scheduleBytes, err := json.Marshal(e.Schedule)
-		if err != nil {
-			return model{}, errors.Wrap(err, "failed to marshal schedule to json")
-		}
-		m.Schedule = scheduleBytes
+	// Serialize Schedule to JSON via DTO
+	schedulesDTO := schedulesToDTO(e.Schedule)
+	bb, err := json.Marshal(schedulesDTO)
+	if err != nil {
+		return m, errors.Wrap(err, "failed to marshal schedule to json")
 	}
+	m.Schedule = bb
 
 	return m, nil
 }
@@ -74,13 +73,10 @@ func (m model) convert() (*entity.User, error) {
 		UpdatedBy:   m.UpdatedBy,
 	}
 
-	// Deserialize Schedule from JSON if not empty
-	if len(m.Schedule) > 0 {
-		var schedule entity.StaffSchedule
-		if err = json.Unmarshal(m.Schedule, &schedule); err != nil {
-			return nil, errors.Wrap(err, "failed to unmarshal schedule from json")
-		}
-		user.Schedule = &schedule
+	// Deserialize Schedule from JSON via DTO
+	var scheduleDTOs schedulesDTO
+	if err = json.Unmarshal(m.Schedule, &scheduleDTOs); err == nil {
+		user.Schedule = scheduleDTOs.toEntity()
 	}
 
 	return user, nil
