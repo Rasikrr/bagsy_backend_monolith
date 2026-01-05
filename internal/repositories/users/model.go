@@ -42,7 +42,14 @@ func convert(e *entity.User) (model, error) {
 	}
 
 	// Serialize Schedule to JSON via DTO
-	schedulesDTO := schedulesToDTO(e.Schedule)
+	// Важно: если Schedule пустой или nil, создаём пустой массив, а не null
+	var schedulesDTO []staffScheduleDTO
+	if e.Schedule != nil {
+		schedulesDTO = schedulesToDTO(e.Schedule)
+	} else {
+		schedulesDTO = []staffScheduleDTO{}
+	}
+
 	bb, err := json.Marshal(schedulesDTO)
 	if err != nil {
 		return m, errors.Wrap(err, "failed to marshal schedule to json")
