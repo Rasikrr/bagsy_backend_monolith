@@ -43,7 +43,7 @@ func (r *Repository) Create(ctx context.Context, user *entity.User) error {
 		m.PointCode,
 		m.NetworkCode,
 		m.Active,
-		m.Schedule,
+		string(m.Schedule),
 		m.UpdatedBy,
 	)
 	if err != nil {
@@ -103,7 +103,7 @@ func (r *Repository) Update(ctx context.Context, user *entity.User) error {
 		m.PointCode,
 		m.NetworkCode,
 		m.Active,
-		m.Schedule,
+		string(m.Schedule),
 		m.UpdatedBy,
 	)
 	if err != nil {

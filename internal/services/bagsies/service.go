@@ -11,6 +11,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/codegen"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
+	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 )
 
@@ -73,6 +74,9 @@ func NewService(
 }
 
 func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (uuid.UUID, error) {
+	log.Infof(ctx, "creating bagsy: client=%s, master=%s, service=%s, start_at=%s",
+		req.ClientPhone, req.MasterPhone, req.ServiceID, req.StartAt.Format(time.RFC3339))
+
 	var (
 		bagsyID uuid.UUID
 		err     error
@@ -84,6 +88,9 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 				return err
 			}
 			if !clientExists {
+				log.Infof(ctx, "creating new client user: phone=%s, name=%s %s",
+					req.ClientPhone, req.Name, req.Surname)
+
 				clientUser := &entity.User{
 					Phone:   req.ClientPhone,
 					Role:    enum.RoleUser,
@@ -125,12 +132,15 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 			if err != nil {
 				return err
 			}
+			log.Infof(ctx, "bagsy created in db: id=%s, point=%s, price=%v", bagsyID, service.PointCode, masterService.Price)
 
 			bagsyConfirmCode := codegen.GenerateAuthCode()
 			err = s.notificationsService.SendBagsyConfirmCode(ctx, req.ClientPhone, bagsyConfirmCode)
 			if err != nil {
 				return err
 			}
+			log.Infof(ctx, "confirmation code sent to client: phone=%s", req.ClientPhone)
+
 			err = s.bagsyConfirmCodesCache.SetCode(ctx, bagsyID, bagsyConfirmCode)
 			if err != nil {
 				return err
@@ -138,8 +148,11 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 			return nil
 		})
 	if err != nil {
+		log.Errorf(ctx, "failed to create bagsy: %v", err)
 		return uuid.Nil, err
 	}
+
+	log.Infof(ctx, "bagsy creation completed successfully: id=%s", bagsyID)
 	return bagsyID, nil
 }
 

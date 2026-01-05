@@ -9,12 +9,12 @@ const (
 
 	createUser = `
 	INSERT INTO users (phone, password, role, name, surname, point_code, network_code, active, schedule, updated_by)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10)
 `
 
 	updateUser = `
 	UPDATE users
-	SET password = $2, role = $3, name = $4, surname = $5, point_code = $6, network_code = $7, active = $8, schedule = $9, updated_by = $10, updated_at = now()
+	SET password = $2, role = $3, name = $4, surname = $5, point_code = $6, network_code = $7, active = $8, schedule = $9::jsonb, updated_by = $10, updated_at = now()
 	WHERE phone = $1
 `
 
