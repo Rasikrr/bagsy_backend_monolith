@@ -58,7 +58,7 @@ func NewServer(
 	usersController := users.New(usersService, authMiddleware)
 	bagsiesController := bagsies.New(bagsiesService, authMiddleware)
 	pointsController := points.New(pointsService, authMiddleware)
-	networksController := networks.New(networksService, authMiddleware)
+	networksController := networks.New(networksService, pointsService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(

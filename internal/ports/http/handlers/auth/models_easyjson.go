@@ -132,7 +132,7 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix)
 		out.String(string(in.Role))
 	}
-	if in.PointCode != "" {
+	{
 		const prefix string = ",\"point_code\":"
 		out.RawString(prefix)
 		out.String(string(in.PointCode))

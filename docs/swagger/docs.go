@@ -505,6 +505,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/networks/{code}": {
+            "get": {
+                "description": "Возвращает детальную информацию о сети: название, описание, даты создания/обновления и автора создания",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "networks"
+                ],
+                "summary": "Получение информации о сети по коду",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код сети (slug)",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о сети",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_networks.networkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Сеть не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/networks/{code}/points": {
+            "get": {
+                "description": "Возвращает список всех точек (заведений), принадлежащих указанной сети. Каждая точка содержит информацию о названии, адресе, расписании работы и других характеристиках.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "networks"
+                ],
+                "summary": "Получение списка точек сети",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код сети (slug)",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список точек сети",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Сеть не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/points": {
             "post": {
                 "security": [
@@ -512,7 +612,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Создаёт новую точку обслуживания с указанными параметрами",
+                "description": "Создаёт новую точку обслуживания с указанными параметрами. Создавать могут только NetManager/SelfOwner",
                 "consumes": [
                     "application/json"
                 ],
@@ -538,7 +638,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Точка успешно создана",
                         "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointResponse"
+                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointCreateResponse"
                         }
                     },
                     "400": {
@@ -576,11 +676,6 @@ const docTemplate = `{
         },
         "/api/v1/points/{code}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "description": "Возвращает информацию о точке обслуживания по её коду",
                 "consumes": [
                     "application/json"
@@ -605,7 +700,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Информация о точке",
                         "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse"
                         }
                     },
                     "400": {
@@ -774,6 +869,122 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO": {
+            "type": "object",
+            "required": [
+                "city",
+                "coordinates",
+                "street"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "coordinates": {
+                    "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.CoordinatesDTO"
+                },
+                "street": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.CoordinatesDTO": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude"
+            ],
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "address": {
+                    "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "network_code": {
+                    "type": "string"
+                },
+                "schedule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointsResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse"
+                    }
+                }
+            }
+        },
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO": {
+            "type": "object",
+            "required": [
+                "close",
+                "open",
+                "week_day"
+            ],
+            "properties": {
+                "all_day": {
+                    "type": "boolean"
+                },
+                "close": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "open": {
+                    "type": "string"
+                },
+                "week_day": {
+                    "type": "integer",
+                    "maximum": 6,
+                    "minimum": 0
+                }
+            }
+        },
         "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -899,7 +1110,8 @@ const docTemplate = `{
                 "role": {
                     "type": "string",
                     "enum": [
-                        "manager"
+                        "manager",
+                        "staff"
                     ]
                 }
             }
@@ -1008,37 +1220,26 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_ports_http_handlers_points.addressDTO": {
+        "internal_ports_http_handlers_networks.networkResponse": {
             "type": "object",
-            "required": [
-                "city",
-                "coordinates",
-                "street"
-            ],
             "properties": {
-                "city": {
+                "code": {
                     "type": "string"
                 },
-                "coordinates": {
-                    "$ref": "#/definitions/internal_ports_http_handlers_points.coordinatesDTO"
-                },
-                "street": {
+                "created_at": {
                     "type": "string"
-                }
-            }
-        },
-        "internal_ports_http_handlers_points.coordinatesDTO": {
-            "type": "object",
-            "required": [
-                "latitude",
-                "longitude"
-            ],
-            "properties": {
-                "latitude": {
-                    "type": "number"
                 },
-                "longitude": {
-                    "type": "number"
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
@@ -1047,28 +1248,17 @@ const docTemplate = `{
             "required": [
                 "address",
                 "category_id",
-                "city",
-                "code",
                 "name",
                 "network_code"
             ],
             "properties": {
-                "active": {
-                    "type": "boolean"
-                },
                 "address": {
-                    "$ref": "#/definitions/internal_ports_http_handlers_points.addressDTO"
+                    "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO"
                 },
                 "category_id": {
                     "type": "integer",
                     "minimum": 1
                 },
-                "city": {
-                    "type": "string"
-                },
-                "code": {
-                    "type": "string"
-                },
                 "description": {
                     "type": "string"
                 },
@@ -1081,76 +1271,16 @@ const docTemplate = `{
                 "schedule": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/internal_ports_http_handlers_points.scheduleDTO"
+                        "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO"
                     }
                 }
             }
         },
-        "internal_ports_http_handlers_points.pointResponse": {
+        "internal_ports_http_handlers_points.pointCreateResponse": {
             "type": "object",
             "properties": {
-                "active": {
-                    "type": "boolean"
-                },
-                "address": {
-                    "$ref": "#/definitions/internal_ports_http_handlers_points.addressDTO"
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "city": {
-                    "type": "string"
-                },
                 "code": {
                     "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "network_code": {
-                    "type": "string"
-                },
-                "schedule": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_ports_http_handlers_points.scheduleDTO"
-                    }
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_ports_http_handlers_points.scheduleDTO": {
-            "type": "object",
-            "required": [
-                "close",
-                "open",
-                "week_day"
-            ],
-            "properties": {
-                "all_day": {
-                    "type": "boolean"
-                },
-                "close": {
-                    "type": "string"
-                },
-                "comment": {
-                    "type": "string"
-                },
-                "open": {
-                    "type": "string"
-                },
-                "week_day": {
-                    "type": "integer",
-                    "maximum": 6,
-                    "minimum": 0
                 }
             }
         },

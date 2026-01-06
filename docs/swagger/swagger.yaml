@@ -1,4 +1,82 @@
 definitions:
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO:
+    properties:
+      city:
+        type: string
+      coordinates:
+        $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.CoordinatesDTO'
+      street:
+        type: string
+    required:
+    - city
+    - coordinates
+    - street
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.CoordinatesDTO:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse:
+    properties:
+      active:
+        type: boolean
+      address:
+        $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO'
+      category_id:
+        type: integer
+      city:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      network_code:
+        type: string
+      schedule:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointsResponse:
+    properties:
+      count:
+        type: integer
+      points:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
+        type: array
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO:
+    properties:
+      all_day:
+        type: boolean
+      close:
+        type: string
+      comment:
+        type: string
+      open:
+        type: string
+      week_day:
+        maximum: 6
+        minimum: 0
+        type: integer
+    required:
+    - close
+    - open
+    - week_day
+    type: object
   github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse:
     properties:
       code:
@@ -81,6 +159,7 @@ definitions:
       role:
         enum:
         - manager
+        - staff
         type: string
     required:
     - phone
@@ -160,74 +239,28 @@ definitions:
     - phone
     - role
     type: object
-  internal_ports_http_handlers_points.addressDTO:
+  internal_ports_http_handlers_networks.networkResponse:
     properties:
-      city:
-        type: string
-      coordinates:
-        $ref: '#/definitions/internal_ports_http_handlers_points.coordinatesDTO'
-      street:
-        type: string
-    required:
-    - city
-    - coordinates
-    - street
-    type: object
-  internal_ports_http_handlers_points.coordinatesDTO:
-    properties:
-      latitude:
-        type: number
-      longitude:
-        type: number
-    required:
-    - latitude
-    - longitude
-    type: object
-  internal_ports_http_handlers_points.createPointRequest:
-    properties:
-      active:
-        type: boolean
-      address:
-        $ref: '#/definitions/internal_ports_http_handlers_points.addressDTO'
-      category_id:
-        minimum: 1
-        type: integer
-      city:
-        type: string
-      code:
-        type: string
-      description:
-        type: string
-      name:
-        type: string
-      network_code:
-        type: string
-      schedule:
-        items:
-          $ref: '#/definitions/internal_ports_http_handlers_points.scheduleDTO'
-        type: array
-    required:
-    - address
-    - category_id
-    - city
-    - code
-    - name
-    - network_code
-    type: object
-  internal_ports_http_handlers_points.pointResponse:
-    properties:
-      active:
-        type: boolean
-      address:
-        $ref: '#/definitions/internal_ports_http_handlers_points.addressDTO'
-      category_id:
-        type: integer
-      city:
-        type: string
       code:
         type: string
       created_at:
         type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_points.createPointRequest:
+    properties:
+      address:
+        $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO'
+      category_id:
+        minimum: 1
+        type: integer
       description:
         type: string
       name:
@@ -236,29 +269,18 @@ definitions:
         type: string
       schedule:
         items:
-          $ref: '#/definitions/internal_ports_http_handlers_points.scheduleDTO'
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
         type: array
-      updated_at:
-        type: string
-    type: object
-  internal_ports_http_handlers_points.scheduleDTO:
-    properties:
-      all_day:
-        type: boolean
-      close:
-        type: string
-      comment:
-        type: string
-      open:
-        type: string
-      week_day:
-        maximum: 6
-        minimum: 0
-        type: integer
     required:
-    - close
-    - open
-    - week_day
+    - address
+    - category_id
+    - name
+    - network_code
+    type: object
+  internal_ports_http_handlers_points.pointCreateResponse:
+    properties:
+      code:
+        type: string
     type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
@@ -649,11 +671,81 @@ paths:
       summary: Отправка формы для сотрудничества
       tags:
       - forms
+  /api/v1/networks/{code}:
+    get:
+      consumes:
+      - application/json
+      description: 'Возвращает детальную информацию о сети: название, описание, даты
+        создания/обновления и автора создания'
+      parameters:
+      - description: Код сети (slug)
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о сети
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_networks.networkResponse'
+        "400":
+          description: Неверный формат запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Сеть не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получение информации о сети по коду
+      tags:
+      - networks
+  /api/v1/networks/{code}/points:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех точек (заведений), принадлежащих указанной
+        сети. Каждая точка содержит информацию о названии, адресе, расписании работы
+        и других характеристиках.
+      parameters:
+      - description: Код сети (slug)
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список точек сети
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointsResponse'
+        "400":
+          description: Неверный формат запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Сеть не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получение списка точек сети
+      tags:
+      - networks
   /api/v1/points:
     post:
       consumes:
       - application/json
-      description: Создаёт новую точку обслуживания с указанными параметрами
+      description: Создаёт новую точку обслуживания с указанными параметрами. Создавать
+        могут только NetManager/SelfOwner
       parameters:
       - description: Данные для создания точки
         in: body
@@ -667,7 +759,7 @@ paths:
         "201":
           description: Точка успешно создана
           schema:
-            $ref: '#/definitions/internal_ports_http_handlers_points.pointResponse'
+            $ref: '#/definitions/internal_ports_http_handlers_points.pointCreateResponse'
         "400":
           description: Неверные параметры запроса
           schema:
@@ -710,7 +802,7 @@ paths:
         "200":
           description: Информация о точке
           schema:
-            $ref: '#/definitions/internal_ports_http_handlers_points.pointResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
         "400":
           description: Неверные параметры запроса
           schema:
@@ -731,8 +823,6 @@ paths:
           description: Внутренняя ошибка сервера
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
-      security:
-      - ApiKeyAuth: []
       summary: Получить точку обслуживания
       tags:
       - points

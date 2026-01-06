@@ -17,7 +17,7 @@ import (
 // @Produce json
 // @Security ApiKeyAuth
 // @Param request body createPointRequest true "Данные для создания точки"
-// @Success 201 {object} pointResponse "Точка успешно создана"
+// @Success 201 {object} pointCreateResponse "Точка успешно создана"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"
 // @Failure 401 {object} errors.ErrorResponse "Пользователь не авторизован"
 // @Failure 403 {object} errors.ErrorResponse "Недостаточно прав для создания точки"
