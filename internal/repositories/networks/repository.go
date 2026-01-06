@@ -35,7 +35,7 @@ func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Networ
 
 func (r *Repository) Create(ctx context.Context, network *entity.Network) error {
 	m := convert(network)
-	_, err := r.db.Exec(ctx, createNetwork, m.Code, m.Name, m.Description, m.UpdatedBy)
+	_, err := r.db.Exec(ctx, createNetwork, m.Code, m.Name, m.Description, m.CreatedBy, m.UpdatedBy)
 	if err != nil {
 		return domainErr.NewInternalError("failed to create network in db", err)
 	}

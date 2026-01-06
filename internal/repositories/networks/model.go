@@ -13,6 +13,7 @@ type model struct {
 	CreatedAt   time.Time  `db:"created_at"`
 	UpdatedAt   *time.Time `db:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at"`
+	CreatedBy   string     `db:"created_by"`
 	UpdatedBy   string     `db:"updated_by"`
 }
 
@@ -24,6 +25,7 @@ func convert(e *entity.Network) model {
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
 		DeletedAt:   e.DeletedAt,
+		CreatedBy:   e.CreatedBy,
 		UpdatedBy:   e.UpdatedBy,
 	}
 }
@@ -36,6 +38,7 @@ func (m model) convert() *entity.Network {
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 		DeletedAt:   m.DeletedAt,
+		CreatedBy:   m.CreatedBy,
 		UpdatedBy:   m.UpdatedBy,
 	}
 }
