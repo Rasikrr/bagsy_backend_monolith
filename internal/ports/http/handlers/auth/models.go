@@ -21,9 +21,9 @@ func (s *sendCodeRequest) Validate() error {
 }
 
 type registerStaffRequest struct {
-	Phone     string `json:"phone"          validate:"required,min=10,max=15"`
-	Role      string `json:"role" validate:"required,oneof=manager,staff"`
-	PointCode string `json:"point_code,omitempty" validate:"required"`
+	Phone     string `json:"phone" validate:"required,min=10,max=15"`
+	Role      string `json:"role" validate:"required,oneof=manager staff"`
+	PointCode string `json:"point_code" validate:"required"`
 }
 
 func (r *registerStaffRequest) Validate() error {

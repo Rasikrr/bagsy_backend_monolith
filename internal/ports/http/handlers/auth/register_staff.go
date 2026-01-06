@@ -18,7 +18,7 @@ import (
 // @Description - Manager: может создавать только Staff в своей точке
 // @Description - NetManager/SelfOwner: могут создавать Manager и Staff в любой точке своей сети
 // @Tags auth
-// @Security BearerAuth
+// @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param request body registerStaffRequest true "Данные для регистрации (phone, role: manager|staff, point_code)"

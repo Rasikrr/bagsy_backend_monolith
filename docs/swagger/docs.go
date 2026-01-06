@@ -166,7 +166,12 @@ const docTemplate = `{
         },
         "/api/v1/auth/staff/register": {
             "post": {
-                "description": "Создает нового пользователя (работника) привязанного к точке. Менеджер точки может создавать только в своей точке, менеджер сети - в любой точке своей сети.",
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Запускает двухэтапный процесс регистрации работника: создает неактивного пользователя и отправляет ссылку для завершения регистрации (WhatsApp с fallback на SMS). Пользователь завершит регистрацию через /api/v1/auth/staff/confirm с указанием имени, фамилии и пароля.\n\nИерархия прав:\n- Staff: не может создавать пользователей\n- Manager: может создавать только Staff в своей точке\n- NetManager/SelfOwner: могут создавать Manager и Staff в любой точке своей сети",
                 "consumes": [
                     "application/json"
                 ],
@@ -176,10 +181,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Регистрация работника на точке",
+                "summary": "Инициация регистрации работника (шаг 1/2)",
                 "parameters": [
                     {
-                        "description": "Данные для регистрации",
+                        "description": "Данные для регистрации (phone, role: manager|staff, point_code)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -190,19 +195,31 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Ссылка для завершения регистрации отправлена",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
                         }
                     },
                     "400": {
-                        "description": "Неверный формат запроса",
+                        "description": "Неверный формат запроса или валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "403": {
-                        "description": "Недостаточно прав для создания работника в указанной точке",
+                        "description": "Недостаточно прав (Staff не может создавать, Manager только в своей точке)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Пользователь уже существует",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -218,7 +235,7 @@ const docTemplate = `{
         },
         "/api/v1/auth/staff/register/confirm": {
             "post": {
-                "description": "Подтверждает регистрацию пользователя(работника)",
+                "description": "Завершает двухэтапную регистрацию работника: проверяет one-time токен из ссылки, устанавливает имя, фамилию и пароль, активирует пользователя и возвращает пару токенов (access/refresh) для дальнейшей авторизации.\n\nВажно: токен можно использовать только один раз (one-time use). При повторной попытке использования возвращается ошибка 409 Conflict.",
                 "consumes": [
                     "application/json"
                 ],
@@ -228,10 +245,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Подтверждение регистрации работника",
+                "summary": "Завершение регистрации работника (шаг 2/2)",
                 "parameters": [
                     {
-                        "description": "Данные для подтверждения",
+                        "description": "Данные для завершения (token, name, surname, password)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -242,19 +259,25 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Регистрация успешно подтверждена",
+                        "description": "Регистрация успешно завершена, пользователь активирован",
                         "schema": {
                             "$ref": "#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse"
                         }
                     },
                     "400": {
-                        "description": "Неверные данные",
+                        "description": "Неверный формат данных или валидация",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Неверный или просроченный токен",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Токен уже использован или пользователь уже активирован",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -861,7 +884,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "phone",
-                "point_code"
+                "point_code",
+                "role"
             ],
             "properties": {
                 "phone": {
@@ -871,6 +895,12 @@ const docTemplate = `{
                 },
                 "point_code": {
                     "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "manager"
+                    ]
                 }
             }
         },
