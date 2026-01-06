@@ -8,8 +8,9 @@ var (
 
 // Users errors
 var (
-	ErrUserNotFound  = NewNotFoundError("user(s) not found", nil)
-	ErrUserActivated = NewConflictError("user(s) activated", nil)
+	ErrUserNotFound      = NewNotFoundError("user(s) not found", nil)
+	ErrUserActivated     = NewConflictError("user(s) activated", nil)
+	ErrUserAlreadyExists = NewConflictError("user(s) already exists", nil)
 )
 
 // Networks errors

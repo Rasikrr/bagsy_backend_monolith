@@ -101,3 +101,62 @@ func (r *registerConfirmRequest) toDomain() *command.RegisterStaffConfirmCommand
 }
 
 type registerConfirmResponse loginResponse
+
+type networkInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type registerManagementRequest struct {
+	Name        string      `json:"name" validate:"required,min=2"`
+	Surname     string      `json:"surname" validate:"required,min=2"`
+	Phone       string      `json:"phone" validate:"required"`
+	Password    string      `json:"password" validate:"required"`
+	Role        string      `json:"role" validate:"required,oneof=net_manager self_owner"`
+	NetworkInfo networkInfo `json:"network_info" validate:"required"`
+}
+
+func (r *registerManagementRequest) Validate() error {
+	if err := request.GetValidator().Struct(r); err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (r *registerManagementRequest) toDomain() *command.RegisterManagementCommand {
+	role, _ := enum.RoleString(r.Role)
+	return &command.RegisterManagementCommand{
+		Name:     r.Name,
+		Surname:  r.Surname,
+		Phone:    r.Phone,
+		Role:     role,
+		Password: r.Password,
+		NetworkRegisterInfo: &command.NetworkRegisterInfo{
+			Name:        r.NetworkInfo.Name,
+			Description: r.NetworkInfo.Description,
+		},
+	}
+}
+
+type registerManagementConfirmRequest struct {
+	Phone string `json:"phone" validate:"required"`
+	Code  string `json:"code" validate:"required"`
+}
+
+func (r *registerManagementConfirmRequest) Validate() error {
+	if err := request.GetValidator().Struct(r); err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+type resendRegisterManagementRequest struct {
+	Phone string `json:"phone" validate:"required"`
+}
+
+func (r *resendRegisterManagementRequest) Validate() error {
+	if err := request.GetValidator().Struct(r); err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}

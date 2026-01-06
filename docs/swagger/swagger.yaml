@@ -111,6 +111,13 @@ definitions:
       refresh_token:
         type: string
     type: object
+  internal_ports_http_handlers_auth.networkInfo:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.refreshTokensRequest:
     properties:
       refresh_token:
@@ -147,6 +154,43 @@ definitions:
         type: string
       refresh_token:
         type: string
+    type: object
+  internal_ports_http_handlers_auth.registerManagementConfirmRequest:
+    properties:
+      code:
+        type: string
+      phone:
+        type: string
+    required:
+    - code
+    - phone
+    type: object
+  internal_ports_http_handlers_auth.registerManagementRequest:
+    properties:
+      name:
+        minLength: 2
+        type: string
+      network_info:
+        $ref: '#/definitions/internal_ports_http_handlers_auth.networkInfo'
+      password:
+        type: string
+      phone:
+        type: string
+      role:
+        enum:
+        - net_manager
+        - self_owner
+        type: string
+      surname:
+        minLength: 2
+        type: string
+    required:
+    - name
+    - network_info
+    - password
+    - phone
+    - role
+    - surname
     type: object
   internal_ports_http_handlers_auth.registerStaffRequest:
     properties:
@@ -403,6 +447,93 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
       summary: Выход из системы
+      tags:
+      - auth
+  /api/v1/auth/management/register:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Запускает двухэтапный процесс регистрации владельца сети или сетевого менеджера: создает сеть и отправляет 4-значный код подтверждения на телефон (SMS/WhatsApp). Пользователь завершит регистрацию через /api/v1/auth/management/register/confirm, введя код из SMS.
+
+        Роли для регистрации:
+        - net_manager: Менеджер сети (управляет точками)
+        - self_owner: Владелец-самозанятый (управляет своей сетью)
+
+        После успешной регистрации код действителен 5 минут. На ввод кода даётся 3 попытки.
+      parameters:
+      - description: 'Данные для регистрации (name, surname, phone, password, role:
+          net_manager|self_owner, network_info)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerManagementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Код подтверждения отправлен на телефон
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Пользователь с таким номером уже существует
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Инициация регистрации менеджмента (шаг 1/2)
+      tags:
+      - auth
+  /api/v1/auth/management/register/confirm:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Завершает двухэтапную регистрацию владельца сети или сетевого менеджера: проверяет 6-значный код из SMS, создает пользователя и сеть в БД, активирует пользователя и возвращает пару токенов (access/refresh) для дальнейшей авторизации.
+
+        Важно:
+        - Код действителен 5 минут после отправки
+        - Даётся максимум 3 попытки ввода кода
+        - После 3 неудачных попыток данные регистрации удаляются, нужно начать заново
+        - Каждая неудачная попытка возвращает количество оставшихся попыток в поле attempts_remaining
+      parameters:
+      - description: Данные для подтверждения (phone, code)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerManagementConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Регистрация успешно завершена, пользователь и сеть созданы
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse'
+        "400":
+          description: Неверный формат данных, валидация или неверный код подтверждения
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Превышен лимит попыток ввода кода (3 попытки)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Код истёк или не найден (истекло 10 минут)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Завершение регистрации менеджмента (шаг 2/2)
       tags:
       - auth
   /api/v1/auth/refresh:

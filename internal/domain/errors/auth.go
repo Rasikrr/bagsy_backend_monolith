@@ -22,4 +22,8 @@ var (
 	ErrInvalidRegistrationToken = NewUnauthorizedError("invalid registration token")
 	ErrRegistrationTokenExpired = NewUnauthorizedError("registration token has expired")
 	ErrMissingRequiredClaim     = NewInvalidInputError("missing required claim", nil)
+
+	// Verification code errors
+	ErrTooManyVerificationAttempts = NewForbiddenError("maximum attempts reached. Please restart your registration")
+	ErrInvalidVerificationCode     = NewInvalidInputError("invalid verification code", nil)
 )

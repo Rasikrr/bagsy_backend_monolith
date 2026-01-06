@@ -3,6 +3,8 @@ package notifications
 import (
 	"context"
 	"fmt"
+
+	"github.com/Rasikrr/core/log"
 )
 
 type smsClient interface {
@@ -31,7 +33,13 @@ func NewService(
 	}
 }
 
-func (s *Service) SendRegistrationLink(ctx context.Context, phone, token string) error {
+func (s *Service) SendManagementAuthConfirmationCode(ctx context.Context, phone, code string) error {
+	// TODO: format message (markdown)
+	message := fmt.Sprintf("%s - Ваш код подтверждения регистрации в системе Bagsy", code)
+	return s.send(ctx, phone, message)
+}
+
+func (s *Service) SendStaffRegistrationLink(ctx context.Context, phone, token string) error {
 	link := fmt.Sprintf("%s?token=%s", s.registrationConfirmURL, token)
 	// TODO: format message (markdown)
 	message := fmt.Sprintf("Добро пожаловать в Bagsy! Завершите регистрацию по ссылке: %s", link)
@@ -47,6 +55,7 @@ func (s *Service) SendBagsyConfirmCode(ctx context.Context, phone, code string) 
 func (s *Service) send(ctx context.Context, phone, message string) error {
 	err := s.whatsApp.SendMessage(ctx, phone, message)
 	if err != nil {
+		log.Warnf(ctx, "Failed to send message by whatsapp: %v", err)
 		err = s.smsClient.Send(ctx, phone, message)
 		if err != nil {
 			return err

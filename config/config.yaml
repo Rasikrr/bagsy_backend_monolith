@@ -170,11 +170,11 @@ env:
     required: true
     value: "86400s"
 
-  registration_token_ttl:
+  registration_ttl:
     type: "duration"
-    env_name: "REGISTRATION_TOKEN_TTL"
+    env_name: "REGISTRATION_TTL"
     required: true
-    value: "86400s"
+    value: "3600s"
 
   register_confirmation_url:
     type: "string"
