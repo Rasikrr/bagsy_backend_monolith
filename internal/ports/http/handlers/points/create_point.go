@@ -11,7 +11,7 @@ import (
 
 // createPoint godoc
 // @Summary Создать точку обслуживания
-// @Description Создаёт новую точку обслуживания с указанными параметрами
+// @Description Создаёт новую точку обслуживания с указанными параметрами. Создавать могут только NetManager/SelfOwner
 // @Tags points
 // @Accept json
 // @Produce json

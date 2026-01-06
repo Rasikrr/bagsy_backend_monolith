@@ -16,7 +16,6 @@ import (
 // @Tags points
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
 // @Param code path string true "Код точки обслуживания"
 // @Success 200 {object} pointResponse "Информация о точке"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"

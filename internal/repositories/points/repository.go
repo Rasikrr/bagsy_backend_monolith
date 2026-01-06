@@ -43,6 +43,9 @@ func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 		m.UpdatedBy,
 	)
 	if err != nil {
+		if postgres.IsUniqueViolation(err) {
+			return domainErr.ErrPointAlreadyExists
+		}
 		return domainErr.NewInternalError("failed to create point in db", err)
 	}
 	return nil

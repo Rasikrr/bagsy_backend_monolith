@@ -5,6 +5,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
 )
 
 //go:generate easyjson -all models.go
@@ -29,14 +30,11 @@ type scheduleDTO struct {
 }
 
 type createPointRequest struct {
-	Code        string        `json:"code" validate:"required"`
 	Name        string        `json:"name" validate:"required"`
 	Description *string       `json:"description"`
 	NetworkCode string        `json:"network_code" validate:"required"`
 	CategoryID  int           `json:"category_id" validate:"required,min=1"`
 	Address     addressDTO    `json:"address" validate:"required"`
-	City        string        `json:"city" validate:"required"`
-	Active      bool          `json:"active"`
 	Schedule    []scheduleDTO `json:"schedule"`
 }
 
@@ -70,7 +68,7 @@ func (r *createPointRequest) toEntity() (*entity.Point, error) {
 	}
 
 	return &entity.Point{
-		Code:        r.Code,
+		Code:        slug.Generate(r.Name + r.Address.City + r.Address.Street),
 		Name:        r.Name,
 		Description: r.Description,
 		NetworkCode: r.NetworkCode,
@@ -83,10 +81,9 @@ func (r *createPointRequest) toEntity() (*entity.Point, error) {
 			Street: r.Address.Street,
 			City:   r.Address.City,
 		},
-		City:      r.City,
-		Active:    r.Active,
-		Schedule:  schedules,
-		UpdatedBy: "system",
+		Active:   true,
+		City:     r.Address.City,
+		Schedule: schedules,
 	}, nil
 }
 

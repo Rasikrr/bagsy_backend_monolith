@@ -8,6 +8,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
 )
 
+// Пока не юзаем, флоу может поменяться
 func (c *Controller) createNetwork(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
