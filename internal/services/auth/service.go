@@ -12,15 +12,21 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/codegen"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
 )
 
+const (
+	maxVerificationAttempts = 3
+)
+
 type usersService interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
+	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Update(ctx context.Context, user *entity.User) error
 }
 
@@ -28,8 +34,13 @@ type pointsService interface {
 	GetByCode(ctx context.Context, code string) (*entity.Point, error)
 }
 
+type networkService interface {
+	CreateForRegistration(ctx context.Context, req *command.CreateNetworkCommand, createdBy string) (*entity.Network, error)
+}
+
 type notificationService interface {
-	SendRegistrationLink(ctx context.Context, phone, token string) error
+	SendStaffRegistrationLink(ctx context.Context, phone, token string) error
+	SendManagementAuthConfirmationCode(ctx context.Context, phone, code string) error
 }
 
 type tokenManager interface {
@@ -38,6 +49,16 @@ type tokenManager interface {
 	NewRegistrationToken(dto *dto.RegistrationTokenPayload, ttl time.Duration) (string, error)
 	ParseAccessToken(token string) (*dto.AccessTokenPayload, error)
 	ParseRegistrationToken(token string) (*dto.RegistrationTokenPayload, error)
+}
+
+type registerCache interface {
+	SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand) error
+	GetManagementRequest(ctx context.Context, phone string) (*command.RegisterManagementCommand, error)
+	DeleteManagementRequest(ctx context.Context, phone string) error
+
+	SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand) error
+	GetStaffRequest(ctx context.Context, phone string) (*command.RegisterStaffCommand, error)
+	DeleteStaffRequest(ctx context.Context, phone string) error
 }
 
 // refreshTokenRepository управляет хранением refresh токенов
@@ -68,9 +89,11 @@ type Service struct {
 	usersService           usersService
 	pointsService          pointsService
 	notificationService    notificationService
+	networkService         networkService
 	tokenManager           tokenManager
 	refreshTokenRepository refreshTokenRepository
 	registrationTokenCache registrationTokenCache
+	registerCache          registerCache
 	accessTTL              time.Duration
 	refreshTTL             time.Duration
 	registrationTTL        time.Duration
@@ -81,9 +104,11 @@ func NewService(
 	usersService usersService,
 	pointsService pointsService,
 	notificationService notificationService,
+	networkService networkService,
 	tokenManager tokenManager,
 	refreshTokenRepo refreshTokenRepository,
 	registrationTokenCache registrationTokenCache,
+	registerCache registerCache,
 	accessTTL time.Duration,
 	refreshTTL time.Duration,
 	registrationTTL time.Duration,
@@ -93,9 +118,11 @@ func NewService(
 		usersService:           usersService,
 		pointsService:          pointsService,
 		notificationService:    notificationService,
+		networkService:         networkService,
 		tokenManager:           tokenManager,
 		refreshTokenRepository: refreshTokenRepo,
 		registrationTokenCache: registrationTokenCache,
+		registerCache:          registerCache,
 		accessTTL:              accessTTL,
 		refreshTTL:             refreshTTL,
 		registrationTTL:        registrationTTL,
@@ -128,6 +155,97 @@ func (s *Service) Login(ctx context.Context, phone string, password string) (acc
 	return accessToken, refreshToken, nil
 }
 
+func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterManagementCommand) error {
+	exist, err := s.usersService.ExistsByPhone(ctx, req.Phone)
+	if err != nil {
+		return err
+	}
+	if exist {
+		return domainErr.ErrUserAlreadyExists
+	}
+	passwordHash, err := hash.Password(req.Password)
+	if err != nil {
+		return domainErr.NewInternalError("failed to hash password", err)
+	}
+	authCode := codegen.GenerateAuthCode()
+
+	req.Password = passwordHash
+	req.AuthCode = authCode
+
+	err = s.registerCache.SaveManagementRequest(ctx, req)
+	if err != nil {
+		return err
+	}
+	return s.notificationService.SendManagementAuthConfirmationCode(ctx, req.Phone, authCode)
+}
+
+func (s *Service) ResendRegisterManagementCode(ctx context.Context, phone string) error {
+	req, err := s.registerCache.GetManagementRequest(ctx, phone)
+	if err != nil {
+		return err
+	}
+	newCode := codegen.GenerateAuthCode()
+	req.AuthCode = newCode
+	req.Attempts = 0
+	err = s.registerCache.SaveManagementRequest(ctx, req)
+	if err != nil {
+		return err
+	}
+	return s.notificationService.SendManagementAuthConfirmationCode(ctx, phone, newCode)
+}
+
+func (s *Service) RegisterManagementConfirm(ctx context.Context, phone, code string) (access, refresh string, err error) {
+	req, err := s.registerCache.GetManagementRequest(ctx, phone)
+	if err != nil {
+		return "", "", err
+	}
+	if req.AuthCode != code {
+		req.Attempts++
+		if req.Attempts >= maxVerificationAttempts {
+			// Удаляем данные регистрации после превышения лимита попыток
+			if delErr := s.registerCache.DeleteManagementRequest(ctx, phone); delErr != nil {
+				return "", "", delErr
+			}
+			return "", "", domainErr.ErrTooManyVerificationAttempts
+		}
+		// Сохраняем обновленный счетчик попыток
+		if saveErr := s.registerCache.SaveManagementRequest(ctx, req); saveErr != nil {
+			return "", "", saveErr
+		}
+		return "", "", domainErr.ErrInvalidVerificationCode.
+			WithDetail("attempts_remaining", maxVerificationAttempts-req.Attempts)
+	}
+	var user *entity.User
+
+	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}, func(ctx context.Context) error {
+		network, netErr := s.networkService.CreateForRegistration(ctx, &command.CreateNetworkCommand{
+			Name:        req.NetworkRegisterInfo.Name,
+			Description: req.NetworkRegisterInfo.Description,
+		}, req.Phone)
+		if netErr != nil {
+			return netErr
+		}
+		user = &entity.User{
+			Name:        req.Name,
+			Surname:     req.Surname,
+			Phone:       req.Phone,
+			Password:    req.Password,
+			Role:        req.Role,
+			NetworkCode: &network.Code,
+			Active:      true,
+		}
+		err = s.usersService.Create(ctx, user)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return "", "", err
+	}
+	return s.generateTokens(ctx, user)
+}
+
 // RegisterStaff регистрирует нового работника (orchestrator)
 // Проверяет права, создает user, генерирует и отправляет ссылку для подтверждения
 func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error {
@@ -139,25 +257,24 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 	if validErr := s.validateStaffRegistrationPermissions(ctx, req.PointCode, req.Role, createdBy); validErr != nil {
 		return validErr
 	}
-
-	// 2. Создаем user (неактивный, без пароля)
-	user := &entity.User{
-		Phone:       req.Phone,
-		PointCode:   &req.PointCode,
-		NetworkCode: ptr.Pointer(createdBy.NetworkCode()),
-		Role:        req.Role,
-		Active:      false, // Будет активирован после подтверждения
-		UpdatedBy:   createdBy.Phone(),
+	// 2. Проверяем что юзер с таким номером уже существует
+	exist, err := s.usersService.ExistsByPhone(ctx, req.Phone)
+	if err != nil {
+		return err
 	}
-
-	if createErr := s.usersService.Create(ctx, user); createErr != nil {
-		return createErr
+	if exist {
+		return domainErr.ErrUserAlreadyExists
 	}
-
-	// 3. Генерируем registration token
+	req.NetworkCode = createdBy.NetworkCode()
+	// 3. Сохраним данные в кеше чтобы преждевременно не создавать юзера
+	err = s.registerCache.SaveStaffRequest(ctx, req)
+	if err != nil {
+		return err
+	}
+	// 4. Генерируем registration token
 	token, err := s.tokenManager.NewRegistrationToken(
 		&dto.RegistrationTokenPayload{
-			Phone:       user.Phone,
+			Phone:       req.Phone,
 			PointCode:   req.PointCode,
 			NetworkCode: createdBy.NetworkCode(),
 		}, s.registrationTTL,
@@ -166,8 +283,8 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 		return domainErr.NewInternalError("failed to generate registration token", err)
 	}
 
-	// 4. Отправляем уведомление (WhatsApp с fallback на SMS)
-	if sendErr := s.notificationService.SendRegistrationLink(ctx, req.Phone, token); sendErr != nil {
+	// 3. Отправляем уведомление (WhatsApp с fallback на SMS)
+	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token); sendErr != nil {
 		return sendErr
 	}
 	return nil
@@ -181,12 +298,16 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 		return "", "", domainErr.NewUnauthorizedError("invalid or expired registration token").WithError(err)
 	}
 
+	createReq, err := s.registerCache.GetStaffRequest(ctx, tokenPayload.Phone)
+	if err != nil {
+		return "", "", err
+	}
+
 	// 2. Хэшируем токен для one-time use проверки
 	h := sha256.Sum256([]byte(req.Token))
 	tokenHash := hex.EncodeToString(h[:])
 
 	var (
-		user                      *entity.User
 		accessToken, refreshToken string
 	)
 
@@ -204,30 +325,21 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 				return domainErr.NewConflictError("registration token already used", nil)
 			}
 
-			// 4. Получаем пользователя
-			user, err = s.usersService.GetByPhone(txCtx, tokenPayload.Phone)
-			if err != nil {
-				return err
-			}
-
-			// 5. Defense in depth: проверка, что пользователь еще не активирован
-			if user.Active {
-				return domainErr.ErrUserActivated
-			}
-
-			// 6. Хэшируем пароль
 			passwordHash, err := hash.Password(req.Password)
 			if err != nil {
 				return domainErr.NewInternalError("failed to hash password", err)
 			}
-
-			// 7. Обновляем данные пользователя
-			user.Name = req.Name
-			user.Surname = req.Surname
-			user.Password = passwordHash
-			user.Active = true
-
-			err = s.usersService.Update(txCtx, user)
+			user := &entity.User{
+				Phone:       createReq.Phone,
+				Name:        req.Name,
+				Surname:     req.Surname,
+				Password:    passwordHash,
+				PointCode:   &createReq.PointCode,
+				NetworkCode: ptr.Pointer(createReq.NetworkCode),
+				Role:        createReq.Role,
+				Active:      true,
+			}
+			err = s.usersService.Create(ctx, user)
 			if err != nil {
 				return err
 			}

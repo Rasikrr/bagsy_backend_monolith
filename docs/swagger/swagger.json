@@ -111,6 +111,116 @@
                 }
             }
         },
+        "/api/v1/auth/management/register": {
+            "post": {
+                "description": "Запускает двухэтапный процесс регистрации владельца сети или сетевого менеджера: создает сеть и отправляет 4-значный код подтверждения на телефон (SMS/WhatsApp). Пользователь завершит регистрацию через /api/v1/auth/management/register/confirm, введя код из SMS.\n\nРоли для регистрации:\n- net_manager: Менеджер сети (управляет точками)\n- self_owner: Владелец-самозанятый (управляет своей сетью)\n\nПосле успешной регистрации код действителен 5 минут. На ввод кода даётся 3 попытки.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Инициация регистрации менеджмента (шаг 1/2)",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации (name, surname, phone, password, role: net_manager|self_owner, network_info)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerManagementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Код подтверждения отправлен на телефон",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Пользователь с таким номером уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/management/register/confirm": {
+            "post": {
+                "description": "Завершает двухэтапную регистрацию владельца сети или сетевого менеджера: проверяет 6-значный код из SMS, создает пользователя и сеть в БД, активирует пользователя и возвращает пару токенов (access/refresh) для дальнейшей авторизации.\n\nВажно:\n- Код действителен 5 минут после отправки\n- Даётся максимум 3 попытки ввода кода\n- После 3 неудачных попыток данные регистрации удаляются, нужно начать заново\n- Каждая неудачная попытка возвращает количество оставшихся попыток в поле attempts_remaining",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Завершение регистрации менеджмента (шаг 2/2)",
+                "parameters": [
+                    {
+                        "description": "Данные для подтверждения (phone, code)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerManagementConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Регистрация успешно завершена, пользователь и сеть созданы",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных, валидация или неверный код подтверждения",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Превышен лимит попыток ввода кода (3 попытки)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Код истёк или не найден (истекло 10 минут)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/refresh": {
             "post": {
                 "description": "Обновляет токены авторизации",
@@ -1069,6 +1179,17 @@
                 }
             }
         },
+        "internal_ports_http_handlers_auth.networkInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_auth.refreshTokensRequest": {
             "type": "object",
             "properties": {
@@ -1121,6 +1242,58 @@
                 },
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.registerManagementConfirmRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "phone"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.registerManagementRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "network_info",
+                "password",
+                "phone",
+                "role",
+                "surname"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "network_info": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_auth.networkInfo"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "net_manager",
+                        "self_owner"
+                    ]
+                },
+                "surname": {
+                    "type": "string",
+                    "minLength": 2
                 }
             }
         },

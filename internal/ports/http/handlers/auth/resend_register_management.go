@@ -1,4 +1,4 @@
-package networks
+package auth
 
 import (
 	"net/http"
@@ -8,21 +8,19 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
 )
 
-// Пока не юзаем, флоу может поменяться. Может ли у net_manager/self_owner более 1 сети?
-func (c *Controller) createNetwork(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) resendRegisterManagement(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var req createNetworkRequest
+	var req resendRegisterManagementRequest
 	if err := request.GetAndValidateData(r, &req); err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
 
-	err := c.networksService.Create(ctx, req.toDomain())
+	err := c.authService.ResendRegisterManagementCode(ctx, req.Phone)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
-
-	response.SendData(ctx, w, response.NewEmptySuccessResponse("network created"), http.StatusCreated)
+	response.SendData(ctx, w, response.NewEmptySuccessResponse("new auth code sent"), http.StatusOK)
 }

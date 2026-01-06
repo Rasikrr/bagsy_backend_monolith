@@ -4,6 +4,7 @@ import (
 	"context"
 
 	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/register"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
@@ -40,6 +41,7 @@ type App struct {
 
 	tokensCache       *tokens.Cache
 	bagsyConfirmCache *bagsyconfirm.Cache
+	registerCache     *register.Cache
 
 	usersRepo           *usersR.Repository
 	pointsRepo          *pointsR.Repository
@@ -128,6 +130,12 @@ func (a *App) initCache(_ context.Context) error {
 		return err
 	}
 	a.bagsyConfirmCache = bagsyconfirm.NewCache(a.Redis(), bagsyConfirmTTL)
+
+	registrationTTL, err := a.Config().Variables.GetDuration(appenv.RegistrationTTL)
+	if err != nil {
+		return err
+	}
+	a.registerCache = register.NewCache(a.Redis(), registrationTTL)
 	return nil
 }
 
@@ -152,7 +160,7 @@ func (a *App) initServices(_ context.Context) error {
 	if err != nil {
 		return err
 	}
-	registrationTokenTTL, err := a.Config().Variables.GetDuration(appenv.RegistrationTokenTTL)
+	registrationTTL, err := a.Config().Variables.GetDuration(appenv.RegistrationTTL)
 	if err != nil {
 		return err
 	}
@@ -174,12 +182,14 @@ func (a *App) initServices(_ context.Context) error {
 		a.usersService,
 		a.pointsService,
 		a.notificationsService,
+		a.networksService,
 		a.tokenManager,
 		a.tokensCache,
 		a.tokensCache,
+		a.registerCache,
 		accessTokenTTL,
 		refreshTokenTTL,
-		registrationTokenTTL,
+		registrationTTL,
 	)
 
 	a.bagsiesService = bagsies.NewService(

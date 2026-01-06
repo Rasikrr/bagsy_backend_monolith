@@ -17,11 +17,13 @@ const (
 	WhatsAppIDInstance = "whatsapp_api_id_instance"
 	WhatsAppAPIToken   = "whatsapp_api_token"
 
-	JWTSecret            = "jwt_secret"
-	JWTIssuer            = "jwt_issuer"
-	AccessTokenTTL       = "access_token_ttl"
-	RefreshTokenTTL      = "refresh_token_ttl"
-	RegistrationTokenTTL = "registration_token_ttl"
+	JWTSecret       = "jwt_secret"
+	JWTIssuer       = "jwt_issuer"
+	AccessTokenTTL  = "access_token_ttl"
+	RefreshTokenTTL = "refresh_token_ttl"
+	RegistrationTTL = "registration_ttl"
 
 	BagsyConfirmTTL = "bagsy_confirm_ttl"
+
+	ManagementAuthTTL = "management_auth_ttl"
 )
