@@ -30,13 +30,16 @@ func New(
 }
 
 func (c *Controller) Init(router *chi.Mux) {
+	auth := c.authMiddleware.Handle
 	management := c.authMiddleware.AuthorizeManagement()
+
 	router.Route("/api/v1/staff", func(r chi.Router) {
 		managersRoutes := r.With(management)
 		managersRoutes.Get("/", c.getUsers)
 	})
 
 	router.Route("/api/v1/users", func(r chi.Router) {
-		r.Get("/me", c.getMyProfile)
+		authenticated := r.With(auth)
+		authenticated.Get("/me", c.getMyProfile)
 	})
 }
