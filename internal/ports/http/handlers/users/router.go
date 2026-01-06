@@ -10,6 +10,7 @@ import (
 )
 
 type userService interface {
+	GetUserProfile(ctx context.Context) (*entity.User, error)
 	GetByFilter(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
 }
 
@@ -33,5 +34,9 @@ func (c *Controller) Init(router *chi.Mux) {
 	router.Route("/api/v1/staff", func(r chi.Router) {
 		managersRoutes := r.With(management)
 		managersRoutes.Get("/", c.getUsers)
+	})
+
+	router.Route("/api/v1/users", func(r chi.Router) {
+		r.Get("/me", c.getMyProfile)
 	})
 }
