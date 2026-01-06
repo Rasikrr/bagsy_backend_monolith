@@ -130,22 +130,22 @@ func (s *Service) Login(ctx context.Context, phone string, password string) (acc
 
 // RegisterStaff регистрирует нового работника (orchestrator)
 // Проверяет права, создает user, генерирует и отправляет ссылку для подтверждения
-func (s *Service) RegisterStaff(ctx context.Context, phone, pointCode string) error {
+func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error {
 	createdBy, err := session.GetSession(ctx)
 	if err != nil {
 		return err
 	}
 	// 1. Валидация прав доступа
-	if validErr := s.validateStaffRegistrationPermissions(ctx, pointCode, createdBy); validErr != nil {
+	if validErr := s.validateStaffRegistrationPermissions(ctx, req.PointCode, req.Role, createdBy); validErr != nil {
 		return validErr
 	}
 
 	// 2. Создаем user (неактивный, без пароля)
 	user := &entity.User{
-		Phone:       phone,
-		PointCode:   &pointCode,
+		Phone:       req.Phone,
+		PointCode:   &req.PointCode,
 		NetworkCode: ptr.Pointer(createdBy.NetworkCode()),
-		Role:        enum.RoleStaff,
+		Role:        req.Role,
 		Active:      false, // Будет активирован после подтверждения
 		UpdatedBy:   createdBy.Phone(),
 	}
@@ -158,7 +158,7 @@ func (s *Service) RegisterStaff(ctx context.Context, phone, pointCode string) er
 	token, err := s.tokenManager.NewRegistrationToken(
 		&dto.RegistrationTokenPayload{
 			Phone:       user.Phone,
-			PointCode:   pointCode,
+			PointCode:   req.PointCode,
 			NetworkCode: createdBy.NetworkCode(),
 		}, s.registrationTTL,
 	)
@@ -167,14 +167,14 @@ func (s *Service) RegisterStaff(ctx context.Context, phone, pointCode string) er
 	}
 
 	// 4. Отправляем уведомление (WhatsApp с fallback на SMS)
-	if sendErr := s.notificationService.SendRegistrationLink(ctx, phone, token); sendErr != nil {
+	if sendErr := s.notificationService.SendRegistrationLink(ctx, req.Phone, token); sendErr != nil {
 		return sendErr
 	}
 	return nil
 }
 
 // nolint: govet
-func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmRequest) (access, refresh string, err error) {
+func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error) {
 	// 1. Парсим и валидируем токен
 	tokenPayload, err := s.tokenManager.ParseRegistrationToken(req.Token)
 	if err != nil {
@@ -185,7 +185,10 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 	h := sha256.Sum256([]byte(req.Token))
 	tokenHash := hex.EncodeToString(h[:])
 
-	var user *entity.User
+	var (
+		user                      *entity.User
+		accessToken, refreshToken string
+	)
 
 	err = s.txManager.Transaction(ctx,
 		database.TXOptions{
@@ -224,18 +227,22 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 			user.Password = passwordHash
 			user.Active = true
 
-			return s.usersService.Update(txCtx, user)
+			err = s.usersService.Update(txCtx, user)
+			if err != nil {
+				return err
+			}
+			accessToken, refreshToken, err = s.generateTokens(txCtx, user)
+			return err
 		},
 	)
 	if err != nil {
 		return "", "", err
 	}
-
-	return s.generateTokens(ctx, user)
+	return accessToken, refreshToken, nil
 }
 
 // validateStaffRegistrationPermissions проверяет права на регистрацию работника
-func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, pointCode string, createdBy *session.Session) error {
+func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, pointCode string, role enum.Role, createdBy *session.Session) error {
 	switch createdBy.Role() {
 	case enum.RoleStaff:
 		// Staff не может создавать пользователей
@@ -243,6 +250,9 @@ func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, poin
 
 	case enum.RoleManager:
 		// Point Manager может создавать только в своей точке
+		if !role.OneOf(enum.RoleStaff) {
+			return domainErr.NewForbiddenError("manager cannot create (net)managers")
+		}
 		if pointCode != createdBy.PointCode() {
 			return domainErr.NewForbiddenError("point manager can only create staff in their own point").
 				WithDetail("allowed_point", createdBy.PointCode()).
@@ -250,6 +260,9 @@ func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, poin
 		}
 
 	case enum.RoleNetManager, enum.RoleSelfOwner:
+		if !role.OneOf(enum.RoleManager, enum.RoleStaff) {
+			return domainErr.NewForbiddenError("manager cannot create net managers")
+		}
 		// Network Manager и SelfOwner могут создавать в любой точке своей сети
 		// Дополнительно проверяем, что точка принадлежит сети
 		point, err := s.pointsService.GetByCode(ctx, pointCode)

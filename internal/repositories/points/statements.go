@@ -17,8 +17,14 @@ const updatePoint = `
 const getPointByCode = `
 	SELECT code, name, description, network_code, category_id, address, city,
     	active, schedule, created_at, updated_at, deleted_at, updated_by
-	FROM points WHERE code = $1
+	FROM points WHERE code = $1 AND active
 	`
+
+const getByNetworkCode = `	
+	SELECT code, name, description, network_code, category_id, address, city,
+    	active, schedule, created_at, updated_at, deleted_at, updated_by
+	FROM points WHERE network_code = $1 AND active
+`
 
 const deletePoint = `
 	UPDATE points SET deleted_at = now() WHERE code = ANY($1)

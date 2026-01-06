@@ -102,6 +102,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.usersService,
 		a.bagsiesService,
 		a.pointsService,
+		a.networksService,
 	)
 	return nil
 }

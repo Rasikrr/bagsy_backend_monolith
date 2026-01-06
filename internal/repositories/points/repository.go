@@ -43,6 +43,9 @@ func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 		m.UpdatedBy,
 	)
 	if err != nil {
+		if postgres.IsUniqueViolation(err) {
+			return domainErr.ErrPointAlreadyExists
+		}
 		return domainErr.NewInternalError("failed to create point in db", err)
 	}
 	return nil
@@ -59,6 +62,17 @@ func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point,
 	}
 	p := m.convert()
 	return p, nil
+}
+
+func (r *Repository) GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.Point, error) {
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getByNetworkCode, networkCode)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+	}
+	return mm.convert(), nil
 }
 
 func (r *Repository) ExistsByCode(ctx context.Context, code string) (bool, error) {

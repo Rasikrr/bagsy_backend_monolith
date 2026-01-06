@@ -10,15 +10,23 @@ import (
 )
 
 // registerStaff godoc
-// @Summary Регистрация работника на точке
-// @Description Создает нового пользователя (работника) привязанного к точке. Менеджер точки может создавать только в своей точке, менеджер сети - в любой точке своей сети.
+// @Summary Инициация регистрации работника (шаг 1/2)
+// @Description Запускает двухэтапный процесс регистрации работника: создает неактивного пользователя и отправляет ссылку для завершения регистрации (WhatsApp с fallback на SMS). Пользователь завершит регистрацию через /api/v1/auth/staff/confirm с указанием имени, фамилии и пароля.
+// @Description
+// @Description Иерархия прав:
+// @Description - Staff: не может создавать пользователей
+// @Description - Manager: может создавать только Staff в своей точке
+// @Description - NetManager/SelfOwner: могут создавать Manager и Staff в любой точке своей сети
 // @Tags auth
+// @Security ApiKeyAuth
 // @Accept json
 // @Produce json
-// @Param request body registerStaffRequest true "Данные для регистрации"
-// @Success 200 {object} response.EmptySuccessResponse
-// @Failure 400 {object} errors.ErrorResponse "Неверный формат запроса"
-// @Failure 403 {object} errors.ErrorResponse "Недостаточно прав для создания работника в указанной точке"
+// @Param request body registerStaffRequest true "Данные для регистрации (phone, role: manager|staff, point_code)"
+// @Success 200 {object} response.EmptySuccessResponse "Ссылка для завершения регистрации отправлена"
+// @Failure 400 {object} errors.ErrorResponse "Неверный формат запроса или валидация"
+// @Failure 401 {object} errors.ErrorResponse "Требуется авторизация"
+// @Failure 403 {object} errors.ErrorResponse "Недостаточно прав (Staff не может создавать, Manager только в своей точке)"
+// @Failure 409 {object} errors.ErrorResponse "Пользователь уже существует"
 // @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
 // @Router /api/v1/auth/staff/register [post]
 func (c *Controller) registerStaff(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +42,7 @@ func (c *Controller) registerStaff(w http.ResponseWriter, r *http.Request) {
 	// - Создание user
 	// - Генерация registration token
 	// - Отправка уведомления (WhatsApp/SMS)
-	err := c.authService.RegisterStaff(ctx, req.Phone, req.PointCode)
+	err := c.authService.RegisterStaff(ctx, req.toDomain())
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return

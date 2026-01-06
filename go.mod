@@ -3,7 +3,7 @@ module github.com/Rasikrr/bagsy_backend_monolith
 go 1.25.1
 
 require (
-	github.com/Rasikrr/core v0.0.76
+	github.com/Rasikrr/core v0.0.77
 	github.com/avast/retry-go v3.0.0+incompatible
 )
 
@@ -43,6 +43,8 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/gosimple/slug v1.15.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect

@@ -14,7 +14,6 @@ import (
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Repository struct {
@@ -88,7 +87,7 @@ func (r *Repository) Create(ctx context.Context, b *entity.Bagsy) (uuid.UUID, er
 
 	if err != nil {
 		// Проверяем на violation exclusion constraint (код 23P01)
-		if isExclusionViolation(err) {
+		if postgres.IsExclusionViolation(err) {
 			return uuid.Nil, domainErr.ErrBagsyTimeIsAlreadyOccupied.WithError(err)
 		}
 		return uuid.Nil, domainErr.NewInternalError("failed to create bagsies in db", err)
@@ -123,7 +122,7 @@ func (r *Repository) Update(ctx context.Context, b *entity.Bagsy) error {
 		m.UpdatedBy,
 	)
 	if err != nil {
-		if isExclusionViolation(err) {
+		if postgres.IsExclusionViolation(err) {
 			return domainErr.ErrBagsyTimeIsAlreadyOccupied.WithError(err)
 		}
 		return domainErr.NewInternalError("failed to update bagsies in db", err)
@@ -146,22 +145,4 @@ func (r *Repository) Delete(ctx context.Context, updatedBy string, bagsies ...*e
 		return domainErr.NewInternalError("failed to delete bagsies from db", err)
 	}
 	return nil
-}
-
-// isExclusionViolation проверяет, является ли ошибка нарушением exclusion constraint
-func isExclusionViolation(err error) bool {
-	// Пробуем извлечь pgconn.PgError (используется pgx/v5)
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		// 23P01 - код ошибки для exclusion constraint violation
-		return pgErr.Code == "23P01"
-	}
-
-	// Fallback на pq.Error (на случай если используется старый драйвер)
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
-		return pqErr.Code == "23P01"
-	}
-
-	return false
 }

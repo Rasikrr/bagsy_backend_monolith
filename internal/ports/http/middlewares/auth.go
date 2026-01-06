@@ -20,8 +20,8 @@ type AuthMiddleware struct {
 	authService authService
 }
 
-func NewAuth(authService authService) AuthMiddleware {
-	return AuthMiddleware{
+func NewAuth(authService authService) *AuthMiddleware {
+	return &AuthMiddleware{
 		authService: authService,
 	}
 }
@@ -69,6 +69,13 @@ func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.Handler) http
 func (a *AuthMiddleware) AuthorizeManagement() func(http.Handler) http.Handler {
 	return a.RequireRole(
 		enum.RoleManager,
+		enum.RoleNetManager,
+		enum.RoleSelfOwner,
+	)
+}
+
+func (a *AuthMiddleware) AuthorizeNetManagement() func(http.Handler) http.Handler {
+	return a.RequireRole(
 		enum.RoleNetManager,
 		enum.RoleSelfOwner,
 	)

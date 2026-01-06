@@ -13,18 +13,18 @@ type authService interface {
 	Login(ctx context.Context, phone, password string) (access, refresh string, err error)
 	Refresh(ctx context.Context, refreshToken string) (access, refresh string, err error)
 	Logout(ctx context.Context, refreshToken string) error
-	RegisterStaff(ctx context.Context, phone, pointCode string) error
-	RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmRequest) (access, refresh string, err error)
+	RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error
+	RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error)
 }
 
 type Controller struct {
 	authService    authService
-	authMiddleware middlewares.AuthMiddleware
+	authMiddleware *middlewares.AuthMiddleware
 }
 
 func New(
 	authService authService,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware *middlewares.AuthMiddleware,
 ) *Controller {
 	return &Controller{
 		authService:    authService,

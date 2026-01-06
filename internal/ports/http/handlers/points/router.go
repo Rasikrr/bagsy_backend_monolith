@@ -15,12 +15,12 @@ type pointsService interface {
 
 type Controller struct {
 	pointsService  pointsService
-	authMiddleware middlewares.AuthMiddleware
+	authMiddleware *middlewares.AuthMiddleware
 }
 
 func New(
 	pointsService pointsService,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware *middlewares.AuthMiddleware,
 ) *Controller {
 	return &Controller{
 		pointsService:  pointsService,
@@ -29,10 +29,12 @@ func New(
 }
 
 func (c *Controller) Init(router *chi.Mux) {
-	management := c.authMiddleware.AuthorizeManagement()
+	netManagement := c.authMiddleware.AuthorizeNetManagement()
 	router.Route("/api/v1/points", func(r chi.Router) {
-		managementRoutes := r.With(management)
-		managementRoutes.Post("/", c.createPoint)
-		managementRoutes.Get("/{code}", c.getPoint)
+		// TODO:  по идее только нет менеджер/ самозанятые могут создавать точки
+		netManagementsRoutes := r.With(netManagement)
+		netManagementsRoutes.Post("/", c.createPoint)
+		// TODO: Вроде все челы могут получать?
+		r.Get("/{code}", c.getPoint)
 	})
 }

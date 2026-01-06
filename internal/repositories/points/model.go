@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/samber/lo"
 )
 
 /*
@@ -37,6 +38,14 @@ type model struct {
 	UpdatedAt   *time.Time `db:"updated_at"`
 	DeletedAt   *time.Time `db:"deleted_at"`
 	UpdatedBy   string     `db:"updated_by"`
+}
+
+type models []model
+
+func (mm models) convert() []*entity.Point {
+	return lo.Map(mm, func(item model, _ int) *entity.Point {
+		return item.convert()
+	})
 }
 
 func convert(e *entity.Point) (model, error) {

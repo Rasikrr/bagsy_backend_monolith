@@ -104,6 +104,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		switch key {
 		case "phone":
 			out.Phone = string(in.String())
+		case "role":
+			out.Role = string(in.String())
 		case "point_code":
 			out.PointCode = string(in.String())
 		default:
@@ -125,7 +127,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix[1:])
 		out.String(string(in.Phone))
 	}
-	if in.PointCode != "" {
+	{
+		const prefix string = ",\"role\":"
+		out.RawString(prefix)
+		out.String(string(in.Role))
+	}
+	{
 		const prefix string = ",\"point_code\":"
 		out.RawString(prefix)
 		out.String(string(in.PointCode))

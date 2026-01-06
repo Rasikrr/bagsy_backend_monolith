@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
 	"github.com/go-chi/chi/v5"
@@ -16,9 +17,8 @@ import (
 // @Tags points
 // @Accept json
 // @Produce json
-// @Security ApiKeyAuth
 // @Param code path string true "Код точки обслуживания"
-// @Success 200 {object} pointResponse "Информация о точке"
+// @Success 200 {object} dto.PointResponse "Информация о точке"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"
 // @Failure 401 {object} errors.ErrorResponse "Пользователь не авторизован"
 // @Failure 403 {object} errors.ErrorResponse "Недостаточно прав для доступа"
@@ -40,5 +40,5 @@ func (c *Controller) getPoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.SendData(ctx, w, toPointResponse(point), http.StatusOK)
+	response.SendData(ctx, w, dto.ToPointResponse(point), http.StatusOK)
 }

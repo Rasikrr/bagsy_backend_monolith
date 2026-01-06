@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 )
@@ -20,8 +21,9 @@ func (s *sendCodeRequest) Validate() error {
 }
 
 type registerStaffRequest struct {
-	Phone     string `json:"phone"          validate:"required,min=10,max=15"`
-	PointCode string `json:"point_code,omitempty" validate:"required"`
+	Phone     string `json:"phone" validate:"required,min=10,max=15"`
+	Role      string `json:"role" validate:"required,oneof=manager staff"`
+	PointCode string `json:"point_code" validate:"required"`
 }
 
 func (r *registerStaffRequest) Validate() error {
@@ -29,6 +31,15 @@ func (r *registerStaffRequest) Validate() error {
 		return request.HandleValidationError(err)
 	}
 	return nil
+}
+
+func (r registerStaffRequest) toDomain() *command.RegisterStaffCommand {
+	role, _ := enum.RoleString(r.Role)
+	return &command.RegisterStaffCommand{
+		Phone:     r.Phone,
+		Role:      role,
+		PointCode: r.PointCode,
+	}
 }
 
 type loginRequest struct {
@@ -80,8 +91,8 @@ func (r *registerConfirmRequest) Validate() error {
 	return nil
 }
 
-func (r *registerConfirmRequest) toDomain() *command.RegisterStaffConfirmRequest {
-	return &command.RegisterStaffConfirmRequest{
+func (r *registerConfirmRequest) toDomain() *command.RegisterStaffConfirmCommand {
+	return &command.RegisterStaffConfirmCommand{
 		Token:    r.Token,
 		Name:     r.Name,
 		Surname:  r.Surname,

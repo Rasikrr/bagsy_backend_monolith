@@ -2,7 +2,6 @@ package points
 
 import (
 	"context"
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 
 	"github.com/Rasikrr/core/log"
 
@@ -20,8 +19,8 @@ type pointCategoriesRepository interface {
 type pointsRepository interface {
 	Create(ctx context.Context, entity *entity.Point) error
 	GetByCode(ctx context.Context, code string) (*entity.Point, error)
+	GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.Point, error)
 	Update(ctx context.Context, entity *entity.Point) error
-	ExistsByCode(ctx context.Context, code string) (bool, error)
 }
 
 type Service struct {
@@ -50,6 +49,14 @@ func (s *Service) GetByCode(ctx context.Context, code string) (*entity.Point, er
 	return point, nil
 }
 
+func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.Point, error) {
+	points, err := s.pointsRepo.GetByNetworkCode(ctx, networkCode)
+	if err != nil {
+		return nil, err
+	}
+	return points, nil
+}
+
 func (s *Service) Create(ctx context.Context, point *entity.Point) error {
 	// проверка на существование сети
 	_, err := s.networksService.GetByCode(ctx, point.NetworkCode)
@@ -63,15 +70,7 @@ func (s *Service) Create(ctx context.Context, point *entity.Point) error {
 		return err
 	}
 
-	// проверка на существование точки с таким же кодом
-	exist, err := s.pointsRepo.ExistsByCode(ctx, point.Code)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return domainErr.ErrPointAlreadyExists
-	}
-
+	// проверка на существование точки с таким же кодом обрабатывается при Create
 	if err = s.pointsRepo.Create(ctx, point); err != nil {
 		return err
 	}

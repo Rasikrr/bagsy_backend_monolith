@@ -17,12 +17,12 @@ type bagsiesService interface {
 
 type Controller struct {
 	bagsiesService bagsiesService
-	authMiddleware middlewares.AuthMiddleware
+	authMiddleware *middlewares.AuthMiddleware
 }
 
 func New(
 	bagsiesService bagsiesService,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware *middlewares.AuthMiddleware,
 ) *Controller {
 	return &Controller{
 		bagsiesService: bagsiesService,

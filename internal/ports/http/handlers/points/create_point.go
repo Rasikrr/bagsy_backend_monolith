@@ -11,13 +11,13 @@ import (
 
 // createPoint godoc
 // @Summary Создать точку обслуживания
-// @Description Создаёт новую точку обслуживания с указанными параметрами
+// @Description Создаёт новую точку обслуживания с указанными параметрами. Создавать могут только NetManager/SelfOwner
 // @Tags points
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param request body createPointRequest true "Данные для создания точки"
-// @Success 201 {object} pointResponse "Точка успешно создана"
+// @Success 201 {object} pointCreateResponse "Точка успешно создана"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"
 // @Failure 401 {object} errors.ErrorResponse "Пользователь не авторизован"
 // @Failure 403 {object} errors.ErrorResponse "Недостаточно прав для создания точки"
