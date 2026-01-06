@@ -61,6 +61,14 @@ func (s *Service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 	return user, nil
 }
 
+func (s *Service) GetUserProfile(ctx context.Context) (*entity.User, error) {
+	ses, err := session.GetSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetByPhone(ctx, ses.Phone())
+}
+
 func (s *Service) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
 	return s.usersRepo.ExistsByPhone(ctx, phone)
 }
