@@ -19,12 +19,12 @@ type authService interface {
 
 type Controller struct {
 	authService    authService
-	authMiddleware middlewares.AuthMiddleware
+	authMiddleware *middlewares.AuthMiddleware
 }
 
 func New(
 	authService authService,
-	authMiddleware middlewares.AuthMiddleware,
+	authMiddleware *middlewares.AuthMiddleware,
 ) *Controller {
 	return &Controller{
 		authService:    authService,

@@ -14,7 +14,8 @@ var (
 
 // Networks errors
 var (
-	ErrNetworkNotFound = NewNotFoundError("network(s) not found", nil)
+	ErrNetworkNotFound      = NewNotFoundError("network(s) not found", nil)
+	ErrNetworkAlreadyExists = NewConflictError("network(s) already exists", nil)
 )
 
 // Point Categories errors

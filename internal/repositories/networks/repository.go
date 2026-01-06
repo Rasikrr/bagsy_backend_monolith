@@ -37,6 +37,9 @@ func (r *Repository) Create(ctx context.Context, network *entity.Network) error 
 	m := convert(network)
 	_, err := r.db.Exec(ctx, createNetwork, m.Code, m.Name, m.Description, m.CreatedBy, m.UpdatedBy)
 	if err != nil {
+		if postgres.IsUniqueViolation(err) {
+			return domainErr.ErrNetworkAlreadyExists.WithDetail("network_code", m.Code)
+		}
 		return domainErr.NewInternalError("failed to create network in db", err)
 	}
 	return nil
