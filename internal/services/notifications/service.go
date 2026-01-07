@@ -52,6 +52,13 @@ func (s *Service) SendBagsyConfirmCode(ctx context.Context, phone, code string) 
 	return s.send(ctx, phone, message)
 }
 
+func (s *Service) SendPasswordChangeLink(ctx context.Context, phone, token string) error {
+	link := fmt.Sprintf("%s?token=%s", s.registrationConfirmURL, token)
+	// TODO: format message (markdown)
+	message := fmt.Sprintf("Для смены пароля в Bagsy следуйте по данной ссылке: %s", link)
+	return s.send(ctx, phone, message)
+}
+
 func (s *Service) send(ctx context.Context, phone, message string) error {
 	err := s.whatsApp.SendMessage(ctx, phone, message)
 	if err != nil {

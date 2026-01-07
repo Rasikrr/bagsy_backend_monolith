@@ -30,7 +30,7 @@ type servicesService interface {
 }
 
 type usersService interface {
-	Create(ctx context.Context, user *entity.User) error
+	Create(ctx context.Context, user *entity.User, rawPassword string) error
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 }
 
@@ -98,7 +98,8 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 					Surname: req.Surname,
 					Active:  true,
 				}
-				err = s.usersService.Create(ctx, clientUser)
+				// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
+				err = s.usersService.Create(ctx, clientUser, "")
 				if err != nil {
 					return err
 				}
