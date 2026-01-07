@@ -167,10 +167,8 @@ func (s *Service) authorizeFilter(
 	}
 }
 
-/*
-Phone который передается в новой структуре используется только для получения старого юзера
-Отальные поля можно переназначать, перед этим добавив нужные поля в convertToUpdateUser
-*/
+// Update Phone который передается в новой структуре используется только для получения старого юзера
+// Оcтальные поля можно переназначать, перед этим добавив нужные поля в convertToUpdateUser
 func (s *Service) Update(ctx context.Context, newUser *entity.User) error {
 	exists, err := s.usersRepo.ExistsByPhone(ctx, newUser.Phone)
 	if err != nil {
