@@ -2,8 +2,6 @@ package users
 
 import (
 	"context"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -18,7 +16,6 @@ type usersRepository interface {
 	GetByParams(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Update(ctx context.Context, user *entity.User) error
-	UpdateUser(ctx context.Context, patch *users.UserUpdatePatch) error
 }
 
 type pointsService interface {
