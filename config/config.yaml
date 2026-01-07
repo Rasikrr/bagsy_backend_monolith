@@ -179,7 +179,7 @@ env:
   register_confirmation_url:
     type: "string"
     env_name: "REGISTER_CONFIRMATION_URL"
-    value: "https://app.bagsy/ru/invite"
+    value: "https://app.bagsy.kz/ru/invite"
     required: true
 
 

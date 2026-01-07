@@ -8,6 +8,7 @@ import (
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 )
 
@@ -39,7 +40,7 @@ func NewService(
 
 // Create создает нового пользователя
 // Проверяет что пользователь с таким номером не существует или не активен
-func (s *Service) Create(ctx context.Context, user *entity.User) error {
+func (s *Service) Create(ctx context.Context, user *entity.User, password string) error {
 	exists, err := s.usersRepo.ExistsByPhone(ctx, user.Phone)
 	if err != nil {
 		return err
@@ -48,6 +49,14 @@ func (s *Service) Create(ctx context.Context, user *entity.User) error {
 	if exists {
 		return domainErr.NewConflictError("active user with this phone already exists", nil).
 			WithDetail("phone", user.Phone)
+	}
+
+	if password != "" {
+		passwordHash, hashErr := hash.Password(password)
+		if hashErr != nil {
+			return domainErr.NewInternalError("failed to hash password", hashErr)
+		}
+		user.Password = passwordHash
 	}
 
 	return s.usersRepo.Create(ctx, user)
@@ -158,6 +167,26 @@ func (s *Service) authorizeFilter(
 	}
 }
 
-func (s *Service) Update(ctx context.Context, user *entity.User) error {
+func (s *Service) UpdateWithPassword(ctx context.Context, user *entity.User, rawPassword string) error {
+	if rawPassword != "" {
+		passwordHash, hashErr := hash.Password(rawPassword)
+		if hashErr != nil {
+			return domainErr.NewInternalError("failed to hash password", hashErr)
+		}
+		user.Password = passwordHash
+	}
+	return s.usersRepo.Update(ctx, user)
+}
+
+func (s *Service) UpdatePasswordByPhone(ctx context.Context, phone string, rawPassword string) error {
+	user, err := s.usersRepo.GetByPhone(ctx, phone)
+	if err != nil {
+		return err
+	}
+	passwordHash, hashErr := hash.Password(rawPassword)
+	if hashErr != nil {
+		return domainErr.NewInternalError("failed to hash password", hashErr)
+	}
+	user.Password = passwordHash
 	return s.usersRepo.Update(ctx, user)
 }

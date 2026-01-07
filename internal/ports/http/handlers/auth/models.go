@@ -9,12 +9,12 @@ import (
 
 //go:generate easyjson -all models.go
 
-type sendCodeRequest struct {
+type changePasswordRequest struct {
 	Phone string `json:"phone" validate:"required,min=10,max=15"`
 }
 
-func (s *sendCodeRequest) Validate() error {
-	if err := request.GetValidator().Struct(s); err != nil {
+func (c *changePasswordRequest) Validate() error {
+	if err := request.GetValidator().Struct(c); err != nil {
 		return request.HandleValidationError(err)
 	}
 	return nil
@@ -22,6 +22,8 @@ func (s *sendCodeRequest) Validate() error {
 
 type registerStaffRequest struct {
 	Phone     string `json:"phone" validate:"required,min=10,max=15"`
+	Name      string `json:"name" validate:"required"`
+	Surname   string `json:"surname" validate:"required"`
 	Role      string `json:"role" validate:"required,oneof=manager staff"`
 	PointCode string `json:"point_code" validate:"required"`
 }
@@ -37,6 +39,8 @@ func (r registerStaffRequest) toDomain() *command.RegisterStaffCommand {
 	role, _ := enum.RoleString(r.Role)
 	return &command.RegisterStaffCommand{
 		Phone:     r.Phone,
+		Name:      r.Name,
+		Surname:   r.Surname,
 		Role:      role,
 		PointCode: r.PointCode,
 	}
@@ -79,9 +83,23 @@ type refreshTokensResponse loginResponse
 
 type registerConfirmRequest struct {
 	Token    string `json:"token" validate:"required"`
-	Name     string `json:"name" validate:"required,min=2"`
-	Surname  string `json:"surname" validate:"required,min=2"`
 	Password string `json:"password" validate:"required"`
+}
+
+type passwordChangeConfirmRequest registerConfirmRequest
+
+func (p *passwordChangeConfirmRequest) Validate() error {
+	if err := request.GetValidator().Struct(p); err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (p *passwordChangeConfirmRequest) toDomain() *command.ChangePasswordConfirmCommand {
+	return &command.ChangePasswordConfirmCommand{
+		Token:    p.Token,
+		Password: p.Password,
+	}
 }
 
 func (r *registerConfirmRequest) Validate() error {
@@ -94,8 +112,6 @@ func (r *registerConfirmRequest) Validate() error {
 func (r *registerConfirmRequest) toDomain() *command.RegisterStaffConfirmCommand {
 	return &command.RegisterStaffConfirmCommand{
 		Token:    r.Token,
-		Name:     r.Name,
-		Surname:  r.Surname,
 		Password: r.Password,
 	}
 }
