@@ -221,6 +221,174 @@
                 }
             }
         },
+        "/api/v1/auth/management/register/resend": {
+            "post": {
+                "description": "Отправляет новый 4-значный код подтверждения на телефон пользователя, который уже начал регистрацию менеджмента через /api/v1/auth/management/register. Сбрасывает счетчик неудачных попыток ввода кода (даёт еще 3 попытки). Данные регистрации (имя, пароль, роль, сеть) НЕ изменяются.\n\nОграничения безопасности:\n- Между запросами resend должно пройти минимум 60 секунд (cooldown)\n- Максимум 5 повторных отправок в час на один номер\n- Код действителен 10 минут с момента отправки\n- После 3 неудачных попыток ввода кода нужно запросить новый через resend\n\nUse Case: Пользователь начал регистрацию, но код не пришел или истек",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Повторная отправка кода подтверждения регистрации",
+                "parameters": [
+                    {
+                        "description": "Номер телефона",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.resendRegisterManagementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Новый код подтверждения отправлен",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных или валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Регистрация не найдена или истекла (нужно начать заново через /register)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Слишком частые запросы - подождите 60 секунд или превышен лимит (5/час)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password/change": {
+            "put": {
+                "description": "Отправляет ссылку для сброса пароля на номер телефона пользователя. Ссылка содержит one-time токен, действительный 1 час. Используется когда пользователь забыл пароль и хочет установить новый.\n\nВажно:\n- Пользователь с указанным номером должен существовать в системе\n- Ссылка отправляется через WhatsApp с fallback на SMS\n- Токен можно использовать только один раз\n- После получения ссылки используйте /api/v1/auth/password/confirm для установки нового пароля",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Запрос на сброс пароля (шаг 1/2)",
+                "parameters": [
+                    {
+                        "description": "Номер телефона пользователя",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.changePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ссылка для сброса пароля отправлена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных или валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь с таким номером не найден",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/password/confirm": {
+            "put": {
+                "description": "Завершает процесс сброса пароля: проверяет one-time токен из ссылки и устанавливает новый пароль пользователю. После успешной смены пароля все активные сессии (refresh токены) инвалидируются для безопасности.\n\nВажно:\n- Токен можно использовать только один раз (one-time use)\n- При повторной попытке использования возвращается ошибка 409 Conflict\n- После смены пароля пользователь должен войти заново (фронт сделать logout) (старые токены недействительны)\n- Токен действителен 24 часа с момента запроса",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Подтверждение сброса пароля (шаг 2/2)",
+                "parameters": [
+                    {
+                        "description": "Токен и новый пароль",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.passwordChangeConfirmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пароль успешно изменен",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных или валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный или просроченный токен",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Токен уже использован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/refresh": {
             "post": {
                 "description": "Обновляет токены авторизации",
@@ -1151,6 +1319,19 @@
                 }
             }
         },
+        "internal_ports_http_handlers_auth.changePasswordRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
+                }
+            }
+        },
         "internal_ports_http_handlers_auth.loginRequest": {
             "type": "object",
             "required": [
@@ -1190,6 +1371,21 @@
                 }
             }
         },
+        "internal_ports_http_handlers_auth.passwordChangeConfirmRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "token"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_auth.refreshTokensRequest": {
             "type": "object",
             "properties": {
@@ -1212,22 +1408,12 @@
         "internal_ports_http_handlers_auth.registerConfirmRequest": {
             "type": "object",
             "required": [
-                "name",
                 "password",
-                "surname",
                 "token"
             ],
             "properties": {
-                "name": {
-                    "type": "string",
-                    "minLength": 2
-                },
                 "password": {
                     "type": "string"
-                },
-                "surname": {
-                    "type": "string",
-                    "minLength": 2
                 },
                 "token": {
                     "type": "string"
@@ -1300,11 +1486,16 @@
         "internal_ports_http_handlers_auth.registerStaffRequest": {
             "type": "object",
             "required": [
+                "name",
                 "phone",
                 "point_code",
-                "role"
+                "role",
+                "surname"
             ],
             "properties": {
+                "name": {
+                    "type": "string"
+                },
                 "phone": {
                     "type": "string",
                     "maxLength": 15,
@@ -1319,6 +1510,20 @@
                         "manager",
                         "staff"
                     ]
+                },
+                "surname": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.resendRegisterManagementRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "phone": {
+                    "type": "string"
                 }
             }
         },

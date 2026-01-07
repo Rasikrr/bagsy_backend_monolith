@@ -42,6 +42,7 @@ type networkService interface {
 type notificationService interface {
 	SendStaffRegistrationLink(ctx context.Context, phone, token string) error
 	SendManagementAuthConfirmationCode(ctx context.Context, phone, code string) error
+	SendPasswordChangeLink(ctx context.Context, phone, token string) error
 }
 
 type tokenManager interface {
@@ -79,7 +80,7 @@ type refreshTokenRepository interface {
 }
 
 // registrationTokenCache управляет one-time use registration токенами
-type registrationTokenCache interface {
+type tokensCache interface {
 	// MarkRegistrationTokenAsUsed помечает токен как использованный (атомарно через SET NX)
 	// Возвращает true если токен уже был использован ранее
 	MarkRegistrationTokenAsUsed(ctx context.Context, tokenHash string, ttl time.Duration) (alreadyUsed bool, err error)
@@ -93,7 +94,7 @@ type Service struct {
 	networkService         networkService
 	tokenManager           tokenManager
 	refreshTokenRepository refreshTokenRepository
-	registrationTokenCache registrationTokenCache
+	tokensCache            tokensCache
 	registerCache          registerCache
 	accessTTL              time.Duration
 	refreshTTL             time.Duration
@@ -108,7 +109,7 @@ func NewService(
 	networkService networkService,
 	tokenManager tokenManager,
 	refreshTokenRepo refreshTokenRepository,
-	registrationTokenCache registrationTokenCache,
+	tokensCache tokensCache,
 	registerCache registerCache,
 	accessTTL time.Duration,
 	refreshTTL time.Duration,
@@ -122,7 +123,7 @@ func NewService(
 		networkService:         networkService,
 		tokenManager:           tokenManager,
 		refreshTokenRepository: refreshTokenRepo,
-		registrationTokenCache: registrationTokenCache,
+		tokensCache:            tokensCache,
 		registerCache:          registerCache,
 		accessTTL:              accessTTL,
 		refreshTTL:             refreshTTL,
@@ -316,7 +317,7 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 		},
 		func(txCtx context.Context) error {
 			// 3. Проверяем и помечаем токен использованным (атомарно через SET NX)
-			alreadyUsed, markErr := s.registrationTokenCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
+			alreadyUsed, markErr := s.tokensCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
 			if markErr != nil {
 				return markErr
 			}
@@ -371,15 +372,13 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone string) erro
 	if !exist {
 		return domainErr.ErrUserNotFound
 	}
-	// TODO: maybe change ttl
 	token, err := s.tokenManager.NewAuthToken(&dto.RegistrationTokenPayload{
 		Phone: phone,
 	}, s.registrationTTL)
 	if err != nil {
 		return domainErr.NewInternalError("failed to generate change password token", err)
 	}
-	// TODO: change name of method
-	return s.notificationService.SendStaffRegistrationLink(ctx, phone, token)
+	return s.notificationService.SendPasswordChangeLink(ctx, phone, token)
 }
 
 func (s *Service) ChangePassword(ctx context.Context, req *command.ChangePasswordConfirmCommand) error {
@@ -399,7 +398,7 @@ func (s *Service) ChangePassword(ctx context.Context, req *command.ChangePasswor
 		},
 		func(txCtx context.Context) error {
 			// 3. Проверяем и помечаем токен использованным (атомарно через SET NX)
-			alreadyUsed, markErr := s.registrationTokenCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
+			alreadyUsed, markErr := s.tokensCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
 			if markErr != nil {
 				return markErr
 			}

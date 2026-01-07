@@ -92,6 +92,15 @@ definitions:
       message:
         type: string
     type: object
+  internal_ports_http_handlers_auth.changePasswordRequest:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
   internal_ports_http_handlers_auth.loginRequest:
     properties:
       password:
@@ -118,6 +127,16 @@ definitions:
       name:
         type: string
     type: object
+  internal_ports_http_handlers_auth.passwordChangeConfirmRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
   internal_ports_http_handlers_auth.refreshTokensRequest:
     properties:
       refresh_token:
@@ -132,20 +151,12 @@ definitions:
     type: object
   internal_ports_http_handlers_auth.registerConfirmRequest:
     properties:
-      name:
-        minLength: 2
-        type: string
       password:
-        type: string
-      surname:
-        minLength: 2
         type: string
       token:
         type: string
     required:
-    - name
     - password
-    - surname
     - token
     type: object
   internal_ports_http_handlers_auth.registerConfirmResponse:
@@ -194,6 +205,8 @@ definitions:
     type: object
   internal_ports_http_handlers_auth.registerStaffRequest:
     properties:
+      name:
+        type: string
       phone:
         maxLength: 15
         minLength: 10
@@ -205,10 +218,21 @@ definitions:
         - manager
         - staff
         type: string
+      surname:
+        type: string
     required:
+    - name
     - phone
     - point_code
     - role
+    - surname
+    type: object
+  internal_ports_http_handlers_auth.resendRegisterManagementRequest:
+    properties:
+      phone:
+        type: string
+    required:
+    - phone
     type: object
   internal_ports_http_handlers_bagsies.confirmBagsyRequest:
     properties:
@@ -534,6 +558,141 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
       summary: Завершение регистрации менеджмента (шаг 2/2)
+      tags:
+      - auth
+  /api/v1/auth/management/register/resend:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Отправляет новый 4-значный код подтверждения на телефон пользователя, который уже начал регистрацию менеджмента через /api/v1/auth/management/register. Сбрасывает счетчик неудачных попыток ввода кода (даёт еще 3 попытки). Данные регистрации (имя, пароль, роль, сеть) НЕ изменяются.
+
+        Ограничения безопасности:
+        - Между запросами resend должно пройти минимум 60 секунд (cooldown)
+        - Максимум 5 повторных отправок в час на один номер
+        - Код действителен 10 минут с момента отправки
+        - После 3 неудачных попыток ввода кода нужно запросить новый через resend
+
+        Use Case: Пользователь начал регистрацию, но код не пришел или истек
+      parameters:
+      - description: Номер телефона
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.resendRegisterManagementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новый код подтверждения отправлен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Регистрация не найдена или истекла (нужно начать заново через
+            /register)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "429":
+          description: Слишком частые запросы - подождите 60 секунд или превышен лимит
+            (5/час)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Повторная отправка кода подтверждения регистрации
+      tags:
+      - auth
+  /api/v1/auth/password/change:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Отправляет ссылку для сброса пароля на номер телефона пользователя. Ссылка содержит one-time токен, действительный 1 час. Используется когда пользователь забыл пароль и хочет установить новый.
+
+        Важно:
+        - Пользователь с указанным номером должен существовать в системе
+        - Ссылка отправляется через WhatsApp с fallback на SMS
+        - Токен можно использовать только один раз
+        - После получения ссылки используйте /api/v1/auth/password/confirm для установки нового пароля
+      parameters:
+      - description: Номер телефона пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.changePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ссылка для сброса пароля отправлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Пользователь с таким номером не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Запрос на сброс пароля (шаг 1/2)
+      tags:
+      - auth
+  /api/v1/auth/password/confirm:
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Завершает процесс сброса пароля: проверяет one-time токен из ссылки и устанавливает новый пароль пользователю. После успешной смены пароля все активные сессии (refresh токены) инвалидируются для безопасности.
+
+        Важно:
+        - Токен можно использовать только один раз (one-time use)
+        - При повторной попытке использования возвращается ошибка 409 Conflict
+        - После смены пароля пользователь должен войти заново (фронт сделать logout) (старые токены недействительны)
+        - Токен действителен 24 часа с момента запроса
+      parameters:
+      - description: Токен и новый пароль
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.passwordChangeConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пароль успешно изменен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Неверный или просроченный токен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Токен уже использован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Подтверждение сброса пароля (шаг 2/2)
       tags:
       - auth
   /api/v1/auth/refresh:
