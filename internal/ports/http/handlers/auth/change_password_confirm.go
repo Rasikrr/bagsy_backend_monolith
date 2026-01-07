@@ -27,7 +27,7 @@ import (
 // @Failure 401 {object} errors.ErrorResponse "Неверный или просроченный токен"
 // @Failure 409 {object} errors.ErrorResponse "Токен уже использован"
 // @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
-// @Router /api/v1/auth/password/confirm [put]
+// @Router /api/v1/auth/password/change/confirm [post]
 func (c *Controller) changePasswordConfirm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

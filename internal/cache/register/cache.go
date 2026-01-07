@@ -38,7 +38,7 @@ func getFromCache[T any](ctx context.Context, c *Cache, key string) (*T, error) 
 	bb, err := c.cli.GetBytes(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, domainErr.NewNotFoundError("register timeout", err)
+			return nil, domainErr.NewNotFoundError("register timeout or not request found", err)
 		}
 		return nil, domainErr.NewInternalError("failed to fetch register request", err)
 	}

@@ -26,7 +26,7 @@ import (
 // @Failure 400 {object} errors.ErrorResponse "Неверный формат данных или валидация"
 // @Failure 404 {object} errors.ErrorResponse "Пользователь с таким номером не найден"
 // @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
-// @Router /api/v1/auth/password/change [put]
+// @Router /api/v1/auth/password/change [post]
 func (c *Controller) changePassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

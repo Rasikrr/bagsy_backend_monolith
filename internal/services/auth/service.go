@@ -158,18 +158,11 @@ func (s *Service) Login(ctx context.Context, phone string, password string) (acc
 }
 
 func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterManagementCommand) error {
-	exist, err := s.usersService.ExistsByPhone(ctx, req.Phone)
-	if err != nil {
-		return err
-	}
-	if exist {
-		return domainErr.ErrUserAlreadyExists
-	}
 	authCode := codegen.GenerateAuthCode()
 
 	req.AuthCode = authCode
 
-	err = s.registerCache.SaveManagementRequest(ctx, req)
+	err := s.registerCache.SaveManagementRequest(ctx, req)
 	if err != nil {
 		return err
 	}

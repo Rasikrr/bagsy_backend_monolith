@@ -610,7 +610,7 @@ paths:
       tags:
       - auth
   /api/v1/auth/password/change:
-    put:
+    post:
       consumes:
       - application/json
       description: |-
@@ -650,8 +650,8 @@ paths:
       summary: Запрос на сброс пароля (шаг 1/2)
       tags:
       - auth
-  /api/v1/auth/password/confirm:
-    put:
+  /api/v1/auth/password/change/confirm:
+    post:
       consumes:
       - application/json
       description: |-

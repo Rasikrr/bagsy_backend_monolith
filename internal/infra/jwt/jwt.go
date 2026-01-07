@@ -166,12 +166,6 @@ func (t *TokenManager) ParseAuthToken(tokenString string) (*dto.RegistrationToke
 	if claims.Phone == "" {
 		return nil, fmt.Errorf("%w: phone", ErrMissingRequiredClaim)
 	}
-	if claims.PointCode == "" {
-		return nil, fmt.Errorf("%w: point_code", ErrMissingRequiredClaim)
-	}
-	if claims.NetworkCode == "" {
-		return nil, fmt.Errorf("%w: network_code", ErrMissingRequiredClaim)
-	}
 
 	return &dto.RegistrationTokenPayload{
 		Phone:       claims.Phone,
