@@ -111,7 +111,7 @@ func (t *TokenManager) NewRefreshToken() (raw, hash string, err error) {
 	return raw, hash, nil
 }
 
-func (t *TokenManager) NewRegistrationToken(dto *dto.RegistrationTokenPayload, ttl time.Duration) (string, error) {
+func (t *TokenManager) NewAuthToken(dto *dto.RegistrationTokenPayload, ttl time.Duration) (string, error) {
 	jwtID := uuid.New().String()
 	claims := &registrationClaims{
 		StandardClaims: jwt.StandardClaims{
@@ -134,8 +134,8 @@ func (t *TokenManager) NewRegistrationToken(dto *dto.RegistrationTokenPayload, t
 }
 
 // nolint: nestif
-// ParseRegistrationToken парсит registration токен и возвращает DTO
-func (t *TokenManager) ParseRegistrationToken(tokenString string) (*dto.RegistrationTokenPayload, error) {
+// ParseAuthToken парсит registration токен и возвращает DTO
+func (t *TokenManager) ParseAuthToken(tokenString string) (*dto.RegistrationTokenPayload, error) {
 	claims := new(registrationClaims)
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
