@@ -1,6 +1,8 @@
 package users
 
 import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"net/http"
 	"strconv"
 
@@ -181,5 +183,27 @@ func toGetUsersResponse(users []*entity.User) getUsersResponse {
 	return getUsersResponse{
 		Users: dtos,
 		Count: len(dtos),
+	}
+}
+
+type updateUserRequest struct {
+	Name    string `json:"name" validate:"required"`
+	Surname string `json:"surname" validate:"required"`
+}
+
+func (r *updateUserRequest) Validate() error {
+	err := request.GetValidator().Struct(r)
+	if err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (r *updateUserRequest) ToDomain(ses *session.Session) *command.UserUpdateCommand {
+	return &command.UserUpdateCommand{
+		Name:      &r.Name,
+		Surname:   &r.Surname,
+		UpdatedBy: ses.Phone(),
+		Phone:     ses.Phone(),
 	}
 }

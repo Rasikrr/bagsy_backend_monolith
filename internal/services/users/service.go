@@ -2,7 +2,9 @@ package users
 
 import (
 	"context"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -17,7 +19,9 @@ type usersRepository interface {
 	GetByParams(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Update(ctx context.Context, user *entity.User) error
+	UpdateUser(ctx context.Context, patch *users.UserUpdatePatch) error
 }
+
 type pointsService interface {
 	GetByCode(ctx context.Context, code string) (*entity.Point, error)
 }
@@ -160,4 +164,15 @@ func (s *Service) authorizeFilter(
 
 func (s *Service) Update(ctx context.Context, user *entity.User) error {
 	return s.usersRepo.Update(ctx, user)
+}
+
+func (s *Service) UpdateUser(ctx context.Context, cmd *command.UserUpdateCommand) error {
+	patch := cmd.ToPatch()
+
+	err := s.usersRepo.UpdateUser(ctx, patch)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
