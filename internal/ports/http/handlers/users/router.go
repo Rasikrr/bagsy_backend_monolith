@@ -3,7 +3,6 @@ package users
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
@@ -13,7 +12,7 @@ import (
 type userService interface {
 	GetUserProfile(ctx context.Context) (*entity.User, error)
 	GetByFilter(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
-	UpdateUser(ctx context.Context, cmd *command.UserUpdateCommand) error
+	Update(ctx context.Context, user *entity.User) error
 }
 
 type Controller struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -162,17 +161,19 @@ func (s *Service) authorizeFilter(
 	}
 }
 
-func (s *Service) Update(ctx context.Context, user *entity.User) error {
-	return s.usersRepo.Update(ctx, user)
-}
+func (s *Service) Update(ctx context.Context, newUser *entity.User) error {
+	exists, err := s.usersRepo.ExistsByPhone(ctx, newUser.Phone)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return domainErr.ErrUserNotFound
+	}
 
-func (s *Service) UpdateUser(ctx context.Context, cmd *command.UserUpdateCommand) error {
-	patch := cmd.ToPatch()
-
-	err := s.usersRepo.UpdateUser(ctx, patch)
+	oldUser, err := s.usersRepo.GetByPhone(ctx, newUser.Phone)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return s.usersRepo.Update(ctx, convertToUpdatedUser(oldUser, newUser))
 }

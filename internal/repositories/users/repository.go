@@ -112,23 +112,6 @@ func (r *Repository) Update(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (r *Repository) UpdateUser(ctx context.Context, patch *UserUpdatePatch) error {
-	if patch == nil || patch.IsEmpty() {
-		return errNothingToUpdate
-	}
-
-	sql, args, err := patch.ToSQL()
-	if err != nil {
-		return domainErr.NewInternalError("failed to build query", err)
-	}
-	_, err = r.db.Exec(ctx, sql, args...)
-	if err != nil {
-		return domainErr.NewInternalError("failed to update user", err)
-	}
-
-	return nil
-}
-
 func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
 	phones := lo.Map(users, func(item *entity.User, _ int) string {
 		return item.Phone

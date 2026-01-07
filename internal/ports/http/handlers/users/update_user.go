@@ -34,12 +34,12 @@ func (c *Controller) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req updateUserRequest
-	if err := request.GetAndValidateData(r, &req); err != nil {
+	if err = request.GetAndValidateData(r, &req); err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
 
-	err = c.userService.UpdateUser(ctx, req.ToDomain(ses))
+	err = c.userService.Update(ctx, req.ToDomain(ses))
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return

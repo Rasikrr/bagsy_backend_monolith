@@ -1,16 +1,14 @@
 package users
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
-	"net/http"
-	"strconv"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	"net/http"
+	"strconv"
 )
 
 //go:generate easyjson -all models.go
@@ -199,11 +197,11 @@ func (r *updateUserRequest) Validate() error {
 	return nil
 }
 
-func (r *updateUserRequest) ToDomain(ses *session.Session) *command.UserUpdateCommand {
-	return &command.UserUpdateCommand{
-		Name:      &r.Name,
-		Surname:   &r.Surname,
-		UpdatedBy: ses.Phone(),
+func (r *updateUserRequest) ToDomain(ses *session.Session) *entity.User {
+	return &entity.User{
 		Phone:     ses.Phone(),
+		Name:      r.Name,
+		Surname:   r.Surname,
+		UpdatedBy: ses.Phone(),
 	}
 }
