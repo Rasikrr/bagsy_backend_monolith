@@ -335,6 +335,24 @@ definitions:
           $ref: '#/definitions/internal_ports_http_handlers_users.userDTO'
         type: array
     type: object
+  internal_ports_http_handlers_users.scheduleRequestDTO:
+    properties:
+      all_day:
+        type: boolean
+      comment:
+        type: string
+      from:
+        type: string
+      to:
+        type: string
+      week_day:
+        maximum: 6
+        minimum: 0
+        type: integer
+    required:
+    - from
+    - to
+    type: object
   internal_ports_http_handlers_users.staffScheduleDTO:
     properties:
       all_day:
@@ -347,6 +365,15 @@ definitions:
         type: string
       week_day:
         type: integer
+    type: object
+  internal_ports_http_handlers_users.updateScheduleRequest:
+    properties:
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_users.scheduleRequestDTO'
+        type: array
+    required:
+    - schedule
     type: object
   internal_ports_http_handlers_users.updateUserRequest:
     properties:
@@ -1125,6 +1152,47 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Обновление своего профиля
+      tags:
+      - users
+  /api/v1/users/me/schedule:
+    put:
+      consumes:
+      - application/json
+      description: Позволяет обновить расписание работы (7 дней). Время передается
+        в формате Almaty timezone и конвертируется в UTC
+      parameters:
+      - description: Расписание на 7 дней
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_users.updateScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Расписание обновлено
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление расписания пользователя
       tags:
       - users
 securityDefinitions:

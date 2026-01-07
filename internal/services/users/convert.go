@@ -11,6 +11,9 @@ func convertToUpdatedUser(oldUser, newUser *entity.User) *entity.User {
 	if newUser.Surname != "" {
 		out.Surname = newUser.Surname
 	}
+	if newUser.Schedule != nil {
+		out.Schedule = newUser.Schedule
+	}
 
 	// остальные если надо добавим
 

@@ -43,5 +43,6 @@ func (c *Controller) Init(router *chi.Mux) {
 		authenticated := r.With(auth)
 		authenticated.Get("/me", c.getMyProfile)
 		authenticated.Put("/me", c.updateUser)
+		authenticated.Put("/me/schedule", c.updateSchedule)
 	})
 }

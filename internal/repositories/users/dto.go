@@ -7,6 +7,8 @@ import (
 	"github.com/samber/lo"
 )
 
+var almatyLocation = time.FixedZone("Asia/Almaty", 5*60*60)
+
 // DTO типы для JSONB с snake_case тегами
 type staffScheduleDTO struct {
 	WeekDay int       `json:"week_day"`
@@ -25,20 +27,22 @@ func schedulesToDTO(schedules []entity.StaffSchedule) []staffScheduleDTO {
 }
 
 func scheduleToDTO(s entity.StaffSchedule) staffScheduleDTO {
+	// Convert from Almaty timezone back to UTC for DB storage
 	return staffScheduleDTO{
 		WeekDay: s.WeekDay,
-		Open:    s.Open,
-		Close:   s.Close,
+		Open:    s.Open.UTC(),
+		Close:   s.Close.UTC(),
 		AllDay:  s.AllDay,
 		Comment: s.Comment,
 	}
 }
 
 func (dto staffScheduleDTO) toEntity() entity.StaffSchedule {
+	// Convert UTC time from DB to Almaty timezone
 	return entity.StaffSchedule{
 		WeekDay: dto.WeekDay,
-		Open:    dto.Open,
-		Close:   dto.Close,
+		Open:    dto.Open.In(almatyLocation),
+		Close:   dto.Close.In(almatyLocation),
 		AllDay:  dto.AllDay,
 		Comment: dto.Comment,
 	}

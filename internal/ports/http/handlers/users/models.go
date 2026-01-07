@@ -7,6 +7,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"net/http"
 	"strconv"
 )
@@ -204,4 +205,64 @@ func (r *updateUserRequest) ToDomain(ses *session.Session) *entity.User {
 		Surname:   r.Surname,
 		UpdatedBy: ses.Phone(),
 	}
+}
+
+type scheduleRequestDTO struct {
+	WeekDay int    `json:"week_day" validate:"min=0,max=6"`
+	From    string `json:"from" validate:"required"`
+	To      string `json:"to" validate:"required"`
+	AllDay  bool   `json:"all_day"`
+	Comment string `json:"comment"`
+}
+
+type updateScheduleRequest struct {
+	Schedule []scheduleRequestDTO `json:"schedule" validate:"required,len=7,dive"`
+}
+
+func (r *updateScheduleRequest) Validate() error {
+	err := request.GetValidator().Struct(r)
+	if err != nil {
+		return request.HandleValidationError(err)
+	}
+
+	if len(r.Schedule) != 7 {
+		return domainErr.NewValidationError("schedule must contain exactly 7 days").
+			WithDetail("length", len(r.Schedule))
+	}
+
+	return nil
+}
+
+func (r *updateScheduleRequest) ToDomain(ses *session.Session) (*entity.User, error) {
+	schedules := make([]entity.StaffSchedule, 0, len(r.Schedule))
+
+	for _, s := range r.Schedule {
+		opens, err := timeutil.ConvertAlmatyTimeToUTC(s.From)
+		if err != nil {
+			return nil, domainErr.NewValidationError("invalid time format in schedule").
+				WithDetail("from", s.From).
+				WithError(err)
+		}
+
+		closes, err := timeutil.ConvertAlmatyTimeToUTC(s.To)
+		if err != nil {
+			return nil, domainErr.NewValidationError("invalid time format in schedule").
+				WithDetail("to", s.To).
+				WithError(err)
+		}
+
+		schedules = append(schedules, entity.StaffSchedule{
+			WeekDay: s.WeekDay,
+			Open:    opens,
+			Close:   closes,
+			AllDay:  s.AllDay,
+			Comment: s.Comment,
+		})
+	}
+
+	return &entity.User{
+		Phone:     ses.Phone(),
+		Schedule:  schedules,
+		UpdatedBy: ses.Phone(),
+	}, nil
 }
