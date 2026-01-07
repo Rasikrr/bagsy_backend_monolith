@@ -54,7 +54,7 @@ func (s *Service) Create(ctx context.Context, user *entity.User, password string
 	if password != "" {
 		passwordHash, hashErr := hash.Password(password)
 		if hashErr != nil {
-			return domainErr.NewInternalError("failed to hash password", err)
+			return domainErr.NewInternalError("failed to hash password", hashErr)
 		}
 		user.Password = passwordHash
 	}

@@ -221,7 +221,7 @@ func (s *Service) RegisterManagementConfirm(ctx context.Context, phone, code str
 		if netErr != nil {
 			return netErr
 		}
-		user, err := s.usersService.GetByPhone(ctx, req.Phone)
+		user, err = s.usersService.GetByPhone(ctx, req.Phone)
 		if err != nil {
 			if !domainErr.IsNotFound(err) {
 				return err

@@ -44,7 +44,6 @@ func (c *Controller) Init(router *chi.Mux) {
 		enum.RoleSelfOwner,
 	)
 	router.Route("/api/v1/auth", func(r chi.Router) {
-
 		r.Route("/staff", func(r chi.Router) {
 			r.With(managerMiddleware).
 				Post("/register", c.registerStaff)
