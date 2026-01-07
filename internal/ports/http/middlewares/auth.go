@@ -80,3 +80,12 @@ func (a *AuthMiddleware) AuthorizeNetManagement() func(http.Handler) http.Handle
 		enum.RoleSelfOwner,
 	)
 }
+
+func (a *AuthMiddleware) AuthorizeWorkers() func(http.Handler) http.Handler {
+	return a.RequireRole(
+		enum.RoleStaff,
+		enum.RoleManager,
+		enum.RoleNetManager,
+		enum.RoleSelfOwner,
+	)
+}

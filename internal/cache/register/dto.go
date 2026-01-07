@@ -57,6 +57,8 @@ func toRegisterManagementDTO(req *command.RegisterManagementCommand) *registerMa
 
 type registerStaffDTO struct {
 	Phone       string `json:"phone"`
+	Name        string `json:"name"`
+	Surname     string `json:"surname"`
 	PointCode   string `json:"point_code"`
 	NetworkCode string `json:"network_code"`
 	Role        string `json:"role"`
@@ -65,6 +67,8 @@ type registerStaffDTO struct {
 func toRegisterStaffDTO(c *command.RegisterStaffCommand) *registerStaffDTO {
 	return &registerStaffDTO{
 		Phone:       c.Phone,
+		Name:        c.Name,
+		Surname:     c.Surname,
 		PointCode:   c.PointCode,
 		NetworkCode: c.NetworkCode,
 		Role:        c.Role.String(),
@@ -74,6 +78,8 @@ func toRegisterStaffDTO(c *command.RegisterStaffCommand) *registerStaffDTO {
 func (r *registerStaffDTO) toDomain() *command.RegisterStaffCommand {
 	role, _ := enum.RoleString(r.Role)
 	return &command.RegisterStaffCommand{
+		Name:        r.Name,
+		Surname:     r.Surname,
 		Phone:       r.Phone,
 		PointCode:   r.PointCode,
 		NetworkCode: r.NetworkCode,

@@ -18,6 +18,8 @@ type authService interface {
 	ResendRegisterManagementCode(ctx context.Context, phone string) error
 	RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error
 	RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error)
+	SendPasswordChangeLink(ctx context.Context, phone string) error
+	ChangePassword(ctx context.Context, req *command.ChangePasswordConfirmCommand) error
 }
 
 type Controller struct {
@@ -48,12 +50,15 @@ func (c *Controller) Init(router *chi.Mux) {
 
 			r.Post("/register/confirm", c.registerStaffConfirm)
 		})
+
 		r.Route("/management", func(r chi.Router) {
 			r.Post("/register", c.registerManagement)
 			r.Post("/register/resend", c.resendRegisterManagement)
 			r.Post("/register/confirm", c.registerManagementConfirm)
 		})
 
+		r.Post("/password/change", c.changePassword)
+		r.Post("/password/change/confirm", c.changePasswordConfirm)
 		r.Post("/login", c.login)
 		r.Post("/refresh", c.refresh)
 		r.Post("/logout", c.logout)
