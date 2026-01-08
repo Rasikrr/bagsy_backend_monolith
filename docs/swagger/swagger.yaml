@@ -227,6 +227,15 @@ definitions:
     - role
     - surname
     type: object
+  internal_ports_http_handlers_auth.registerStaffResendRequest:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
   internal_ports_http_handlers_auth.resendRegisterManagementRequest:
     properties:
       phone:
@@ -852,6 +861,68 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
       summary: Завершение регистрации работника (шаг 2/2)
+      tags:
+      - auth
+  /api/v1/auth/staff/register/resend:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Отправляет новую ссылку для завершения регистрации работнику, которого менеджер уже зарегистрировал через /api/v1/auth/staff/register. Ссылка содержит one-time токен и отправляется через WhatsApp с fallback на SMS. Данные регистрации (имя, фамилия, роль, точка) НЕ изменяются.
+
+        Права доступа:
+        - Manager: может отправить повторно только для работников своей точки
+        - NetManager/SelfOwner: могут отправить для любого работника своей сети
+        - Staff: не может использовать этот endpoint
+
+        Ограничения безопасности:
+        - Требуется авторизация (Manager+)
+        - Работник должен быть предварительно создан через /staff/register
+        - Токен действителен 24 часа с момента отправки
+        - Максимум 10 повторных отправок в час (rate limiting)
+
+        Use Case: Работник не получил первую ссылку или она истекла
+      parameters:
+      - description: Номер телефона работника
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerStaffResendRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новая ссылка для регистрации отправлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав (работник не в вашей точке/сети)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Регистрация работника не найдена (нужно создать через /register)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "429":
+          description: Превышен лимит повторных отправок (10/час)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Повторная отправка ссылки для регистрации работника
       tags:
       - auth
   /api/v1/bagsies:

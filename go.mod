@@ -3,7 +3,7 @@ module github.com/Rasikrr/bagsy_backend_monolith
 go 1.25.1
 
 require (
-	github.com/Rasikrr/core v0.0.77
+	github.com/Rasikrr/core v0.0.78
 	github.com/avast/retry-go v3.0.0+incompatible
 )
 
@@ -33,6 +33,8 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/getsentry/sentry-go v0.40.0 // indirect
 	github.com/getsentry/sentry-go/slog v0.40.0 // indirect
+	github.com/go-chi/httprate v0.15.0 // indirect
+	github.com/go-chi/httprate-redis v0.7.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
@@ -46,6 +48,7 @@ require (
 	github.com/gosimple/slug v1.15.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
@@ -62,6 +65,7 @@ require (
 	github.com/swaggo/files v1.0.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.54.0 // indirect
+	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
 	go.opentelemetry.io/otel v1.38.0 // indirect

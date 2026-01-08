@@ -17,12 +17,12 @@ type userService interface {
 
 type Controller struct {
 	userService    userService
-	authMiddleware *middlewares.AuthMiddleware
+	authMiddleware *middlewares.Auth
 }
 
 func New(
 	userService userService,
-	authMiddleware *middlewares.AuthMiddleware,
+	authMiddleware *middlewares.Auth,
 ) *Controller {
 	return &Controller{
 		userService:    userService,

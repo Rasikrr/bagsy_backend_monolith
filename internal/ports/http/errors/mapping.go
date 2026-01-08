@@ -9,13 +9,14 @@ import (
 
 // HTTPStatusMap maps domain error types to HTTP status codes
 var httpStatusMap = map[domainErr.ErrorType]int{
-	domainErr.TypeNotFound:     http.StatusNotFound,            // 404
-	domainErr.TypeInvalidInput: http.StatusBadRequest,          // 400
-	domainErr.TypeValidation:   http.StatusBadRequest,          // 400
-	domainErr.TypeUnauthorized: http.StatusUnauthorized,        // 401
-	domainErr.TypeForbidden:    http.StatusForbidden,           // 403
-	domainErr.TypeConflict:     http.StatusConflict,            // 409
-	domainErr.TypeInternal:     http.StatusInternalServerError, // 500
+	domainErr.TypeNotFound:        http.StatusNotFound,            // 404
+	domainErr.TypeInvalidInput:    http.StatusBadRequest,          // 400
+	domainErr.TypeValidation:      http.StatusBadRequest,          // 400
+	domainErr.TypeUnauthorized:    http.StatusUnauthorized,        // 401
+	domainErr.TypeForbidden:       http.StatusForbidden,           // 403
+	domainErr.TypeConflict:        http.StatusConflict,            // 409
+	domainErr.TypeTooManyRequests: http.StatusTooManyRequests,     // 429
+	domainErr.TypeInternal:        http.StatusInternalServerError, // 500
 }
 
 // GetHTTPStatus returns HTTP status code for domain error type

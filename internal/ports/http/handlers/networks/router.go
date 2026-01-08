@@ -20,13 +20,13 @@ type pointsService interface {
 type Controller struct {
 	networksService networksService
 	pointsService   pointsService
-	authMiddleware  *middlewares.AuthMiddleware
+	authMiddleware  *middlewares.Auth
 }
 
 func New(
 	networksService networksService,
 	pointsService pointsService,
-	authMiddleware *middlewares.AuthMiddleware,
+	authMiddleware *middlewares.Auth,
 ) *Controller {
 	return &Controller{
 		networksService: networksService,

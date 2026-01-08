@@ -162,7 +162,18 @@ func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterM
 
 	req.AuthCode = authCode
 
-	err := s.registerCache.SaveManagementRequest(ctx, req)
+	// Проверка, что запрос не был уже создан ранее
+	existedReq, err := s.registerCache.GetManagementRequest(ctx, req.Phone)
+	if err != nil {
+		if !domainErr.IsNotFound(err) {
+			return err
+		}
+	}
+	if existedReq != nil {
+		return domainErr.NewConflictError("registration request already created", nil)
+	}
+
+	err = s.registerCache.SaveManagementRequest(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -261,6 +272,18 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 		return validErr
 	}
 	req.NetworkCode = createdBy.NetworkCode()
+
+	// 2. Проверим что запрос не был создан ранее
+	existedReq, err := s.registerCache.GetStaffRequest(ctx, req.Phone)
+	if err != nil {
+		if !domainErr.IsNotFound(err) {
+			return err
+		}
+	}
+	if existedReq != nil {
+		return domainErr.NewConflictError("registration request already created", nil)
+	}
+
 	// 3. Сохраним данные в кеше чтобы преждевременно не создавать юзера
 	err = s.registerCache.SaveStaffRequest(ctx, req)
 	if err != nil {
@@ -277,6 +300,25 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 	}
 
 	// 3. Отправляем уведомление (WhatsApp с fallback на SMS)
+	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token); sendErr != nil {
+		return sendErr
+	}
+	return nil
+}
+
+func (s *Service) ResendRegisterStaffLink(ctx context.Context, phone string) error {
+	req, err := s.registerCache.GetStaffRequest(ctx, phone)
+	if err != nil {
+		return err
+	}
+	token, tErr := s.tokenManager.NewAuthToken(
+		&dto.RegistrationTokenPayload{
+			Phone: req.Phone,
+		}, s.registrationTTL,
+	)
+	if tErr != nil {
+		return domainErr.NewInternalError("failed to generate registration token", tErr)
+	}
 	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token); sendErr != nil {
 		return sendErr
 	}

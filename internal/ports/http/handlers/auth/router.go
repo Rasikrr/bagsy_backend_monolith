@@ -2,11 +2,17 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
+)
+
+const (
+	rateLimiterLimit       = 3
+	rateLimiterPerDuration = time.Minute
 )
 
 type authService interface {
@@ -18,22 +24,26 @@ type authService interface {
 	ResendRegisterManagementCode(ctx context.Context, phone string) error
 	RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error
 	RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error)
+	ResendRegisterStaffLink(ctx context.Context, phone string) error
 	SendPasswordChangeLink(ctx context.Context, phone string) error
 	ChangePassword(ctx context.Context, req *command.ChangePasswordConfirmCommand) error
 }
 
 type Controller struct {
-	authService    authService
-	authMiddleware *middlewares.AuthMiddleware
+	authService        authService
+	authMiddleware     *middlewares.Auth
+	rateLimiterFactory *middlewares.RateLimiterFactory
 }
 
 func New(
 	authService authService,
-	authMiddleware *middlewares.AuthMiddleware,
+	authMiddleware *middlewares.Auth,
+	rateLimiterFactory *middlewares.RateLimiterFactory,
 ) *Controller {
 	return &Controller{
-		authService:    authService,
-		authMiddleware: authMiddleware,
+		authService:        authService,
+		authMiddleware:     authMiddleware,
+		rateLimiterFactory: rateLimiterFactory,
 	}
 }
 
@@ -43,21 +53,30 @@ func (c *Controller) Init(router *chi.Mux) {
 		enum.RoleNetManager,
 		enum.RoleSelfOwner,
 	)
+
+	rateLimiter := c.rateLimiterFactory.NewRateLimiter(rateLimiterLimit, rateLimiterPerDuration)
+
 	router.Route("/api/v1/auth", func(r chi.Router) {
 		r.Route("/staff", func(r chi.Router) {
 			r.With(managerMiddleware).
 				Post("/register", c.registerStaff)
+			r.With(managerMiddleware, rateLimiter).
+				Post("/register/resend", c.registerStaffResend)
 
 			r.Post("/register/confirm", c.registerStaffConfirm)
 		})
 
 		r.Route("/management", func(r chi.Router) {
 			r.Post("/register", c.registerManagement)
-			r.Post("/register/resend", c.resendRegisterManagement)
+
+			r.With(rateLimiter).
+				Post("/register/resend", c.resendRegisterManagement)
 			r.Post("/register/confirm", c.registerManagementConfirm)
 		})
 
-		r.Post("/password/change", c.changePassword)
+		r.With(rateLimiter).
+			Post("/password/change", c.changePassword)
+
 		r.Post("/password/change/confirm", c.changePasswordConfirm)
 		r.Post("/login", c.login)
 		r.Post("/refresh", c.refresh)

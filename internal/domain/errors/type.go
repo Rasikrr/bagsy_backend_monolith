@@ -9,13 +9,14 @@ import (
 type ErrorType string
 
 const (
-	TypeNotFound     ErrorType = "NOT_FOUND"
-	TypeInvalidInput ErrorType = "INVALID_INPUT"
-	TypeValidation   ErrorType = "VALIDATION"
-	TypeUnauthorized ErrorType = "UNAUTHORIZED"
-	TypeForbidden    ErrorType = "FORBIDDEN"
-	TypeConflict     ErrorType = "CONFLICT"
-	TypeInternal     ErrorType = "INTERNAL"
+	TypeNotFound        ErrorType = "NOT_FOUND"
+	TypeInvalidInput    ErrorType = "INVALID_INPUT"
+	TypeValidation      ErrorType = "VALIDATION"
+	TypeUnauthorized    ErrorType = "UNAUTHORIZED"
+	TypeForbidden       ErrorType = "FORBIDDEN"
+	TypeConflict        ErrorType = "CONFLICT"
+	TypeTooManyRequests ErrorType = "TOO_MANY_REQUESTS"
+	TypeInternal        ErrorType = "INTERNAL"
 )
 
 type DomainError struct {
@@ -76,6 +77,14 @@ func NewValidationError(message string, keyVals ...string) *DomainError {
 		}
 	}
 	return err
+}
+
+func NewTooManyRequestsError(message string, cause error) *DomainError {
+	return &DomainError{
+		Type:    TypeTooManyRequests,
+		Message: message,
+		Cause:   cause,
+	}
 }
 
 func NewUnauthorizedError(message string) *DomainError {

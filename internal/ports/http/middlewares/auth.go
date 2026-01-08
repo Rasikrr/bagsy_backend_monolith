@@ -16,18 +16,18 @@ type authService interface {
 	VerifyAccessToken(ctx context.Context, tokenStr string) (*session.Session, error)
 }
 
-type AuthMiddleware struct {
+type Auth struct {
 	authService authService
 }
 
-func NewAuth(authService authService) *AuthMiddleware {
-	return &AuthMiddleware{
+func NewAuth(authService authService) *Auth {
+	return &Auth{
 		authService: authService,
 	}
 }
 
-func (a *AuthMiddleware) Handle(next http.Handler) http.Handler { // Изменено здесь
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { // Приводим к HandlerFunc внутри
+func (a *Auth) Handle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		token, err := httputil.GetAuthHeader(r)
 		if err != nil {
@@ -46,7 +46,7 @@ func (a *AuthMiddleware) Handle(next http.Handler) http.Handler { // Измен�
 	})
 }
 
-func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.Handler) http.Handler {
+func (a *Auth) RequireRole(roles ...enum.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return a.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -66,7 +66,7 @@ func (a *AuthMiddleware) RequireRole(roles ...enum.Role) func(http.Handler) http
 	}
 }
 
-func (a *AuthMiddleware) AuthorizeManagement() func(http.Handler) http.Handler {
+func (a *Auth) AuthorizeManagement() func(http.Handler) http.Handler {
 	return a.RequireRole(
 		enum.RoleManager,
 		enum.RoleNetManager,
@@ -74,14 +74,14 @@ func (a *AuthMiddleware) AuthorizeManagement() func(http.Handler) http.Handler {
 	)
 }
 
-func (a *AuthMiddleware) AuthorizeNetManagement() func(http.Handler) http.Handler {
+func (a *Auth) AuthorizeNetManagement() func(http.Handler) http.Handler {
 	return a.RequireRole(
 		enum.RoleNetManager,
 		enum.RoleSelfOwner,
 	)
 }
 
-func (a *AuthMiddleware) AuthorizeWorkers() func(http.Handler) http.Handler {
+func (a *Auth) AuthorizeWorkers() func(http.Handler) http.Handler {
 	return a.RequireRole(
 		enum.RoleStaff,
 		enum.RoleManager,

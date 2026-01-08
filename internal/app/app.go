@@ -97,6 +97,7 @@ func (a *App) initHTTP(_ context.Context) error {
 	}
 	http.NewServer(
 		a.HTTPServer(),
+		a.Redis(),
 		swaggerHost,
 		swaggerScheme,
 		a.authService,
