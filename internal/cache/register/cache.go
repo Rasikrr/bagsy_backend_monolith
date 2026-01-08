@@ -12,23 +12,21 @@ import (
 
 type Cache struct {
 	cli *redis.Client
-	ttl time.Duration
 }
 
-func NewCache(cli *redis.Client, ttl time.Duration) *Cache {
+func NewCache(cli *redis.Client) *Cache {
 	return &Cache{
 		cli: cli,
-		ttl: ttl,
 	}
 }
 
-func saveToCache[T any](ctx context.Context, c *Cache, key string, dto T) error {
+func saveToCache[T any](ctx context.Context, c *Cache, key string, dto T, ttl time.Duration) error {
 	bb, err := json.Marshal(dto)
 	if err != nil {
 		return domainErr.NewInternalError("failed to marshal register request", err)
 	}
 
-	if err = c.cli.SetWithExpiration(ctx, key, bb, c.ttl); err != nil {
+	if err = c.cli.SetWithExpiration(ctx, key, bb, ttl); err != nil {
 		return domainErr.NewInternalError("failed to save register request", err)
 	}
 	return nil

@@ -40,7 +40,7 @@ func (s *Service) SendManagementAuthConfirmationCode(ctx context.Context, phone,
 }
 
 func (s *Service) SendStaffRegistrationLink(ctx context.Context, phone, token string) error {
-	link := fmt.Sprintf("%s?token=%s", s.registrationConfirmURL, token)
+	link := fmt.Sprintf("%s/%s", s.registrationConfirmURL, token)
 	// TODO: format message (markdown)
 	message := fmt.Sprintf("Добро пожаловать в Bagsy! Завершите регистрацию по ссылке: %s", link)
 	return s.send(ctx, phone, message)
@@ -53,7 +53,7 @@ func (s *Service) SendBagsyConfirmCode(ctx context.Context, phone, code string) 
 }
 
 func (s *Service) SendPasswordChangeLink(ctx context.Context, phone, token string) error {
-	link := fmt.Sprintf("%s?token=%s", s.registrationConfirmURL, token)
+	link := fmt.Sprintf("%s/%s", s.registrationConfirmURL, token)
 	// TODO: format message (markdown)
 	message := fmt.Sprintf("Для смены пароля в Bagsy следуйте по данной ссылке: %s", link)
 	return s.send(ctx, phone, message)

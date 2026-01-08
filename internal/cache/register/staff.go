@@ -3,14 +3,15 @@ package register
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 )
 
-func (c *Cache) SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand) error {
+func (c *Cache) SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand, ttl time.Duration) error {
 	key := genStaffKey(req.Phone)
-	return saveToCache(ctx, c, key, toRegisterStaffDTO(req))
+	return saveToCache(ctx, c, key, toRegisterStaffDTO(req), ttl)
 }
 
 func (c *Cache) GetStaffRequest(ctx context.Context, phone string) (*command.RegisterStaffCommand, error) {

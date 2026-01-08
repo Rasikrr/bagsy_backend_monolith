@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
@@ -19,6 +20,7 @@ type authService interface {
 	Login(ctx context.Context, phone, password string) (access, refresh string, err error)
 	Refresh(ctx context.Context, refreshToken string) (access, refresh string, err error)
 	Logout(ctx context.Context, refreshToken string) error
+	InspectAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error)
 	RegisterManagement(ctx context.Context, req *command.RegisterManagementCommand) error
 	RegisterManagementConfirm(ctx context.Context, phone, code string) (access, refresh string, err error)
 	ResendRegisterManagementCode(ctx context.Context, phone string) error
@@ -76,8 +78,9 @@ func (c *Controller) Init(router *chi.Mux) {
 
 		r.With(rateLimiter).
 			Post("/password/change", c.changePassword)
-
 		r.Post("/password/change/confirm", c.changePasswordConfirm)
+
+		r.Get("/verify-auth-token/{token}", c.verifyAuthToken)
 		r.Post("/login", c.login)
 		r.Post("/refresh", c.refresh)
 		r.Post("/logout", c.logout)

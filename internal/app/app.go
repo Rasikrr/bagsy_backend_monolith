@@ -131,12 +131,7 @@ func (a *App) initCache(_ context.Context) error {
 		return err
 	}
 	a.bagsyConfirmCache = bagsyconfirm.NewCache(a.Redis(), bagsyConfirmTTL)
-
-	registrationTTL, err := a.Config().Variables.GetDuration(appenv.RegistrationTTL)
-	if err != nil {
-		return err
-	}
-	a.registerCache = register.NewCache(a.Redis(), registrationTTL)
+	a.registerCache = register.NewCache(a.Redis())
 	return nil
 }
 

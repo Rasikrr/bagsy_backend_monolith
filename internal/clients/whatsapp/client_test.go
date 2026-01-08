@@ -11,11 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	testAPIURL     = "https://7105.api.greenapi.com"
-	testMediaURL   = "https://7105.media.greenapi.com"
-	testInstanceID = ""
-	testAPIToken   = ""
+var (
+	_              = godotenv.Load("../../../.env")
+	testAPIURL     = os.Getenv("WHATSAPP_API_URL")
+	testMediaURL   = os.Getenv("WHATSAPP_MEDIA_URL")
+	testInstanceID = os.Getenv("WHATSAPP_API_ID_INSTANCE")
+	testAPIToken   = os.Getenv("WHATSAPP_API_TOKEN")
 )
 
 func TestSendMessage(t *testing.T) {
