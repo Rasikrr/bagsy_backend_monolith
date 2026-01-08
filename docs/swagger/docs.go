@@ -569,6 +569,81 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/staff/register/resend": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Отправляет новую ссылку для завершения регистрации работнику, которого менеджер уже зарегистрировал через /api/v1/auth/staff/register. Ссылка содержит one-time токен и отправляется через WhatsApp с fallback на SMS. Данные регистрации (имя, фамилия, роль, точка) НЕ изменяются.\n\nПрава доступа:\n- Manager: может отправить повторно только для работников своей точки\n- NetManager/SelfOwner: могут отправить для любого работника своей сети\n- Staff: не может использовать этот endpoint\n\nОграничения безопасности:\n- Требуется авторизация (Manager+)\n- Работник должен быть предварительно создан через /staff/register\n- Токен действителен 24 часа с момента отправки\n- Максимум 10 повторных отправок в час (rate limiting)\n\nUse Case: Работник не получил первую ссылку или она истекла",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Повторная отправка ссылки для регистрации работника",
+                "parameters": [
+                    {
+                        "description": "Номер телефона работника",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.registerStaffResendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Новая ссылка для регистрации отправлена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат данных или валидация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав (работник не в вашей точке/сети)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Регистрация работника не найдена (нужно создать через /register)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Превышен лимит повторных отправок (10/час)",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bagsies": {
             "post": {
                 "description": "Создает новую бронь на услугу у мастера. Если клиент с указанным номером не существует, создается автоматически. Отправляется SMS/WhatsApp с кодом подтверждения.",
@@ -1520,6 +1595,19 @@ const docTemplate = `{
                 },
                 "surname": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.registerStaffResendRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
                 }
             }
         },

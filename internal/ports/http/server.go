@@ -8,6 +8,7 @@ import (
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
+	"github.com/Rasikrr/core/cache/redis"
 	"github.com/Rasikrr/core/environment"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
@@ -43,6 +44,7 @@ import (
 // @name Authorization
 func NewServer(
 	server *coreHttp.Server,
+	redis *redis.Client,
 	swaggerHost, swaggerScheme string,
 	authService *authS.Service,
 	formsService *forms.Service,
@@ -52,8 +54,9 @@ func NewServer(
 	networksService *networksS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
+	rateLimiterFactory := middlewares.NewRateLimiterFactory(redis)
 
-	authController := auth.New(authService, authMiddleware)
+	authController := auth.New(authService, authMiddleware, rateLimiterFactory)
 	formsController := form.New(formsService)
 	usersController := users.New(usersService, authMiddleware)
 	bagsiesController := bagsies.New(bagsiesService, authMiddleware)

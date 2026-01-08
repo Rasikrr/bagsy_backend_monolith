@@ -176,3 +176,5 @@ func (r *resendRegisterManagementRequest) Validate() error {
 	}
 	return nil
 }
+
+type registerStaffResendRequest = changePasswordRequest
