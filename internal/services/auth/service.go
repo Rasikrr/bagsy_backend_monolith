@@ -311,6 +311,8 @@ func (s *Service) ResendRegisterStaffLink(ctx context.Context, phone string) err
 	if err != nil {
 		return err
 	}
+
+	// Генерируем новый токен (валиден registrationTTL от момента resend)
 	token, tErr := s.tokenManager.NewAuthToken(
 		&dto.RegistrationTokenPayload{
 			Phone: req.Phone,
@@ -319,6 +321,14 @@ func (s *Service) ResendRegisterStaffLink(ctx context.Context, phone string) err
 	if tErr != nil {
 		return domainErr.NewInternalError("failed to generate registration token", tErr)
 	}
+
+	// ВАЖНО: Пересохраняем данные в кэш, чтобы обновить TTL!
+	// Теперь данные будут жить еще registrationTTL (24 часа) от момента resend,
+	// синхронизируя время жизни кэша с временем жизни токена
+	if saveErr := s.registerCache.SaveStaffRequest(ctx, req); saveErr != nil {
+		return domainErr.NewInternalError("failed to refresh staff request TTL", saveErr)
+	}
+
 	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token); sendErr != nil {
 		return sendErr
 	}
