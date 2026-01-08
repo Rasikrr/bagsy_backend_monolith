@@ -13,12 +13,3 @@ type accessClaims struct {
 	PointCode   string `json:"point_code,omitempty"`
 	NetworkCode string `json:"network_code,omitempty"`
 }
-
-// registrationClaims для registration токена
-type registrationClaims struct {
-	jwt.StandardClaims
-
-	Phone       string `json:"phone"`
-	PointCode   string `json:"point_code"`
-	NetworkCode string `json:"network_code"`
-}

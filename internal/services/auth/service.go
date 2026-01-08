@@ -48,17 +48,15 @@ type notificationService interface {
 type tokenManager interface {
 	NewAccessToken(user *entity.User, ttl time.Duration) (string, error)
 	NewRefreshToken() (raw, hash string, err error)
-	NewAuthToken(dto *dto.RegistrationTokenPayload, ttl time.Duration) (string, error)
 	ParseAccessToken(token string) (*dto.AccessTokenPayload, error)
-	ParseAuthToken(token string) (*dto.RegistrationTokenPayload, error)
 }
 
 type registerCache interface {
-	SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand) error
+	SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand, duration time.Duration) error
 	GetManagementRequest(ctx context.Context, phone string) (*command.RegisterManagementCommand, error)
 	DeleteManagementRequest(ctx context.Context, phone string) error
 
-	SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand) error
+	SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand, duration time.Duration) error
 	GetStaffRequest(ctx context.Context, phone string) (*command.RegisterStaffCommand, error)
 	DeleteStaffRequest(ctx context.Context, phone string) error
 }
@@ -67,23 +65,16 @@ type registerCache interface {
 // Хранит маппинг tokenHash → phone для валидации токенов
 // Это позволяет поддерживать multiple devices (несколько токенов на пользователя)
 type refreshTokenRepository interface {
-	// SaveRefreshToken сохраняет hash refresh токена
-	// Key: tokenHash, Value: phone
 	SaveRefreshToken(ctx context.Context, tokenHash, phone string, ttl time.Duration) error
-
-	// GetRefreshToken получает phone по hash токена
-	// Возвращает domain error если токен не найден
 	GetRefreshToken(ctx context.Context, tokenHash string) (string, error)
-
-	// DeleteRefreshToken удаляет refresh токен по hash
 	DeleteRefreshToken(ctx context.Context, tokenHash string) error
 }
 
 // registrationTokenCache управляет one-time use registration токенами
 type tokensCache interface {
-	// MarkRegistrationTokenAsUsed помечает токен как использованный (атомарно через SET NX)
-	// Возвращает true если токен уже был использован ранее
-	MarkRegistrationTokenAsUsed(ctx context.Context, tokenHash string, ttl time.Duration) (alreadyUsed bool, err error)
+	SaveAuthToken(ctx context.Context, token string, payload *dto.AuthTokenPayload, ttl time.Duration) error
+	GetAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error)
+	DeleteAuthToken(ctx context.Context, token string) error
 }
 
 type Service struct {
@@ -157,6 +148,14 @@ func (s *Service) Login(ctx context.Context, phone string, password string) (acc
 	return accessToken, refreshToken, nil
 }
 
+func (s *Service) InspectAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error) {
+	payload, err := s.tokensCache.GetAuthToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
 func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterManagementCommand) error {
 	authCode := codegen.GenerateAuthCode()
 
@@ -173,7 +172,7 @@ func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterM
 		return domainErr.NewConflictError("registration request already created", nil)
 	}
 
-	err = s.registerCache.SaveManagementRequest(ctx, req)
+	err = s.registerCache.SaveManagementRequest(ctx, req, s.registrationTTL)
 	if err != nil {
 		return err
 	}
@@ -188,7 +187,7 @@ func (s *Service) ResendRegisterManagementCode(ctx context.Context, phone string
 	newCode := codegen.GenerateAuthCode()
 	req.AuthCode = newCode
 	req.Attempts = 0
-	err = s.registerCache.SaveManagementRequest(ctx, req)
+	err = s.registerCache.SaveManagementRequest(ctx, req, s.registrationTTL)
 	if err != nil {
 		return err
 	}
@@ -210,7 +209,7 @@ func (s *Service) RegisterManagementConfirm(ctx context.Context, phone, code str
 			return "", "", domainErr.ErrTooManyVerificationAttempts
 		}
 		// Сохраняем обновленный счетчик попыток
-		if saveErr := s.registerCache.SaveManagementRequest(ctx, req); saveErr != nil {
+		if saveErr := s.registerCache.SaveManagementRequest(ctx, req, s.registrationTTL); saveErr != nil {
 			return "", "", saveErr
 		}
 		return "", "", domainErr.ErrInvalidVerificationCode.
@@ -245,6 +244,7 @@ func (s *Service) RegisterManagementConfirm(ctx context.Context, phone, code str
 			user.Name = req.Name
 			user.Surname = req.Surname
 			user.Role = req.Role
+			user.PointCode = nil
 			user.NetworkCode = &network.Code
 			user.Active = true
 			err = s.usersService.UpdateWithPassword(ctx, user, req.Password)
@@ -285,22 +285,26 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 	}
 
 	// 3. Сохраним данные в кеше чтобы преждевременно не создавать юзера
-	err = s.registerCache.SaveStaffRequest(ctx, req)
+	err = s.registerCache.SaveStaffRequest(ctx, req, s.registrationTTL)
 	if err != nil {
 		return err
 	}
-	// 4. Генерируем registration token
-	token, err := s.tokenManager.NewAuthToken(
-		&dto.RegistrationTokenPayload{
-			Phone: req.Phone,
-		}, s.registrationTTL,
-	)
-	if err != nil {
-		return domainErr.NewInternalError("failed to generate registration token", err)
+
+	// 4. Генерируем короткий invite токен (8-10 символов)
+	inviteToken := codegen.GenerateAuthToken()
+	payload := &dto.AuthTokenPayload{
+		Phone:       req.Phone,
+		PointCode:   req.PointCode,
+		NetworkCode: req.NetworkCode,
 	}
 
-	// 3. Отправляем уведомление (WhatsApp с fallback на SMS)
-	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token); sendErr != nil {
+	err = s.tokensCache.SaveAuthToken(ctx, inviteToken, payload, s.registrationTTL)
+	if err != nil {
+		return err
+	}
+
+	// 5. Отправляем уведомление (WhatsApp с fallback на SMS)
+	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, inviteToken); sendErr != nil {
 		return sendErr
 	}
 	return nil
@@ -312,33 +316,32 @@ func (s *Service) ResendRegisterStaffLink(ctx context.Context, phone string) err
 		return err
 	}
 
-	// Генерируем новый токен (валиден registrationTTL от момента resend)
-	token, tErr := s.tokenManager.NewAuthToken(
-		&dto.RegistrationTokenPayload{
-			Phone: req.Phone,
-		}, s.registrationTTL,
-	)
-	if tErr != nil {
-		return domainErr.NewInternalError("failed to generate registration token", tErr)
+	// Генерируем новый короткий invite токен
+	token := codegen.GenerateAuthToken()
+	payload := &dto.AuthTokenPayload{
+		Phone:       req.Phone,
+		PointCode:   req.PointCode,
+		NetworkCode: req.NetworkCode,
+	}
+
+	if saveErr := s.tokensCache.SaveAuthToken(ctx, token, payload, s.registrationTTL); saveErr != nil {
+		return saveErr
 	}
 
 	// ВАЖНО: Пересохраняем данные в кэш, чтобы обновить TTL!
 	// Теперь данные будут жить еще registrationTTL (24 часа) от момента resend,
 	// синхронизируя время жизни кэша с временем жизни токена
-	if saveErr := s.registerCache.SaveStaffRequest(ctx, req); saveErr != nil {
+	if saveErr := s.registerCache.SaveStaffRequest(ctx, req, s.registrationTTL); saveErr != nil {
 		return domainErr.NewInternalError("failed to refresh staff request TTL", saveErr)
 	}
 
-	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token); sendErr != nil {
-		return sendErr
-	}
-	return nil
+	return s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token)
 }
 
 // nolint: govet
 func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error) {
-	// 1. Парсим и валидируем токен
-	tokenPayload, err := s.tokenManager.ParseAuthToken(req.Token)
+	// 1. Получаем данные из Redis по короткому токену
+	tokenPayload, err := s.tokensCache.GetAuthToken(ctx, req.Token)
 	if err != nil {
 		return "", "", domainErr.NewUnauthorizedError("invalid or expired registration token").WithError(err)
 	}
@@ -348,9 +351,8 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 		return "", "", err
 	}
 
-	// 2. Хэшируем токен для one-time use проверки
-	h := sha256.Sum256([]byte(req.Token))
-	tokenHash := hex.EncodeToString(h[:])
+	// 2. One-time use проверка уже не нужна для invite токенов,
+	// так как мы их удалим после успешного использования
 
 	var (
 		accessToken, refreshToken string
@@ -361,15 +363,6 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 			IsolationLevel: coreEnum.IsoLevelReadCommited,
 		},
 		func(txCtx context.Context) error {
-			// 3. Проверяем и помечаем токен использованным (атомарно через SET NX)
-			alreadyUsed, markErr := s.tokensCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
-			if markErr != nil {
-				return markErr
-			}
-			if alreadyUsed {
-				return domainErr.NewConflictError("registration token already used", nil)
-			}
-
 			user, err := s.usersService.GetByPhone(ctx, createReq.Phone)
 			if err != nil {
 				if !domainErr.IsNotFound(err) {
@@ -406,6 +399,10 @@ func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.Registe
 	if err != nil {
 		return "", "", err
 	}
+
+	// 3. Удаляем использованный invite токен (игнорируем ошибки - токен истечет по TTL)
+	_ = s.tokensCache.DeleteAuthToken(ctx, req.Token)
+
 	return accessToken, refreshToken, nil
 }
 
@@ -417,43 +414,36 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone string) erro
 	if !exist {
 		return domainErr.ErrUserNotFound
 	}
-	token, err := s.tokenManager.NewAuthToken(&dto.RegistrationTokenPayload{
+
+	// Генерируем короткий auth токен
+	token := codegen.GenerateAuthToken()
+	payload := &dto.AuthTokenPayload{
 		Phone: phone,
-	}, s.registrationTTL)
-	if err != nil {
-		return domainErr.NewInternalError("failed to generate change password token", err)
 	}
+
+	if saveErr := s.tokensCache.SaveAuthToken(ctx, token, payload, s.registrationTTL); saveErr != nil {
+		return saveErr
+	}
+
 	return s.notificationService.SendPasswordChangeLink(ctx, phone, token)
 }
 
 func (s *Service) ChangePassword(ctx context.Context, req *command.ChangePasswordConfirmCommand) error {
-	// 1. Парсим и валидируем токен
-	tokenPayload, err := s.tokenManager.ParseAuthToken(req.Token)
+	// 1. Получаем данные из Redis по короткому токену
+	tokenPayload, err := s.tokensCache.GetAuthToken(ctx, req.Token)
 	if err != nil {
 		return domainErr.NewUnauthorizedError("invalid or expired token").WithError(err)
 	}
 
-	// 2. Хэшируем токен для one-time use проверки
-	h := sha256.Sum256([]byte(req.Token))
-	tokenHash := hex.EncodeToString(h[:])
+	err = s.usersService.UpdatePasswordByPhone(ctx, tokenPayload.Phone, req.Password)
+	if err != nil {
+		return err
+	}
 
-	err = s.txManager.Transaction(ctx,
-		database.TXOptions{
-			IsolationLevel: coreEnum.IsoLevelReadCommited,
-		},
-		func(txCtx context.Context) error {
-			// 3. Проверяем и помечаем токен использованным (атомарно через SET NX)
-			alreadyUsed, markErr := s.tokensCache.MarkRegistrationTokenAsUsed(txCtx, tokenHash, 24*time.Hour)
-			if markErr != nil {
-				return markErr
-			}
-			if alreadyUsed {
-				return domainErr.NewConflictError("change password token already used", nil)
-			}
-			return s.usersService.UpdatePasswordByPhone(ctx, tokenPayload.Phone, req.Password)
-		},
-	)
-	return err
+	// 2. Удаляем использованный invite токен (игнорируем ошибки - токен истечет по TTL)
+	_ = s.tokensCache.DeleteAuthToken(ctx, req.Token)
+
+	return nil
 }
 
 // validateStaffRegistrationPermissions проверяет права на регистрацию работника

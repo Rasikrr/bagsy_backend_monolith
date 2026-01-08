@@ -10,9 +10,8 @@ type AccessTokenPayload struct {
 	NetworkCode string
 }
 
-// RegistrationTokenPayload - результат парсинга registration токена
-type RegistrationTokenPayload struct {
-	Phone       string
-	PointCode   string
-	NetworkCode string
+type AuthTokenPayload struct {
+	Phone       string `json:"phone"`
+	PointCode   string `json:"point_code"`
+	NetworkCode string `json:"network_code"`
 }

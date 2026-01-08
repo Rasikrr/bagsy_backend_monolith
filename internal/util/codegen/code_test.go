@@ -18,3 +18,8 @@ func TestGenerateAuthCode(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateAuthToken(t *testing.T) {
+	str := GenerateAuthToken()
+	t.Logf("GenerateAuthToken: %q", str)
+}

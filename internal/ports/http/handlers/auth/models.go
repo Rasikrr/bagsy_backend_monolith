@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
@@ -178,3 +179,17 @@ func (r *resendRegisterManagementRequest) Validate() error {
 }
 
 type registerStaffResendRequest = changePasswordRequest
+
+type verifyAuthTokenResponse struct {
+	Phone       string `json:"phone"`
+	NetworkCode string `json:"network_code,omitempty"`
+	PointCode   string `json:"point_code,omitempty"`
+}
+
+func toVerifyAuthTokenResponse(dto *dto.AuthTokenPayload) *verifyAuthTokenResponse {
+	return &verifyAuthTokenResponse{
+		Phone:       dto.Phone,
+		NetworkCode: dto.NetworkCode,
+		PointCode:   dto.PointCode,
+	}
+}

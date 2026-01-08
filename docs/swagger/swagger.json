@@ -637,6 +637,56 @@
                 }
             }
         },
+        "/api/v1/auth/verify-auth-token/{token}": {
+            "get": {
+                "description": "Позволяет фронтенду проверить валидность короткого токена из ссылки и получить метаданные (телефон, название точки/сети) для отображения пользователю.\nМетод является Read-only: он НЕ удаляет токен из кэша и НЕ завершает процесс регистрации/смены пароля.\n\nПоддерживаемые типы токенов (поле type):\n- `registration`: Инвайт нового сотрудника. Возвращает имя, роль и название точки.\n- `password_reset`: Ссылка на восстановление пароля. Возвращает только номер телефона.\n\nЛогика работы:\n1. Проверяет наличие токена в Redis.\n2. Если тип \"registration\", обогащает ответ данными из кэша заявок и справочника точек.\n3. Если токен просрочен или не существует — возвращает 401.\n\nUse Case: Пользователь кликнул по ссылке из WhatsApp/SMS, фронтенд запрашивает данные, чтобы отобразить под каким номер проходит процесс",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Проверка токена регистрации или сброса пароля",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Короткий токен из ссылки (10 символов)",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные о токене и владельце",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.verifyAuthTokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Токен недействителен, истек или уже был использован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Токен не найден",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bagsies": {
             "post": {
                 "description": "Создает новую бронь на услугу у мастера. Если клиент с указанным номером не существует, создается автоматически. Отправляется SMS/WhatsApp с кодом подтверждения.",
@@ -1735,6 +1785,20 @@
             ],
             "properties": {
                 "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.verifyAuthTokenResponse": {
+            "type": "object",
+            "properties": {
+                "network_code": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "point_code": {
                     "type": "string"
                 }
             }

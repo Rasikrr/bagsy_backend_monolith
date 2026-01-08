@@ -3,14 +3,15 @@ package register
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 )
 
-func (c *Cache) SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand) error {
+func (c *Cache) SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand, ttl time.Duration) error {
 	key := genManagementKey(req.Phone)
-	return saveToCache(ctx, c, key, toRegisterManagementDTO(req))
+	return saveToCache(ctx, c, key, toRegisterManagementDTO(req), ttl)
 }
 
 func (c *Cache) DeleteManagementRequest(ctx context.Context, phone string) error {
