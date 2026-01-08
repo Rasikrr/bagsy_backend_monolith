@@ -25,5 +25,8 @@ const (
 
 	BagsyConfirmTTL = "bagsy_confirm_ttl"
 
-	ManagementAuthTTL = "management_auth_ttl"
+	AwsRegion          = "aws_region"
+	AwsS3BucketName    = "aws_s3_bucket_name"
+	AwsSecretAccessKey = "aws_secret_access_key"
+	AwsAccessKeyId     = "aws_access_key_id"
 )

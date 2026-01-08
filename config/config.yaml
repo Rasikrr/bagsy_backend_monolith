@@ -198,3 +198,24 @@ env:
     env_name: "BAGSY_CONFIRM_TTL"
     value: "300s"
     required: true
+
+
+  aws_region:
+    type: "string"
+    env_name: "AWS_REGION"
+    required: true
+
+  aws_s3_bucket_name:
+    type: "string"
+    env_name: "AWS_S3_BUCKET_NAME"
+    required: true
+
+  aws_secret_access_key:
+    type: "string"
+    env_name: "AWS_SECRET_ACCESS_KEY"
+    required: true
+
+  aws_access_key_id:
+    type: "string"
+    env_name: "AWS_ACCESS_KEY_ID"
+    required: true
