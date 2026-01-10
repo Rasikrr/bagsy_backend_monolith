@@ -65,23 +65,30 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone, token strin
 
 func (s *Service) send(ctx context.Context, phone, message string) error {
 	// Пытаемся отправить через WhatsApp
-	err := s.whatsApp.SendMessage(ctx, phone, message)
-	if err != nil {
-		log.Warnf(ctx, "Failed to send message by whatsapp: %v", err)
+	whatsappErr := s.whatsApp.SendMessage(ctx, phone, message)
+	if whatsappErr != nil {
+		log.Warnf(ctx, "Failed to send message by whatsapp: %v", whatsappErr)
 
 		// Fallback на SMS
-		err = s.smsClient.Send(ctx, phone, message)
-		if err != nil {
-			// Преобразуем ошибку уведомления → доменную
-			return s.mapNotificationError(err)
+		smsErr := s.smsClient.Send(ctx, phone, message)
+		if smsErr != nil {
+			// Обе попытки отправки провалились - возвращаем доменную ошибку с деталями обеих ошибок
+			mappedErr := s.mapNotificationError(smsErr)
+			// Добавляем информацию об ошибке WhatsApp в Details
+			return mappedErr.
+				WithDetail("whatsapp_error", whatsappErr.Error()).
+				WithDetail("sms_error", smsErr.Error()).
+				WithDetail("fallback_attempted", true)
 		}
+		// SMS отправился успешно после fallback
+		log.Infof(ctx, "Message sent via SMS fallback after WhatsApp failure")
 	}
 	return nil
 }
 
 // mapNotificationError преобразует ошибки notification клиентов (SMS/WhatsApp) → доменные ошибки
 // nolint:gocognit,gocyclo,cyclop,funlen // Comprehensive error mapping requires explicit handling of all error cases
-func (s *Service) mapNotificationError(err error) error {
+func (s *Service) mapNotificationError(err error) *domainErr.DomainError {
 	if err == nil {
 		return nil
 	}
