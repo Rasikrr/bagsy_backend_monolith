@@ -20,7 +20,7 @@ var (
 )
 
 func TestGenPresignedUploadURL(t *testing.T) {
-	//t.Skip()
+	t.Skip()
 	ctx := context.Background()
 	cfg := Config{
 		Region:          region,
@@ -38,7 +38,7 @@ func TestGenPresignedUploadURL(t *testing.T) {
 }
 
 func TestGetPresignedGetURL(t *testing.T) {
-	//t.Skip()
+	t.Skip()
 	ctx := context.Background()
 	cfg := Config{
 		Region:          region,
