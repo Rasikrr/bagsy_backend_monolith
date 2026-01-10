@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/cockroachdb/errors"
 	greenapi "github.com/green-api/whatsapp-api-client-golang-v2"
 )
 
@@ -28,21 +28,21 @@ func NewClient(apiURL, mediaURL, idInstance, apiToken string) *Client {
 
 func (c *Client) SendMessage(_ context.Context, phoneNumber, message string) error {
 	if phoneNumber == "" {
-		return domainErr.ErrWhatsAppEmptyPhone
+		return ErrEmptyPhone
 	}
 	if message == "" {
-		return domainErr.ErrWhatsAppEmptyMessage
+		return ErrEmptyMessage
 	}
 
 	chatID := formatPhoneNumber(phoneNumber)
 
 	resp, err := c.api.Sending().SendMessage(chatID, message)
 	if err != nil {
-		return domainErr.ErrWhatsAppSendFailed.WithError(err)
+		return errors.Wrap(ErrSendFailed, err.Error())
 	}
 
 	if resp == nil {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -50,10 +50,10 @@ func (c *Client) SendMessage(_ context.Context, phoneNumber, message string) err
 
 func (c *Client) SendFileByURL(_ context.Context, phoneNumber, fileURL, caption string) error {
 	if phoneNumber == "" {
-		return domainErr.ErrWhatsAppEmptyPhone
+		return ErrEmptyPhone
 	}
 	if fileURL == "" {
-		return domainErr.ErrWhatsAppEmptyFile
+		return ErrEmptyFile
 	}
 
 	chatID := formatPhoneNumber(phoneNumber)
@@ -65,11 +65,11 @@ func (c *Client) SendFileByURL(_ context.Context, phoneNumber, fileURL, caption 
 
 	resp, err := c.api.Sending().SendFileByUrl(chatID, fileURL, "", opts...)
 	if err != nil {
-		return domainErr.ErrWhatsAppSendFailed.WithError(err)
+		return errors.Wrap(ErrSendFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -77,10 +77,10 @@ func (c *Client) SendFileByURL(_ context.Context, phoneNumber, fileURL, caption 
 
 func (c *Client) SendFileByUpload(_ context.Context, phoneNumber, filePath, caption string) error {
 	if phoneNumber == "" {
-		return domainErr.ErrWhatsAppEmptyPhone
+		return ErrEmptyPhone
 	}
 	if filePath == "" {
-		return domainErr.ErrWhatsAppEmptyFile
+		return ErrEmptyFile
 	}
 
 	chatID := formatPhoneNumber(phoneNumber)
@@ -92,11 +92,11 @@ func (c *Client) SendFileByUpload(_ context.Context, phoneNumber, filePath, capt
 
 	resp, err := c.api.Sending().SendFileByUpload(chatID, filePath, "", opts...)
 	if err != nil {
-		return domainErr.ErrWhatsAppSendFailed.WithError(err)
+		return errors.Wrap(ErrSendFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -104,7 +104,7 @@ func (c *Client) SendFileByUpload(_ context.Context, phoneNumber, filePath, capt
 
 func (c *Client) SendLocation(_ context.Context, phoneNumber string, latitude, longitude float64, locationName string) error {
 	if phoneNumber == "" {
-		return domainErr.ErrWhatsAppEmptyPhone
+		return ErrEmptyPhone
 	}
 
 	chatID := formatPhoneNumber(phoneNumber)
@@ -116,11 +116,11 @@ func (c *Client) SendLocation(_ context.Context, phoneNumber string, latitude, l
 
 	resp, err := c.api.Sending().SendLocation(chatID, float32(latitude), float32(longitude), opts...)
 	if err != nil {
-		return domainErr.ErrWhatsAppSendFailed.WithError(err)
+		return errors.Wrap(ErrSendFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -128,10 +128,10 @@ func (c *Client) SendLocation(_ context.Context, phoneNumber string, latitude, l
 
 func (c *Client) SendContact(_ context.Context, phoneNumber string, contact Contact) error {
 	if phoneNumber == "" {
-		return domainErr.ErrWhatsAppEmptyPhone
+		return ErrEmptyPhone
 	}
 	if contact.PhoneContact == 0 {
-		return domainErr.NewInvalidInputError("contact phone number is required", nil)
+		return ErrEmptyContact
 	}
 
 	chatID := formatPhoneNumber(phoneNumber)
@@ -146,11 +146,11 @@ func (c *Client) SendContact(_ context.Context, phoneNumber string, contact Cont
 
 	resp, err := c.api.Sending().SendContact(chatID, greenContact)
 	if err != nil {
-		return domainErr.ErrWhatsAppSendFailed.WithError(err)
+		return errors.Wrap(ErrSendFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -160,16 +160,16 @@ func (c *Client) SendContact(_ context.Context, phoneNumber string, contact Cont
 func (c *Client) GetStateInstance(_ context.Context) (*StateInstance, error) {
 	resp, err := c.api.Account().GetStateInstance()
 	if err != nil {
-		return nil, domainErr.NewInternalError("failed to get state instance", err)
+		return nil, errors.Wrap(ErrGetStateFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return nil, domainErr.ErrWhatsAppEmptyResponse
+		return nil, ErrEmptyResponse
 	}
 
 	var state StateInstance
 	if unmarshalErr := json.Unmarshal(resp.Body, &state); unmarshalErr != nil {
-		return nil, domainErr.NewInternalError("failed to unmarshal state response", unmarshalErr)
+		return nil, errors.Wrap(ErrUnmarshalFailed, unmarshalErr.Error())
 	}
 
 	return &state, nil
@@ -179,16 +179,16 @@ func (c *Client) GetStateInstance(_ context.Context) (*StateInstance, error) {
 func (c *Client) GetSettings(_ context.Context) (*Settings, error) {
 	resp, err := c.api.Account().GetSettings()
 	if err != nil {
-		return nil, domainErr.NewInternalError("failed to get settings", err)
+		return nil, errors.Wrap(ErrGetSettingsFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return nil, domainErr.ErrWhatsAppEmptyResponse
+		return nil, ErrEmptyResponse
 	}
 
 	var settings Settings
 	if unmarshalErr := json.Unmarshal(resp.Body, &settings); unmarshalErr != nil {
-		return nil, domainErr.NewInternalError("failed to unmarshal settings response", unmarshalErr)
+		return nil, errors.Wrap(ErrUnmarshalFailed, unmarshalErr.Error())
 	}
 
 	return &settings, nil
@@ -219,11 +219,11 @@ func (c *Client) SetSettings(_ context.Context, settings Settings) error {
 
 	resp, err := c.api.Account().SetSettings(opts...)
 	if err != nil {
-		return domainErr.NewInternalError("failed to set settings", err)
+		return errors.Wrap(ErrSetSettingsFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -233,10 +233,10 @@ func (c *Client) SetSettings(_ context.Context, settings Settings) error {
 func (c *Client) Reboot(_ context.Context) error {
 	resp, err := c.api.Account().Reboot()
 	if err != nil {
-		return domainErr.NewInternalError("failed to reboot instance", err)
+		return errors.Wrap(ErrRebootFailed, err.Error())
 	}
 	if resp == nil {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -246,11 +246,11 @@ func (c *Client) Reboot(_ context.Context) error {
 func (c *Client) Logout(_ context.Context) error {
 	resp, err := c.api.Account().Logout()
 	if err != nil {
-		return domainErr.NewInternalError("failed to logout", err)
+		return errors.Wrap(ErrLogoutFailed, err.Error())
 	}
 
 	if resp == nil {
-		return domainErr.ErrWhatsAppEmptyResponse
+		return ErrEmptyResponse
 	}
 
 	return nil
@@ -259,19 +259,19 @@ func (c *Client) Logout(_ context.Context) error {
 // DownloadFile загружает файл из сообщения
 func (c *Client) DownloadFile(_ context.Context, chatID, messageID string) ([]byte, error) {
 	if chatID == "" {
-		return nil, domainErr.NewInvalidInputError("chat ID is required", nil)
+		return nil, ErrEmptyChatID
 	}
 	if messageID == "" {
-		return nil, domainErr.NewInvalidInputError("message ID is required", nil)
+		return nil, ErrEmptyMsgID
 	}
 
 	resp, err := c.api.Receiving().DownloadFile(chatID, messageID)
 	if err != nil {
-		return nil, domainErr.NewInternalError("failed to download file", err)
+		return nil, errors.Wrap(ErrDownloadFailed, err.Error())
 	}
 
 	if resp == nil || resp.StatusCode != http.StatusOK {
-		return nil, domainErr.ErrWhatsAppEmptyResponse
+		return nil, ErrEmptyResponse
 	}
 
 	return resp.Body, nil

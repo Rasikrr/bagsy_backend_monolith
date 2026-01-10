@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -74,13 +73,13 @@ func TestClient_SendMessage_Validation(t *testing.T) {
 			name:        "empty phone number",
 			phoneNumber: "",
 			message:     "Test message",
-			expectedErr: domainErr.ErrWhatsAppEmptyPhone,
+			expectedErr: ErrEmptyPhone,
 		},
 		{
 			name:        "empty message",
 			phoneNumber: "77001234567",
 			message:     "",
-			expectedErr: domainErr.ErrWhatsAppEmptyMessage,
+			expectedErr: ErrEmptyMessage,
 		},
 	}
 
@@ -107,13 +106,13 @@ func TestClient_SendFileByURL_Validation(t *testing.T) {
 			name:        "empty phone number",
 			phoneNumber: "",
 			fileURL:     "https://example.com/file.jpg",
-			expectedErr: domainErr.ErrWhatsAppEmptyPhone,
+			expectedErr: ErrEmptyPhone,
 		},
 		{
 			name:        "empty file URL",
 			phoneNumber: "77001234567",
 			fileURL:     "",
-			expectedErr: domainErr.ErrWhatsAppEmptyFile,
+			expectedErr: ErrEmptyFile,
 		},
 	}
 
@@ -140,13 +139,13 @@ func TestClient_SendFileByUpload_Validation(t *testing.T) {
 			name:        "empty phone number",
 			phoneNumber: "",
 			filePath:    "/path/to/file.jpg",
-			expectedErr: domainErr.ErrWhatsAppEmptyPhone,
+			expectedErr: ErrEmptyPhone,
 		},
 		{
 			name:        "empty file path",
 			phoneNumber: "77001234567",
 			filePath:    "",
-			expectedErr: domainErr.ErrWhatsAppEmptyFile,
+			expectedErr: ErrEmptyFile,
 		},
 	}
 
@@ -165,7 +164,7 @@ func TestClient_SendLocation_Validation(t *testing.T) {
 
 	err := client.SendLocation(context.Background(), "", 51.5074, -0.1278, "London")
 	require.Error(t, err)
-	assert.ErrorIs(t, err, domainErr.ErrWhatsAppEmptyPhone)
+	assert.ErrorIs(t, err, ErrEmptyPhone)
 }
 
 func TestClient_SendContact_Validation(t *testing.T) {
