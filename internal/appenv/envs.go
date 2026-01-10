@@ -27,6 +27,7 @@ const (
 
 	AwsRegion          = "aws_region"
 	AwsS3BucketName    = "aws_s3_bucket_name"
+	AwsS3Endpoint      = "aws_s3_endpoint"
 	AwsSecretAccessKey = "aws_secret_access_key"
 	AwsAccessKeyId     = "aws_access_key_id"
 )

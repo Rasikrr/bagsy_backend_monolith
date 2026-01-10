@@ -219,3 +219,8 @@ env:
     type: "string"
     env_name: "AWS_ACCESS_KEY_ID"
     required: true
+
+  aws_s3_endpoint:
+    type: "string"
+    env_name: "AWS_S3_ENDPOINT"
+    required: true
