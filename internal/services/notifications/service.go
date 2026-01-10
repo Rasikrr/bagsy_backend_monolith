@@ -72,70 +72,139 @@ func (s *Service) send(ctx context.Context, phone, message string) error {
 		// Fallback на SMS
 		err = s.smsClient.Send(ctx, phone, message)
 		if err != nil {
-			// Преобразуем SMS ошибку → доменную
-			return s.mapSMSError(err)
+			// Преобразуем ошибку уведомления → доменную
+			return s.mapNotificationError(err)
 		}
 	}
 	return nil
 }
 
-// mapSMSError преобразует ошибки SMS клиента → доменные ошибки
-func (s *Service) mapSMSError(err error) error {
-	// Validation errors
-	if errors.Is(err, sms.ErrEmptyPhone) || errors.Is(err, sms.ErrEmptyMessage) {
-		return domainErr.NewInvalidInputError("invalid notification data", err)
+// mapNotificationError преобразует ошибки notification клиентов (SMS/WhatsApp) → доменные ошибки
+// nolint:gocognit,gocyclo,cyclop,funlen // Comprehensive error mapping requires explicit handling of all error cases
+func (s *Service) mapNotificationError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// ========== VALIDATION ERRORS (400) ==========
+
+	// Phone validation (SMS + WhatsApp)
+	if errors.Is(err, sms.ErrEmptyPhone) || errors.Is(err, whatsapp.ErrEmptyPhone) {
+		return domainErr.NewInvalidInputError("phone number is required", err)
 	}
 	if errors.Is(err, sms.ErrInvalidPhone) {
 		return domainErr.NewInvalidInputError("invalid phone number format", err)
 	}
 
-	// API errors - конвертируем в соответствующие доменные
-	if errors.Is(err, sms.ErrAuthFailed) {
-		return domainErr.NewUnauthorizedError("SMS service authentication failed")
-	}
-	if errors.Is(err, sms.ErrNoFunds) {
-		return domainErr.NewInternalError("insufficient funds to send notification", err)
-	}
-	if errors.Is(err, sms.ErrIPBlocked) || errors.Is(err, sms.ErrForbidden) {
-		return domainErr.NewInternalError("SMS service blocked the request", err)
-	}
-	if errors.Is(err, sms.ErrUndeliverable) {
-		return domainErr.NewInternalError("notification cannot be delivered", err)
-	}
-	if errors.Is(err, sms.ErrTooManyRequests) || errors.Is(err, sms.ErrSpam) {
-		return domainErr.NewInternalError("too many notification requests, try again later", err)
+	// Message validation (SMS + WhatsApp)
+	if errors.Is(err, sms.ErrEmptyMessage) || errors.Is(err, whatsapp.ErrEmptyMessage) {
+		return domainErr.NewInvalidInputError("message is required", err)
 	}
 
-	// Общая ошибка для всех остальных случаев
-	return domainErr.NewInternalError("failed to send notification", err)
-}
-
-// mapWhatsAppError преобразует ошибки WhatsApp клиента → доменные ошибки
-// (на случай если вам понадобится обрабатывать WhatsApp ошибки отдельно)
-// nolint:unused // Функция создана для будущего использования
-func (s *Service) mapWhatsAppError(err error) error {
-	// Validation errors
-	if errors.Is(err, whatsapp.ErrEmptyPhone) || errors.Is(err, whatsapp.ErrEmptyMessage) {
-		return domainErr.NewInvalidInputError("invalid notification data", err)
-	}
+	// WhatsApp specific validation
 	if errors.Is(err, whatsapp.ErrEmptyFile) {
 		return domainErr.NewInvalidInputError("file is required", err)
 	}
-
-	// API errors
-	if errors.Is(err, whatsapp.ErrUnauthorized) {
-		return domainErr.NewUnauthorizedError("WhatsApp API authentication failed")
+	if errors.Is(err, whatsapp.ErrEmptyChatID) {
+		return domainErr.NewInvalidInputError("chat ID is required", err)
 	}
+	if errors.Is(err, whatsapp.ErrEmptyContact) {
+		return domainErr.NewInvalidInputError("contact is required", err)
+	}
+
+	// Message ID validation (SMS + WhatsApp)
+	if errors.Is(err, sms.ErrInvalidMsgID) || errors.Is(err, whatsapp.ErrEmptyMsgID) {
+		return domainErr.NewInvalidInputError("message ID is invalid", err)
+	}
+
+	// ========== AUTH ERRORS (401) ==========
+
+	if errors.Is(err, sms.ErrAuthFailed) || errors.Is(err, whatsapp.ErrUnauthorized) {
+		return domainErr.NewUnauthorizedError("notification service authentication failed")
+	}
+
+	// ========== BUSINESS/API ERRORS (500) ==========
+
+	// Insufficient funds (SMS only)
+	if errors.Is(err, sms.ErrNoFunds) {
+		return domainErr.NewInternalError("insufficient funds to send notification", err)
+	}
+
+	// IP/Access restrictions (SMS only)
+	if errors.Is(err, sms.ErrIPBlocked) {
+		return domainErr.NewInternalError("IP address blocked by notification service", err)
+	}
+	if errors.Is(err, sms.ErrForbidden) {
+		return domainErr.NewInternalError("notification service rejected the message", err)
+	}
+
+	// Delivery issues (SMS only)
+	if errors.Is(err, sms.ErrUndeliverable) {
+		return domainErr.NewInternalError("notification cannot be delivered", err)
+	}
+
+	// Rate limiting (SMS + WhatsApp)
+	if errors.Is(err, sms.ErrTooManyRequests) || errors.Is(err, whatsapp.ErrRateLimited) {
+		return domainErr.NewInternalError("too many notification requests, try again later", err)
+	}
+
+	// Spam detection (SMS only)
+	if errors.Is(err, sms.ErrSpam) {
+		return domainErr.NewInternalError("notification rejected as spam, try again later", err)
+	}
+
+	// WhatsApp instance offline
 	if errors.Is(err, whatsapp.ErrInstanceOffline) {
-		return domainErr.NewInternalError("WhatsApp instance is offline", err)
-	}
-	if errors.Is(err, whatsapp.ErrRateLimited) {
-		return domainErr.NewInternalError("WhatsApp rate limit reached, try again later", err)
-	}
-	if errors.Is(err, whatsapp.ErrEmptyResponse) || errors.Is(err, whatsapp.ErrSendFailed) {
-		return domainErr.NewInternalError("failed to send WhatsApp notification", err)
+		return domainErr.NewInternalError("WhatsApp instance is temporarily unavailable", err)
 	}
 
-	// Общая ошибка
+	// Generic send failures (SMS + WhatsApp)
+	if errors.Is(err, sms.ErrSendFailed) || errors.Is(err, whatsapp.ErrSendFailed) {
+		return domainErr.NewInternalError("failed to send notification", err)
+	}
+
+	// Empty response (WhatsApp only)
+	if errors.Is(err, whatsapp.ErrEmptyResponse) {
+		return domainErr.NewInternalError("received empty response from notification service", err)
+	}
+
+	// ========== INTERNAL/NETWORK ERRORS (500) ==========
+
+	// SMS internal errors
+	if errors.Is(err, sms.ErrMarshalFailed) || errors.Is(err, sms.ErrUnmarshalFailed) {
+		return domainErr.NewInternalError("notification service serialization error", err)
+	}
+	if errors.Is(err, sms.ErrCreateRequestFailed) || errors.Is(err, sms.ErrRequestFailed) {
+		return domainErr.NewInternalError("failed to create notification request", err)
+	}
+	if errors.Is(err, sms.ErrHTTPRequestFailed) {
+		return domainErr.NewInternalError("notification service network error", err)
+	}
+	if errors.Is(err, sms.ErrUnexpectedStatus) {
+		return domainErr.NewInternalError("notification service returned unexpected status", err)
+	}
+	if errors.Is(err, sms.ErrReadBodyFailed) {
+		return domainErr.NewInternalError("failed to read notification service response", err)
+	}
+
+	// WhatsApp internal errors
+	if errors.Is(err, whatsapp.ErrUnmarshalFailed) {
+		return domainErr.NewInternalError("WhatsApp service serialization error", err)
+	}
+	if errors.Is(err, whatsapp.ErrGetStateFailed) ||
+		errors.Is(err, whatsapp.ErrGetSettingsFailed) ||
+		errors.Is(err, whatsapp.ErrSetSettingsFailed) {
+		return domainErr.NewInternalError("WhatsApp service configuration error", err)
+	}
+	if errors.Is(err, whatsapp.ErrRebootFailed) || errors.Is(err, whatsapp.ErrLogoutFailed) {
+		return domainErr.NewInternalError("WhatsApp service operation error", err)
+	}
+	if errors.Is(err, whatsapp.ErrDownloadFailed) {
+		return domainErr.NewInternalError("failed to download file from WhatsApp", err)
+	}
+
+	// ========== FALLBACK ==========
+
+	// Для всех неизвестных ошибок
 	return domainErr.NewInternalError("failed to send notification", err)
 }
