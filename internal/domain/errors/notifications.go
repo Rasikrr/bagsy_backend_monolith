@@ -33,22 +33,3 @@ var (
 	ErrWhatsAppUnauthorized    = NewUnauthorizedError("unauthorized access to WhatsApp API")
 	ErrWhatsAppRateLimited     = NewInternalError("WhatsApp rate limit reached", nil)
 )
-
-// S3 errors
-var (
-	// Validation errors
-	ErrS3EmptyRegion    = NewInvalidInputError("AWS region is required", nil)
-	ErrS3EmptyAccessKey = NewInvalidInputError("AWS access key is required", nil)
-	ErrS3EmptySecretKey = NewInvalidInputError("AWS secret key is required", nil)
-	ErrS3EmptyBucket    = NewInvalidInputError("S3 bucket name is required", nil)
-	ErrS3EmptyKey       = NewInvalidInputError("S3 object key is required", nil)
-	ErrS3EmptyData      = NewInvalidInputError("data to upload cannot be empty", nil)
-
-	// API errors
-	ErrS3ConfigFailed   = NewInternalError("failed to load AWS configuration", nil)
-	ErrS3UploadFailed   = NewInternalError("failed to upload file to S3", nil)
-	ErrS3DownloadFailed = NewInternalError("failed to download file from S3", nil)
-	ErrS3DeleteFailed   = NewInternalError("failed to delete file from S3", nil)
-	ErrS3ListFailed     = NewInternalError("failed to list S3 objects", nil)
-	ErrS3EmptyLocation  = NewInternalError("empty location returned from S3", nil)
-)

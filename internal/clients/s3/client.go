@@ -13,8 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/cockroachdb/errors"
 )
 
 // Config содержит параметры конфигурации для S3 клиента
@@ -38,16 +37,16 @@ type Client struct {
 // NewClient создает новый S3 клиент
 func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	if cfg.Region == "" {
-		return nil, domainErr.ErrS3EmptyRegion
+		return nil, ErrEmptyRegion
 	}
 	if cfg.AccessKeyID == "" {
-		return nil, domainErr.ErrS3EmptyAccessKey
+		return nil, ErrEmptyAccessKey
 	}
 	if cfg.SecretAccessKey == "" {
-		return nil, domainErr.ErrS3EmptySecretKey
+		return nil, ErrEmptySecretKey
 	}
 	if cfg.BucketName == "" {
-		return nil, domainErr.ErrS3EmptyBucket
+		return nil, ErrEmptyBucket
 	}
 
 	// Настройка AWS конфигурации
@@ -60,7 +59,7 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 		)),
 	)
 	if err != nil {
-		return nil, domainErr.ErrS3ConfigFailed.WithError(err)
+		return nil, errors.Wrap(ErrConfigFailed, err.Error())
 	}
 
 	// Создание S3 клиента
@@ -100,10 +99,10 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 // Upload загружает файл в S3
 func (c *Client) Upload(ctx context.Context, key string, data []byte, contentType string) (string, error) {
 	if key == "" {
-		return "", domainErr.ErrS3EmptyKey
+		return "", ErrEmptyKey
 	}
 	if len(data) == 0 {
-		return "", domainErr.ErrS3EmptyData
+		return "", ErrEmptyData
 	}
 
 	input := &s3.PutObjectInput{
@@ -118,11 +117,11 @@ func (c *Client) Upload(ctx context.Context, key string, data []byte, contentTyp
 
 	result, err := c.uploader.Upload(ctx, input)
 	if err != nil {
-		return "", domainErr.ErrS3UploadFailed.WithError(err)
+		return "", errors.Wrap(ErrUploadFailed, err.Error())
 	}
 
 	if result.Location == "" {
-		return "", domainErr.ErrS3EmptyLocation
+		return "", ErrEmptyLocation
 	}
 
 	return result.Location, nil
@@ -131,10 +130,10 @@ func (c *Client) Upload(ctx context.Context, key string, data []byte, contentTyp
 // UploadStream загружает файл из io.Reader в S3
 func (c *Client) UploadStream(ctx context.Context, key string, reader io.Reader, contentType string) (string, error) {
 	if key == "" {
-		return "", domainErr.ErrS3EmptyKey
+		return "", ErrEmptyKey
 	}
 	if reader == nil {
-		return "", domainErr.ErrS3EmptyData
+		return "", ErrNilReader
 	}
 
 	input := &s3.PutObjectInput{
@@ -149,11 +148,11 @@ func (c *Client) UploadStream(ctx context.Context, key string, reader io.Reader,
 
 	result, err := c.uploader.Upload(ctx, input)
 	if err != nil {
-		return "", domainErr.ErrS3UploadFailed.WithError(err)
+		return "", errors.Wrap(ErrUploadFailed, err.Error())
 	}
 
 	if result.Location == "" {
-		return "", domainErr.ErrS3EmptyLocation
+		return "", ErrEmptyLocation
 	}
 
 	return result.Location, nil
@@ -162,7 +161,7 @@ func (c *Client) UploadStream(ctx context.Context, key string, reader io.Reader,
 // Download скачивает файл из S3
 func (c *Client) Download(ctx context.Context, key string) ([]byte, error) {
 	if key == "" {
-		return nil, domainErr.ErrS3EmptyKey
+		return nil, ErrEmptyKey
 	}
 
 	buffer := manager.NewWriteAtBuffer([]byte{})
@@ -172,7 +171,7 @@ func (c *Client) Download(ctx context.Context, key string) ([]byte, error) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return nil, domainErr.ErrS3DownloadFailed.WithError(err)
+		return nil, errors.Wrap(ErrDownloadFailed, err.Error())
 	}
 
 	return buffer.Bytes(), nil
@@ -181,10 +180,10 @@ func (c *Client) Download(ctx context.Context, key string) ([]byte, error) {
 // DownloadStream скачивает файл из S3 в io.WriterAt
 func (c *Client) DownloadStream(ctx context.Context, key string, writer io.WriterAt) (int64, error) {
 	if key == "" {
-		return 0, domainErr.ErrS3EmptyKey
+		return 0, ErrEmptyKey
 	}
 	if writer == nil {
-		return 0, domainErr.NewInvalidInputError("writer cannot be nil", nil)
+		return 0, ErrNilWriter
 	}
 
 	n, err := c.downloader.Download(ctx, writer, &s3.GetObjectInput{
@@ -192,7 +191,7 @@ func (c *Client) DownloadStream(ctx context.Context, key string, writer io.Write
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return 0, domainErr.ErrS3DownloadFailed.WithError(err)
+		return 0, errors.Wrap(ErrDownloadFailed, err.Error())
 	}
 
 	return n, nil
@@ -201,7 +200,7 @@ func (c *Client) DownloadStream(ctx context.Context, key string, writer io.Write
 // Delete удаляет файл из S3
 func (c *Client) Delete(ctx context.Context, key string) error {
 	if key == "" {
-		return domainErr.ErrS3EmptyKey
+		return ErrEmptyKey
 	}
 
 	_, err := c.s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
@@ -209,7 +208,7 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return domainErr.ErrS3DeleteFailed.WithError(err)
+		return errors.Wrap(ErrDeleteFailed, err.Error())
 	}
 
 	return nil
@@ -218,7 +217,7 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 // DeleteMultiple удаляет несколько файлов из S3
 func (c *Client) DeleteMultiple(ctx context.Context, keys []string) error {
 	if len(keys) == 0 {
-		return domainErr.NewInvalidInputError("keys cannot be empty", nil)
+		return ErrEmptyKeys
 	}
 
 	var objectIDs []types.ObjectIdentifier
@@ -229,7 +228,7 @@ func (c *Client) DeleteMultiple(ctx context.Context, keys []string) error {
 	}
 
 	if len(objectIDs) == 0 {
-		return domainErr.NewInvalidInputError("no valid keys provided", nil)
+		return ErrNoValidKeys
 	}
 
 	_, err := c.s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
@@ -240,7 +239,7 @@ func (c *Client) DeleteMultiple(ctx context.Context, keys []string) error {
 		},
 	})
 	if err != nil {
-		return domainErr.ErrS3DeleteFailed.WithError(err)
+		return errors.Wrap(ErrDeleteFailed, err.Error())
 	}
 
 	return nil
@@ -262,7 +261,7 @@ func (c *Client) List(ctx context.Context, prefix string) ([]string, error) {
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, domainErr.ErrS3ListFailed.WithError(err)
+			return nil, errors.Wrap(ErrListFailed, err.Error())
 		}
 
 		for _, obj := range output.Contents {
@@ -291,7 +290,7 @@ func (c *Client) ListWithDetails(ctx context.Context, prefix string) ([]ObjectIn
 	for paginator.HasMorePages() {
 		output, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, domainErr.ErrS3ListFailed.WithError(err)
+			return nil, errors.Wrap(ErrListFailed, err.Error())
 		}
 
 		for _, obj := range output.Contents {
@@ -310,7 +309,7 @@ func (c *Client) ListWithDetails(ctx context.Context, prefix string) ([]ObjectIn
 // Exists проверяет существование файла в S3
 func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 	if key == "" {
-		return false, domainErr.ErrS3EmptyKey
+		return false, ErrEmptyKey
 	}
 
 	_, err := c.s3Client.HeadObject(ctx, &s3.HeadObjectInput{
@@ -323,7 +322,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 		if strings.Contains(errMsg, "NotFound") || strings.Contains(errMsg, "NoSuchKey") {
 			return false, nil
 		}
-		return false, domainErr.NewInternalError("failed to check object existence", err)
+		return false, errors.Wrap(ErrCheckFailed, err.Error())
 	}
 
 	return true, nil
@@ -344,10 +343,10 @@ func (c *Client) GetURL(key string) string {
 // expiresIn - время жизни ссылки (рекомендуется 15 минут для загрузки)
 func (c *Client) GeneratePresignedUploadURL(ctx context.Context, key string, contentType string, expiresIn time.Duration) (string, error) {
 	if key == "" {
-		return "", domainErr.ErrS3EmptyKey
+		return "", ErrEmptyKey
 	}
 	if expiresIn <= 0 {
-		return "", domainErr.NewInvalidInputError("expiration time must be positive", nil)
+		return "", ErrInvalidExpiry
 	}
 
 	input := &s3.PutObjectInput{
@@ -363,7 +362,7 @@ func (c *Client) GeneratePresignedUploadURL(ctx context.Context, key string, con
 		opts.Expires = expiresIn
 	})
 	if err != nil {
-		return "", domainErr.NewInternalError("failed to generate presigned upload URL", err)
+		return "", errors.Wrap(ErrPresignFailed, err.Error())
 	}
 
 	return presignedReq.URL, nil
@@ -374,10 +373,10 @@ func (c *Client) GeneratePresignedUploadURL(ctx context.Context, key string, con
 // expiresIn - время жизни ссылки (рекомендуется от 15 минут до 7 дней)
 func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, expiresIn time.Duration) (string, error) {
 	if key == "" {
-		return "", domainErr.ErrS3EmptyKey
+		return "", ErrEmptyKey
 	}
 	if expiresIn <= 0 {
-		return "", domainErr.NewInvalidInputError("expiration time must be positive", nil)
+		return "", ErrInvalidExpiry
 	}
 
 	input := &s3.GetObjectInput{
@@ -389,7 +388,7 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 		opts.Expires = expiresIn
 	})
 	if err != nil {
-		return "", domainErr.NewInternalError("failed to generate presigned download URL", err)
+		return "", errors.Wrap(ErrPresignFailed, err.Error())
 	}
 
 	return presignedReq.URL, nil
