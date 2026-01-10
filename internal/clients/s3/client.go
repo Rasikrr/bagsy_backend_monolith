@@ -20,7 +20,7 @@ import (
 // Config содержит параметры конфигурации для S3 клиента
 type Config struct {
 	Region          string
-	Endpoint        string // Опционально, для совместимых с S3 сервисов (MinIO, LocalStack)
+	Endpoint        string // Опционально, для совместимых с S3 сервисов (MinIO, LocalStack, Railway)
 	AccessKeyID     string
 	SecretAccessKey string
 	BucketName      string
@@ -221,21 +221,21 @@ func (c *Client) DeleteMultiple(ctx context.Context, keys []string) error {
 		return domainErr.NewInvalidInputError("keys cannot be empty", nil)
 	}
 
-	var objectIds []types.ObjectIdentifier
+	var objectIDs []types.ObjectIdentifier
 	for _, key := range keys {
 		if key != "" {
-			objectIds = append(objectIds, types.ObjectIdentifier{Key: aws.String(key)})
+			objectIDs = append(objectIDs, types.ObjectIdentifier{Key: aws.String(key)})
 		}
 	}
 
-	if len(objectIds) == 0 {
+	if len(objectIDs) == 0 {
 		return domainErr.NewInvalidInputError("no valid keys provided", nil)
 	}
 
 	_, err := c.s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
 		Bucket: aws.String(c.bucketName),
 		Delete: &types.Delete{
-			Objects: objectIds,
+			Objects: objectIDs,
 			Quiet:   aws.Bool(true),
 		},
 	})
