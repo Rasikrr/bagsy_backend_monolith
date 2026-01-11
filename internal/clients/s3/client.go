@@ -393,3 +393,7 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 
 	return presignedReq.URL, nil
 }
+
+func (c *Client) GetBucketName(_ context.Context) string {
+	return c.bucketName
+}

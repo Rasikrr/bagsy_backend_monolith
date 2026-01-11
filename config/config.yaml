@@ -224,3 +224,9 @@ env:
     type: "string"
     env_name: "AWS_S3_ENDPOINT"
     required: true
+
+  media_ttl:
+    type: "duration"
+    env_name: "MEDIA_TTL"
+    value: "900s"
+    required: true

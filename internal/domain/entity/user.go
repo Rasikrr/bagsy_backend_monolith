@@ -14,6 +14,7 @@ type User struct {
 	Surname     string
 	PointCode   *string
 	NetworkCode *string
+	AvatarURL   *string // file_key из S3 (через user_media → media)
 	Active      bool
 	Schedule    []StaffSchedule
 	CreatedAt   time.Time

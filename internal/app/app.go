@@ -11,10 +11,12 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
+	mediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
+	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	"github.com/Rasikrr/core/application"
@@ -52,6 +54,7 @@ type App struct {
 	bagsiesRepo         *bagsiesR.Repository
 	masterServicesRepo  *masterServicesR.Repository
 	servicesRepo        *servicesR.Repository
+	mediaRepository     *mediaR.Repository
 
 	usersService          *usersS.Service
 	pointsService         *pointsS.Service
@@ -62,6 +65,7 @@ type App struct {
 	bagsiesService        *bagsies.Service
 	masterServicesService *masterservices.Service
 	servicesService       *services.Service
+	mediaService          *mediaS.Service
 
 	s3Client *s3.Client
 
@@ -90,7 +94,7 @@ func InitApp(ctx context.Context) *App {
 }
 
 func (a *App) initHTTP(_ context.Context) error {
-	vars := a.Config().Variables()
+	vars := a.Config().Variables
 
 	http.NewServer(
 		a.HTTPServer(),
@@ -103,12 +107,13 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.bagsiesService,
 		a.pointsService,
 		a.networksService,
+		a.mediaService,
 	)
 	return nil
 }
 
 func (a *App) initInfra(_ context.Context) error {
-	vars := a.Config().Variables()
+	vars := a.Config().Variables
 
 	a.tokenManager = jwt.NewTokenManager(
 		vars.GetString(appenv.JWTSecret),
@@ -120,7 +125,7 @@ func (a *App) initInfra(_ context.Context) error {
 func (a *App) initCache(_ context.Context) error {
 	a.tokensCache = tokens.New(a.Redis())
 
-	vars := a.Config().Variables()
+	vars := a.Config().Variables
 
 	a.bagsyConfirmCache = bagsyconfirm.NewCache(
 		a.Redis(),
@@ -143,11 +148,12 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
 	a.servicesRepo = servicesR.NewRepository(a.Postgres())
+	a.mediaRepository = mediaR.NewRepository(a.Postgres())
 	return nil
 }
 
 func (a *App) initServices(_ context.Context) error {
-	vars := a.Config().Variables()
+	vars := a.Config().Variables
 
 	a.networksService = networksS.NewService(a.networksRepo)
 	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService, a.pointCategoriesRepo)
@@ -186,11 +192,17 @@ func (a *App) initServices(_ context.Context) error {
 		a.bagsyConfirmCache,
 	)
 
+	a.mediaService = mediaS.NewService(
+		a.s3Client,
+		a.mediaRepository,
+		vars.GetDuration(appenv.MediaTTL),
+	)
+
 	return nil
 }
 
 func (a *App) initClients(ctx context.Context) error {
-	vars := a.Config().Variables()
+	vars := a.Config().Variables
 
 	a.smsClient = sms.NewClient(
 		vars.GetString(appenv.SMSClientLogin),
@@ -203,6 +215,7 @@ func (a *App) initClients(ctx context.Context) error {
 		vars.GetString(appenv.WhatsAppIDInstance),
 		vars.GetString(appenv.WhatsAppAPIToken),
 	)
+	log.Infof(ctx, "vars: %v", vars)
 	var err error
 	a.s3Client, err = s3.NewClient(
 		ctx,

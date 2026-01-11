@@ -908,6 +908,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/media/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создает запись в БД со статусом PENDING и генерирует временную S3 URL для загрузки файла напрямую с клиента",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Получить пресайнд ссылку для загрузки медиафайла",
+                "parameters": [
+                    {
+                        "description": "Данные о загружаемом файле",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.getUploadURLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ссылки на загрузку и метаданные",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.getUploadURLResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса или неподдерживаемый тип контента",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/networks/{code}": {
             "get": {
                 "description": "Возвращает детальную информацию о сети: название, описание, даты создания/обновления и автора создания",
@@ -1910,6 +1967,39 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.getUploadURLRequest": {
+            "type": "object",
+            "required": [
+                "content_type",
+                "filename",
+                "purpose"
+            ],
+            "properties": {
+                "content_type": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.getUploadURLResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "media_url": {
+                    "type": "string"
+                },
+                "url": {
                     "type": "string"
                 }
             }

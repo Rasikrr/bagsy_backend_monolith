@@ -30,4 +30,6 @@ const (
 	AwsS3Endpoint      = "aws_s3_endpoint"
 	AwsSecretAccessKey = "aws_secret_access_key"
 	AwsAccessKeyID     = "aws_access_key_id"
+
+	MediaTTL = "media_ttl"
 )
