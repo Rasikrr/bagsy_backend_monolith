@@ -1,0 +1,211 @@
+-- +goose Up
+-- +goose StatementBegin
+
+-- ============================================
+-- MEDIA MANAGEMENT TABLES
+-- ============================================
+
+-- Основная таблица медиа-файлов
+CREATE TABLE IF NOT EXISTS media (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- S3 информация
+    file_key TEXT NOT NULL UNIQUE,
+    bucket_name TEXT NOT NULL,
+
+    -- Метаданные файла
+    original_filename TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size_bytes BIGINT NOT NULL,
+
+    -- Для изображений
+    width INTEGER,
+    height INTEGER,
+
+    -- Статус обработки
+    status TEXT NOT NULL DEFAULT 'pending',
+
+    -- Audit
+    uploaded_by TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+-- Индексы для media
+CREATE INDEX idx_media_file_key ON media(file_key) WHERE deleted_at IS NULL;
+CREATE INDEX idx_media_status ON media(status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_media_uploaded_by ON media(uploaded_by) WHERE deleted_at IS NULL;
+CREATE INDEX idx_media_created_at ON media(created_at DESC);
+
+-- Проверки для media
+-- ALTER TABLE media ADD CONSTRAINT check_media_mime_type
+--     CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/webp'));
+--
+-- ALTER TABLE media ADD CONSTRAINT check_media_size
+--     CHECK (size_bytes > 0 AND size_bytes <= 10485760); -- max 10MB
+
+-- ALTER TABLE media ADD CONSTRAINT check_media_dimensions
+--     CHECK (
+--         (width IS NULL AND height IS NULL) OR
+--         (width > 0 AND height > 0 AND width <= 4096 AND height <= 4096)
+--     );
+
+-- ALTER TABLE media ADD CONSTRAINT check_media_status
+--     CHECK (status IN ('pending', 'active', 'processing', 'failed'));
+
+COMMENT ON TABLE media IS 'Central storage for all media files (images, photos)';
+COMMENT ON COLUMN media.file_key IS 'S3 object key: YYYY/MM/{uuid}.{ext}';
+COMMENT ON COLUMN media.status IS 'pending: uploaded to S3, active: in use, processing: being processed, failed: error';
+
+-- ============================================
+-- USER AVATARS (1:1)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS user_media (
+    user_phone TEXT PRIMARY KEY,
+    media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Индексы для user_media
+CREATE INDEX idx_user_media_media_id ON user_media(media_id);
+
+COMMENT ON TABLE user_media IS 'User avatars (one avatar per user)';
+
+-- ============================================
+-- STAFF WORK PHOTOS (1:N)
+-- ============================================
+-- Note: staff = users with role='staff'
+
+CREATE TABLE IF NOT EXISTS staff_media (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_phone TEXT NOT NULL REFERENCES users(phone) ON DELETE CASCADE,
+    media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+
+    -- Описание фото работы
+    description TEXT,
+
+    -- Порядок отображения в галерее
+    display_order INTEGER NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+-- Индексы для staff_media
+CREATE INDEX idx_staff_media_staff_phone ON staff_media(staff_phone) WHERE deleted_at IS NULL;
+CREATE INDEX idx_staff_media_media_id ON staff_media(media_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_staff_media_display_order ON staff_media(staff_phone, display_order) WHERE deleted_at IS NULL;
+
+-- Уникальный порядок для каждого staff (не может быть двух фото с order=1)
+CREATE UNIQUE INDEX idx_staff_media_unique_order
+    ON staff_media(staff_phone, display_order)
+    WHERE deleted_at IS NULL;
+
+COMMENT ON TABLE staff_media IS 'Staff portfolio/work photos (staff = users with role=staff)';
+
+-- ============================================
+-- POINT LOCATION PHOTOS (1:N)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS point_media (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    point_code TEXT NOT NULL REFERENCES points(code) ON DELETE CASCADE,
+    media_id UUID NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+
+    -- Тип фото локации
+    media_type TEXT NOT NULL DEFAULT 'exterior',
+
+    -- Главное фото (для превью)
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Порядок отображения
+    display_order INTEGER NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+-- Индексы для point_media
+CREATE INDEX idx_point_media_point_code ON point_media(point_code) WHERE deleted_at IS NULL;
+CREATE INDEX idx_point_media_media_id ON point_media(media_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_point_media_primary ON point_media(point_code, is_primary) WHERE deleted_at IS NULL AND is_primary = TRUE;
+CREATE INDEX idx_point_media_display_order ON point_media(point_code, display_order) WHERE deleted_at IS NULL;
+
+-- Только одно primary фото на точку
+CREATE UNIQUE INDEX idx_point_media_unique_primary
+    ON point_media(point_code)
+    WHERE deleted_at IS NULL AND is_primary = TRUE;
+
+-- Уникальный порядок для каждого point
+CREATE UNIQUE INDEX idx_point_media_unique_order
+    ON point_media(point_code, display_order)
+    WHERE deleted_at IS NULL;
+
+-- Проверки для point_media
+ALTER TABLE point_media ADD CONSTRAINT check_point_media_type
+    CHECK (media_type IN ('exterior', 'interior', 'map', 'menu'));
+
+COMMENT ON TABLE point_media IS 'Point location photos';
+COMMENT ON COLUMN point_media.media_type IS 'exterior: фасад, interior: интерьер, map: карта проезда, menu: меню/прайс';
+
+-- ============================================
+-- TRIGGERS
+-- ============================================
+
+-- Функция для автоматического обновления updated_at
+CREATE OR REPLACE FUNCTION update_media_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Триггеры updated_at
+CREATE TRIGGER trigger_update_media_updated_at
+    BEFORE UPDATE ON media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_media_updated_at_column();
+
+CREATE TRIGGER trigger_update_user_media_updated_at
+    BEFORE UPDATE ON user_media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_media_updated_at_column();
+
+CREATE TRIGGER trigger_update_staff_media_updated_at
+    BEFORE UPDATE ON staff_media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_media_updated_at_column();
+
+CREATE TRIGGER trigger_update_point_media_updated_at
+    BEFORE UPDATE ON point_media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_media_updated_at_column();
+
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+
+-- Удаляем триггеры
+DROP TRIGGER IF EXISTS trigger_update_point_media_updated_at ON point_media;
+DROP TRIGGER IF EXISTS trigger_update_staff_media_updated_at ON staff_media;
+DROP TRIGGER IF EXISTS trigger_update_user_media_updated_at ON user_media;
+DROP TRIGGER IF EXISTS trigger_update_media_updated_at ON media;
+
+-- Удаляем функцию
+DROP FUNCTION IF EXISTS update_media_updated_at_column();
+
+-- Удаляем таблицы (в обратном порядке из-за FK)
+DROP TABLE IF EXISTS point_media;
+DROP TABLE IF EXISTS staff_media;
+DROP TABLE IF EXISTS user_media;
+DROP TABLE IF EXISTS media;
+
+-- +goose StatementEnd
