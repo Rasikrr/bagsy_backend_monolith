@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ type bagsiesService interface {
 	Create(ctx context.Context, req *command.CreateBagsyCommand) (uuid.UUID, error)
 	Confirm(ctx context.Context, bagsyID uuid.UUID, code string) error
 	ResendConfirmationCode(ctx context.Context, bagsyID uuid.UUID) error
+	GetAvailableSlots(ctx context.Context, cmd *command.GetAvailableSlotsCommand) (*dto.AvailableSlots, error)
 }
 
 type Controller struct {
@@ -35,5 +37,6 @@ func (c *Controller) Init(router *chi.Mux) {
 		r.Post("/", c.createBagsy)
 		r.Post("/resend", c.resendCode)
 		r.Post("/confirm", c.confirmBagsy)
+		r.Post("/slots", c.getSlots)
 	})
 }

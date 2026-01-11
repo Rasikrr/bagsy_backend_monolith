@@ -73,3 +73,18 @@ func (r *Repository) Delete(ctx context.Context, masterServices ...*entity.Maste
 	}
 	return nil
 }
+
+func (r *Repository) GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*entity.MasterService, error) {
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getByPointCodeAndServiceID, serviceID, pointCode)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*entity.MasterService{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get master services from db", err)
+	}
+	if len(mm) == 0 {
+		return []*entity.MasterService{}, nil
+	}
+	return mm.convert(), nil
+}

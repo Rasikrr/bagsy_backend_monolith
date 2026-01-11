@@ -26,3 +26,14 @@ const getByMasterPhoneAndServiceID = `
 	SELECT id, master_phone, service_id, price, active, created_at, updated_at, updated_by
 		FROM master_services WHERE master_phone = $1 AND service_id = $2
 `
+
+const getByPointCodeAndServiceID = `
+	SELECT ms.id, ms.master_phone, ms.service_id, ms.price, ms.active, ms.created_at, ms.updated_at, ms.updated_by
+	FROM master_services ms
+	JOIN users u ON ms.master_phone = u.phone
+	WHERE ms.service_id = $1
+	  AND u.point_code = $2
+	  AND ms.active = true
+	  AND u.deleted_at IS NULL
+	  AND u.active = true
+`

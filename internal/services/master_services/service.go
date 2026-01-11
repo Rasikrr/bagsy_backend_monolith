@@ -9,6 +9,7 @@ import (
 
 type masterServicesRepository interface {
 	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*entity.MasterService, error)
+	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*entity.MasterService, error)
 }
 
 type Service struct {
@@ -23,4 +24,8 @@ func NewService(repository masterServicesRepository) *Service {
 
 func (s *Service) GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*entity.MasterService, error) {
 	return s.masterServicesRepo.GetByMasterPhoneAndServiceID(ctx, phone, serviceID)
+}
+
+func (s *Service) GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*entity.MasterService, error) {
+	return s.masterServicesRepo.GetByPointCodeAndServiceID(ctx, pointCode, serviceID)
 }
