@@ -1996,7 +1996,7 @@ const docTemplate = `{
                 "expires_at": {
                     "type": "string"
                 },
-                "media_url": {
+                "media_id": {
                     "type": "string"
                 },
                 "url": {
