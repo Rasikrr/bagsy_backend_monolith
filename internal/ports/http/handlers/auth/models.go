@@ -184,6 +184,7 @@ type verifyAuthTokenResponse struct {
 	Phone       string `json:"phone"`
 	NetworkCode string `json:"network_code,omitempty"`
 	PointCode   string `json:"point_code,omitempty"`
+	Purpose     string `json:"purpose"`
 }
 
 func toVerifyAuthTokenResponse(dto *dto.AuthTokenPayload) *verifyAuthTokenResponse {
@@ -191,5 +192,6 @@ func toVerifyAuthTokenResponse(dto *dto.AuthTokenPayload) *verifyAuthTokenRespon
 		Phone:       dto.Phone,
 		NetworkCode: dto.NetworkCode,
 		PointCode:   dto.PointCode,
+		Purpose:     dto.Purpose.String(),
 	}
 }

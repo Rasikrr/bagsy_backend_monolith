@@ -296,6 +296,7 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 		Phone:       req.Phone,
 		PointCode:   req.PointCode,
 		NetworkCode: req.NetworkCode,
+		Purpose:     enum.AuthTokenPurposeRegister,
 	}
 
 	err = s.tokensCache.SaveAuthToken(ctx, inviteToken, payload, s.registrationTTL)
@@ -418,7 +419,8 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone string) erro
 	// Генерируем короткий auth токен
 	token := codegen.GenerateAuthToken()
 	payload := &dto.AuthTokenPayload{
-		Phone: phone,
+		Phone:   phone,
+		Purpose: enum.AuthTokenPurposePasswordChange,
 	}
 
 	if saveErr := s.tokensCache.SaveAuthToken(ctx, token, payload, s.registrationTTL); saveErr != nil {

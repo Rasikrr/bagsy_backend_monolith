@@ -42,6 +42,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.NetworkCode = string(in.String())
 		case "point_code":
 			out.PointCode = string(in.String())
+		case "purpose":
+			out.Purpose = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -70,6 +72,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"point_code\":"
 		out.RawString(prefix)
 		out.String(string(in.PointCode))
+	}
+	{
+		const prefix string = ",\"purpose\":"
+		out.RawString(prefix)
+		out.String(string(in.Purpose))
 	}
 	out.RawByte('}')
 }

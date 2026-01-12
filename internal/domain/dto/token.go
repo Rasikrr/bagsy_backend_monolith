@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+
 // AccessTokenPayload - результат парсинга access токена
 // Это DTO (Data Transfer Object) - структура для передачи данных между слоями
 // Находится в domain, так как описывает доменные данные и является контрактом между слоями
@@ -11,7 +13,8 @@ type AccessTokenPayload struct {
 }
 
 type AuthTokenPayload struct {
-	Phone       string `json:"phone"`
-	PointCode   string `json:"point_code"`
-	NetworkCode string `json:"network_code"`
+	Phone       string                `json:"phone"`
+	PointCode   string                `json:"point_code"`
+	NetworkCode string                `json:"network_code"`
+	Purpose     enum.AuthTokenPurpose `json:"purpose"`
 }
