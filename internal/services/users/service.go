@@ -2,7 +2,9 @@ package users
 
 import (
 	"context"
+	"strings"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
@@ -11,6 +13,9 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
+	"github.com/Rasikrr/core/database"
+	coreEnum "github.com/Rasikrr/core/enum"
+	"github.com/google/uuid"
 )
 
 type usersRepository interface {
@@ -26,18 +31,32 @@ type pointsService interface {
 	GetByCode(ctx context.Context, code string) (*entity.Point, error)
 }
 
+type mediaService interface {
+	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
+	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
+	GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error)
+	CreateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+	UpdateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+}
+
 type Service struct {
+	txManager     database.TXManager
 	usersRepo     usersRepository
 	pointsService pointsService
+	mediaService  mediaService
 }
 
 func NewService(
+	txManager database.TXManager,
 	usersRepo usersRepository,
 	pointsService pointsService,
+	mediaService mediaService,
 ) *Service {
 	return &Service{
+		txManager:     txManager,
 		usersRepo:     usersRepo,
 		pointsService: pointsService,
+		mediaService:  mediaService,
 	}
 }
 
@@ -117,6 +136,154 @@ func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFi
 	}, nil
 }
 
+// Update Phone который передается в новой структуре используется только для получения старого юзера
+// Оcтальные поля можно переназначать, перед этим добавив нужные поля в convertToUpdateUser
+func (s *Service) Update(ctx context.Context, newUser *entity.User) error {
+	exists, err := s.usersRepo.ExistsByPhone(ctx, newUser.Phone)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return domainErr.ErrUserNotFound
+	}
+
+	oldUser, err := s.usersRepo.GetByPhone(ctx, newUser.Phone)
+	if err != nil {
+		return err
+	}
+
+	return s.usersRepo.Update(ctx, convertToUpdatedUser(oldUser, newUser))
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*entity.User, error) {
+	ses, err := session.GetSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var updatedUser *entity.User
+
+	err = s.txManager.Transaction(ctx, database.TXOptions{
+		IsolationLevel: coreEnum.IsoLevelReadCommited,
+	},
+		func(ctx context.Context) error {
+			user, userErr := s.usersRepo.GetByPhone(ctx, ses.Phone())
+			if err != nil {
+				return userErr
+			}
+
+			user.Name = cmd.Name
+			user.Surname = cmd.Surname
+
+			if cmd.AvatarMediaID != nil {
+				err = s.updateUserAvatar(ctx, user, *cmd.AvatarMediaID)
+				if err != nil {
+					return err
+				}
+			}
+
+			err = s.usersRepo.Update(ctx, user)
+			if err != nil {
+				return err
+			}
+
+			updatedUser = user
+			return nil
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedUser, nil
+}
+
+func (s *Service) updateUserAvatar(ctx context.Context, user *entity.User, mediaID uuid.UUID) error {
+	media, err := s.mediaService.GetMediaByID(ctx, mediaID)
+	if err != nil {
+		return err
+	}
+
+	// Проверка владельца media
+	if media.UploadedBy == nil || *media.UploadedBy != user.Phone {
+		return domainErr.NewForbiddenError("cannot use media uploaded by another user").
+			WithDetail("media_id", media.ID.String())
+	}
+
+	// Проверка статуса - должен быть Pending
+	if media.Status != enum.MediaStatusPending {
+		return domainErr.NewValidationError("media must be in pending status").
+			WithDetail("current_status", media.Status.String())
+	}
+
+	// Проверка mime type - должно быть изображение
+	if media.MimeType == "" || !strings.HasPrefix(media.MimeType, "image/") {
+		return domainErr.NewValidationError("avatar must be an image").
+			WithDetail("mime_type", media.MimeType)
+	}
+
+	// Получить старый аватар если есть
+	oldUserMedia, err := s.mediaService.GetUserAvatar(ctx, user.Phone)
+	if err != nil && !domainErr.IsNotFound(err) {
+		return err
+	}
+
+	userMedia := &entity.UserMedia{
+		UserPhone: user.Phone,
+		MediaID:   media.ID,
+	}
+
+	// Если у пользователя уже есть аватар - обновляем, иначе создаем
+	if oldUserMedia != nil {
+		err = s.mediaService.UpdateUserAvatar(ctx, userMedia)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = s.mediaService.CreateUserAvatar(ctx, userMedia)
+		if err != nil {
+			return err
+		}
+	}
+
+	// TODO: background worker to set media meta info (size, width etc.)
+	// Обновить статус новой media только после успешной привязки
+	err = s.mediaService.UpdateMediaStatus(ctx, media.ID, enum.MediaStatusActive)
+	if err != nil {
+		return err
+	}
+
+	// Деактивировать старую media если она была
+	if oldUserMedia != nil && oldUserMedia.MediaID != media.ID {
+		_ = s.mediaService.UpdateMediaStatus(ctx, oldUserMedia.MediaID, enum.MediaStatusInactive)
+	}
+	return nil
+}
+
+func (s *Service) UpdateWithPassword(ctx context.Context, user *entity.User, rawPassword string) error {
+	if rawPassword != "" {
+		passwordHash, hashErr := hash.Password(rawPassword)
+		if hashErr != nil {
+			return domainErr.NewInternalError("failed to hash password", hashErr)
+		}
+		user.Password = passwordHash
+	}
+	return s.usersRepo.Update(ctx, user)
+}
+
+func (s *Service) UpdatePasswordByPhone(ctx context.Context, phone string, rawPassword string) error {
+	user, err := s.usersRepo.GetByPhone(ctx, phone)
+	if err != nil {
+		return err
+	}
+	passwordHash, hashErr := hash.Password(rawPassword)
+	if hashErr != nil {
+		return domainErr.NewInternalError("failed to hash password", hashErr)
+	}
+	user.Password = passwordHash
+	return s.usersRepo.Update(ctx, user)
+}
+
 // authorizeFilter применяет ограничения доступа на основе роли пользователя
 // Возвращает модифицированный фильтр или ошибку при недостаточных правах
 func (s *Service) authorizeFilter(
@@ -179,47 +346,4 @@ func (s *Service) authorizeFilter(
 		return nil, domainErr.NewForbiddenError("unknown role").
 			WithDetail("role", userSession.Role().String())
 	}
-}
-
-// Update Phone который передается в новой структуре используется только для получения старого юзера
-// Оcтальные поля можно переназначать, перед этим добавив нужные поля в convertToUpdateUser
-func (s *Service) Update(ctx context.Context, newUser *entity.User) error {
-	exists, err := s.usersRepo.ExistsByPhone(ctx, newUser.Phone)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return domainErr.ErrUserNotFound
-	}
-
-	oldUser, err := s.usersRepo.GetByPhone(ctx, newUser.Phone)
-	if err != nil {
-		return err
-	}
-
-	return s.usersRepo.Update(ctx, convertToUpdatedUser(oldUser, newUser))
-}
-
-func (s *Service) UpdateWithPassword(ctx context.Context, user *entity.User, rawPassword string) error {
-	if rawPassword != "" {
-		passwordHash, hashErr := hash.Password(rawPassword)
-		if hashErr != nil {
-			return domainErr.NewInternalError("failed to hash password", hashErr)
-		}
-		user.Password = passwordHash
-	}
-	return s.usersRepo.Update(ctx, user)
-}
-
-func (s *Service) UpdatePasswordByPhone(ctx context.Context, phone string, rawPassword string) error {
-	user, err := s.usersRepo.GetByPhone(ctx, phone)
-	if err != nil {
-		return err
-	}
-	passwordHash, hashErr := hash.Password(rawPassword)
-	if hashErr != nil {
-		return domainErr.NewInternalError("failed to hash password", hashErr)
-	}
-	user.Password = passwordHash
-	return s.usersRepo.Update(ctx, user)
 }

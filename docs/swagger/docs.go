@@ -2149,6 +2149,9 @@ const docTemplate = `{
                 "surname"
             ],
             "properties": {
+                "media_id": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },

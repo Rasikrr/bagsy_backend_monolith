@@ -4,6 +4,7 @@ package users
 
 import (
 	json "encoding/json"
+	uuid "github.com/google/uuid"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -223,6 +224,18 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.Name = string(in.String())
 		case "surname":
 			out.Surname = string(in.String())
+		case "media_id":
+			if in.IsNull() {
+				in.Skip()
+				out.MediaID = nil
+			} else {
+				if out.MediaID == nil {
+					out.MediaID = new(uuid.UUID)
+				}
+				if data := in.UnsafeBytes(); in.Ok() {
+					in.AddError((*out.MediaID).UnmarshalText(data))
+				}
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -246,6 +259,15 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"surname\":"
 		out.RawString(prefix)
 		out.String(string(in.Surname))
+	}
+	{
+		const prefix string = ",\"media_id\":"
+		out.RawString(prefix)
+		if in.MediaID == nil {
+			out.RawString("null")
+		} else {
+			out.RawText((*in.MediaID).MarshalText())
+		}
 	}
 	out.RawByte('}')
 }

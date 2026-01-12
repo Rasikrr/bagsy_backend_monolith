@@ -90,3 +90,31 @@ func (m model) convert() (*entity.Media, error) {
 		DeletedAt:        m.DeletedAt,
 	}, nil
 }
+
+// userMediaModel представляет DB модель связи пользователя с аватаром
+type userMediaModel struct {
+	UserPhone string     `db:"user_phone"`
+	MediaID   uuid.UUID  `db:"media_id"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt *time.Time `db:"updated_at"`
+}
+
+// convert преобразует entity.UserMedia → DB model
+func convertUserMedia(e *entity.UserMedia) userMediaModel {
+	return userMediaModel{
+		UserPhone: e.UserPhone,
+		MediaID:   e.MediaID,
+		CreatedAt: e.CreatedAt,
+		UpdatedAt: e.UpdatedAt,
+	}
+}
+
+// convert преобразует DB model → entity.UserMedia
+func (m userMediaModel) convert() *entity.UserMedia {
+	return &entity.UserMedia{
+		UserPhone: m.UserPhone,
+		MediaID:   m.MediaID,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+	}
+}

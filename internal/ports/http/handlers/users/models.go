@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
@@ -12,6 +13,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+	"github.com/google/uuid"
 )
 
 //go:generate easyjson -all models.go
@@ -188,8 +190,9 @@ func toGetUsersResponse(paginated *dto.PaginatedUsers) getUsersResponse {
 }
 
 type updateUserRequest struct {
-	Name    string `json:"name" validate:"required"`
-	Surname string `json:"surname" validate:"required"`
+	Name    string     `json:"name" validate:"required"`
+	Surname string     `json:"surname" validate:"required"`
+	MediaID *uuid.UUID `json:"media_id"`
 }
 
 func (r *updateUserRequest) Validate() error {
@@ -200,12 +203,11 @@ func (r *updateUserRequest) Validate() error {
 	return nil
 }
 
-func (r *updateUserRequest) ToDomain(ses *session.Session) *entity.User {
-	return &entity.User{
-		Phone:     ses.Phone(),
-		Name:      r.Name,
-		Surname:   r.Surname,
-		UpdatedBy: ses.Phone(),
+func (r *updateUserRequest) toDomain() *command.UpdateUserCommand {
+	return &command.UpdateUserCommand{
+		Name:          r.Name,
+		Surname:       r.Surname,
+		AvatarMediaID: r.MediaID,
 	}
 }
 

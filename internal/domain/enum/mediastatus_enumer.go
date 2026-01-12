@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-const _MediaStatusName = "PendingActiveProcessingFailed"
+const _MediaStatusName = "PendingActiveInactiveFailed"
 
-var _MediaStatusIndex = [...]uint8{0, 7, 13, 23, 29}
+var _MediaStatusIndex = [...]uint8{0, 7, 13, 21, 27}
 
-const _MediaStatusLowerName = "pendingactiveprocessingfailed"
+const _MediaStatusLowerName = "pendingactiveinactivefailed"
 
 func (i MediaStatus) String() string {
 	if i < 0 || i >= MediaStatus(len(_MediaStatusIndex)-1) {
@@ -27,28 +27,28 @@ func _MediaStatusNoOp() {
 	var x [1]struct{}
 	_ = x[MediaStatusPending-(0)]
 	_ = x[MediaStatusActive-(1)]
-	_ = x[MediaStatusProcessing-(2)]
+	_ = x[MediaStatusInactive-(2)]
 	_ = x[MediaStatusFailed-(3)]
 }
 
-var _MediaStatusValues = []MediaStatus{MediaStatusPending, MediaStatusActive, MediaStatusProcessing, MediaStatusFailed}
+var _MediaStatusValues = []MediaStatus{MediaStatusPending, MediaStatusActive, MediaStatusInactive, MediaStatusFailed}
 
 var _MediaStatusNameToValueMap = map[string]MediaStatus{
 	_MediaStatusName[0:7]:        MediaStatusPending,
 	_MediaStatusLowerName[0:7]:   MediaStatusPending,
 	_MediaStatusName[7:13]:       MediaStatusActive,
 	_MediaStatusLowerName[7:13]:  MediaStatusActive,
-	_MediaStatusName[13:23]:      MediaStatusProcessing,
-	_MediaStatusLowerName[13:23]: MediaStatusProcessing,
-	_MediaStatusName[23:29]:      MediaStatusFailed,
-	_MediaStatusLowerName[23:29]: MediaStatusFailed,
+	_MediaStatusName[13:21]:      MediaStatusInactive,
+	_MediaStatusLowerName[13:21]: MediaStatusInactive,
+	_MediaStatusName[21:27]:      MediaStatusFailed,
+	_MediaStatusLowerName[21:27]: MediaStatusFailed,
 }
 
 var _MediaStatusNames = []string{
 	_MediaStatusName[0:7],
 	_MediaStatusName[7:13],
-	_MediaStatusName[13:23],
-	_MediaStatusName[23:29],
+	_MediaStatusName[13:21],
+	_MediaStatusName[21:27],
 }
 
 // MediaStatusString retrieves an enum value from the enum constants string name.

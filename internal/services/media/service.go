@@ -22,7 +22,12 @@ type storage interface {
 }
 
 type mediaRepository interface {
-	Create(ctx context.Context, media *entity.Media) error
+	CreateMedia(ctx context.Context, media *entity.Media) error
+	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
+	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
+	GetUserMedia(ctx context.Context, phone string) (*entity.UserMedia, error)
+	CreateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+	UpdateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
 }
 
 type Service struct {
@@ -60,7 +65,7 @@ func (s *Service) GenerateUploadURL(ctx context.Context, filename, contentType, 
 		Status:           enum.MediaStatusPending,
 		UploadedBy:       ptr.Pointer(ses.Phone()),
 	}
-	err = s.mediaRepository.Create(ctx, media)
+	err = s.mediaRepository.CreateMedia(ctx, media)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +87,26 @@ func (s *Service) GenerateDownloadURL(ctx context.Context, key string) (string, 
 		return "", s.mapS3Error(err)
 	}
 	return url, nil
+}
+
+func (s *Service) GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error) {
+	return s.mediaRepository.GetMediaByID(ctx, mediaID)
+}
+
+func (s *Service) UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error {
+	return s.mediaRepository.UpdateMediaStatus(ctx, id, status)
+}
+
+func (s *Service) GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error) {
+	return s.mediaRepository.GetUserMedia(ctx, phone)
+}
+
+func (s *Service) CreateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error {
+	return s.mediaRepository.CreateUserAvatar(ctx, userMedia)
+}
+
+func (s *Service) UpdateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error {
+	return s.mediaRepository.UpdateUserAvatar(ctx, userMedia)
 }
 
 func (s *Service) genStorageKey(mediaID uuid.UUID, filename, purpose string) string {

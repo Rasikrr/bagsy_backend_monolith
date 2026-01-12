@@ -441,6 +441,8 @@ definitions:
     type: object
   internal_ports_http_handlers_users.updateUserRequest:
     properties:
+      media_id:
+        type: string
       name:
         type: string
       surname:

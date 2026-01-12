@@ -156,7 +156,6 @@ func (a *App) initServices(_ context.Context) error {
 
 	a.networksService = networksS.NewService(a.networksRepo)
 	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService, a.pointCategoriesRepo)
-	a.usersService = usersS.NewService(a.usersRepo, a.pointsService)
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(
 		a.smsClient,
@@ -165,6 +164,19 @@ func (a *App) initServices(_ context.Context) error {
 	)
 	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
 	a.servicesService = services.NewService(a.servicesRepo)
+
+	a.mediaService = mediaS.NewService(
+		a.s3Client,
+		a.mediaRepository,
+		vars.GetDuration(appenv.MediaTTL),
+	)
+
+	a.usersService = usersS.NewService(
+		a.PostgresTXManager(),
+		a.usersRepo,
+		a.pointsService,
+		a.mediaService,
+	)
 
 	a.authService = authS.NewService(
 		a.PostgresTXManager(),
@@ -191,12 +203,6 @@ func (a *App) initServices(_ context.Context) error {
 		a.bagsyConfirmCache,
 	)
 
-	a.mediaService = mediaS.NewService(
-		a.s3Client,
-		a.mediaRepository,
-		vars.GetDuration(appenv.MediaTTL),
-	)
-
 	return nil
 }
 
@@ -214,7 +220,6 @@ func (a *App) initClients(ctx context.Context) error {
 		vars.GetString(appenv.WhatsAppIDInstance),
 		vars.GetString(appenv.WhatsAppAPIToken),
 	)
-	log.Infof(ctx, "vars: %v", vars)
 	var err error
 	a.s3Client, err = s3.NewClient(
 		ctx,

@@ -10,8 +10,8 @@ const (
 	MediaStatusPending MediaStatus = iota
 	// MediaStatusActive - файл активно используется
 	MediaStatusActive
-	// MediaStatusProcessing - файл в процессе обработки (например, генерация thumbnails)
-	MediaStatusProcessing
+	// MediaStatusInactive - файл был заменен или отвязан
+	MediaStatusInactive
 	// MediaStatusFailed - ошибка при обработке файла
 	MediaStatusFailed
 )
