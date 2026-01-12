@@ -132,6 +132,20 @@ func (r *Repository) ExistsByPhone(ctx context.Context, phone string) (bool, err
 	return out, nil
 }
 
+func (r *Repository) CountByFilter(ctx context.Context, filter *query.UserFilter) (int, error) {
+	q, args, err := buildCountQuery(filter)
+	if err != nil {
+		return 0, domainErr.NewInternalError("failed to build count query", err)
+	}
+
+	var count int
+	err = pgxscan.Get(ctx, r.db, &count, q, args...)
+	if err != nil {
+		return 0, domainErr.NewInternalError("failed to count users from db", err)
+	}
+	return count, nil
+}
+
 func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	builder := psql.Select(columns...).
@@ -163,5 +177,34 @@ func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	)
 	builder = builder.Limit(filter.Limit)
 	builder = builder.Offset(filter.Offset)
+	return builder.ToSql()
+}
+
+func buildCountQuery(filter *query.UserFilter) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	builder := psql.Select("COUNT(*)").
+		From("users").
+		Where(sq.Eq{"deleted_at": nil})
+
+	// Применяем те же фильтры что и в buildQuery, но БЕЗ limit, offset, orderBy
+	if filter.NetworkCode != nil {
+		builder = builder.Where(sq.Eq{"network_code": *filter.NetworkCode})
+	}
+
+	if filter.PointCode != nil {
+		builder = builder.Where(sq.Eq{"point_code": *filter.PointCode})
+	}
+
+	if len(filter.Roles) > 0 {
+		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
+			return role.String()
+		})
+		builder = builder.Where(sq.Eq{"role": roleStrings})
+	}
+
+	if len(filter.Phones) > 0 {
+		builder = builder.Where(sq.Eq{"phone": filter.Phones})
+	}
+
 	return builder.ToSql()
 }

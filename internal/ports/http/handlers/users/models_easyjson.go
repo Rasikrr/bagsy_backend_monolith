@@ -601,8 +601,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				}
 				in.Delim(']')
 			}
-		case "count":
-			out.Count = int(in.Int())
+		case "total":
+			out.Total = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -634,9 +634,9 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		}
 	}
 	{
-		const prefix string = ",\"count\":"
+		const prefix string = ",\"total\":"
 		out.RawString(prefix)
-		out.Int(int(in.Count))
+		out.Int(int(in.Total))
 	}
 	out.RawByte('}')
 }

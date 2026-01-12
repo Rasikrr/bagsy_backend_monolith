@@ -2,6 +2,8 @@ package users
 
 import (
 	"context"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -15,6 +17,7 @@ type usersRepository interface {
 	Create(ctx context.Context, user *entity.User) error
 	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
 	GetByParams(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
+	CountByFilter(ctx context.Context, filter *query.UserFilter) (int, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Update(ctx context.Context, user *entity.User) error
 }
@@ -84,7 +87,7 @@ func (s *Service) ExistsByPhone(ctx context.Context, phone string) (bool, error)
 
 // GetByFilter возвращает список пользователей с пагинацией и учетом прав доступа
 // Применяет ограничения на основе роли текущего пользователя
-func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFilter) ([]*entity.User, error) {
+func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFilter) (*dto.PaginatedUsers, error) {
 	userSession, err := session.GetSession(ctx)
 	if err != nil {
 		return nil, domainErr.NewUnauthorizedError("user session not found").WithError(err)
@@ -96,11 +99,22 @@ func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFi
 		return nil, err
 	}
 
+	// Получаем пользователей с пагинацией
 	users, err := s.usersRepo.GetByParams(ctx, authorizedFilter)
 	if err != nil {
 		return nil, err
 	}
-	return users, nil
+
+	// Получаем общее количество пользователей по фильтру (без limit/offset)
+	total, err := s.usersRepo.CountByFilter(ctx, authorizedFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.PaginatedUsers{
+		Users: users,
+		Total: total,
+	}, nil
 }
 
 // authorizeFilter применяет ограничения доступа на основе роли пользователя

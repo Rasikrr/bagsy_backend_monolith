@@ -1,6 +1,10 @@
 package users
 
 import (
+	"net/http"
+	"strconv"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -8,8 +12,6 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
-	"net/http"
-	"strconv"
 )
 
 //go:generate easyjson -all models.go
@@ -170,18 +172,18 @@ func toUserDTO(user *entity.User) userDTO {
 
 type getUsersResponse struct {
 	Users []userDTO `json:"users"`
-	Count int       `json:"count"`
+	Total int       `json:"total"`
 }
 
-func toGetUsersResponse(users []*entity.User) getUsersResponse {
-	dtos := make([]userDTO, 0, len(users))
-	for _, user := range users {
+func toGetUsersResponse(paginated *dto.PaginatedUsers) getUsersResponse {
+	dtos := make([]userDTO, 0, len(paginated.Users))
+	for _, user := range paginated.Users {
 		dtos = append(dtos, toUserDTO(user))
 	}
 
 	return getUsersResponse{
 		Users: dtos,
-		Count: len(dtos),
+		Total: paginated.Total,
 	}
 }
 

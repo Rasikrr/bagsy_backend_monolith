@@ -370,7 +370,7 @@ definitions:
     type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
-      count:
+      total:
         type: integer
       users:
         items:

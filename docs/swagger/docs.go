@@ -1981,7 +1981,7 @@ const docTemplate = `{
         "internal_ports_http_handlers_users.getUsersResponse": {
             "type": "object",
             "properties": {
-                "count": {
+                "total": {
                     "type": "integer"
                 },
                 "users": {
