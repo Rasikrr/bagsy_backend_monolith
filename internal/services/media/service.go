@@ -25,9 +25,8 @@ type mediaRepository interface {
 	CreateMedia(ctx context.Context, media *entity.Media) error
 	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
 	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
-	GetUserMedia(ctx context.Context, phone string) (*entity.UserMedia, error)
-	CreateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
-	UpdateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+	GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error)
+	SetUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
 }
 
 type Service struct {
@@ -81,32 +80,14 @@ func (s *Service) GenerateUploadURL(ctx context.Context, filename, contentType, 
 	}, nil
 }
 
-func (s *Service) GenerateDownloadURL(ctx context.Context, key string) (string, error) {
-	url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, s.mediaTTL)
+// GenerateDownloadURL генерирует presigned URL для скачивания по file_key
+// Используется когда file_key уже известен (из entity) - БЕЗ запроса к БД
+func (s *Service) GenerateDownloadURL(ctx context.Context, fileKey string) (string, error) {
+	url, err := s.storage.GeneratePresignedDownloadURL(ctx, fileKey, s.mediaTTL)
 	if err != nil {
 		return "", s.mapS3Error(err)
 	}
 	return url, nil
-}
-
-func (s *Service) GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error) {
-	return s.mediaRepository.GetMediaByID(ctx, mediaID)
-}
-
-func (s *Service) UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error {
-	return s.mediaRepository.UpdateMediaStatus(ctx, id, status)
-}
-
-func (s *Service) GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error) {
-	return s.mediaRepository.GetUserMedia(ctx, phone)
-}
-
-func (s *Service) CreateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error {
-	return s.mediaRepository.CreateUserAvatar(ctx, userMedia)
-}
-
-func (s *Service) UpdateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error {
-	return s.mediaRepository.UpdateUserAvatar(ctx, userMedia)
 }
 
 func (s *Service) genStorageKey(mediaID uuid.UUID, filename, purpose string) string {

@@ -10,19 +10,20 @@ import (
 )
 
 type model struct {
-	Phone       string     `db:"phone"`
-	Password    string     `db:"password"`
-	Role        string     `db:"role"`
-	Name        string     `db:"name"`
-	Surname     string     `db:"surname"`
-	PointCode   *string    `db:"point_code"`
-	NetworkCode *string    `db:"network_code"`
-	Active      bool       `db:"active"`
-	Schedule    []byte     `db:"schedule"`
-	CreatedAt   time.Time  `db:"created_at"`
-	UpdatedAt   *time.Time `db:"updated_at"`
-	DeletedAt   *time.Time `db:"deleted_at"`
-	UpdatedBy   string     `db:"updated_by"`
+	Phone         string     `db:"phone"`
+	Password      string     `db:"password"`
+	Role          string     `db:"role"`
+	Name          string     `db:"name"`
+	Surname       string     `db:"surname"`
+	PointCode     *string    `db:"point_code"`
+	NetworkCode   *string    `db:"network_code"`
+	AvatarFileKey *string    `db:"avatar_file_key"` // Из JOIN с media таблицей
+	Active        bool       `db:"active"`
+	Schedule      []byte     `db:"schedule"`
+	CreatedAt     time.Time  `db:"created_at"`
+	UpdatedAt     *time.Time `db:"updated_at"`
+	DeletedAt     *time.Time `db:"deleted_at"`
+	UpdatedBy     string     `db:"updated_by"`
 }
 
 func convert(e *entity.User) (model, error) {
@@ -34,11 +35,12 @@ func convert(e *entity.User) (model, error) {
 		Surname:     e.Surname,
 		PointCode:   e.PointCode,
 		NetworkCode: e.NetworkCode,
-		Active:      e.Active,
-		CreatedAt:   e.CreatedAt,
-		UpdatedAt:   e.UpdatedAt,
-		DeletedAt:   e.DeletedAt,
-		UpdatedBy:   e.UpdatedBy,
+		// AvatarFileKey НЕ сохраняем через users таблицу (обновляется через user_media)
+		Active:    e.Active,
+		CreatedAt: e.CreatedAt,
+		UpdatedAt: e.UpdatedAt,
+		DeletedAt: e.DeletedAt,
+		UpdatedBy: e.UpdatedBy,
 	}
 
 	// Serialize Schedule to JSON via DTO
@@ -66,18 +68,20 @@ func (m model) convert() (*entity.User, error) {
 	}
 
 	user := &entity.User{
-		Phone:       m.Phone,
-		Password:    m.Password,
-		Role:        role,
-		Name:        m.Name,
-		Surname:     m.Surname,
-		PointCode:   m.PointCode,
-		NetworkCode: m.NetworkCode,
-		Active:      m.Active,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-		DeletedAt:   m.DeletedAt,
-		UpdatedBy:   m.UpdatedBy,
+		Phone:         m.Phone,
+		Password:      m.Password,
+		Role:          role,
+		Name:          m.Name,
+		Surname:       m.Surname,
+		PointCode:     m.PointCode,
+		NetworkCode:   m.NetworkCode,
+		AvatarFileKey: m.AvatarFileKey, // Маппим из JOIN
+		// AvatarURL остается nil (заполняется в service при необходимости)
+		Active:    m.Active,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+		DeletedAt: m.DeletedAt,
+		UpdatedBy: m.UpdatedBy,
 	}
 
 	// Deserialize Schedule from JSON via DTO

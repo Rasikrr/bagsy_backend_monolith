@@ -7,20 +7,21 @@ import (
 )
 
 type User struct {
-	Phone       string
-	Password    string
-	Role        enum.Role
-	Name        string
-	Surname     string
-	PointCode   *string
-	NetworkCode *string
-	AvatarURL   *string // file_key из S3 (через user_media → media)
-	Active      bool
-	Schedule    []StaffSchedule
-	CreatedAt   time.Time
-	UpdatedAt   *time.Time
-	DeletedAt   *time.Time
-	UpdatedBy   string
+	Phone         string
+	Password      string
+	Role          enum.Role
+	Name          string
+	Surname       string
+	PointCode     *string
+	NetworkCode   *string
+	AvatarFileKey *string // file_key из media таблицы (через JOIN user_media → media), персистится
+	AvatarURL     *string // Presigned URL для скачивания, runtime поле (НЕ персистится)
+	Active        bool
+	Schedule      []StaffSchedule
+	CreatedAt     time.Time
+	UpdatedAt     *time.Time
+	DeletedAt     *time.Time
+	UpdatedBy     string
 }
 
 type StaffSchedule struct {

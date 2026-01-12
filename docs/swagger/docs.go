@@ -2166,6 +2166,9 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
+                "avatar_url": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },

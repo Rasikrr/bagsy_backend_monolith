@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-	"strings"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
@@ -32,11 +31,8 @@ type pointsService interface {
 }
 
 type mediaService interface {
-	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
-	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
-	GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error)
-	CreateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
-	UpdateUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+	SetUserAvatar(ctx context.Context, user *entity.User, mediaID uuid.UUID) error
+	GenerateDownloadURL(ctx context.Context, fileKey string) (string, error)
 }
 
 type Service struct {
@@ -97,7 +93,18 @@ func (s *Service) GetUserProfile(ctx context.Context) (*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.GetByPhone(ctx, ses.Phone())
+
+	user, err := s.GetByPhone(ctx, ses.Phone())
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.enrichWithAvatars(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (s *Service) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
@@ -120,6 +127,11 @@ func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFi
 
 	// Получаем пользователей с пагинацией
 	users, err := s.usersRepo.GetByParams(ctx, authorizedFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.enrichWithAvatars(ctx, users...)
 	if err != nil {
 		return nil, err
 	}
@@ -161,14 +173,16 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserComm
 		return nil, err
 	}
 
-	var updatedUser *entity.User
+	var (
+		updatedUser *entity.User
+	)
 
 	err = s.txManager.Transaction(ctx, database.TXOptions{
 		IsolationLevel: coreEnum.IsoLevelReadCommited,
 	},
 		func(ctx context.Context) error {
 			user, userErr := s.usersRepo.GetByPhone(ctx, ses.Phone())
-			if err != nil {
+			if userErr != nil {
 				return userErr
 			}
 
@@ -176,14 +190,14 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserComm
 			user.Surname = cmd.Surname
 
 			if cmd.AvatarMediaID != nil {
-				err = s.updateUserAvatar(ctx, user, *cmd.AvatarMediaID)
+				err = s.mediaService.SetUserAvatar(ctx, user, *cmd.AvatarMediaID)
 				if err != nil {
 					return err
 				}
 			}
 
-			err = s.usersRepo.Update(ctx, user)
-			if err != nil {
+			// 9. Обновить пользователя (name, surname)
+			if err = s.usersRepo.Update(ctx, user); err != nil {
 				return err
 			}
 
@@ -195,69 +209,18 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserComm
 		return nil, err
 	}
 
+	// 10. После транзакции - повторно запросить пользователя чтобы получить file_key из JOIN
+	updatedUser, err = s.usersRepo.GetByPhone(ctx, ses.Phone())
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.enrichWithAvatars(ctx, updatedUser)
+	if err != nil {
+		return nil, err
+	}
+
 	return updatedUser, nil
-}
-
-func (s *Service) updateUserAvatar(ctx context.Context, user *entity.User, mediaID uuid.UUID) error {
-	media, err := s.mediaService.GetMediaByID(ctx, mediaID)
-	if err != nil {
-		return err
-	}
-
-	// Проверка владельца media
-	if media.UploadedBy == nil || *media.UploadedBy != user.Phone {
-		return domainErr.NewForbiddenError("cannot use media uploaded by another user").
-			WithDetail("media_id", media.ID.String())
-	}
-
-	// Проверка статуса - должен быть Pending
-	if media.Status != enum.MediaStatusPending {
-		return domainErr.NewValidationError("media must be in pending status").
-			WithDetail("current_status", media.Status.String())
-	}
-
-	// Проверка mime type - должно быть изображение
-	if media.MimeType == "" || !strings.HasPrefix(media.MimeType, "image/") {
-		return domainErr.NewValidationError("avatar must be an image").
-			WithDetail("mime_type", media.MimeType)
-	}
-
-	// Получить старый аватар если есть
-	oldUserMedia, err := s.mediaService.GetUserAvatar(ctx, user.Phone)
-	if err != nil && !domainErr.IsNotFound(err) {
-		return err
-	}
-
-	userMedia := &entity.UserMedia{
-		UserPhone: user.Phone,
-		MediaID:   media.ID,
-	}
-
-	// Если у пользователя уже есть аватар - обновляем, иначе создаем
-	if oldUserMedia != nil {
-		err = s.mediaService.UpdateUserAvatar(ctx, userMedia)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = s.mediaService.CreateUserAvatar(ctx, userMedia)
-		if err != nil {
-			return err
-		}
-	}
-
-	// TODO: background worker to set media meta info (size, width etc.)
-	// Обновить статус новой media только после успешной привязки
-	err = s.mediaService.UpdateMediaStatus(ctx, media.ID, enum.MediaStatusActive)
-	if err != nil {
-		return err
-	}
-
-	// Деактивировать старую media если она была
-	if oldUserMedia != nil && oldUserMedia.MediaID != media.ID {
-		_ = s.mediaService.UpdateMediaStatus(ctx, oldUserMedia.MediaID, enum.MediaStatusInactive)
-	}
-	return nil
 }
 
 func (s *Service) UpdateWithPassword(ctx context.Context, user *entity.User, rawPassword string) error {
@@ -282,6 +245,23 @@ func (s *Service) UpdatePasswordByPhone(ctx context.Context, phone string, rawPa
 	}
 	user.Password = passwordHash
 	return s.usersRepo.Update(ctx, user)
+}
+
+func (s *Service) enrichWithAvatars(ctx context.Context, users ...*entity.User) error {
+	if len(users) == 0 {
+		return nil
+	}
+	for _, user := range users {
+		if user.AvatarFileKey == nil || user.AvatarURL != nil {
+			continue
+		}
+		url, err := s.mediaService.GenerateDownloadURL(ctx, *user.AvatarFileKey)
+		if err != nil {
+			return err
+		}
+		user.AvatarURL = &url
+	}
+	return nil
 }
 
 // authorizeFilter применяет ограничения доступа на основе роли пользователя

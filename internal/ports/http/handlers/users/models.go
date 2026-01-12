@@ -129,6 +129,7 @@ type userDTO struct {
 	PointCode   *string            `json:"point_code,omitempty"`
 	NetworkCode *string            `json:"network_code,omitempty"`
 	Active      bool               `json:"active"`
+	AvatarURL   *string            `json:"avatar_url,omitempty"`
 	Schedule    []staffScheduleDTO `json:"schedule,omitempty"`
 	CreatedAt   string             `json:"created_at"`
 	UpdatedAt   *string            `json:"updated_at,omitempty"`
@@ -154,6 +155,9 @@ func toUserDTO(user *entity.User) userDTO {
 		NetworkCode: user.NetworkCode,
 		Active:      user.Active,
 		CreatedAt:   user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if user.AvatarURL != nil {
+		dto.AvatarURL = user.AvatarURL
 	}
 
 	if user.UpdatedAt != nil {

@@ -75,20 +75,7 @@ const (
 
 	// === UserMedia queries ===
 
-	// Create UserMedia
-	createUserAvatarSQL = `
-		INSERT INTO user_media (user_phone, media_id)
-		VALUES ($1, $2)
-	`
-
-	// Update UserMedia
-	updateUserAvatarSQL = `
-		UPDATE user_media
-		SET media_id = $2, updated_at = NOW()
-		WHERE user_phone = $1
-	`
-
-	// UPSERT UserMedia (legacy)
+	// UPSERT UserMedia
 	setUserAvatarSQL = `
 		INSERT INTO user_media (user_phone, media_id)
 		VALUES ($1, $2)
@@ -111,7 +98,7 @@ const (
 			m.created_at, m.updated_at, m.deleted_at
 		FROM user_media um
 		INNER JOIN media m ON um.media_id = m.id
-		WHERE um.user_phone = $1 AND m.deleted_at IS NULL
+		WHERE um.user_phone = $1 AND m.status = 'active' AND m.deleted_at IS NULL
 	`
 
 	// Delete UserMedia

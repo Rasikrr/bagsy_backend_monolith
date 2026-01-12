@@ -18,7 +18,22 @@ import (
 )
 
 var (
-	columns = []string{"phone", "password", "role", "name", "surname", "point_code", "network_code", "active", "schedule", "created_at", "updated_at", "deleted_at", "updated_by"}
+	columns = []string{
+		"u.phone",
+		"u.password",
+		"u.role",
+		"u.name",
+		"u.surname",
+		"u.point_code",
+		"u.network_code",
+		"u.active",
+		"u.schedule",
+		"u.created_at",
+		"u.updated_at",
+		"u.deleted_at",
+		"u.updated_by",
+		"m.file_key as avatar_file_key",
+	}
 )
 
 type Repository struct {
@@ -149,31 +164,36 @@ func (r *Repository) CountByFilter(ctx context.Context, filter *query.UserFilter
 func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	builder := psql.Select(columns...).
-		From("users").
-		Where(sq.Eq{"deleted_at": nil})
+		From("users u").
+		LeftJoin("user_media um ON u.phone = um.user_phone").
+		LeftJoin("media m ON um.media_id = m.id AND m.status = 'active' AND m.deleted_at IS NULL").
+		Where(sq.Eq{"u.deleted_at": nil})
 
-	// Фильтры
+	// Фильтры (добавляем префикс u.)
 	if filter.NetworkCode != nil {
-		builder = builder.Where(sq.Eq{"network_code": *filter.NetworkCode})
+		builder = builder.Where(sq.Eq{"u.network_code": *filter.NetworkCode})
 	}
 
 	if filter.PointCode != nil {
-		builder = builder.Where(sq.Eq{"point_code": *filter.PointCode})
+		builder = builder.Where(sq.Eq{"u.point_code": *filter.PointCode})
 	}
 
 	if len(filter.Roles) > 0 {
 		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
 			return role.String()
 		})
-		builder = builder.Where(sq.Eq{"role": roleStrings})
+		builder = builder.Where(sq.Eq{"u.role": roleStrings})
 	}
 
 	if len(filter.Phones) > 0 {
-		builder = builder.Where(sq.Eq{"phone": filter.Phones})
+		builder = builder.Where(sq.Eq{"u.phone": filter.Phones})
 	}
 
+	// OrderBy с префиксом u.
+	orderByColumn := "u." + filter.OrderBy
+
 	builder = builder.OrderBy(
-		fmt.Sprintf("%s %s", filter.OrderBy, filter.SortOrder.String()),
+		fmt.Sprintf("%s %s", orderByColumn, filter.SortOrder.String()),
 	)
 	builder = builder.Limit(filter.Limit)
 	builder = builder.Offset(filter.Offset)
@@ -182,28 +202,28 @@ func buildQuery(filter *query.UserFilter) (string, []any, error) {
 
 func buildCountQuery(filter *query.UserFilter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
-	builder := psql.Select("COUNT(*)").
-		From("users").
-		Where(sq.Eq{"deleted_at": nil})
+	builder := psql.Select("COUNT(DISTINCT u.phone)").
+		From("users u").
+		Where(sq.Eq{"u.deleted_at": nil})
 
 	// Применяем те же фильтры что и в buildQuery, но БЕЗ limit, offset, orderBy
 	if filter.NetworkCode != nil {
-		builder = builder.Where(sq.Eq{"network_code": *filter.NetworkCode})
+		builder = builder.Where(sq.Eq{"u.network_code": *filter.NetworkCode})
 	}
 
 	if filter.PointCode != nil {
-		builder = builder.Where(sq.Eq{"point_code": *filter.PointCode})
+		builder = builder.Where(sq.Eq{"u.point_code": *filter.PointCode})
 	}
 
 	if len(filter.Roles) > 0 {
 		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
 			return role.String()
 		})
-		builder = builder.Where(sq.Eq{"role": roleStrings})
+		builder = builder.Where(sq.Eq{"u.role": roleStrings})
 	}
 
 	if len(filter.Phones) > 0 {
-		builder = builder.Where(sq.Eq{"phone": filter.Phones})
+		builder = builder.Where(sq.Eq{"u.phone": filter.Phones})
 	}
 
 	return builder.ToSql()

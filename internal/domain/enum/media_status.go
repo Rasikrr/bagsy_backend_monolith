@@ -1,6 +1,6 @@
 package enum
 
-//go:generate enumer -type=MediaStatus -json -trimprefix MediaStatus -transform=snake_case
+//go:generate enumer -type=MediaStatus -json -trimprefix MediaStatus -transform=snake -output media_status_enumer.go
 
 // MediaStatus представляет статус обработки медиа-файла
 type MediaStatus int8

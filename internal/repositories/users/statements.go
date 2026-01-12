@@ -2,9 +2,27 @@ package users
 
 const (
 	getUserByPhone = `
-	SELECT phone, password, role, name, surname, point_code, network_code, active, schedule, created_at, updated_at, deleted_at, updated_by
-	FROM users
-	WHERE phone = $1 AND deleted_at IS NULL
+	SELECT
+		u.phone,
+		u.password,
+		u.role,
+		u.name,
+		u.surname,
+		u.point_code,
+		u.network_code,
+		u.active,
+		u.schedule,
+		u.created_at,
+		u.updated_at,
+		u.deleted_at,
+		u.updated_by,
+		m.file_key as avatar_file_key
+	FROM users u
+	LEFT JOIN user_media um ON u.phone = um.user_phone
+	LEFT JOIN media m ON um.media_id = m.id
+		AND m.status = 'active'
+		AND m.deleted_at IS NULL
+	WHERE u.phone = $1 AND u.deleted_at IS NULL
 `
 
 	createUser = `
