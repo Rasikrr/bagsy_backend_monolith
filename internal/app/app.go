@@ -134,7 +134,6 @@ func (a *App) initCache(_ context.Context) error {
 
 	a.registerCache = register.NewCache(
 		a.Redis(),
-		vars.GetDuration(appenv.RegistrationTTL),
 	)
 	return nil
 }
