@@ -261,7 +261,7 @@ func (s *Service) GetAvailableSlots(ctx context.Context, cmd *command.GetAvailab
 
 	masterUsers, err := s.usersService.GetByParams(ctx, &query.UserFilter{
 		Phones:  masterPhones,
-		Limit:   1000,
+		Limit:   uint64(len(masterPhones)),
 		OrderBy: "name",
 	})
 	if err != nil {

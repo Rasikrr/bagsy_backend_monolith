@@ -38,5 +38,6 @@ func (c *Controller) Init(router *chi.Mux) {
 		r.Post("/resend", c.resendCode)
 		r.Post("/confirm", c.confirmBagsy)
 		r.Post("/slots", c.getSlots)
+		r.Post("/slots/day", c.getSlotsForDay)
 	})
 }

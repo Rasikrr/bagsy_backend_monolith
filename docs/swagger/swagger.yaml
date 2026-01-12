@@ -294,6 +294,37 @@ definitions:
     required:
     - bagsy_id
     type: object
+  internal_ports_http_handlers_bagsies.getSlotsForDayRequest:
+    properties:
+      date:
+        type: string
+      master_phone:
+        minLength: 10
+        type: string
+      point_code:
+        type: string
+      service_id:
+        type: string
+    required:
+    - date
+    - point_code
+    - service_id
+    type: object
+  internal_ports_http_handlers_bagsies.getSlotsForDayResponse:
+    properties:
+      date:
+        type: string
+      duration_minutes:
+        type: integer
+      masters:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse'
+        type: array
+      point_code:
+        type: string
+      service_id:
+        type: string
+    type: object
   internal_ports_http_handlers_bagsies.getSlotsRequest:
     properties:
       master_phone:
@@ -309,22 +340,22 @@ definitions:
     type: object
   internal_ports_http_handlers_bagsies.getSlotsResponse:
     properties:
+      available_dates:
+        items:
+          type: string
+        type: array
       duration_minutes:
         type: integer
-      master_slots:
-        items:
-          $ref: '#/definitions/internal_ports_http_handlers_bagsies.masterSlotResponse'
-        type: array
       point_code:
         type: string
       service_id:
         type: string
     type: object
-  internal_ports_http_handlers_bagsies.masterSlotResponse:
+  internal_ports_http_handlers_bagsies.masterSlotsResponse:
     properties:
-      master_name:
+      name:
         type: string
-      master_phone:
+      phone:
         type: string
       slots:
         items:
@@ -1175,6 +1206,41 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
       summary: Получить доступные слоты для записи
+      tags:
+      - bagsies
+  /api/v1/bagsies/slots/day:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список доступных временных слотов для записи на услугу
+        на конкретную дату, сгруппированных по мастерам
+      parameters:
+      - description: Параметры запроса слотов на день
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.getSlotsForDayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Слоты на выбранный день
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_bagsies.getSlotsForDayResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Точка, услуга или мастера не найдены
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить слоты на конкретный день
       tags:
       - bagsies
   /api/v1/forms:
