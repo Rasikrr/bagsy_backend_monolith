@@ -11,7 +11,9 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
-	mediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media"
+	mediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/media"
+	pointMediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/point_media"
+	userAvatarR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/user_avatar"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
@@ -54,7 +56,9 @@ type App struct {
 	bagsiesRepo         *bagsiesR.Repository
 	masterServicesRepo  *masterServicesR.Repository
 	servicesRepo        *servicesR.Repository
-	mediaRepository     *mediaR.Repository
+	mediaRepo           *mediaR.Repository
+	userAvatarRepo      *userAvatarR.Repository
+	pointMediaRepo      *pointMediaR.Repository
 
 	usersService          *usersS.Service
 	pointsService         *pointsS.Service
@@ -147,7 +151,9 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
 	a.servicesRepo = servicesR.NewRepository(a.Postgres())
-	a.mediaRepository = mediaR.NewRepository(a.Postgres())
+	a.mediaRepo = mediaR.NewRepository(a.Postgres())
+	a.userAvatarRepo = userAvatarR.NewRepository(a.Postgres())
+	a.pointMediaRepo = pointMediaR.NewRepository(a.Postgres())
 	return nil
 }
 
@@ -159,7 +165,9 @@ func (a *App) initServices(_ context.Context) error {
 	a.mediaService = mediaS.NewService(
 		a.PostgresTXManager(),
 		a.s3Client,
-		a.mediaRepository,
+		a.mediaRepo,
+		a.userAvatarRepo,
+		a.pointMediaRepo,
 		vars.GetDuration(appenv.MediaTTL),
 	)
 

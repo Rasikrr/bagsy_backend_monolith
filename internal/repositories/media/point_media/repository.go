@@ -1,19 +1,30 @@
-package media
+package pointmedia
 
 import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/models"
+	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-// AddPointPhoto добавляет фото к точке
-func (r *Repository) AddPointPhoto(ctx context.Context, pointMedia *entity.PointMedia) error {
-	m := convertPointMedia(pointMedia)
+// Repository отвечает за работу с point_media таблицей
+type Repository struct {
+	db *postgres.Postgres
+}
+
+func NewRepository(db *postgres.Postgres) *Repository {
+	return &Repository{db: db}
+}
+
+// Add добавляет фото к точке
+func (r *Repository) Add(ctx context.Context, pointMedia *entity.PointMedia) error {
+	m := convert(pointMedia)
 
 	_, err := r.db.Exec(ctx, addPointPhotoSQL,
 		m.ID,
@@ -28,9 +39,9 @@ func (r *Repository) AddPointPhoto(ctx context.Context, pointMedia *entity.Point
 	return nil
 }
 
-// GetPointPhotos получает все фото точки (только связи, без Media)
-func (r *Repository) GetPointPhotos(ctx context.Context, pointCode string) ([]*entity.PointMedia, error) {
-	var mm pointMediaModels
+// GetAll получает все фото точки (только связи, без Media)
+func (r *Repository) GetAll(ctx context.Context, pointCode string) ([]*entity.PointMedia, error) {
+	var mm modelList
 	err := pgxscan.Select(ctx, r.db, &mm, getPointPhotosSQL, pointCode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -42,9 +53,10 @@ func (r *Repository) GetPointPhotos(ctx context.Context, pointCode string) ([]*e
 	return mm.convert(), nil
 }
 
-// GetPointPhotosWithMedia получает все фото точки с полными данными Media через JOIN
-func (r *Repository) GetPointPhotosWithMedia(ctx context.Context, pointCode string) ([]*entity.Media, error) {
-	var mm models
+// GetWithMedia получает все фото точки с полными данными Media через JOIN
+// Использует эффективный SQL JOIN вместо N+1 запросов
+func (r *Repository) GetWithMedia(ctx context.Context, pointCode string) ([]*entity.Media, error) {
+	var mm models.MediaList
 	err := pgxscan.Select(ctx, r.db, &mm, getPointPhotosWithMediaSQL, pointCode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -53,12 +65,17 @@ func (r *Repository) GetPointPhotosWithMedia(ctx context.Context, pointCode stri
 		return nil, domainErr.NewInternalError("failed to get point photos with media", err)
 	}
 
-	return mm.convert()
+	out, convErr := mm.Convert()
+	if convErr != nil {
+		return nil, domainErr.NewInternalError("failed to get point photos with media", convErr)
+	}
+
+	return out, nil
 }
 
-// GetPointPhoto получает одну связь точки с фото
-func (r *Repository) GetPointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) (*entity.PointMedia, error) {
-	var m pointMediaModel
+// Get получает одну связь точки с фото
+func (r *Repository) Get(ctx context.Context, pointCode string, mediaID uuid.UUID) (*entity.PointMedia, error) {
+	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getPointPhotoSQL, pointCode, mediaID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -70,8 +87,8 @@ func (r *Repository) GetPointPhoto(ctx context.Context, pointCode string, mediaI
 	return m.convert(), nil
 }
 
-// UpdatePointPhotoOrder обновляет порядок отображения фото
-func (r *Repository) UpdatePointPhotoOrder(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error {
+// UpdateOrder обновляет порядок отображения фото
+func (r *Repository) UpdateOrder(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error {
 	result, err := r.db.Exec(ctx, updatePointPhotoOrderSQL, pointCode, mediaID, displayOrder)
 	if err != nil {
 		return domainErr.NewInternalError("failed to update point photo order", err)
@@ -84,8 +101,8 @@ func (r *Repository) UpdatePointPhotoOrder(ctx context.Context, pointCode string
 	return nil
 }
 
-// RemovePointPhoto удаляет фото точки (soft delete)
-func (r *Repository) RemovePointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) error {
+// Remove удаляет фото точки (soft delete)
+func (r *Repository) Remove(ctx context.Context, pointCode string, mediaID uuid.UUID) error {
 	result, err := r.db.Exec(ctx, removePointPhotoSQL, pointCode, mediaID)
 	if err != nil {
 		return domainErr.NewInternalError("failed to remove point photo", err)
@@ -98,8 +115,8 @@ func (r *Repository) RemovePointPhoto(ctx context.Context, pointCode string, med
 	return nil
 }
 
-// RemoveAllPointPhotos удаляет все фото точки (soft delete)
-func (r *Repository) RemoveAllPointPhotos(ctx context.Context, pointCode string) error {
+// RemoveAll удаляет все фото точки (soft delete)
+func (r *Repository) RemoveAll(ctx context.Context, pointCode string) error {
 	_, err := r.db.Exec(ctx, removeAllPointPhotosSQL, pointCode)
 	if err != nil {
 		return domainErr.NewInternalError("failed to remove all point photos", err)
@@ -108,8 +125,8 @@ func (r *Repository) RemoveAllPointPhotos(ctx context.Context, pointCode string)
 	return nil
 }
 
-// CountPointPhotos подсчитывает количество фото у точки
-func (r *Repository) CountPointPhotos(ctx context.Context, pointCode string) (int, error) {
+// Count подсчитывает количество фото у точки
+func (r *Repository) Count(ctx context.Context, pointCode string) (int, error) {
 	var count int
 	err := r.db.QueryRow(ctx, countPointPhotosSQL, pointCode).Scan(&count)
 	if err != nil {
@@ -119,8 +136,8 @@ func (r *Repository) CountPointPhotos(ctx context.Context, pointCode string) (in
 	return count, nil
 }
 
-// PointHasPhoto проверяет, есть ли у точки указанное фото
-func (r *Repository) PointHasPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) (bool, error) {
+// Has проверяет, есть ли у точки указанное фото
+func (r *Repository) Has(ctx context.Context, pointCode string, mediaID uuid.UUID) (bool, error) {
 	var exists bool
 	err := r.db.QueryRow(ctx, pointHasPhotoSQL, pointCode, mediaID).Scan(&exists)
 	if err != nil {

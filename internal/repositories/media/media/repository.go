@@ -6,15 +6,26 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/models"
+	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-// CreateMedia создает новую запись медиа в БД
-func (r *Repository) CreateMedia(ctx context.Context, media *entity.Media) error {
-	m := convert(media)
+// Repository отвечает за базовую работу с media таблицей
+type Repository struct {
+	db *postgres.Postgres
+}
+
+func NewRepository(db *postgres.Postgres) *Repository {
+	return &Repository{db: db}
+}
+
+// Create создает новую запись медиа в БД
+func (r *Repository) Create(ctx context.Context, media *entity.Media) error {
+	m := models.FromEntity(media)
 
 	_, err := r.db.Exec(ctx, createMediaSQL,
 		m.ID,
@@ -35,9 +46,9 @@ func (r *Repository) CreateMedia(ctx context.Context, media *entity.Media) error
 	return nil
 }
 
-// GetMediaByID получает медиа по ID
-func (r *Repository) GetMediaByID(ctx context.Context, id uuid.UUID) (*entity.Media, error) {
-	var m model
+// GetByID получает медиа по ID
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Media, error) {
+	var m models.Media
 	err := pgxscan.Get(ctx, r.db, &m, getMediaByIDSQL, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -45,16 +56,16 @@ func (r *Repository) GetMediaByID(ctx context.Context, id uuid.UUID) (*entity.Me
 		}
 		return nil, domainErr.NewInternalError("failed to get media from db", err)
 	}
-	out, convErr := m.convert()
+	out, convErr := m.Convert()
 	if convErr != nil {
 		return nil, domainErr.NewInternalError("failed to get media from db", convErr)
 	}
 	return out, nil
 }
 
-// GetMediaByFileKey получает медиа по file_key
-func (r *Repository) GetMediaByFileKey(ctx context.Context, fileKey string) (*entity.Media, error) {
-	var m model
+// GetByFileKey получает медиа по file_key
+func (r *Repository) GetByFileKey(ctx context.Context, fileKey string) (*entity.Media, error) {
+	var m models.Media
 	err := pgxscan.Get(ctx, r.db, &m, getMediaByFileKeySQL, fileKey)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -62,15 +73,15 @@ func (r *Repository) GetMediaByFileKey(ctx context.Context, fileKey string) (*en
 		}
 		return nil, domainErr.NewInternalError("failed to get media from db", err)
 	}
-	out, convErr := m.convert()
+	out, convErr := m.Convert()
 	if convErr != nil {
 		return nil, domainErr.NewInternalError("failed to get media from db", convErr)
 	}
 	return out, nil
 }
 
-// UpdateMediaStatus обновляет статус медиа
-func (r *Repository) UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error {
+// UpdateStatus обновляет статус медиа
+func (r *Repository) UpdateStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error {
 	result, err := r.db.Exec(ctx, updateMediaStatusSQL, id, status.String())
 	if err != nil {
 		return domainErr.NewInternalError("failed to update media status", err)
@@ -83,8 +94,8 @@ func (r *Repository) UpdateMediaStatus(ctx context.Context, id uuid.UUID, status
 	return nil
 }
 
-// UpdateMediaMetadata обновляет метаданные медиа (width, height, size)
-func (r *Repository) UpdateMediaMetadata(ctx context.Context, id uuid.UUID, width, height *int, sizeBytes int64) error {
+// UpdateMetadata обновляет метаданные медиа (width, height, size)
+func (r *Repository) UpdateMetadata(ctx context.Context, id uuid.UUID, width, height *int, sizeBytes int64) error {
 	result, err := r.db.Exec(ctx, updateMediaMetadataSQL, id, width, height, sizeBytes)
 	if err != nil {
 		return domainErr.NewInternalError("failed to update media metadata", err)
@@ -97,8 +108,8 @@ func (r *Repository) UpdateMediaMetadata(ctx context.Context, id uuid.UUID, widt
 	return nil
 }
 
-// SoftDeleteMediaByID помечает медиа как удаленное
-func (r *Repository) SoftDeleteMediaByID(ctx context.Context, id uuid.UUID) error {
+// SoftDeleteByID помечает медиа как удаленное
+func (r *Repository) SoftDeleteByID(ctx context.Context, id uuid.UUID) error {
 	result, err := r.db.Exec(ctx, softDeleteMediaSQL, id)
 	if err != nil {
 		return domainErr.NewInternalError("failed to delete media", err)
@@ -111,8 +122,8 @@ func (r *Repository) SoftDeleteMediaByID(ctx context.Context, id uuid.UUID) erro
 	return nil
 }
 
-// SoftDeleteMediaByIDs помечает несколько медиа как удаленные
-func (r *Repository) SoftDeleteMediaByIDs(ctx context.Context, ids []uuid.UUID) error {
+// SoftDeleteByIDs помечает несколько медиа как удаленные
+func (r *Repository) SoftDeleteByIDs(ctx context.Context, ids []uuid.UUID) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -125,8 +136,8 @@ func (r *Repository) SoftDeleteMediaByIDs(ctx context.Context, ids []uuid.UUID) 
 	return nil
 }
 
-// ExistsMediaByFileKey проверяет существование медиа по file_key
-func (r *Repository) ExistsMediaByFileKey(ctx context.Context, fileKey string) (bool, error) {
+// ExistsByFileKey проверяет существование медиа по file_key
+func (r *Repository) ExistsByFileKey(ctx context.Context, fileKey string) (bool, error) {
 	var exists bool
 	err := r.db.QueryRow(ctx, existsByFileKeySQL, fileKey).Scan(&exists)
 	if err != nil {
@@ -136,9 +147,9 @@ func (r *Repository) ExistsMediaByFileKey(ctx context.Context, fileKey string) (
 	return exists, nil
 }
 
-// ListMediaByStatus получает список медиа по статусу (для cleanup jobs)
-func (r *Repository) ListMediaByStatus(ctx context.Context, status enum.MediaStatus, limit int) ([]*entity.Media, error) {
-	var mm models
+// ListByStatus получает список медиа по статусу (для cleanup jobs)
+func (r *Repository) ListByStatus(ctx context.Context, status enum.MediaStatus, limit int) ([]*entity.Media, error) {
+	var mm models.MediaList
 	err := pgxscan.Select(ctx, r.db, &mm, listByStatusSQL, status.String(), limit)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -146,7 +157,7 @@ func (r *Repository) ListMediaByStatus(ctx context.Context, status enum.MediaSta
 		}
 		return nil, domainErr.NewInternalError("failed to list media by status", err)
 	}
-	out, convErr := mm.convert()
+	out, convErr := mm.Convert()
 	if convErr != nil {
 		return nil, domainErr.NewInternalError("failed to list media by status", convErr)
 	}

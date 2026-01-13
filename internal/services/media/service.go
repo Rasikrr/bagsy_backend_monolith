@@ -23,45 +23,55 @@ type storage interface {
 }
 
 type mediaRepository interface {
-	CreateMedia(ctx context.Context, media *entity.Media) error
-	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
-	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
-	SoftDeleteMediaByID(ctx context.Context, id uuid.UUID) error
-	// UserMedia methods
-	GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error)
-	SetUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
-	GetUserAvatarWithMedia(ctx context.Context, phone string) (*entity.Media, error)
-	RemoveUserAvatar(ctx context.Context, phone string) error
-	// PointMedia methods
-	AddPointPhoto(ctx context.Context, pointMedia *entity.PointMedia) error
-	GetPointPhotos(ctx context.Context, pointCode string) ([]*entity.PointMedia, error)
-	GetPointPhotosWithMedia(ctx context.Context, pointCode string) ([]*entity.Media, error)
-	GetPointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) (*entity.PointMedia, error)
-	UpdatePointPhotoOrder(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error
-	RemovePointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) error
-	RemoveAllPointPhotos(ctx context.Context, pointCode string) error
-	CountPointPhotos(ctx context.Context, pointCode string) (int, error)
-	PointHasPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) (bool, error)
+	Create(ctx context.Context, media *entity.Media) error
+	GetByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
+	SoftDeleteByID(ctx context.Context, id uuid.UUID) error
+}
+
+type userAvatarRepository interface {
+	Get(ctx context.Context, phone string) (*entity.UserMedia, error)
+	Set(ctx context.Context, userMedia *entity.UserMedia) error
+	GetWithMedia(ctx context.Context, phone string) (*entity.Media, error)
+	Remove(ctx context.Context, phone string) error
+}
+
+type pointMediaRepository interface {
+	Add(ctx context.Context, pointMedia *entity.PointMedia) error
+	GetAll(ctx context.Context, pointCode string) ([]*entity.PointMedia, error)
+	GetWithMedia(ctx context.Context, pointCode string) ([]*entity.Media, error)
+	Get(ctx context.Context, pointCode string, mediaID uuid.UUID) (*entity.PointMedia, error)
+	UpdateOrder(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error
+	Remove(ctx context.Context, pointCode string, mediaID uuid.UUID) error
+	RemoveAll(ctx context.Context, pointCode string) error
+	Count(ctx context.Context, pointCode string) (int, error)
+	Has(ctx context.Context, pointCode string, mediaID uuid.UUID) (bool, error)
 }
 
 type Service struct {
-	txManager       database.TXManager
-	storage         storage
-	mediaRepository mediaRepository
-	mediaTTL        time.Duration
+	txManager      database.TXManager
+	storage        storage
+	mediaRepo      mediaRepository
+	userAvatarRepo userAvatarRepository
+	pointMediaRepo pointMediaRepository
+	mediaTTL       time.Duration
 }
 
 func NewService(
 	txManager database.TXManager,
 	storage storage,
-	mediaRepository mediaRepository,
+	mediaRepo mediaRepository,
+	userAvatarRepo userAvatarRepository,
+	pointMediaRepo pointMediaRepository,
 	mediaTTL time.Duration,
 ) *Service {
 	return &Service{
-		txManager:       txManager,
-		storage:         storage,
-		mediaRepository: mediaRepository,
-		mediaTTL:        mediaTTL,
+		txManager:      txManager,
+		storage:        storage,
+		mediaRepo:      mediaRepo,
+		userAvatarRepo: userAvatarRepo,
+		pointMediaRepo: pointMediaRepo,
+		mediaTTL:       mediaTTL,
 	}
 }
 
@@ -82,7 +92,7 @@ func (s *Service) GenerateUploadURL(ctx context.Context, filename, contentType, 
 		Status:           enum.MediaStatusPending,
 		UploadedBy:       ptr.Pointer(ses.Phone()),
 	}
-	err = s.mediaRepository.CreateMedia(ctx, media)
+	err = s.mediaRepo.Create(ctx, media)
 	if err != nil {
 		return nil, err
 	}

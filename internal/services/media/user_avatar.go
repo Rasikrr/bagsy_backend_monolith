@@ -19,7 +19,7 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 
 	err := s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
 		// 1. Валидация медиа
-		newMedia, mediaErr := s.mediaRepository.GetMediaByID(txCtx, mediaID)
+		newMedia, mediaErr := s.mediaRepo.GetByID(txCtx, mediaID)
 		if mediaErr != nil {
 			return mediaErr
 		}
@@ -44,7 +44,7 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 		}
 
 		// 5. Получить старую аватарку (если есть)
-		oldAvatar, err := s.mediaRepository.GetUserAvatar(txCtx, phone)
+		oldAvatar, err := s.userAvatarRepo.Get(txCtx, phone)
 		if err != nil && !domainErr.IsNotFound(err) {
 			return err
 		}
@@ -54,18 +54,18 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 			MediaID:   mediaID,
 		}
 
-		if err = s.mediaRepository.SetUserAvatar(txCtx, userMedia); err != nil {
+		if err = s.userAvatarRepo.Set(txCtx, userMedia); err != nil {
 			return err
 		}
 
 		// 7. Обновить статус новой медиа на active
-		if err = s.mediaRepository.UpdateMediaStatus(txCtx, mediaID, enum.MediaStatusActive); err != nil {
+		if err = s.mediaRepo.UpdateStatus(txCtx, mediaID, enum.MediaStatusActive); err != nil {
 			return err
 		}
 
 		// 8. Деактивировать старую аватарку (если была и это не та же самая)
 		if oldAvatar != nil && oldAvatar.MediaID != mediaID {
-			_ = s.mediaRepository.UpdateMediaStatus(txCtx, oldAvatar.MediaID, enum.MediaStatusInactive)
+			_ = s.mediaRepo.UpdateStatus(txCtx, oldAvatar.MediaID, enum.MediaStatusInactive)
 		}
 		return nil
 	})
@@ -76,7 +76,7 @@ func (s *Service) RemoveUserAvatar(ctx context.Context, phone string) error {
 	txOpts := database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}
 
 	err := s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
-		userAvatar, err := s.mediaRepository.GetUserAvatarWithMedia(txCtx, phone)
+		userAvatar, err := s.userAvatarRepo.GetWithMedia(txCtx, phone)
 		if err != nil {
 			if domainErr.IsNotFound(err) {
 				return nil
@@ -84,11 +84,11 @@ func (s *Service) RemoveUserAvatar(ctx context.Context, phone string) error {
 			return err
 		}
 
-		err = s.mediaRepository.RemoveUserAvatar(txCtx, phone)
+		err = s.userAvatarRepo.Remove(txCtx, phone)
 		if err != nil {
 			return err
 		}
-		err = s.mediaRepository.SoftDeleteMediaByID(txCtx, userAvatar.ID)
+		err = s.mediaRepo.SoftDeleteByID(txCtx, userAvatar.ID)
 		if err != nil {
 			return err
 		}
