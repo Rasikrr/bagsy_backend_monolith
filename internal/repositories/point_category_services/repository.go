@@ -1,3 +1,4 @@
+// nolint
 package pointcategoryservices
 
 import (
@@ -6,9 +7,11 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/core/database/postgres"
+	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
+	"github.com/samber/lo"
 )
 
 type Repository struct {
@@ -19,101 +22,89 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
-// GetServiceCategoriesByPointCategoryID возвращает все service_categories для данной point_category
-func (r *Repository) GetServiceCategoriesByPointCategoryID(ctx context.Context, pointCategoryID int) ([]*entity.ServiceCategory, error) {
-	var mm serviceCategoryModels
-	err := pgxscan.Select(ctx, r.db, &mm, getServiceCategoriesByPointCategoryIDSQL, pointCategoryID)
+func (r *Repository) GetByID(ctx context.Context, id int) (*entity.PointCategoryService, error) {
+	var m model
+	err := pgxscan.Get(ctx, r.db, &m, getByID, id)
 	if err != nil {
-		if pgxscan.NotFound(err) {
-			return []*entity.ServiceCategory{}, nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrPointCategoryServiceNotFound.WithError(err)
 		}
-		return nil, domainErr.NewInternalError("failed to get service categories by point category id", err)
+		return nil, domainErr.NewInternalError("failed to get point category service from db", err)
 	}
-	return mm.convert(), nil
+	return m.convert(), nil
 }
 
-// GetPointCategoriesByServiceCategoryID возвращает все point_categories для данной service_category
-func (r *Repository) GetPointCategoriesByServiceCategoryID(ctx context.Context, serviceCategoryID int) ([]*entity.PointCategory, error) {
-	var mm pointCategoryModels
-	err := pgxscan.Select(ctx, r.db, &mm, getPointCategoriesByServiceCategoryIDSQL, serviceCategoryID)
-	if err != nil {
-		if pgxscan.NotFound(err) {
-			return []*entity.PointCategory{}, nil
-		}
-		return nil, domainErr.NewInternalError("failed to get point categories by service category id", err)
-	}
-	return mm.convert(), nil
-}
-
-// GetByPointCategoryID возвращает связи для данной point_category
 func (r *Repository) GetByPointCategoryID(ctx context.Context, pointCategoryID int) ([]*entity.PointCategoryService, error) {
 	var mm models
-	err := pgxscan.Select(ctx, r.db, &mm, getByPointCategoryIDSQL, pointCategoryID)
+	err := pgxscan.Select(ctx, r.db, &mm, getByPointCategoryID, pointCategoryID)
 	if err != nil {
-		if pgxscan.NotFound(err) {
-			return []*entity.PointCategoryService{}, nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrPointCategoryServiceNotFound.WithError(err)
 		}
-		return nil, domainErr.NewInternalError("failed to get point category services", err)
+		return nil, domainErr.NewInternalError("failed to get point category services from db", err)
 	}
 	return mm.convert(), nil
 }
 
-// GetByServiceCategoryID возвращает связи для данной service_category
 func (r *Repository) GetByServiceCategoryID(ctx context.Context, serviceCategoryID int) ([]*entity.PointCategoryService, error) {
 	var mm models
-	err := pgxscan.Select(ctx, r.db, &mm, getByServiceCategoryIDSQL, serviceCategoryID)
+	err := pgxscan.Select(ctx, r.db, &mm, getByServiceCategoryID, serviceCategoryID)
 	if err != nil {
-		if pgxscan.NotFound(err) {
-			return []*entity.PointCategoryService{}, nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrPointCategoryServiceNotFound.WithError(err)
 		}
-		return nil, domainErr.NewInternalError("failed to get point category services", err)
+		return nil, domainErr.NewInternalError("failed to get point category services from db", err)
 	}
 	return mm.convert(), nil
 }
 
-// AddServiceCategoriesToPointCategory добавляет связи service_categories к point_category
-func (r *Repository) AddServiceCategoriesToPointCategory(ctx context.Context, pointCategoryID int, serviceCategoryIDs []int) error {
-	if len(serviceCategoryIDs) == 0 {
-		return nil
-	}
-
-	batch := &pgx.Batch{}
-	for _, scID := range serviceCategoryIDs {
-		batch.Queue(addServiceCategoryToPointCategorySQL, pointCategoryID, scID)
-	}
-
-	br := r.db.SendBatch(ctx, batch)
-	defer br.Close()
-
-	for range serviceCategoryIDs {
-		if _, err := br.Exec(); err != nil {
-			return domainErr.NewInternalError("failed to add service category to point category", err)
+func (r *Repository) GetByPointCategoryIDAndServiceCategoryID(ctx context.Context, pointCategoryID, serviceCategoryID int) (*entity.PointCategoryService, error) {
+	var m model
+	err := pgxscan.Get(ctx, r.db, &m, getByPointCategoryIDAndServiceCategoryID, pointCategoryID, serviceCategoryID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domainErr.ErrPointCategoryServiceNotFound.WithError(err)
 		}
+		return nil, domainErr.NewInternalError("failed to get point category service from db", err)
 	}
+	return m.convert(), nil
+}
 
+func (r *Repository) Create(ctx context.Context, pcs *entity.PointCategoryService) error {
+	m := convert(pcs)
+	err := r.db.QueryRow(ctx, createPointCategoryService, m.PointCategoryID, m.ServiceCategoryID).Scan(&pcs.ID)
+	if err != nil {
+		return domainErr.NewInternalError("failed to create point category service in db", err)
+	}
 	return nil
 }
 
-// RemoveServiceCategoriesFromPointCategory удаляет связи service_categories от point_category
-func (r *Repository) RemoveServiceCategoriesFromPointCategory(ctx context.Context, pointCategoryID int, serviceCategoryIDs []int) error {
+func (r *Repository) Delete(ctx context.Context, pointCategoryServices ...*entity.PointCategoryService) error {
+	ids := lo.Map(pointCategoryServices, func(item *entity.PointCategoryService, _ int) int {
+		return item.ID
+	})
+	_, err := r.db.Exec(ctx, deletePointCategoryService, pq.Array(ids))
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete point category services from db", err)
+	}
+	return nil
+}
+
+func (r *Repository) DeleteByPointCategoryID(ctx context.Context, pointCategoryID int) error {
+	_, err := r.db.Exec(ctx, deleteByPointCategoryID, pointCategoryID)
+	if err != nil {
+		return domainErr.NewInternalError("failed to delete point category services from db", err)
+	}
+	return nil
+}
+
+func (r *Repository) DeleteByPointCategoryIDAndServiceCategoryIDs(ctx context.Context, pointCategoryID int, serviceCategoryIDs []int) error {
 	if len(serviceCategoryIDs) == 0 {
 		return nil
 	}
-
-	_, err := r.db.Exec(ctx, removeServiceCategoriesFromPointCategorySQL, pointCategoryID, pq.Array(serviceCategoryIDs))
+	_, err := r.db.Exec(ctx, deleteByPointCategoryIDAndServiceCategoryIDs, pointCategoryID, pq.Array(serviceCategoryIDs))
 	if err != nil {
-		return domainErr.NewInternalError("failed to remove service categories from point category", err)
+		return domainErr.NewInternalError("failed to delete point category services from db", err)
 	}
-
 	return nil
-}
-
-// SetServiceCategoriesForPointCategory устанавливает связи (удаляет старые, добавляет новые)
-func (r *Repository) SetServiceCategoriesForPointCategory(ctx context.Context, pointCategoryID int, serviceCategoryIDs []int) error {
-	_, err := r.db.Exec(ctx, removeAllServiceCategoriesFromPointCategorySQL, pointCategoryID)
-	if err != nil {
-		return domainErr.NewInternalError("failed to remove all service categories from point category", err)
-	}
-
-	return r.AddServiceCategoriesToPointCategory(ctx, pointCategoryID, serviceCategoryIDs)
 }

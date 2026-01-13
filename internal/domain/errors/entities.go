@@ -49,3 +49,8 @@ var (
 var (
 	ErrMasterServiceNotFound = NewNotFoundError("master service(s) not found", nil)
 )
+
+// Point Category Services errors
+var (
+	ErrPointCategoryServiceNotFound = NewNotFoundError("point category service(s) not found", nil)
+)
