@@ -149,23 +149,14 @@ func (s *Service) GetListByFilter(ctx context.Context, requestedFilter *query.Us
 	}, nil
 }
 
-// Update Phone который передается в новой структуре используется только для получения старого юзера
-// Оcтальные поля можно переназначать, перед этим добавив нужные поля в convertToUpdateUser
-func (s *Service) Update(ctx context.Context, newUser *entity.User) error {
-	exists, err := s.usersRepo.ExistsByPhone(ctx, newUser.Phone)
+func (s *Service) UpdateSchedule(ctx context.Context, phone string, schedule []entity.StaffSchedule) error {
+	user, err := s.usersRepo.GetByPhone(ctx, phone)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return domainErr.ErrUserNotFound
-	}
+	user.Schedule = schedule
 
-	oldUser, err := s.usersRepo.GetByPhone(ctx, newUser.Phone)
-	if err != nil {
-		return err
-	}
-
-	return s.usersRepo.Update(ctx, convertToUpdatedUser(oldUser, newUser))
+	return s.usersRepo.Update(ctx, user)
 }
 
 func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*dto.UserWithAvatar, error) {

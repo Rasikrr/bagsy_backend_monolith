@@ -38,14 +38,13 @@ func (c *Controller) updateSchedule(w http.ResponseWriter, r *http.Request) {
 		errors.HandleError(ctx, w, err)
 		return
 	}
-
-	user, err := req.ToDomain(ses)
+	schedules, err := req.toDomain()
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
 
-	err = c.userService.Update(ctx, user)
+	err = c.userService.UpdateSchedule(ctx, ses.Phone(), schedules)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return

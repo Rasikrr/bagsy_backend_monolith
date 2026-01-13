@@ -15,7 +15,7 @@ type userService interface {
 	GetUserProfile(ctx context.Context) (*dto.UserWithAvatar, error)
 	GetListByFilter(ctx context.Context, filter *query.UserFilter) (*dto.PaginatedUsers, error)
 	UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*dto.UserWithAvatar, error)
-	Update(ctx context.Context, user *entity.User) error
+	UpdateSchedule(ctx context.Context, phone string, schedule []entity.StaffSchedule) error
 	RemoveAvatar(ctx context.Context) error
 }
 

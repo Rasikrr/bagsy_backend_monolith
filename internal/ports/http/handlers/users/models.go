@@ -10,7 +10,6 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"github.com/google/uuid"
@@ -246,7 +245,7 @@ func (r *updateScheduleRequest) Validate() error {
 	return nil
 }
 
-func (r *updateScheduleRequest) ToDomain(ses *session.Session) (*entity.User, error) {
+func (r *updateScheduleRequest) toDomain() ([]entity.StaffSchedule, error) {
 	schedules := make([]entity.StaffSchedule, 0, len(r.Schedule))
 
 	for _, s := range r.Schedule {
@@ -272,10 +271,5 @@ func (r *updateScheduleRequest) ToDomain(ses *session.Session) (*entity.User, er
 			Comment: s.Comment,
 		})
 	}
-
-	return &entity.User{
-		Phone:     ses.Phone(),
-		Schedule:  schedules,
-		UpdatedBy: ses.Phone(),
-	}, nil
+	return schedules, nil
 }
