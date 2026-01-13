@@ -31,3 +31,14 @@ type UserMedia struct {
 	CreatedAt time.Time
 	UpdatedAt *time.Time
 }
+
+// PointMedia представляет связь точки с её фотографиями
+type PointMedia struct {
+	ID           uuid.UUID
+	PointCode    string
+	MediaID      uuid.UUID
+	DisplayOrder int
+	CreatedAt    time.Time
+	UpdatedAt    *time.Time
+	DeletedAt    *time.Time
+}

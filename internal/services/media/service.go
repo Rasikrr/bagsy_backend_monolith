@@ -25,8 +25,19 @@ type mediaRepository interface {
 	CreateMedia(ctx context.Context, media *entity.Media) error
 	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
 	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
+	// UserMedia methods
 	GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error)
 	SetUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+	// PointMedia methods
+	AddPointPhoto(ctx context.Context, pointMedia *entity.PointMedia) error
+	GetPointPhotos(ctx context.Context, pointCode string) ([]*entity.PointMedia, error)
+	GetPointPhotosWithMedia(ctx context.Context, pointCode string) ([]*entity.Media, error)
+	GetPointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) (*entity.PointMedia, error)
+	UpdatePointPhotoOrder(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error
+	RemovePointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) error
+	RemoveAllPointPhotos(ctx context.Context, pointCode string) error
+	CountPointPhotos(ctx context.Context, pointCode string) (int, error)
+	PointHasPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID) (bool, error)
 }
 
 type Service struct {
