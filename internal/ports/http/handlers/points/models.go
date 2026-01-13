@@ -18,6 +18,7 @@ type createPointRequest struct {
 	CategoryID  int               `json:"category_id" validate:"required,min=1"`
 	Address     dto.AddressDTO    `json:"address" validate:"required"`
 	Schedule    []dto.ScheduleDTO `json:"schedule"`
+	PhotoIDs    []string          `json:"photo_ids" validate:"omitempty,max=10,dive,uuid"`
 }
 
 func (r *createPointRequest) Validate() error {

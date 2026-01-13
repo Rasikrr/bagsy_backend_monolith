@@ -199,9 +199,9 @@ func toGetUsersResponse(paginated *dto.PaginatedUsers) getUsersResponse {
 }
 
 type updateUserRequest struct {
-	Name    string     `json:"name" validate:"required"`
-	Surname string     `json:"surname" validate:"required"`
-	MediaID *uuid.UUID `json:"media_id"`
+	Name     string     `json:"name" validate:"required"`
+	Surname  string     `json:"surname" validate:"required"`
+	AvatarID *uuid.UUID `json:"avatar_id"`
 }
 
 func (r *updateUserRequest) Validate() error {
@@ -214,9 +214,9 @@ func (r *updateUserRequest) Validate() error {
 
 func (r *updateUserRequest) toDomain() *command.UpdateUserCommand {
 	return &command.UpdateUserCommand{
-		Name:          r.Name,
-		Surname:       r.Surname,
-		AvatarMediaID: r.MediaID,
+		Name:     r.Name,
+		Surname:  r.Surname,
+		AvatarID: r.AvatarID,
 	}
 }
 

@@ -155,7 +155,21 @@ func (a *App) initServices(_ context.Context) error {
 	vars := a.Config().Variables
 
 	a.networksService = networksS.NewService(a.networksRepo)
-	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService, a.pointCategoriesRepo)
+
+	a.mediaService = mediaS.NewService(
+		a.PostgresTXManager(),
+		a.s3Client,
+		a.mediaRepository,
+		vars.GetDuration(appenv.MediaTTL),
+	)
+
+	a.pointsService = pointsS.NewService(
+		a.pointsRepo,
+		a.networksService,
+		a.pointCategoriesRepo,
+		a.mediaService,
+		a.PostgresTXManager(),
+	)
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(
 		a.smsClient,
@@ -164,12 +178,6 @@ func (a *App) initServices(_ context.Context) error {
 	)
 	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
 	a.servicesService = services.NewService(a.servicesRepo)
-
-	a.mediaService = mediaS.NewService(
-		a.s3Client,
-		a.mediaRepository,
-		vars.GetDuration(appenv.MediaTTL),
-	)
 
 	a.usersService = usersS.NewService(
 		a.PostgresTXManager(),

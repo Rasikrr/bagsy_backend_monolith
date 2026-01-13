@@ -44,13 +44,13 @@ const (
 	// Delete (soft)
 	softDeleteMediaSQL = `
 		UPDATE media
-		SET deleted_at = NOW()
+		SET deleted_at = NOW(), status = 'inactive'
 		WHERE id = $1 AND deleted_at IS NULL
 	`
 
 	softDeleteMediaByIDsSQL = `
 		UPDATE media
-		SET deleted_at = NOW()
+		SET deleted_at = NOW(), status = 'inactive'
 		WHERE id = ANY($1) AND deleted_at IS NULL
 	`
 

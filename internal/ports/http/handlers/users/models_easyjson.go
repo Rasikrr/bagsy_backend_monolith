@@ -239,16 +239,16 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.Name = string(in.String())
 		case "surname":
 			out.Surname = string(in.String())
-		case "media_id":
+		case "avatar_id":
 			if in.IsNull() {
 				in.Skip()
-				out.MediaID = nil
+				out.AvatarID = nil
 			} else {
-				if out.MediaID == nil {
-					out.MediaID = new(uuid.UUID)
+				if out.AvatarID == nil {
+					out.AvatarID = new(uuid.UUID)
 				}
 				if data := in.UnsafeBytes(); in.Ok() {
-					in.AddError((*out.MediaID).UnmarshalText(data))
+					in.AddError((*out.AvatarID).UnmarshalText(data))
 				}
 			}
 		default:
@@ -276,12 +276,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.String(string(in.Surname))
 	}
 	{
-		const prefix string = ",\"media_id\":"
+		const prefix string = ",\"avatar_id\":"
 		out.RawString(prefix)
-		if in.MediaID == nil {
+		if in.AvatarID == nil {
 			out.RawString("null")
 		} else {
-			out.RawText((*in.MediaID).MarshalText())
+			out.RawText((*in.AvatarID).MarshalText())
 		}
 	}
 	out.RawByte('}')

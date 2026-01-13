@@ -16,6 +16,7 @@ type userService interface {
 	GetListByFilter(ctx context.Context, filter *query.UserFilter) (*dto.PaginatedUsers, error)
 	UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*dto.UserWithAvatar, error)
 	Update(ctx context.Context, user *entity.User) error
+	RemoveAvatar(ctx context.Context) error
 }
 
 type Controller struct {
@@ -47,5 +48,6 @@ func (c *Controller) Init(router *chi.Mux) {
 		authenticated.Get("/me", c.getMyProfile)
 		authenticated.Put("/me", c.updateUser)
 		authenticated.Put("/me/schedule", c.updateSchedule)
+		authenticated.Delete("/me/avatar", c.deleteAvatar)
 	})
 }

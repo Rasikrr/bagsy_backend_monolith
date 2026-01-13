@@ -1072,7 +1072,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Создаёт новую точку обслуживания с указанными параметрами. Создавать могут только NetManager/SelfOwner",
+                "description": "Создаёт новую точку обслуживания с указанными параметрами. Опционально можно прикрепить фото (до 10). Создавать могут только NetManager/SelfOwner",
                 "consumes": [
                     "application/json"
                 ],
@@ -1085,7 +1085,7 @@ const docTemplate = `{
                 "summary": "Создать точку обслуживания",
                 "parameters": [
                     {
-                        "description": "Данные для создания точки",
+                        "description": "Данные для создания точки (photo_ids опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1102,7 +1102,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Неверные параметры запроса",
+                        "description": "Неверные параметры запроса или некорректный формат photo_id",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -1415,6 +1415,52 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/me/avatar": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет текущий аватар пользователя (soft delete связи user_media и деактивация media)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Удалить аватар пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Аватар успешно удален",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Аватар не найден",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -2052,6 +2098,13 @@ const docTemplate = `{
                 "network_code": {
                     "type": "string"
                 },
+                "photo_ids": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "schedule": {
                     "type": "array",
                     "items": {
@@ -2149,7 +2202,7 @@ const docTemplate = `{
                 "surname"
             ],
             "properties": {
-                "media_id": {
+                "avatar_id": {
                     "type": "string"
                 },
                 "name": {

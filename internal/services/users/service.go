@@ -32,6 +32,7 @@ type pointsService interface {
 
 type mediaService interface {
 	SetUserAvatar(ctx context.Context, phone string, mediaID uuid.UUID) error
+	RemoveUserAvatar(ctx context.Context, phone string) error
 	GenerateDownloadURL(ctx context.Context, fileKey string) (string, error)
 }
 
@@ -189,8 +190,8 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserComm
 			user.Name = cmd.Name
 			user.Surname = cmd.Surname
 
-			if cmd.AvatarMediaID != nil {
-				err = s.mediaService.SetUserAvatar(ctx, user.Phone, *cmd.AvatarMediaID)
+			if cmd.AvatarID != nil {
+				err = s.mediaService.SetUserAvatar(ctx, user.Phone, *cmd.AvatarID)
 				if err != nil {
 					return err
 				}
@@ -245,6 +246,14 @@ func (s *Service) UpdatePasswordByPhone(ctx context.Context, phone string, rawPa
 	}
 	user.Password = passwordHash
 	return s.usersRepo.Update(ctx, user)
+}
+
+func (s *Service) RemoveAvatar(ctx context.Context) error {
+	ses, err := session.GetSession(ctx)
+	if err != nil {
+		return err
+	}
+	return s.mediaService.RemoveUserAvatar(ctx, ses.Phone())
 }
 
 func (s *Service) enrichUserWithAvatar(ctx context.Context, user *entity.User) (*dto.UserWithAvatar, error) {

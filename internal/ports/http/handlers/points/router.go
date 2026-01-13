@@ -6,10 +6,12 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type pointsService interface {
 	Create(ctx context.Context, point *entity.Point) error
+	CreateWithPhotos(ctx context.Context, point *entity.Point, photoIDs []uuid.UUID) error
 	GetByCode(ctx context.Context, code string) (*entity.Point, error)
 }
 

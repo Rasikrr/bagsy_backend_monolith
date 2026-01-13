@@ -9,6 +9,10 @@ github.com/Masterminds/squirrel v1.5.4 h1:uUcX/aBc8O7Fg9kaISIUsHXdKuqehiXAMQTYX8
 github.com/Masterminds/squirrel v1.5.4/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=
 github.com/Rasikrr/core v0.0.81 h1:aPipGzJuwHJzniV5W3rxwYIvsBS9wKm/MQKBmmfOBUk=
 github.com/Rasikrr/core v0.0.81/go.mod h1:ldu/2acJUI1KCj1y17fWxLt4AyuhcbYHsI1zTt3S6ik=
+github.com/Rasikrr/core v0.0.82 h1:k9A0CHF2UmJ8+LtTO0Pn98bsWk2aukK4B6hOLs3mHF0=
+github.com/Rasikrr/core v0.0.82/go.mod h1:ldu/2acJUI1KCj1y17fWxLt4AyuhcbYHsI1zTt3S6ik=
+github.com/Rasikrr/core v0.0.84 h1:yAEKt+AhqO3V/DTUZtuecdsxMyrHvud7NVK44po0Qg0=
+github.com/Rasikrr/core v0.0.84/go.mod h1:ldu/2acJUI1KCj1y17fWxLt4AyuhcbYHsI1zTt3S6ik=
 github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 h1:uvdUDbHQHO85qeSydJtItA4T55Pw6BtAejd0APRJOCE=
 github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302/go.mod h1:SGnFV6hVsYE877CKEZ6tDNTjaSXYUk6QqoIK6PrAtcc=
 github.com/alicebob/miniredis/v2 v2.34.0 h1:mBFWMaJSNL9RwdGRyEDoAAv8OQc5UlEhLDQggTglU/0=

@@ -3,9 +3,11 @@ package points
 import (
 	"context"
 
-	"github.com/Rasikrr/core/log"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/core/database"
+	coreEnum "github.com/Rasikrr/core/enum"
+	"github.com/Rasikrr/core/log"
+	"github.com/google/uuid"
 )
 
 type networksService interface {
@@ -23,21 +25,31 @@ type pointsRepository interface {
 	Update(ctx context.Context, entity *entity.Point) error
 }
 
+type mediaService interface {
+	AddPointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error
+}
+
 type Service struct {
 	pointsRepo          pointsRepository
 	networksService     networksService
 	pointCategoriesRepo pointCategoriesRepository
+	mediaService        mediaService
+	txManager           database.TXManager
 }
 
 func NewService(
 	repo pointsRepository,
 	networksService networksService,
 	pointCategoriesRepo pointCategoriesRepository,
+	mediaService mediaService,
+	txManager database.TXManager,
 ) *Service {
 	return &Service{
 		pointsRepo:          repo,
 		networksService:     networksService,
 		pointCategoriesRepo: pointCategoriesRepo,
+		mediaService:        mediaService,
+		txManager:           txManager,
 	}
 }
 
@@ -85,4 +97,26 @@ func (s *Service) UpdateByCode(ctx context.Context, code string, point *entity.P
 func (s *Service) DeleteByCode(ctx context.Context, code string) error {
 	log.Infof(ctx, "UpdateByCode %v %v", code)
 	return nil
+}
+
+// CreateWithPhotos создает точку и привязывает к ней фотографии в транзакции
+func (s *Service) CreateWithPhotos(ctx context.Context, point *entity.Point, photoIDs []uuid.UUID) error {
+	// Создать точку + привязать фото в транзакции
+	txOpts := database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}
+
+	return s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
+		// 1. Создать точку
+		if err := s.Create(txCtx, point); err != nil {
+			return err
+		}
+
+		// 2. Привязать фото в заданном порядке
+		for i, photoID := range photoIDs {
+			if err := s.mediaService.AddPointPhoto(txCtx, point.Code, photoID, i); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

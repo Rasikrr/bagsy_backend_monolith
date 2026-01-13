@@ -97,8 +97,8 @@ func (r *Repository) UpdateMediaMetadata(ctx context.Context, id uuid.UUID, widt
 	return nil
 }
 
-// SoftDeleteMedia помечает медиа как удаленное
-func (r *Repository) SoftDeleteMedia(ctx context.Context, id uuid.UUID) error {
+// SoftDeleteMediaByID помечает медиа как удаленное
+func (r *Repository) SoftDeleteMediaByID(ctx context.Context, id uuid.UUID) error {
 	result, err := r.db.Exec(ctx, softDeleteMediaSQL, id)
 	if err != nil {
 		return domainErr.NewInternalError("failed to delete media", err)

@@ -12,6 +12,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
+	"github.com/Rasikrr/core/database"
 	"github.com/google/uuid"
 )
 
@@ -25,9 +26,12 @@ type mediaRepository interface {
 	CreateMedia(ctx context.Context, media *entity.Media) error
 	GetMediaByID(ctx context.Context, mediaID uuid.UUID) (*entity.Media, error)
 	UpdateMediaStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error
+	SoftDeleteMediaByID(ctx context.Context, id uuid.UUID) error
 	// UserMedia methods
 	GetUserAvatar(ctx context.Context, phone string) (*entity.UserMedia, error)
 	SetUserAvatar(ctx context.Context, userMedia *entity.UserMedia) error
+	GetUserAvatarWithMedia(ctx context.Context, phone string) (*entity.Media, error)
+	RemoveUserAvatar(ctx context.Context, phone string) error
 	// PointMedia methods
 	AddPointPhoto(ctx context.Context, pointMedia *entity.PointMedia) error
 	GetPointPhotos(ctx context.Context, pointCode string) ([]*entity.PointMedia, error)
@@ -41,17 +45,20 @@ type mediaRepository interface {
 }
 
 type Service struct {
+	txManager       database.TXManager
 	storage         storage
 	mediaRepository mediaRepository
 	mediaTTL        time.Duration
 }
 
 func NewService(
+	txManager database.TXManager,
 	storage storage,
 	mediaRepository mediaRepository,
 	mediaTTL time.Duration,
 ) *Service {
 	return &Service{
+		txManager:       txManager,
 		storage:         storage,
 		mediaRepository: mediaRepository,
 		mediaTTL:        mediaTTL,

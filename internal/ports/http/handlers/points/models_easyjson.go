@@ -144,6 +144,29 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				}
 				in.Delim(']')
 			}
+		case "photo_ids":
+			if in.IsNull() {
+				in.Skip()
+				out.PhotoIDs = nil
+			} else {
+				in.Delim('[')
+				if out.PhotoIDs == nil {
+					if !in.IsDelim(']') {
+						out.PhotoIDs = make([]string, 0, 4)
+					} else {
+						out.PhotoIDs = []string{}
+					}
+				} else {
+					out.PhotoIDs = (out.PhotoIDs)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v2 string
+					v2 = string(in.String())
+					out.PhotoIDs = append(out.PhotoIDs, v2)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -194,11 +217,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v2, v3 := range in.Schedule {
-				if v2 > 0 {
+			for v3, v4 := range in.Schedule {
+				if v3 > 0 {
 					out.RawByte(',')
 				}
-				(v3).MarshalEasyJSON(out)
+				(v4).MarshalEasyJSON(out)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"photo_ids\":"
+		out.RawString(prefix)
+		if in.PhotoIDs == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v5, v6 := range in.PhotoIDs {
+				if v5 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v6))
 			}
 			out.RawByte(']')
 		}
