@@ -22,6 +22,7 @@ func (m model) convert() *entity.PointCategoryService {
 	}
 }
 
+//nolint:unused
 func convert(e *entity.PointCategoryService) model {
 	return model{
 		ID:                e.ID,
