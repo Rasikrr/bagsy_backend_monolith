@@ -15,7 +15,6 @@ type User struct {
 	PointCode     *string
 	NetworkCode   *string
 	AvatarFileKey *string // file_key из media таблицы (через JOIN user_media → media), персистится
-	AvatarURL     *string // Presigned URL для скачивания, runtime поле (НЕ персистится)
 	Active        bool
 	Schedule      []StaffSchedule
 	CreatedAt     time.Time

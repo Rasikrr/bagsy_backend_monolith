@@ -31,7 +31,7 @@ type pointsService interface {
 }
 
 type mediaService interface {
-	SetUserAvatar(ctx context.Context, user *entity.User, mediaID uuid.UUID) error
+	SetUserAvatar(ctx context.Context, phone string, mediaID uuid.UUID) error
 	GenerateDownloadURL(ctx context.Context, fileKey string) (string, error)
 }
 
@@ -88,7 +88,7 @@ func (s *Service) GetByPhone(ctx context.Context, phone string) (*entity.User, e
 	return user, nil
 }
 
-func (s *Service) GetUserProfile(ctx context.Context) (*entity.User, error) {
+func (s *Service) GetUserProfile(ctx context.Context) (*dto.UserWithAvatar, error) {
 	ses, err := session.GetSession(ctx)
 	if err != nil {
 		return nil, err
@@ -99,21 +99,21 @@ func (s *Service) GetUserProfile(ctx context.Context) (*entity.User, error) {
 		return nil, err
 	}
 
-	err = s.enrichWithAvatars(ctx, user)
+	userDTO, err := s.enrichUserWithAvatar(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return userDTO, nil
 }
 
 func (s *Service) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
 	return s.usersRepo.ExistsByPhone(ctx, phone)
 }
 
-// GetByFilter возвращает список пользователей с пагинацией и учетом прав доступа
+// GetListByFilter возвращает список пользователей с пагинацией и учетом прав доступа
 // Применяет ограничения на основе роли текущего пользователя
-func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFilter) (*dto.PaginatedUsers, error) {
+func (s *Service) GetListByFilter(ctx context.Context, requestedFilter *query.UserFilter) (*dto.PaginatedUsers, error) {
 	userSession, err := session.GetSession(ctx)
 	if err != nil {
 		return nil, domainErr.NewUnauthorizedError("user session not found").WithError(err)
@@ -131,7 +131,7 @@ func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFi
 		return nil, err
 	}
 
-	err = s.enrichWithAvatars(ctx, users...)
+	userDTOs, err := s.enrichUsersWithAvatars(ctx, users)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (s *Service) GetByFilter(ctx context.Context, requestedFilter *query.UserFi
 	}
 
 	return &dto.PaginatedUsers{
-		Users: users,
+		Users: userDTOs,
 		Total: total,
 	}, nil
 }
@@ -167,7 +167,7 @@ func (s *Service) Update(ctx context.Context, newUser *entity.User) error {
 	return s.usersRepo.Update(ctx, convertToUpdatedUser(oldUser, newUser))
 }
 
-func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*entity.User, error) {
+func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*dto.UserWithAvatar, error) {
 	ses, err := session.GetSession(ctx)
 	if err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserComm
 			user.Surname = cmd.Surname
 
 			if cmd.AvatarMediaID != nil {
-				err = s.mediaService.SetUserAvatar(ctx, user, *cmd.AvatarMediaID)
+				err = s.mediaService.SetUserAvatar(ctx, user.Phone, *cmd.AvatarMediaID)
 				if err != nil {
 					return err
 				}
@@ -215,12 +215,12 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *command.UpdateUserComm
 		return nil, err
 	}
 
-	err = s.enrichWithAvatars(ctx, updatedUser)
+	userDTO, err := s.enrichUserWithAvatar(ctx, updatedUser)
 	if err != nil {
 		return nil, err
 	}
 
-	return updatedUser, nil
+	return userDTO, nil
 }
 
 func (s *Service) UpdateWithPassword(ctx context.Context, user *entity.User, rawPassword string) error {
@@ -247,21 +247,37 @@ func (s *Service) UpdatePasswordByPhone(ctx context.Context, phone string, rawPa
 	return s.usersRepo.Update(ctx, user)
 }
 
-func (s *Service) enrichWithAvatars(ctx context.Context, users ...*entity.User) error {
+func (s *Service) enrichUserWithAvatar(ctx context.Context, user *entity.User) (*dto.UserWithAvatar, error) {
+	if user == nil {
+		return nil, domainErr.ErrUserNotFound
+	}
+	userDTO := &dto.UserWithAvatar{
+		User: user,
+	}
+	if user.AvatarFileKey == nil {
+		return userDTO, nil
+	}
+	url, err := s.mediaService.GenerateDownloadURL(ctx, *user.AvatarFileKey)
+	if err != nil {
+		return nil, err
+	}
+	userDTO.AvatarURL = &url
+	return userDTO, nil
+}
+
+func (s *Service) enrichUsersWithAvatars(ctx context.Context, users []*entity.User) ([]*dto.UserWithAvatar, error) {
 	if len(users) == 0 {
-		return nil
+		return nil, nil
 	}
-	for _, user := range users {
-		if user.AvatarFileKey == nil || user.AvatarURL != nil {
-			continue
-		}
-		url, err := s.mediaService.GenerateDownloadURL(ctx, *user.AvatarFileKey)
+	out := make([]*dto.UserWithAvatar, len(users))
+	for i, user := range users {
+		userDTO, err := s.enrichUserWithAvatar(ctx, user)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		user.AvatarURL = &url
+		out[i] = userDTO
 	}
-	return nil
+	return out, nil
 }
 
 // authorizeFilter применяет ограничения доступа на основе роли пользователя

@@ -12,9 +12,9 @@ import (
 )
 
 type userService interface {
-	GetUserProfile(ctx context.Context) (*entity.User, error)
-	GetByFilter(ctx context.Context, filter *query.UserFilter) (*dto.PaginatedUsers, error)
-	UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*entity.User, error)
+	GetUserProfile(ctx context.Context) (*dto.UserWithAvatar, error)
+	GetListByFilter(ctx context.Context, filter *query.UserFilter) (*dto.PaginatedUsers, error)
+	UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*dto.UserWithAvatar, error)
 	Update(ctx context.Context, user *entity.User) error
 }
 

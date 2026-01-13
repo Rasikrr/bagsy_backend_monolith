@@ -623,16 +623,24 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Users == nil {
 					if !in.IsDelim(']') {
-						out.Users = make([]userDTO, 0, 0)
+						out.Users = make([]*userDTO, 0, 8)
 					} else {
-						out.Users = []userDTO{}
+						out.Users = []*userDTO{}
 					}
 				} else {
 					out.Users = (out.Users)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v7 userDTO
-					(v7).UnmarshalEasyJSON(in)
+					var v7 *userDTO
+					if in.IsNull() {
+						in.Skip()
+						v7 = nil
+					} else {
+						if v7 == nil {
+							v7 = new(userDTO)
+						}
+						(*v7).UnmarshalEasyJSON(in)
+					}
 					out.Users = append(out.Users, v7)
 					in.WantComma()
 				}
@@ -665,7 +673,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				if v8 > 0 {
 					out.RawByte(',')
 				}
-				(v9).MarshalEasyJSON(out)
+				if v9 == nil {
+					out.RawString("null")
+				} else {
+					(*v9).MarshalEasyJSON(out)
+				}
 			}
 			out.RawByte(']')
 		}

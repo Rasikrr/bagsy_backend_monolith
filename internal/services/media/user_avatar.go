@@ -12,7 +12,7 @@ import (
 )
 
 // SetUserAvatar устанавливает аватар пользователя (UPSERT в user_media)
-func (s *Service) SetUserAvatar(ctx context.Context, user *entity.User, mediaID uuid.UUID) error {
+func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.UUID) error {
 	// 1. Валидация медиа
 	newMedia, mediaErr := s.mediaRepository.GetMediaByID(ctx, mediaID)
 	if mediaErr != nil {
@@ -20,10 +20,10 @@ func (s *Service) SetUserAvatar(ctx context.Context, user *entity.User, mediaID 
 	}
 
 	// 2. Проверка owner
-	if ptr.Deref(newMedia.UploadedBy) != user.Phone {
+	if ptr.Deref(newMedia.UploadedBy) != phone {
 		return domainErr.NewForbiddenError("media does not belong to user").
 			WithDetail("media_id", mediaID.String()).
-			WithDetail("user_phone", user.Phone)
+			WithDetail("user_phone", phone)
 	}
 
 	// 3. Проверка статуса
@@ -39,13 +39,13 @@ func (s *Service) SetUserAvatar(ctx context.Context, user *entity.User, mediaID 
 	}
 
 	// 5. Получить старую аватарку (если есть)
-	oldAvatar, err := s.mediaRepository.GetUserAvatar(ctx, user.Phone)
+	oldAvatar, err := s.mediaRepository.GetUserAvatar(ctx, phone)
 	if err != nil && !domainErr.IsNotFound(err) {
 		return err
 	}
 	// 6. Установить новую аватарку (UPSERT в user_media)
 	userMedia := &entity.UserMedia{
-		UserPhone: user.Phone,
+		UserPhone: phone,
 		MediaID:   mediaID,
 	}
 

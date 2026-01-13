@@ -145,8 +145,16 @@ func toStaffScheduleDTO(schedule entity.StaffSchedule) staffScheduleDTO {
 	}
 }
 
-func toUserDTO(user *entity.User) userDTO {
-	dto := userDTO{
+func toUserWithAvatar(u *dto.UserWithAvatar) *userDTO {
+	userDTO := toUserDTO(u.User)
+	if u.AvatarURL != nil {
+		userDTO.AvatarURL = u.AvatarURL
+	}
+	return userDTO
+}
+
+func toUserDTO(user *entity.User) *userDTO {
+	d := &userDTO{
 		Phone:       user.Phone,
 		Role:        user.Role.String(),
 		Name:        user.Name,
@@ -156,13 +164,10 @@ func toUserDTO(user *entity.User) userDTO {
 		Active:      user.Active,
 		CreatedAt:   user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
-	if user.AvatarURL != nil {
-		dto.AvatarURL = user.AvatarURL
-	}
 
 	if user.UpdatedAt != nil {
 		updatedAt := user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
-		dto.UpdatedAt = &updatedAt
+		d.UpdatedAt = &updatedAt
 	}
 
 	if len(user.Schedule) > 0 {
@@ -170,21 +175,21 @@ func toUserDTO(user *entity.User) userDTO {
 		for _, s := range user.Schedule {
 			schedules = append(schedules, toStaffScheduleDTO(s))
 		}
-		dto.Schedule = schedules
+		d.Schedule = schedules
 	}
 
-	return dto
+	return d
 }
 
 type getUsersResponse struct {
-	Users []userDTO `json:"users"`
-	Total int       `json:"total"`
+	Users []*userDTO `json:"users"`
+	Total int        `json:"total"`
 }
 
 func toGetUsersResponse(paginated *dto.PaginatedUsers) getUsersResponse {
-	dtos := make([]userDTO, 0, len(paginated.Users))
+	dtos := make([]*userDTO, 0, len(paginated.Users))
 	for _, user := range paginated.Users {
-		dtos = append(dtos, toUserDTO(user))
+		dtos = append(dtos, toUserWithAvatar(user))
 	}
 
 	return getUsersResponse{
