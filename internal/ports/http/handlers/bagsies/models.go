@@ -73,7 +73,7 @@ func newGetSlotsResponse(slots *dto.AvailableSlots) *getSlotsResponse {
 	}
 
 	// Сортируем даты
-	for i := 0; i < len(availableDates)-1; i++ {
+	for i := range len(availableDates) - 1 {
 		for j := i + 1; j < len(availableDates); j++ {
 			if availableDates[i] > availableDates[j] {
 				availableDates[i], availableDates[j] = availableDates[j], availableDates[i]
