@@ -1,7 +1,7 @@
 package form
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/form"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 )
 
@@ -22,8 +22,8 @@ func (c *clientFormRequest) Validate() error {
 	return nil
 }
 
-func (c *clientFormRequest) toEntity() *entity.Form {
-	return &entity.Form{
+func (c *clientFormRequest) toEntity() *form.Form {
+	return &form.Form{
 		FirstName:   c.FirstName,
 		LastName:    c.LastName,
 		Role:        c.Role,

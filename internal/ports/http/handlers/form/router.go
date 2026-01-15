@@ -3,12 +3,12 @@ package form
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/form"
 	"github.com/go-chi/chi/v5"
 )
 
 type formsService interface {
-	Create(ctx context.Context, form *entity.Form) error
+	Create(ctx context.Context, form *form.Form) error
 }
 
 type Controller struct {

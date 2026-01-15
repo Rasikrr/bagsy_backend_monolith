@@ -3,8 +3,7 @@ package bagsies
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
@@ -28,12 +27,12 @@ type model struct {
 
 type models []model
 
-func (m model) convert() (*entity.Bagsy, error) {
-	status, err := enum.BagsyStatusString(m.Status)
+func (m model) convert() (*bagsy.Bagsy, error) {
+	status, err := bagsy.StatusString(m.Status)
 	if err != nil {
 		return nil, err
 	}
-	bagsy := &entity.Bagsy{
+	bagsy := &bagsy.Bagsy{
 		ID:           m.ID,
 		PointCode:    m.PointCode,
 		MasterPhone:  m.MasterPhone,
@@ -52,8 +51,8 @@ func (m model) convert() (*entity.Bagsy, error) {
 	return bagsy, nil
 }
 
-func (ms models) convert() ([]*entity.Bagsy, error) {
-	res := make([]*entity.Bagsy, len(ms))
+func (ms models) convert() ([]*bagsy.Bagsy, error) {
+	res := make([]*bagsy.Bagsy, len(ms))
 	for i, m := range ms {
 		out, err := m.convert()
 		if err != nil {
@@ -64,7 +63,7 @@ func (ms models) convert() ([]*entity.Bagsy, error) {
 	return res, nil
 }
 
-func convertToModel(b *entity.Bagsy) *model {
+func convertToModel(b *bagsy.Bagsy) *model {
 	return &model{
 		ID:           b.ID,
 		Status:       b.Status.String(),

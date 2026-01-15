@@ -3,9 +3,8 @@ package media
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/models"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
@@ -24,7 +23,7 @@ func NewRepository(db *postgres.Postgres) *Repository {
 }
 
 // Create создает новую запись медиа в БД
-func (r *Repository) Create(ctx context.Context, media *entity.Media) error {
+func (r *Repository) Create(ctx context.Context, media *media.Media) error {
 	m := models.FromEntity(media)
 
 	_, err := r.db.Exec(ctx, createMediaSQL,
@@ -47,7 +46,7 @@ func (r *Repository) Create(ctx context.Context, media *entity.Media) error {
 }
 
 // GetByID получает медиа по ID
-func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Media, error) {
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*media.Media, error) {
 	var m models.Media
 	err := pgxscan.Get(ctx, r.db, &m, getMediaByIDSQL, id)
 	if err != nil {
@@ -64,7 +63,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Media, 
 }
 
 // GetByFileKey получает медиа по file_key
-func (r *Repository) GetByFileKey(ctx context.Context, fileKey string) (*entity.Media, error) {
+func (r *Repository) GetByFileKey(ctx context.Context, fileKey string) (*media.Media, error) {
 	var m models.Media
 	err := pgxscan.Get(ctx, r.db, &m, getMediaByFileKeySQL, fileKey)
 	if err != nil {
@@ -81,7 +80,7 @@ func (r *Repository) GetByFileKey(ctx context.Context, fileKey string) (*entity.
 }
 
 // UpdateStatus обновляет статус медиа
-func (r *Repository) UpdateStatus(ctx context.Context, id uuid.UUID, status enum.MediaStatus) error {
+func (r *Repository) UpdateStatus(ctx context.Context, id uuid.UUID, status media.Status) error {
 	result, err := r.db.Exec(ctx, updateMediaStatusSQL, id, status.String())
 	if err != nil {
 		return domainErr.NewInternalError("failed to update media status", err)
@@ -148,12 +147,12 @@ func (r *Repository) ExistsByFileKey(ctx context.Context, fileKey string) (bool,
 }
 
 // ListByStatus получает список медиа по статусу (для cleanup jobs)
-func (r *Repository) ListByStatus(ctx context.Context, status enum.MediaStatus, limit int) ([]*entity.Media, error) {
+func (r *Repository) ListByStatus(ctx context.Context, status media.Status, limit int) ([]*media.Media, error) {
 	var mm models.MediaList
 	err := pgxscan.Select(ctx, r.db, &mm, listByStatusSQL, status.String(), limit)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []*entity.Media{}, nil
+			return []*media.Media{}, nil
 		}
 		return nil, domainErr.NewInternalError("failed to list media by status", err)
 	}

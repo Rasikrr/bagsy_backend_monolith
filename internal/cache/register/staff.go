@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 )
 
-func (c *Cache) SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand, ttl time.Duration) error {
+func (c *Cache) SaveStaffRequest(ctx context.Context, req *auth.RegisterStaffCommand, ttl time.Duration) error {
 	key := genStaffKey(req.Phone)
 	return saveToCache(ctx, c, key, toRegisterStaffDTO(req), ttl)
 }
 
-func (c *Cache) GetStaffRequest(ctx context.Context, phone string) (*command.RegisterStaffCommand, error) {
+func (c *Cache) GetStaffRequest(ctx context.Context, phone string) (*auth.RegisterStaffCommand, error) {
 	dto, err := getFromCache[registerStaffDTO](ctx, c, genStaffKey(phone))
 	if err != nil {
 		return nil, err

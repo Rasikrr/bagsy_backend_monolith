@@ -373,8 +373,6 @@ definitions:
         type: string
       name:
         type: string
-      network_code:
-        type: string
       photo_ids:
         items:
           type: string
@@ -388,12 +386,6 @@ definitions:
     - address
     - category_id
     - name
-    - network_code
-    type: object
-  internal_ports_http_handlers_points.pointCreateResponse:
-    properties:
-      code:
-        type: string
     type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
@@ -1280,7 +1272,7 @@ paths:
         "201":
           description: Точка успешно создана
           schema:
-            $ref: '#/definitions/internal_ports_http_handlers_points.pointCreateResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
         "400":
           description: Неверные параметры запроса или некорректный формат photo_id
           schema:

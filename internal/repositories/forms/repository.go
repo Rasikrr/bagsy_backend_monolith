@@ -3,8 +3,8 @@ package forms
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/form"
 	"github.com/Rasikrr/core/database/postgres"
 )
 
@@ -16,7 +16,7 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) Create(ctx context.Context, form *entity.Form) error {
+func (r *Repository) Create(ctx context.Context, form *form.Form) error {
 	m := toModel(form)
 	_, err := r.db.Exec(ctx, insertForm, m.FirstName, m.LastName, m.Phone, m.Description, m.Role)
 	if err != nil {

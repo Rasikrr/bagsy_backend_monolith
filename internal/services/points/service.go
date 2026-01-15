@@ -1,28 +1,33 @@
+// nolint
 package points
 
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
-	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 )
 
 type networksService interface {
-	GetByCode(cxt context.Context, code string) (*entity.Network, error)
+	GetByCode(cxt context.Context, code string) (*network.Network, error)
+	ExistsByCode(cxt context.Context, code string) (bool, error)
 }
 
 type pointCategoriesRepository interface {
-	GetByID(ctx context.Context, id int) (*entity.PointCategory, error)
+	GetByID(ctx context.Context, id int) (*point.Category, error)
+	ExistsByID(ctx context.Context, id int) (bool, error)
 }
 
 type pointsRepository interface {
-	Create(ctx context.Context, entity *entity.Point) error
-	GetByCode(ctx context.Context, code string) (*entity.Point, error)
-	GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.Point, error)
-	Update(ctx context.Context, entity *entity.Point) error
+	Create(ctx context.Context, entity *point.Point) error
+	GetByCode(ctx context.Context, code string) (*point.Point, error)
+	GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error)
+	Update(ctx context.Context, entity *point.Point) error
 }
 
 type mediaService interface {
@@ -53,7 +58,7 @@ func NewService(
 	}
 }
 
-func (s *Service) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
+func (s *Service) GetByCode(ctx context.Context, code string) (*point.Point, error) {
 	point, err := s.pointsRepo.GetByCode(ctx, code)
 	if err != nil {
 		return nil, err
@@ -61,7 +66,7 @@ func (s *Service) GetByCode(ctx context.Context, code string) (*entity.Point, er
 	return point, nil
 }
 
-func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.Point, error) {
+func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error) {
 	points, err := s.pointsRepo.GetByNetworkCode(ctx, networkCode)
 	if err != nil {
 		return nil, err
@@ -69,54 +74,61 @@ func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*
 	return points, nil
 }
 
-func (s *Service) Create(ctx context.Context, point *entity.Point) error {
-	// проверка на существование сети
-	_, err := s.networksService.GetByCode(ctx, point.NetworkCode)
+// Create создает точку и привязывает к ней фотографии в транзакции
+func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*point.Point, error) {
+	act, err := actor.GetActor(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	// проверка на существование категории точки
-	_, err = s.pointCategoriesRepo.GetByID(ctx, point.CategoryID)
-	if err != nil {
-		return err
-	}
-
-	// проверка на существование точки с таким же кодом обрабатывается при Create
-	if err = s.pointsRepo.Create(ctx, point); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) UpdateByCode(ctx context.Context, code string, point *entity.Point) error {
-	log.Infof(ctx, "UpdateByCode %v %v", code, point)
-	return nil
-}
-
-func (s *Service) DeleteByCode(ctx context.Context, code string) error {
-	log.Infof(ctx, "UpdateByCode %v %v", code)
-	return nil
-}
-
-// CreateWithPhotos создает точку и привязывает к ней фотографии в транзакции
-func (s *Service) CreateWithPhotos(ctx context.Context, point *entity.Point, photoIDs []uuid.UUID) error {
-	// Создать точку + привязать фото в транзакции
+	var (
+		newPoint *point.Point
+	)
 	txOpts := database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}
 
-	return s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
-		// 1. Создать точку
-		if err := s.Create(txCtx, point); err != nil {
+	err = s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
+		exist, err := s.networksService.ExistsByCode(ctx, act.NetworkCode())
+		if err != nil {
 			return err
 		}
-
+		if !exist {
+			return network.ErrNetworkNotFound
+		}
+		exist, err = s.pointCategoriesRepo.ExistsByID(ctx, cmd.CategoryID)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return point.ErrPointCategoryNotFound
+		}
+		newPoint = &point.Point{
+			Code:        slug.Generate(cmd.Name, cmd.Address.City, cmd.Address.Street),
+			Name:        cmd.Name,
+			Description: cmd.Description,
+			NetworkCode: act.NetworkCode(),
+			CategoryID:  cmd.CategoryID,
+			Address:     cmd.Address,
+			City:        cmd.Address.City,
+			Active:      true,
+			Schedule:    cmd.Schedule,
+		}
+		err = s.pointsRepo.Create(txCtx, newPoint)
+		if err != nil {
+			return err
+		}
 		// 2. Привязать фото в заданном порядке
-		for i, photoID := range photoIDs {
-			if err := s.mediaService.AddPointPhoto(txCtx, point.Code, photoID, i); err != nil {
+		for i, photoID := range cmd.PhotoIDs {
+			if err := s.mediaService.AddPointPhoto(txCtx, newPoint.Code, photoID, i); err != nil {
 				return err
 			}
 		}
-
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	newPoint, err = s.pointsRepo.GetByCode(ctx, newPoint.Code)
+	if err != nil {
+		return nil, err
+	}
+	return newPoint, nil
 }

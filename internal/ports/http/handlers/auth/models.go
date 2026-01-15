@@ -1,11 +1,11 @@
 package auth
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 )
 
 //go:generate easyjson -all models.go
@@ -36,9 +36,9 @@ func (r *registerStaffRequest) Validate() error {
 	return nil
 }
 
-func (r registerStaffRequest) toDomain() *command.RegisterStaffCommand {
-	role, _ := enum.RoleString(r.Role)
-	return &command.RegisterStaffCommand{
+func (r registerStaffRequest) toDomain() *auth.RegisterStaffCommand {
+	role, _ := user.RoleString(r.Role)
+	return &auth.RegisterStaffCommand{
 		Phone:     r.Phone,
 		Name:      r.Name,
 		Surname:   r.Surname,
@@ -96,8 +96,8 @@ func (p *passwordChangeConfirmRequest) Validate() error {
 	return nil
 }
 
-func (p *passwordChangeConfirmRequest) toDomain() *command.ChangePasswordConfirmCommand {
-	return &command.ChangePasswordConfirmCommand{
+func (p *passwordChangeConfirmRequest) toDomain() *auth.ChangePasswordConfirmCommand {
+	return &auth.ChangePasswordConfirmCommand{
 		Token:    p.Token,
 		Password: p.Password,
 	}
@@ -110,8 +110,8 @@ func (r *registerConfirmRequest) Validate() error {
 	return nil
 }
 
-func (r *registerConfirmRequest) toDomain() *command.RegisterStaffConfirmCommand {
-	return &command.RegisterStaffConfirmCommand{
+func (r *registerConfirmRequest) toDomain() *auth.RegisterStaffConfirmCommand {
+	return &auth.RegisterStaffConfirmCommand{
 		Token:    r.Token,
 		Password: r.Password,
 	}
@@ -140,15 +140,15 @@ func (r *registerManagementRequest) Validate() error {
 	return nil
 }
 
-func (r *registerManagementRequest) toDomain() *command.RegisterManagementCommand {
-	role, _ := enum.RoleString(r.Role)
-	return &command.RegisterManagementCommand{
+func (r *registerManagementRequest) toDomain() *auth.RegisterManagementCommand {
+	role, _ := user.RoleString(r.Role)
+	return &auth.RegisterManagementCommand{
 		Name:     r.Name,
 		Surname:  r.Surname,
 		Phone:    r.Phone,
 		Role:     role,
 		Password: r.Password,
-		NetworkRegisterInfo: &command.NetworkRegisterInfo{
+		NetworkRegisterInfo: &auth.RegisterNetworkInfo{
 			Name:        r.NetworkInfo.Name,
 			Description: r.NetworkInfo.Description,
 		},
@@ -187,7 +187,7 @@ type verifyAuthTokenResponse struct {
 	Purpose     string `json:"purpose"`
 }
 
-func toVerifyAuthTokenResponse(dto *dto.AuthTokenPayload) *verifyAuthTokenResponse {
+func toVerifyAuthTokenResponse(dto *authS.InviteTokenInfo) *verifyAuthTokenResponse {
 	return &verifyAuthTokenResponse{
 		Phone:       dto.Phone,
 		NetworkCode: dto.NetworkCode,

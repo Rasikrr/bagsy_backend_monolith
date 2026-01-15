@@ -4,9 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
@@ -32,7 +31,7 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 		}
 
 		// 3. Проверка статуса
-		if newMedia.Status != enum.MediaStatusPending {
+		if newMedia.Status != media.StatusPending {
 			return domainErr.NewInvalidInputError("media must be in pending status", nil).
 				WithDetail("current_status", newMedia.Status.String())
 		}
@@ -49,7 +48,7 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 			return err
 		}
 		// 6. Установить новую аватарку (UPSERT в user_media)
-		userMedia := &entity.UserMedia{
+		userMedia := &media.UserMedia{
 			UserPhone: phone,
 			MediaID:   mediaID,
 		}
@@ -59,13 +58,13 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 		}
 
 		// 7. Обновить статус новой медиа на active
-		if err = s.mediaRepo.UpdateStatus(txCtx, mediaID, enum.MediaStatusActive); err != nil {
+		if err = s.mediaRepo.UpdateStatus(txCtx, mediaID, media.StatusActive); err != nil {
 			return err
 		}
 
 		// 8. Деактивировать старую аватарку (если была и это не та же самая)
 		if oldAvatar != nil && oldAvatar.MediaID != mediaID {
-			_ = s.mediaRepo.UpdateStatus(txCtx, oldAvatar.MediaID, enum.MediaStatusInactive)
+			_ = s.mediaRepo.UpdateStatus(txCtx, oldAvatar.MediaID, media.StatusInactive)
 		}
 		return nil
 	})

@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/samber/lo"
 )
 
@@ -45,7 +45,7 @@ type PointsResponse struct {
 	Count  int              `json:"count"`
 }
 
-func ToPointResponse(point *entity.Point) *PointResponse {
+func ToPointResponse(point *point.Point) *PointResponse {
 	schedules := make([]ScheduleDTO, 0, len(point.Schedule))
 	for _, s := range point.Schedule {
 		schedules = append(schedules, ScheduleDTO{
@@ -85,9 +85,9 @@ func ToPointResponse(point *entity.Point) *PointResponse {
 	return resp
 }
 
-func ToPointsResponse(points []*entity.Point) *PointsResponse {
+func ToPointsResponse(points []*point.Point) *PointsResponse {
 	return &PointsResponse{
-		Points: lo.Map(points, func(item *entity.Point, _ int) *PointResponse {
+		Points: lo.Map(points, func(item *point.Point, _ int) *PointResponse {
 			return ToPointResponse(item)
 		}),
 		Count: len(points),

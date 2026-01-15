@@ -3,8 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
 )
@@ -28,8 +27,8 @@ type Media struct {
 
 type MediaList []Media
 
-func (mm MediaList) Convert() ([]*entity.Media, error) {
-	out := make([]*entity.Media, len(mm))
+func (mm MediaList) Convert() ([]*media.Media, error) {
+	out := make([]*media.Media, len(mm))
 	for i, m := range mm {
 		e, err := m.Convert()
 		if err != nil {
@@ -41,7 +40,7 @@ func (mm MediaList) Convert() ([]*entity.Media, error) {
 }
 
 // FromEntity преобразует entity.Media → DB model
-func FromEntity(e *entity.Media) Media {
+func FromEntity(e *media.Media) Media {
 	m := Media{
 		ID:               e.ID,
 		FileKey:          e.FileKey,
@@ -68,13 +67,13 @@ func FromEntity(e *entity.Media) Media {
 }
 
 // Convert преобразует DB model → entity.Media
-func (m Media) Convert() (*entity.Media, error) {
-	status, err := enum.MediaStatusString(m.Status)
+func (m Media) Convert() (*media.Media, error) {
+	status, err := media.StatusString(m.Status)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid media status")
 	}
 
-	return &entity.Media{
+	return &media.Media{
 		ID:               m.ID,
 		FileKey:          m.FileKey,
 		BucketName:       m.BucketName,

@@ -3,13 +3,13 @@ package media
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
 )
 
 type mediaService interface {
-	GenerateUploadURL(ctx context.Context, key string, contentType, purpose string) (*dto.UploadMediaResponse, error)
+	GenerateUploadURL(ctx context.Context, key string, contentType, purpose string) (*media.UploadedMedia, error)
 }
 
 type Controller struct {

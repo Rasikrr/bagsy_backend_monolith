@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 )
 
-func (c *Cache) SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand, ttl time.Duration) error {
-	key := genManagementKey(req.Phone)
+func (c *Cache) SaveManagementRequest(ctx context.Context, req *authS.ManagementRegistrationState, ttl time.Duration) error {
+	key := genManagementKey(req.Command.Phone)
 	return saveToCache(ctx, c, key, toRegisterManagementDTO(req), ttl)
 }
 
@@ -22,8 +22,8 @@ func (c *Cache) DeleteManagementRequest(ctx context.Context, phone string) error
 	return nil
 }
 
-func (c *Cache) GetManagementRequest(ctx context.Context, phone string) (*command.RegisterManagementCommand, error) {
-	dto, err := getFromCache[registerManagementDTO](ctx, c, genManagementKey(phone))
+func (c *Cache) GetManagementRequest(ctx context.Context, phone string) (*authS.ManagementRegistrationState, error) {
+	dto, err := getFromCache[registerManagementStateDTO](ctx, c, genManagementKey(phone))
 	if err != nil {
 		return nil, err
 	}

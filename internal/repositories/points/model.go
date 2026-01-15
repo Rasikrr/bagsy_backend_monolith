@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/samber/lo"
 )
 
@@ -42,13 +42,13 @@ type model struct {
 
 type models []model
 
-func (mm models) convert() []*entity.Point {
-	return lo.Map(mm, func(item model, _ int) *entity.Point {
+func (mm models) convert() []*point.Point {
+	return lo.Map(mm, func(item model, _ int) *point.Point {
 		return item.convert()
 	})
 }
 
-func convert(e *entity.Point) (model, error) {
+func convert(e *point.Point) (model, error) {
 	out := model{
 		Code:        e.Code,
 		Name:        e.Name,
@@ -79,8 +79,8 @@ func convert(e *entity.Point) (model, error) {
 	return out, nil
 }
 
-func (m model) convert() *entity.Point {
-	point := &entity.Point{
+func (m model) convert() *point.Point {
+	point := &point.Point{
 		Code:        m.Code,
 		Name:        m.Name,
 		Description: m.Description,

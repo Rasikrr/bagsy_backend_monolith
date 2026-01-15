@@ -3,7 +3,7 @@ package points
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/samber/lo"
 )
 
@@ -29,7 +29,7 @@ type scheduleDTO struct {
 
 type schedulesDTO []scheduleDTO
 
-func addressToDTO(a entity.Address) addressDTO {
+func addressToDTO(a point.Address) addressDTO {
 	return addressDTO{
 		Coordinates: coordinatesDTO{
 			Latitude:  a.Coordinates.Latitude,
@@ -40,9 +40,9 @@ func addressToDTO(a entity.Address) addressDTO {
 	}
 }
 
-func (dto addressDTO) toEntity() entity.Address {
-	return entity.Address{
-		Coordinates: entity.Coordinates{
+func (dto addressDTO) toEntity() point.Address {
+	return point.Address{
+		Coordinates: point.Coordinates{
 			Latitude:  dto.Coordinates.Latitude,
 			Longitude: dto.Coordinates.Longitude,
 		},
@@ -51,14 +51,14 @@ func (dto addressDTO) toEntity() entity.Address {
 	}
 }
 
-func schedulesToDTO(schedules []entity.Schedule) []scheduleDTO {
-	return lo.Map(schedules, func(item entity.Schedule, _ int) scheduleDTO {
+func schedulesToDTO(schedule point.Schedule) []*scheduleDTO {
+	return lo.Map(schedule, func(item *point.ScheduleElement, _ int) *scheduleDTO {
 		return scheduleToDTO(item)
 	})
 }
 
-func scheduleToDTO(s entity.Schedule) scheduleDTO {
-	return scheduleDTO{
+func scheduleToDTO(s *point.ScheduleElement) *scheduleDTO {
+	return &scheduleDTO{
 		WeekDay: s.WeekDay,
 		Open:    s.Open,
 		Close:   s.Close,
@@ -67,8 +67,8 @@ func scheduleToDTO(s entity.Schedule) scheduleDTO {
 	}
 }
 
-func (dto scheduleDTO) toEntity() entity.Schedule {
-	return entity.Schedule{
+func (dto scheduleDTO) toEntity() *point.ScheduleElement {
+	return &point.ScheduleElement{
 		WeekDay: dto.WeekDay,
 		Open:    dto.Open,
 		Close:   dto.Close,
@@ -77,8 +77,8 @@ func (dto scheduleDTO) toEntity() entity.Schedule {
 	}
 }
 
-func (dto schedulesDTO) toEntity() []entity.Schedule {
-	return lo.Map(dto, func(item scheduleDTO, _ int) entity.Schedule {
+func (dto schedulesDTO) toEntity() point.Schedule {
+	return lo.Map(dto, func(item scheduleDTO, _ int) *point.ScheduleElement {
 		return item.toEntity()
 	})
 }

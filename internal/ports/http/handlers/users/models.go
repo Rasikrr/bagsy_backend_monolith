@@ -4,14 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/google/uuid"
 )
 
@@ -82,8 +81,8 @@ func (r *getUsersRequest) Validate() error {
 	return nil
 }
 
-func (r *getUsersRequest) toFilter() (*query.UserFilter, error) {
-	q := query.UserFilter{
+func (r *getUsersRequest) toFilter() (*user.Filter, error) {
+	q := &user.Filter{
 		PointCode:   r.PointCode,
 		NetworkCode: r.NetworkCode,
 		Phones:      r.Phones,
@@ -98,9 +97,9 @@ func (r *getUsersRequest) toFilter() (*query.UserFilter, error) {
 	}
 	q.SortOrder = sortOrder
 
-	roles := make([]enum.Role, len(r.Roles))
+	roles := make([]user.Role, len(r.Roles))
 	for i, role := range r.Roles {
-		roleEnum, enumErr := enum.RoleString(role)
+		roleEnum, enumErr := user.RoleString(role)
 		if enumErr != nil {
 			return nil, domainErr.NewValidationError("roles contains invalid item").
 				WithDetail("role", role)
@@ -109,7 +108,7 @@ func (r *getUsersRequest) toFilter() (*query.UserFilter, error) {
 	}
 	q.Roles = roles
 
-	return &q, nil
+	return q, nil
 }
 
 type staffScheduleDTO struct {
@@ -121,21 +120,21 @@ type staffScheduleDTO struct {
 }
 
 type userDTO struct {
-	Phone       string             `json:"phone"`
-	Role        string             `json:"role"`
-	Name        string             `json:"name"`
-	Surname     string             `json:"surname"`
-	PointCode   *string            `json:"point_code,omitempty"`
-	NetworkCode *string            `json:"network_code,omitempty"`
-	Active      bool               `json:"active"`
-	AvatarURL   *string            `json:"avatar_url,omitempty"`
-	Schedule    []staffScheduleDTO `json:"schedule,omitempty"`
-	CreatedAt   string             `json:"created_at"`
-	UpdatedAt   *string            `json:"updated_at,omitempty"`
+	Phone       string              `json:"phone"`
+	Role        string              `json:"role"`
+	Name        string              `json:"name"`
+	Surname     string              `json:"surname"`
+	PointCode   *string             `json:"point_code,omitempty"`
+	NetworkCode *string             `json:"network_code,omitempty"`
+	Active      bool                `json:"active"`
+	AvatarURL   *string             `json:"avatar_url,omitempty"`
+	Schedule    []*staffScheduleDTO `json:"schedule,omitempty"`
+	CreatedAt   string              `json:"created_at"`
+	UpdatedAt   *string             `json:"updated_at,omitempty"`
 }
 
-func toStaffScheduleDTO(schedule entity.StaffSchedule) staffScheduleDTO {
-	return staffScheduleDTO{
+func toStaffScheduleDTO(schedule *user.ScheduleElement) *staffScheduleDTO {
+	return &staffScheduleDTO{
 		WeekDay: schedule.WeekDay,
 		Open:    schedule.Open.Format("15:04:05"),
 		Close:   schedule.Close.Format("15:04:05"),
@@ -144,15 +143,7 @@ func toStaffScheduleDTO(schedule entity.StaffSchedule) staffScheduleDTO {
 	}
 }
 
-func toUserWithAvatar(u *dto.UserWithAvatar) *userDTO {
-	userDTO := toUserDTO(u.User)
-	if u.AvatarURL != nil {
-		userDTO.AvatarURL = u.AvatarURL
-	}
-	return userDTO
-}
-
-func toUserDTO(user *entity.User) *userDTO {
+func toUserDTO(user *user.User) *userDTO {
 	d := &userDTO{
 		Phone:       user.Phone,
 		Role:        user.Role.String(),
@@ -170,11 +161,14 @@ func toUserDTO(user *entity.User) *userDTO {
 	}
 
 	if len(user.Schedule) > 0 {
-		schedules := make([]staffScheduleDTO, 0, len(user.Schedule))
+		schedules := make([]*staffScheduleDTO, 0, len(user.Schedule))
 		for _, s := range user.Schedule {
 			schedules = append(schedules, toStaffScheduleDTO(s))
 		}
 		d.Schedule = schedules
+	}
+	if user.Avatar != nil {
+		d.AvatarURL = ptr.Pointer(user.Avatar.GetURL())
 	}
 
 	return d
@@ -185,10 +179,10 @@ type getUsersResponse struct {
 	Total int        `json:"total"`
 }
 
-func toGetUsersResponse(paginated *dto.PaginatedUsers) getUsersResponse {
-	dtos := make([]*userDTO, 0, len(paginated.Users))
-	for _, user := range paginated.Users {
-		dtos = append(dtos, toUserWithAvatar(user))
+func toGetUsersResponse(paginated *query.Page[*user.User]) getUsersResponse {
+	dtos := make([]*userDTO, 0, len(paginated.Items))
+	for _, user := range paginated.Items {
+		dtos = append(dtos, toUserDTO(user))
 	}
 
 	return getUsersResponse{
@@ -211,8 +205,8 @@ func (r *updateUserRequest) Validate() error {
 	return nil
 }
 
-func (r *updateUserRequest) toDomain() *command.UpdateUserCommand {
-	return &command.UpdateUserCommand{
+func (r *updateUserRequest) toDomain() *user.UpdateUserCommand {
+	return &user.UpdateUserCommand{
 		Name:     r.Name,
 		Surname:  r.Surname,
 		AvatarID: r.AvatarID,
@@ -245,8 +239,8 @@ func (r *updateScheduleRequest) Validate() error {
 	return nil
 }
 
-func (r *updateScheduleRequest) toDomain() ([]entity.StaffSchedule, error) {
-	schedules := make([]entity.StaffSchedule, 0, len(r.Schedule))
+func (r *updateScheduleRequest) toDomain() (user.Schedule, error) {
+	schedules := make(user.Schedule, 0, len(r.Schedule))
 
 	for _, s := range r.Schedule {
 		opens, err := timeutil.ConvertAlmatyTimeToUTC(s.From)
@@ -263,7 +257,7 @@ func (r *updateScheduleRequest) toDomain() ([]entity.StaffSchedule, error) {
 				WithError(err)
 		}
 
-		schedules = append(schedules, entity.StaffSchedule{
+		schedules = append(schedules, &user.ScheduleElement{
 			WeekDay: s.WeekDay,
 			Open:    opens,
 			Close:   closes,

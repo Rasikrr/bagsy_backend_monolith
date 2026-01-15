@@ -3,7 +3,7 @@ package services
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/google/uuid"
 )
 
@@ -34,7 +34,7 @@ type model struct {
 	UpdatedBy       *string    `db:"updated_by"`
 }
 
-func convert(e *entity.Service) model {
+func convert(e *service.Service) model {
 	return model{
 		ID:              e.ID,
 		PointCode:       e.PointCode,
@@ -50,8 +50,8 @@ func convert(e *entity.Service) model {
 	}
 }
 
-func (m model) convert() *entity.Service {
-	return &entity.Service{
+func (m model) convert() *service.Service {
+	return &service.Service{
 		ID:              m.ID,
 		PointCode:       m.PointCode,
 		CategoryID:      m.CategoryID,
@@ -68,8 +68,8 @@ func (m model) convert() *entity.Service {
 
 type models []model
 
-func (m models) convert() []*entity.Service {
-	list := make([]*entity.Service, len(m))
+func (m models) convert() []*service.Service {
+	list := make([]*service.Service, len(m))
 	for i, item := range m {
 		list[i] = item.convert()
 	}

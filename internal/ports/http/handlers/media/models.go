@@ -1,7 +1,7 @@
 package media
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 )
 
@@ -26,7 +26,7 @@ type getUploadURLResponse struct {
 	ExpiresAt string `json:"expires_at"`
 }
 
-func toUploadURLResponse(dto *dto.UploadMediaResponse) *getUploadURLResponse {
+func toUploadURLResponse(dto *media.UploadedMedia) *getUploadURLResponse {
 	return &getUploadURLResponse{
 		MediaID:   dto.MediaID.String(),
 		URL:       dto.URL,

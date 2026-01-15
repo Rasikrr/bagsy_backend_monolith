@@ -5,6 +5,10 @@ const getPointCategoryByID = `
 	FROM point_categories WHERE id = $1
 `
 
+const existsByID = `
+	SELECT EXISTS (SELECT 1 FROM point_categories WHERE id = $1)
+    `
+
 const createPointCategory = `
 	INSERT INTO point_categories (name, description, updated_by)
 	VALUES ($1, $2, $3)

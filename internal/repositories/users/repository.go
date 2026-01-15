@@ -5,10 +5,8 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -44,8 +42,8 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) Create(ctx context.Context, user *entity.User) error {
-	m, err := convert(user)
+func (r *Repository) Create(ctx context.Context, u *user.User) error {
+	m, err := convert(u)
 	if err != nil {
 		return domainErr.NewInternalError("failed to convert user entity", err)
 	}
@@ -62,17 +60,20 @@ func (r *Repository) Create(ctx context.Context, user *entity.User) error {
 		m.UpdatedBy,
 	)
 	if err != nil {
+		if postgres.IsUniqueViolation(err) {
+			return user.ErrUserAlreadyExists.WithError(err)
+		}
 		return domainErr.NewInternalError("failed to create user in db", err)
 	}
 	return nil
 }
 
-func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User, error) {
+func (r *Repository) GetByPhone(ctx context.Context, phone string) (*user.User, error) {
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getUserByPhone, phone)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrUserNotFound.WithError(err)
+			return nil, user.ErrUserNotFound.WithError(err)
 		}
 		return nil, domainErr.NewInternalError("failed to get user from db", err)
 	}
@@ -83,7 +84,7 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*entity.User
 	return out, nil
 }
 
-func (r *Repository) GetByParams(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error) {
+func (r *Repository) GetByParams(ctx context.Context, filter *user.Filter) ([]*user.User, error) {
 	q, args, err := buildQuery(filter)
 	if err != nil {
 		return nil, domainErr.NewInternalError("failed to build query", err)
@@ -93,7 +94,7 @@ func (r *Repository) GetByParams(ctx context.Context, filter *query.UserFilter) 
 	err = pgxscan.Select(ctx, r.db, &mm, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []*entity.User{}, nil
+			return []*user.User{}, nil
 		}
 		return nil, domainErr.NewInternalError("failed to get users from db", err)
 	}
@@ -104,7 +105,7 @@ func (r *Repository) GetByParams(ctx context.Context, filter *query.UserFilter) 
 	return out, nil
 }
 
-func (r *Repository) Update(ctx context.Context, user *entity.User) error {
+func (r *Repository) Update(ctx context.Context, user *user.User) error {
 	m, err := convert(user)
 	if err != nil {
 		return domainErr.NewInternalError("failed to convert user entity", err)
@@ -127,8 +128,8 @@ func (r *Repository) Update(ctx context.Context, user *entity.User) error {
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, users ...*entity.User) error {
-	phones := lo.Map(users, func(item *entity.User, _ int) string {
+func (r *Repository) Delete(ctx context.Context, users ...*user.User) error {
+	phones := lo.Map(users, func(item *user.User, _ int) string {
 		return item.Phone
 	})
 	_, err := r.db.Exec(ctx, deleteUser, pq.Array(phones))
@@ -147,7 +148,7 @@ func (r *Repository) ExistsByPhone(ctx context.Context, phone string) (bool, err
 	return out, nil
 }
 
-func (r *Repository) CountByFilter(ctx context.Context, filter *query.UserFilter) (int, error) {
+func (r *Repository) CountByFilter(ctx context.Context, filter *user.Filter) (int, error) {
 	q, args, err := buildCountQuery(filter)
 	if err != nil {
 		return 0, domainErr.NewInternalError("failed to build count query", err)
@@ -161,7 +162,7 @@ func (r *Repository) CountByFilter(ctx context.Context, filter *query.UserFilter
 	return count, nil
 }
 
-func buildQuery(filter *query.UserFilter) (string, []any, error) {
+func buildQuery(filter *user.Filter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	builder := psql.Select(columns...).
 		From("users u").
@@ -179,7 +180,7 @@ func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	}
 
 	if len(filter.Roles) > 0 {
-		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
+		roleStrings := lo.Map(filter.Roles, func(role user.Role, _ int) string {
 			return role.String()
 		})
 		builder = builder.Where(sq.Eq{"u.role": roleStrings})
@@ -200,7 +201,7 @@ func buildQuery(filter *query.UserFilter) (string, []any, error) {
 	return builder.ToSql()
 }
 
-func buildCountQuery(filter *query.UserFilter) (string, []any, error) {
+func buildCountQuery(filter *user.Filter) (string, []any, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	builder := psql.Select("COUNT(DISTINCT u.phone)").
 		From("users u").
@@ -216,7 +217,7 @@ func buildCountQuery(filter *query.UserFilter) (string, []any, error) {
 	}
 
 	if len(filter.Roles) > 0 {
-		roleStrings := lo.Map(filter.Roles, func(role enum.Role, _ int) string {
+		roleStrings := lo.Map(filter.Roles, func(role user.Role, _ int) string {
 			return role.String()
 		})
 		builder = builder.Where(sq.Eq{"u.role": roleStrings})

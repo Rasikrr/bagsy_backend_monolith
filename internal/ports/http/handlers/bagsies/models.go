@@ -3,7 +3,7 @@ package bagsies
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	"github.com/google/uuid"
 )
@@ -27,8 +27,8 @@ func (c *createBagsyRequest) Validate() error {
 	return nil
 }
 
-func (c *createBagsyRequest) toDomain() *command.CreateBagsyCommand {
-	return &command.CreateBagsyCommand{
+func (c *createBagsyRequest) toDomain() *bagsy.CreateBagsyCommand {
+	return &bagsy.CreateBagsyCommand{
 		ServiceID:   c.ServiceID,
 		MasterPhone: c.MasterPhone,
 		StartAt:     c.StartAt,

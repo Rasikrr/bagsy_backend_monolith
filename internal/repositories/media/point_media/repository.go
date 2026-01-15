@@ -3,8 +3,8 @@ package pointmedia
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/models"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
@@ -23,7 +23,7 @@ func NewRepository(db *postgres.Postgres) *Repository {
 }
 
 // Add добавляет фото к точке
-func (r *Repository) Add(ctx context.Context, pointMedia *entity.PointMedia) error {
+func (r *Repository) Add(ctx context.Context, pointMedia *media.PointMedia) error {
 	m := convert(pointMedia)
 
 	_, err := r.db.Exec(ctx, addPointPhotoSQL,
@@ -40,12 +40,12 @@ func (r *Repository) Add(ctx context.Context, pointMedia *entity.PointMedia) err
 }
 
 // GetAll получает все фото точки (только связи, без Media)
-func (r *Repository) GetAll(ctx context.Context, pointCode string) ([]*entity.PointMedia, error) {
+func (r *Repository) GetAll(ctx context.Context, pointCode string) ([]*media.PointMedia, error) {
 	var mm modelList
 	err := pgxscan.Select(ctx, r.db, &mm, getPointPhotosSQL, pointCode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []*entity.PointMedia{}, nil
+			return []*media.PointMedia{}, nil
 		}
 		return nil, domainErr.NewInternalError("failed to get point photos", err)
 	}
@@ -55,12 +55,12 @@ func (r *Repository) GetAll(ctx context.Context, pointCode string) ([]*entity.Po
 
 // GetWithMedia получает все фото точки с полными данными Media через JOIN
 // Использует эффективный SQL JOIN вместо N+1 запросов
-func (r *Repository) GetWithMedia(ctx context.Context, pointCode string) ([]*entity.Media, error) {
+func (r *Repository) GetWithMedia(ctx context.Context, pointCode string) ([]*media.Media, error) {
 	var mm models.MediaList
 	err := pgxscan.Select(ctx, r.db, &mm, getPointPhotosWithMediaSQL, pointCode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []*entity.Media{}, nil
+			return []*media.Media{}, nil
 		}
 		return nil, domainErr.NewInternalError("failed to get point photos with media", err)
 	}
@@ -74,7 +74,7 @@ func (r *Repository) GetWithMedia(ctx context.Context, pointCode string) ([]*ent
 }
 
 // Get получает одну связь точки с фото
-func (r *Repository) Get(ctx context.Context, pointCode string, mediaID uuid.UUID) (*entity.PointMedia, error) {
+func (r *Repository) Get(ctx context.Context, pointCode string, mediaID uuid.UUID) (*media.PointMedia, error) {
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getPointPhotoSQL, pointCode, mediaID)
 	if err != nil {

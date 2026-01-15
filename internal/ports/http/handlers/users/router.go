@@ -3,19 +3,17 @@ package users
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
 )
 
 type userService interface {
-	GetUserProfile(ctx context.Context) (*dto.UserWithAvatar, error)
-	GetListByFilter(ctx context.Context, filter *query.UserFilter) (*dto.PaginatedUsers, error)
-	UpdateProfile(ctx context.Context, cmd *command.UpdateUserCommand) (*dto.UserWithAvatar, error)
-	UpdateSchedule(ctx context.Context, phone string, schedule []entity.StaffSchedule) error
+	GetUserProfile(ctx context.Context) (*user.User, error)
+	GetListByFilter(ctx context.Context, filter *user.Filter) (*query.Page[*user.User], error)
+	UpdateProfile(ctx context.Context, cmd *user.UpdateUserCommand) (*user.User, error)
+	UpdateSchedule(ctx context.Context, phone string, schedule user.Schedule) error
 	RemoveAvatar(ctx context.Context) error
 }
 

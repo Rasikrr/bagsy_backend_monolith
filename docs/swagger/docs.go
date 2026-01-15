@@ -1098,7 +1098,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Точка успешно создана",
                         "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointCreateResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse"
                         }
                     },
                     "400": {
@@ -2078,8 +2078,7 @@ const docTemplate = `{
             "required": [
                 "address",
                 "category_id",
-                "name",
-                "network_code"
+                "name"
             ],
             "properties": {
                 "address": {
@@ -2095,9 +2094,6 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "network_code": {
-                    "type": "string"
-                },
                 "photo_ids": {
                     "type": "array",
                     "maxItems": 10,
@@ -2110,14 +2106,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO"
                     }
-                }
-            }
-        },
-        "internal_ports_http_handlers_points.pointCreateResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
                 }
             }
         },

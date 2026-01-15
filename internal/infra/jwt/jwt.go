@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/cockroachdb/errors"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -27,8 +26,8 @@ func NewTokenManager(secretKey, issuer string) *TokenManager {
 	}
 }
 
-func (t *TokenManager) NewAccessToken(user *entity.User, ttl time.Duration) (string, error) {
-	claims := t.createAccessClaims(user, ttl)
+func (t *TokenManager) NewAccessToken(payload *authS.AccessTokenPayload, ttl time.Duration) (string, error) {
+	claims := t.createAccessClaims(payload, ttl)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte(t.secretKey))
 	if err != nil {
@@ -37,10 +36,24 @@ func (t *TokenManager) NewAccessToken(user *entity.User, ttl time.Duration) (str
 	return tokenStr, nil
 }
 
+func (t *TokenManager) NewRefreshToken() (raw, hash string, err error) {
+	b := make([]byte, 32)
+	if _, readErr := rand.Read(b); readErr != nil {
+		return "", "", readErr
+	}
+
+	raw = base64.RawURLEncoding.EncodeToString(b)
+
+	h := sha256.Sum256([]byte(raw))
+	hash = hex.EncodeToString(h[:])
+
+	return raw, hash, nil
+}
+
 // ParseAccessToken парсит access токен и возвращает DTO
-// Конвертация в domain.Session должна происходить на уровне Service
+// Конвертация в actor.Actor должна происходить на уровне Service
 // nolint: nestif
-func (t *TokenManager) ParseAccessToken(accessToken string) (*dto.AccessTokenPayload, error) {
+func (t *TokenManager) ParseAccessToken(accessToken string) (*authS.AccessTokenPayload, error) {
 	claims := new(accessClaims)
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -68,7 +81,7 @@ func (t *TokenManager) ParseAccessToken(accessToken string) (*dto.AccessTokenPay
 	}
 
 	// Возвращаем DTO из domain
-	return &dto.AccessTokenPayload{
+	return &authS.AccessTokenPayload{
 		Phone:       claims.Phone,
 		Role:        claims.Role,
 		PointCode:   claims.PointCode,
@@ -76,7 +89,7 @@ func (t *TokenManager) ParseAccessToken(accessToken string) (*dto.AccessTokenPay
 	}, nil
 }
 
-func (t *TokenManager) createAccessClaims(user *entity.User, ttl time.Duration) *accessClaims {
+func (t *TokenManager) createAccessClaims(payload *authS.AccessTokenPayload, ttl time.Duration) *accessClaims {
 	jwtID := uuid.New().String()
 	claims := &accessClaims{
 		StandardClaims: jwt.StandardClaims{
@@ -85,28 +98,10 @@ func (t *TokenManager) createAccessClaims(user *entity.User, ttl time.Duration) 
 			IssuedAt:  time.Now().Unix(),
 			Issuer:    t.issuer,
 		},
-		Phone: user.Phone,
-		Role:  user.Role.String(),
-	}
-	if user.PointCode != nil {
-		claims.PointCode = *user.PointCode
-	}
-	if user.NetworkCode != nil {
-		claims.NetworkCode = *user.NetworkCode
+		Phone:       payload.Phone,
+		Role:        payload.Role,
+		PointCode:   payload.PointCode,
+		NetworkCode: payload.NetworkCode,
 	}
 	return claims
-}
-
-func (t *TokenManager) NewRefreshToken() (raw, hash string, err error) {
-	b := make([]byte, 32)
-	if _, readErr := rand.Read(b); readErr != nil {
-		return "", "", readErr
-	}
-
-	raw = base64.RawURLEncoding.EncodeToString(b)
-
-	h := sha256.Sum256([]byte(raw))
-	hash = hex.EncodeToString(h[:])
-
-	return raw, hash, nil
 }

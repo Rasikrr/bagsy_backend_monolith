@@ -150,6 +150,14 @@ func IsInternal(err error) bool {
 	return false
 }
 
+func IsConflict(err error) bool {
+	var domainErr *DomainError
+	if errors.As(err, &domainErr) {
+		return domainErr.Type == TypeConflict
+	}
+	return false
+}
+
 func GetType(err error) ErrorType {
 	var domainErr *DomainError
 	if errors.As(err, &domainErr) {

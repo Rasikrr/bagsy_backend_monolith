@@ -1,14 +1,13 @@
-// nolint: godot
+// nolint
 package points
 
 import (
 	"net/http"
 
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
-	"github.com/google/uuid"
 )
 
 // createPoint godoc
@@ -19,7 +18,7 @@ import (
 // @Produce json
 // @Security ApiKeyAuth
 // @Param request body createPointRequest true "Данные для создания точки (photo_ids опционально)"
-// @Success 201 {object} pointCreateResponse "Точка успешно создана"
+// @Success 201 {object} dto.PointResponse "Точка успешно создана"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса или некорректный формат photo_id"
 // @Failure 401 {object} errors.ErrorResponse "Пользователь не авторизован"
 // @Failure 403 {object} errors.ErrorResponse "Недостаточно прав для создания точки"
@@ -34,31 +33,15 @@ func (c *Controller) createPoint(w http.ResponseWriter, r *http.Request) {
 		errors.HandleError(ctx, w, err)
 		return
 	}
-
-	point, err := req.toEntity()
+	cmd, err := req.toCommand()
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
-
-	// Парсинг photo_ids из строк в uuid.UUID
-	photoIDs := make([]uuid.UUID, 0, len(req.PhotoIDs))
-	for _, photoIDStr := range req.PhotoIDs {
-		photoID, parseErr := uuid.Parse(photoIDStr)
-		if parseErr != nil {
-			errors.HandleError(ctx, w,
-				domainErr.NewInvalidInputError("invalid photo_id format", parseErr).
-					WithDetail("photo_id", photoIDStr))
-			return
-		}
-		photoIDs = append(photoIDs, photoID)
-	}
-
-	// Создать точку с фото
-	if err = c.pointsService.CreateWithPhotos(ctx, point, photoIDs); err != nil {
+	point, err := c.pointsService.Create(ctx, cmd)
+	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
-
-	response.SendData(ctx, w, toPointCreateResponse(point.Code), http.StatusCreated)
+	response.SendData(ctx, w, dto.ToPointResponse(point), http.StatusCreated)
 }

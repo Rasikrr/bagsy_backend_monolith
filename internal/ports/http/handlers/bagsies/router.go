@@ -3,14 +3,14 @@ package bagsies
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type bagsiesService interface {
-	Create(ctx context.Context, req *command.CreateBagsyCommand) (uuid.UUID, error)
+	Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uuid.UUID, error)
 	Confirm(ctx context.Context, bagsyID uuid.UUID, code string) error
 	ResendConfirmationCode(ctx context.Context, bagsyID uuid.UUID) error
 }

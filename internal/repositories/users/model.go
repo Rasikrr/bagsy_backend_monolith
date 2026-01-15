@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/cockroachdb/errors"
 )
 
@@ -26,10 +25,10 @@ type model struct {
 	UpdatedBy     string     `db:"updated_by"`
 }
 
-func convert(e *entity.User) (model, error) {
+func convert(e *user.User) (model, error) {
 	m := model{
 		Phone:       e.Phone,
-		Password:    e.Password,
+		Password:    e.PasswordHash,
 		Role:        e.Role.String(),
 		Name:        e.Name,
 		Surname:     e.Surname,
@@ -61,21 +60,23 @@ func convert(e *entity.User) (model, error) {
 	return m, nil
 }
 
-func (m model) convert() (*entity.User, error) {
-	role, err := enum.RoleString(m.Role)
+func (m model) convert() (*user.User, error) {
+	role, err := user.RoleString(m.Role)
 	if err != nil {
 		return nil, err
 	}
 
-	user := &entity.User{
-		Phone:         m.Phone,
-		Password:      m.Password,
-		Role:          role,
-		Name:          m.Name,
-		Surname:       m.Surname,
-		PointCode:     m.PointCode,
-		NetworkCode:   m.NetworkCode,
-		AvatarFileKey: m.AvatarFileKey, // Маппим из JOIN
+	user := &user.User{
+		Phone:        m.Phone,
+		PasswordHash: m.Password,
+		Role:         role,
+		Name:         m.Name,
+		Surname:      m.Surname,
+		PointCode:    m.PointCode,
+		NetworkCode:  m.NetworkCode,
+		Avatar: &user.Avatar{
+			FileKey: m.AvatarFileKey,
+		}, // Маппим из JOIN
 		// AvatarURL остается nil (заполняется в service при необходимости)
 		Active:    m.Active,
 		CreatedAt: m.CreatedAt,
@@ -95,8 +96,8 @@ func (m model) convert() (*entity.User, error) {
 
 type models []model
 
-func (m models) convert() ([]*entity.User, error) {
-	users := make([]*entity.User, len(m))
+func (m models) convert() ([]*user.User, error) {
+	users := make([]*user.User, len(m))
 	for i, model := range m {
 		user, err := model.convert()
 		if err != nil {

@@ -20,6 +20,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/registration"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
@@ -70,6 +71,7 @@ type App struct {
 	masterServicesService *masterservices.Service
 	servicesService       *services.Service
 	mediaService          *mediaS.Service
+	registrationService   *registration.Service
 
 	s3Client *s3.Client
 
@@ -129,11 +131,8 @@ func (a *App) initInfra(_ context.Context) error {
 func (a *App) initCache(_ context.Context) error {
 	a.tokensCache = tokens.New(a.Redis())
 
-	vars := a.Config().Variables
-
 	a.bagsyConfirmCache = bagsyconfirm.NewCache(
 		a.Redis(),
-		vars.GetDuration(appenv.BagsyConfirmTTL),
 	)
 
 	a.registerCache = register.NewCache(
@@ -193,13 +192,18 @@ func (a *App) initServices(_ context.Context) error {
 		a.pointsService,
 		a.mediaService,
 	)
+	a.registrationService = registration.NewService(
+		a.PostgresTXManager(),
+		a.usersService,
+		a.networksService,
+	)
 
 	a.authService = authS.NewService(
 		a.PostgresTXManager(),
+		a.registrationService,
 		a.usersService,
 		a.pointsService,
 		a.notificationsService,
-		a.networksService,
 		a.tokenManager,
 		a.tokensCache,
 		a.tokensCache,
@@ -217,6 +221,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.usersService,
 		a.notificationsService,
 		a.bagsyConfirmCache,
+		vars.GetDuration(appenv.BagsyConfirmTTL),
 	)
 
 	return nil

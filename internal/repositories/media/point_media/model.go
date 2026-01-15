@@ -3,7 +3,7 @@ package pointmedia
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/google/uuid"
 )
 
@@ -20,8 +20,8 @@ type model struct {
 
 type modelList []model
 
-func (mm modelList) convert() []*entity.PointMedia {
-	out := make([]*entity.PointMedia, len(mm))
+func (mm modelList) convert() []*media.PointMedia {
+	out := make([]*media.PointMedia, len(mm))
 	for i, m := range mm {
 		out[i] = m.convert()
 	}
@@ -29,7 +29,7 @@ func (mm modelList) convert() []*entity.PointMedia {
 }
 
 // convert преобразует entity.PointMedia → DB model
-func convert(e *entity.PointMedia) model {
+func convert(e *media.PointMedia) model {
 	m := model{
 		ID:           e.ID,
 		PointCode:    e.PointCode,
@@ -50,8 +50,8 @@ func convert(e *entity.PointMedia) model {
 }
 
 // convert преобразует DB model → entity.PointMedia
-func (m model) convert() *entity.PointMedia {
-	return &entity.PointMedia{
+func (m model) convert() *media.PointMedia {
+	return &media.PointMedia{
 		ID:           m.ID,
 		PointCode:    m.PointCode,
 		MediaID:      m.MediaID,

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/Rasikrr/core/cache/redis"
 	"github.com/cockroachdb/errors"
 )
@@ -38,7 +39,7 @@ func (c *Cache) GetRefreshToken(ctx context.Context, tokenHash string) (string, 
 	phone, err := c.cli.GetString(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", domainErr.ErrInvalidToken.WithDetail("reason", "token not found or expired")
+			return "", auth.ErrInvalidToken.WithDetail("reason", "token not found or expired")
 		}
 		return "", domainErr.NewInternalError("failed to get refresh token", err)
 	}
@@ -58,15 +59,15 @@ func (c *Cache) refreshTokenKey(tokenHash string) string {
 	return fmt.Sprintf("refresh_token:%s", tokenHash)
 }
 
-// SaveAuthToken сохраняет короткий authтокен с данными регистрации
+// SaveInviteToken сохраняет короткий authтокен с данными регистрации
 // Key: invite_token:<token>
 // Value: JSON с phone, point_code, network_code
 // TTL: время жизни токена (обычно 1 час)
-func (c *Cache) SaveAuthToken(ctx context.Context, token string, payload *dto.AuthTokenPayload, ttl time.Duration) error {
+func (c *Cache) SaveInviteToken(ctx context.Context, token string, payload *authS.InviteTokenInfo, ttl time.Duration) error {
 	key := c.authTokenKey(token)
 
 	// Сериализуем payload в JSON
-	data, err := json.Marshal(payload)
+	data, err := json.Marshal(toDTO(payload))
 	if err != nil {
 		return domainErr.NewInternalError("failed to marshal auth token payload", err)
 	}
@@ -77,28 +78,28 @@ func (c *Cache) SaveAuthToken(ctx context.Context, token string, payload *dto.Au
 	return nil
 }
 
-// GetAuthToken получает данные по короткому authтокену
-func (c *Cache) GetAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error) {
+// GetInviteToken получает данные по короткому authтокену
+func (c *Cache) GetInviteToken(ctx context.Context, token string) (*authS.InviteTokenInfo, error) {
 	key := c.authTokenKey(token)
 	data, err := c.cli.GetString(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, domainErr.ErrInvalidToken.WithDetail("reason", "auth token not found or expired")
+			return nil, auth.ErrInvalidToken.WithDetail("reason", "auth token not found or expired")
 		}
 		return nil, domainErr.NewInternalError("failed to get auth token", err)
 	}
 
 	// Десериализуем JSON
-	var payload dto.AuthTokenPayload
+	var payload inviteTokenInfoDTO
 	if err = json.Unmarshal([]byte(data), &payload); err != nil {
 		return nil, domainErr.NewInternalError("failed to unmarshal auth token payload", err)
 	}
 
-	return &payload, nil
+	return payload.toDomain(), nil
 }
 
-// DeleteAuthToken удаляет authтокен (например, после использования)
-func (c *Cache) DeleteAuthToken(ctx context.Context, token string) error {
+// DeleteInviteToken удаляет authтокен (например, после использования)
+func (c *Cache) DeleteInviteToken(ctx context.Context, token string) error {
 	key := c.authTokenKey(token)
 	if err := c.cli.Delete(ctx, key); err != nil {
 		return domainErr.NewInternalError("failed to delete auth token", err)

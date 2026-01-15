@@ -3,7 +3,7 @@ package useravatar
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/google/uuid"
 )
 
@@ -16,7 +16,7 @@ type model struct {
 }
 
 // convert преобразует entity.UserMedia → DB model
-func convert(e *entity.UserMedia) model {
+func convert(e *media.UserMedia) model {
 	return model{
 		UserPhone: e.UserPhone,
 		MediaID:   e.MediaID,
@@ -26,8 +26,8 @@ func convert(e *entity.UserMedia) model {
 }
 
 // convert преобразует DB model → entity.UserMedia
-func (m model) convert() *entity.UserMedia {
-	return &entity.UserMedia{
+func (m model) convert() *media.UserMedia {
+	return &media.UserMedia{
 		UserPhone: m.UserPhone,
 		MediaID:   m.MediaID,
 		CreatedAt: m.CreatedAt,

@@ -28,5 +28,5 @@ func (c *Controller) getMyProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.SendData(ctx, w, toUserWithAvatar(user), http.StatusOK)
+	response.SendData(ctx, w, toUserDTO(user), http.StatusOK)
 }

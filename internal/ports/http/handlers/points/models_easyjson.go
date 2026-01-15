@@ -5,6 +5,7 @@ package points
 import (
 	json "encoding/json"
 	dto "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/dto"
+	uuid "github.com/google/uuid"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -18,73 +19,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(in *jlexer.Lexer, out *pointCreateResponse) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "code":
-			out.Code = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(out *jwriter.Writer, in pointCreateResponse) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"code\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.Code))
-	}
-	out.RawByte('}')
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v pointCreateResponse) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v pointCreateResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *pointCreateResponse) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *pointCreateResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(l, v)
-}
-func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints1(in *jlexer.Lexer, out *createPointRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(in *jlexer.Lexer, out *createPointRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -115,8 +50,6 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				}
 				*out.Description = string(in.String())
 			}
-		case "network_code":
-			out.NetworkCode = string(in.String())
 		case "category_id":
 			out.CategoryID = int(in.Int())
 		case "address":
@@ -152,16 +85,18 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.PhotoIDs == nil {
 					if !in.IsDelim(']') {
-						out.PhotoIDs = make([]string, 0, 4)
+						out.PhotoIDs = make([]uuid.UUID, 0, 4)
 					} else {
-						out.PhotoIDs = []string{}
+						out.PhotoIDs = []uuid.UUID{}
 					}
 				} else {
 					out.PhotoIDs = (out.PhotoIDs)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v2 string
-					v2 = string(in.String())
+					var v2 uuid.UUID
+					if data := in.UnsafeBytes(); in.Ok() {
+						in.AddError((v2).UnmarshalText(data))
+					}
 					out.PhotoIDs = append(out.PhotoIDs, v2)
 					in.WantComma()
 				}
@@ -177,7 +112,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints1(out *jwriter.Writer, in createPointRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(out *jwriter.Writer, in createPointRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -194,11 +129,6 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		} else {
 			out.String(string(*in.Description))
 		}
-	}
-	{
-		const prefix string = ",\"network_code\":"
-		out.RawString(prefix)
-		out.String(string(in.NetworkCode))
 	}
 	{
 		const prefix string = ",\"category_id\":"
@@ -237,7 +167,7 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				if v5 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v6))
+				out.RawText((v6).MarshalText())
 			}
 			out.RawByte(']')
 		}
@@ -248,23 +178,23 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v createPointRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints1(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v createPointRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints1(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *createPointRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints1(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *createPointRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints1(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersPoints(l, v)
 }

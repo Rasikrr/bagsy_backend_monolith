@@ -4,10 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/codegen"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
@@ -16,22 +17,21 @@ import (
 )
 
 type bagsiesRepository interface {
-	Create(ctx context.Context, bagsy *entity.Bagsy) (uuid.UUID, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*entity.Bagsy, error)
-	Update(ctx context.Context, bagsy *entity.Bagsy) error
+	Create(ctx context.Context, bagsy *bagsy.Bagsy) (uuid.UUID, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*bagsy.Bagsy, error)
+	Update(ctx context.Context, bagsy *bagsy.Bagsy) error
 }
 
 type masterServicesService interface {
-	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*entity.MasterService, error)
+	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*masterservice.MasterService, error)
 }
 
 type servicesService interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*entity.Service, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
 }
 
 type usersService interface {
-	Create(ctx context.Context, user *entity.User, rawPassword string) error
-	ExistsByPhone(ctx context.Context, phone string) (bool, error)
+	CreateUser(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
 }
 
 type notificationsService interface {
@@ -40,7 +40,7 @@ type notificationsService interface {
 
 type bagsyConfirmCodesCache interface {
 	GetCode(ctx context.Context, id uuid.UUID) (string, error)
-	SetCode(ctx context.Context, id uuid.UUID, code string) error
+	SetCode(ctx context.Context, id uuid.UUID, code string, ttl time.Duration) error
 }
 
 type Service struct {
@@ -51,6 +51,7 @@ type Service struct {
 	usersService           usersService
 	notificationsService   notificationsService
 	bagsyConfirmCodesCache bagsyConfirmCodesCache
+	confirmTTL             time.Duration
 }
 
 func NewService(
@@ -61,6 +62,7 @@ func NewService(
 	usersService usersService,
 	notificationsService notificationsService,
 	bagsyConfirmCodesCache bagsyConfirmCodesCache,
+	confirmTTL time.Duration,
 ) *Service {
 	return &Service{
 		txManager:              txManager,
@@ -70,10 +72,11 @@ func NewService(
 		usersService:           usersService,
 		notificationsService:   notificationsService,
 		bagsyConfirmCodesCache: bagsyConfirmCodesCache,
+		confirmTTL:             confirmTTL,
 	}
 }
 
-func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (uuid.UUID, error) {
+func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uuid.UUID, error) {
 	log.Infof(ctx, "creating bagsy: client=%s, master=%s, service=%s, start_at=%s",
 		req.ClientPhone, req.MasterPhone, req.ServiceID, req.StartAt.Format(time.RFC3339))
 
@@ -83,29 +86,19 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 	)
 	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
 		func(ctx context.Context) error {
-			clientExists, usersErr := s.usersService.ExistsByPhone(ctx, req.ClientPhone)
-			if usersErr != nil {
-				return usersErr
-			}
-			if !clientExists {
-				log.Infof(ctx, "creating new client user: phone=%s, name=%s %s",
-					req.ClientPhone, req.Name, req.Surname)
-
-				clientUser := &entity.User{
-					Phone:   req.ClientPhone,
-					Role:    enum.RoleUser,
-					Name:    req.Name,
-					Surname: req.Surname,
-					Active:  true,
-				}
-				// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
-				err = s.usersService.Create(ctx, clientUser, "")
-				if err != nil {
+			// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
+			_, err = s.usersService.CreateUser(ctx, &user.CreateUserCommand{
+				Phone:   req.ClientPhone,
+				Name:    req.Name,
+				Surname: req.Surname,
+			})
+			if err != nil {
+				if !domainErr.IsConflict(err) {
 					return err
 				}
+				// Значит Юзер уже существовал
 			}
-
-			service, serviceErr := s.servicesService.GetByID(ctx, req.ServiceID)
+			pointService, serviceErr := s.servicesService.GetByID(ctx, req.ServiceID)
 			if serviceErr != nil {
 				return serviceErr
 			}
@@ -115,37 +108,39 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 				return masterServErr
 			}
 
-			endAt := req.StartAt.Add(time.Minute * time.Duration(service.DurationMinutes))
+			endAt := req.StartAt.Add(time.Minute * time.Duration(pointService.DurationMinutes))
 
-			bagsy := &entity.Bagsy{
+			bag := &bagsy.Bagsy{
 				ServiceID:   req.ServiceID,
-				PointCode:   service.PointCode,
+				PointCode:   pointService.PointCode,
 				ClientPhone: req.ClientPhone,
 				MasterPhone: masterService.MasterPhone,
-				Status:      enum.BagsyStatusPending,
+				Status:      bagsy.StatusPending,
 				Price:       masterService.Price,
 				StartAt:     req.StartAt,
 				EndAt:       endAt,
 				Comment:     req.Comment,
 			}
 
-			bagsyID, err = s.bagsiesRepository.Create(ctx, bagsy)
+			bagsyID, err = s.bagsiesRepository.Create(ctx, bag)
 			if err != nil {
 				return err
 			}
-			log.Infof(ctx, "bagsy created in db: id=%s, point=%s, price=%v", bagsyID, service.PointCode, masterService.Price)
+			log.Infof(ctx, "bagsy created in db: id=%s, point=%s, price=%v", bagsyID, pointService.PointCode, masterService.Price)
 
 			bagsyConfirmCode := codegen.GenerateAuthCode()
 			err = s.notificationsService.SendBagsyConfirmCode(ctx, req.ClientPhone, bagsyConfirmCode)
 			if err != nil {
 				return err
 			}
+
 			log.Infof(ctx, "confirmation code sent to client: phone=%s", req.ClientPhone)
 
-			err = s.bagsyConfirmCodesCache.SetCode(ctx, bagsyID, bagsyConfirmCode)
+			err = s.bagsyConfirmCodesCache.SetCode(ctx, bagsyID, bagsyConfirmCode, s.confirmTTL)
 			if err != nil {
 				return err
 			}
+
 			return nil
 		})
 	if err != nil {
@@ -158,11 +153,12 @@ func (s *Service) Create(ctx context.Context, req *command.CreateBagsyCommand) (
 }
 
 func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) error {
-	bagsy, err := s.bagsiesRepository.GetByID(ctx, bagsyID)
+	bag, err := s.bagsiesRepository.GetByID(ctx, bagsyID)
 	if err != nil {
 		return err
 	}
-	codeFromCache, err := s.bagsyConfirmCodesCache.GetCode(ctx, bagsy.ID)
+
+	codeFromCache, err := s.bagsyConfirmCodesCache.GetCode(ctx, bag.ID)
 	if err != nil {
 		return err
 	}
@@ -170,8 +166,8 @@ func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) e
 		return domainErr.NewInvalidInputError("code not correct", nil)
 	}
 
-	bagsy.Status = enum.BagsyStatusCreated
-	err = s.bagsiesRepository.Update(ctx, bagsy)
+	bag.Status = bagsy.StatusCreated
+	err = s.bagsiesRepository.Update(ctx, bag)
 	if err != nil {
 		return err
 	}
@@ -180,13 +176,13 @@ func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) e
 
 func (s *Service) ResendConfirmationCode(ctx context.Context, bagsyID uuid.UUID) error {
 	// Получаем бронь по ID
-	bagsy, err := s.bagsiesRepository.GetByID(ctx, bagsyID)
+	bag, err := s.bagsiesRepository.GetByID(ctx, bagsyID)
 	if err != nil {
 		return err
 	}
 
 	// Проверяем что бронь в статусе ожидания подтверждения
-	if bagsy.Status != enum.BagsyStatusPending {
+	if bag.Status != bagsy.StatusPending {
 		return domainErr.NewConflictError("bagsy is not in pending status", nil)
 	}
 
@@ -194,13 +190,13 @@ func (s *Service) ResendConfirmationCode(ctx context.Context, bagsyID uuid.UUID)
 	newCode := codegen.GenerateAuthCode()
 
 	// Отправляем код клиенту
-	err = s.notificationsService.SendBagsyConfirmCode(ctx, bagsy.ClientPhone, newCode)
+	err = s.notificationsService.SendBagsyConfirmCode(ctx, bag.ClientPhone, newCode)
 	if err != nil {
 		return err
 	}
 
 	// Обновляем код в кеше
-	err = s.bagsyConfirmCodesCache.SetCode(ctx, bagsyID, newCode)
+	err = s.bagsyConfirmCodesCache.SetCode(ctx, bagsyID, newCode, s.confirmTTL)
 	if err != nil {
 		return err
 	}

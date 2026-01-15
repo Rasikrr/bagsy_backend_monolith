@@ -6,17 +6,15 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/codegen"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hash"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/Rasikrr/core/database"
-	coreEnum "github.com/Rasikrr/core/enum"
 )
 
 const (
@@ -24,19 +22,18 @@ const (
 )
 
 type usersService interface {
-	Create(ctx context.Context, user *entity.User, password string) error
-	GetByPhone(ctx context.Context, phone string) (*entity.User, error)
+	GetByPhone(ctx context.Context, phone string) (*user.User, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
-	UpdateWithPassword(ctx context.Context, user *entity.User, rawPassword string) error
 	UpdatePasswordByPhone(ctx context.Context, phone, rawPassword string) error
 }
 
 type pointsService interface {
-	GetByCode(ctx context.Context, code string) (*entity.Point, error)
+	GetByCode(ctx context.Context, code string) (*point.Point, error)
 }
 
-type networkService interface {
-	CreateForRegistration(ctx context.Context, req *command.CreateNetworkCommand, createdBy string) (*entity.Network, error)
+type registrationService interface {
+	RegisterNewOwner(ctx context.Context, cmd *auth.RegisterManagementCommand) (*user.User, error)
+	RegisterNewStaff(ctx context.Context, cmd *auth.RegisterStaffCommand, rawPassword string) (*user.User, error)
 }
 
 type notificationService interface {
@@ -46,18 +43,18 @@ type notificationService interface {
 }
 
 type tokenManager interface {
-	NewAccessToken(user *entity.User, ttl time.Duration) (string, error)
+	NewAccessToken(payload *AccessTokenPayload, ttl time.Duration) (string, error)
 	NewRefreshToken() (raw, hash string, err error)
-	ParseAccessToken(token string) (*dto.AccessTokenPayload, error)
+	ParseAccessToken(token string) (*AccessTokenPayload, error)
 }
 
 type registerCache interface {
-	SaveManagementRequest(ctx context.Context, req *command.RegisterManagementCommand, duration time.Duration) error
-	GetManagementRequest(ctx context.Context, phone string) (*command.RegisterManagementCommand, error)
+	SaveManagementRequest(ctx context.Context, state *ManagementRegistrationState, duration time.Duration) error
+	GetManagementRequest(ctx context.Context, phone string) (*ManagementRegistrationState, error)
 	DeleteManagementRequest(ctx context.Context, phone string) error
 
-	SaveStaffRequest(ctx context.Context, req *command.RegisterStaffCommand, duration time.Duration) error
-	GetStaffRequest(ctx context.Context, phone string) (*command.RegisterStaffCommand, error)
+	SaveStaffRequest(ctx context.Context, req *auth.RegisterStaffCommand, duration time.Duration) error
+	GetStaffRequest(ctx context.Context, phone string) (*auth.RegisterStaffCommand, error)
 	DeleteStaffRequest(ctx context.Context, phone string) error
 }
 
@@ -72,17 +69,17 @@ type refreshTokenRepository interface {
 
 // registrationTokenCache управляет one-time use registration токенами
 type tokensCache interface {
-	SaveAuthToken(ctx context.Context, token string, payload *dto.AuthTokenPayload, ttl time.Duration) error
-	GetAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error)
-	DeleteAuthToken(ctx context.Context, token string) error
+	SaveInviteToken(ctx context.Context, token string, payload *InviteTokenInfo, ttl time.Duration) error
+	GetInviteToken(ctx context.Context, token string) (*InviteTokenInfo, error)
+	DeleteInviteToken(ctx context.Context, token string) error
 }
 
 type Service struct {
 	txManager              database.TXManager
+	registrationService    registrationService
 	usersService           usersService
 	pointsService          pointsService
 	notificationService    notificationService
-	networkService         networkService
 	tokenManager           tokenManager
 	refreshTokenRepository refreshTokenRepository
 	tokensCache            tokensCache
@@ -94,10 +91,10 @@ type Service struct {
 
 func NewService(
 	txManager database.TXManager,
+	registrationService registrationService,
 	usersService usersService,
 	pointsService pointsService,
 	notificationService notificationService,
-	networkService networkService,
 	tokenManager tokenManager,
 	refreshTokenRepo refreshTokenRepository,
 	tokensCache tokensCache,
@@ -108,10 +105,10 @@ func NewService(
 ) *Service {
 	return &Service{
 		txManager:              txManager,
+		registrationService:    registrationService,
 		usersService:           usersService,
 		pointsService:          pointsService,
 		notificationService:    notificationService,
-		networkService:         networkService,
 		tokenManager:           tokenManager,
 		refreshTokenRepository: refreshTokenRepo,
 		tokensCache:            tokensCache,
@@ -126,18 +123,18 @@ func (s *Service) Login(ctx context.Context, phone string, password string) (acc
 	user, err := s.usersService.GetByPhone(ctx, phone)
 	if err != nil {
 		if domainErr.IsNotFound(err) {
-			return "", "", domainErr.ErrInvalidCredentials
+			return "", "", auth.ErrInvalidCredentials
 		}
 		return "", "", err
 	}
 
 	if !user.Active {
-		return "", "", domainErr.ErrUserInactive
+		return "", "", auth.ErrUserInactive
 	}
 
-	valid := hash.CheckPassword(user.Password, password)
+	valid := hash.CheckPassword(user.PasswordHash, password)
 	if !valid {
-		return "", "", domainErr.ErrInvalidPassword
+		return "", "", auth.ErrInvalidCredentials
 	}
 
 	accessToken, refreshToken, err := s.generateTokens(ctx, user)
@@ -148,21 +145,17 @@ func (s *Service) Login(ctx context.Context, phone string, password string) (acc
 	return accessToken, refreshToken, nil
 }
 
-func (s *Service) InspectAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error) {
-	payload, err := s.tokensCache.GetAuthToken(ctx, token)
+func (s *Service) InspectAuthToken(ctx context.Context, token string) (*InviteTokenInfo, error) {
+	payload, err := s.tokensCache.GetInviteToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 	return payload, nil
 }
 
-func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterManagementCommand) error {
-	authCode := codegen.GenerateAuthCode()
-
-	req.AuthCode = authCode
-
+func (s *Service) RegisterManagement(ctx context.Context, cmd *auth.RegisterManagementCommand) error {
 	// Проверка, что запрос не был уже создан ранее
-	existedReq, err := s.registerCache.GetManagementRequest(ctx, req.Phone)
+	existedReq, err := s.registerCache.GetManagementRequest(ctx, cmd.Phone)
 	if err != nil {
 		if !domainErr.IsNotFound(err) {
 			return err
@@ -172,22 +165,25 @@ func (s *Service) RegisterManagement(ctx context.Context, req *command.RegisterM
 		return domainErr.NewConflictError("registration request already created", nil)
 	}
 
-	err = s.registerCache.SaveManagementRequest(ctx, req, s.registrationTTL)
+	authCode := codegen.GenerateAuthCode()
+	registerState := newManagementRegistrationState(cmd, authCode)
+
+	err = s.registerCache.SaveManagementRequest(ctx, registerState, s.registrationTTL)
 	if err != nil {
 		return err
 	}
-	return s.notificationService.SendManagementAuthConfirmationCode(ctx, req.Phone, authCode)
+	return s.notificationService.SendManagementAuthConfirmationCode(ctx, cmd.Phone, authCode)
 }
 
 func (s *Service) ResendRegisterManagementCode(ctx context.Context, phone string) error {
-	req, err := s.registerCache.GetManagementRequest(ctx, phone)
+	state, err := s.registerCache.GetManagementRequest(ctx, phone)
 	if err != nil {
 		return err
 	}
 	newCode := codegen.GenerateAuthCode()
-	req.AuthCode = newCode
-	req.Attempts = 0
-	err = s.registerCache.SaveManagementRequest(ctx, req, s.registrationTTL)
+	state.AuthCode = newCode
+	state.Attempts = 0
+	err = s.registerCache.SaveManagementRequest(ctx, state, s.registrationTTL)
 	if err != nil {
 		return err
 	}
@@ -195,86 +191,52 @@ func (s *Service) ResendRegisterManagementCode(ctx context.Context, phone string
 }
 
 func (s *Service) RegisterManagementConfirm(ctx context.Context, phone, code string) (access, refresh string, err error) {
-	req, err := s.registerCache.GetManagementRequest(ctx, phone)
+	state, err := s.registerCache.GetManagementRequest(ctx, phone)
 	if err != nil {
 		return "", "", err
 	}
-	if req.AuthCode != code {
-		req.Attempts++
-		if req.Attempts >= maxVerificationAttempts {
+	if state.AuthCode != code {
+		state.Attempts++
+		if state.Attempts >= maxVerificationAttempts {
 			// Удаляем данные регистрации после превышения лимита попыток
 			if delErr := s.registerCache.DeleteManagementRequest(ctx, phone); delErr != nil {
 				return "", "", delErr
 			}
-			return "", "", domainErr.ErrTooManyVerificationAttempts
+			return "", "", auth.ErrTooManyVerificationAttempts
 		}
 		// Сохраняем обновленный счетчик попыток
-		if saveErr := s.registerCache.SaveManagementRequest(ctx, req, s.registrationTTL); saveErr != nil {
+		if saveErr := s.registerCache.SaveManagementRequest(ctx, state, s.registrationTTL); saveErr != nil {
 			return "", "", saveErr
 		}
-		return "", "", domainErr.ErrInvalidVerificationCode.
-			WithDetail("attempts_remaining", maxVerificationAttempts-req.Attempts)
+		return "", "", auth.ErrInvalidVerificationCode.
+			WithDetail("attempts_remaining", maxVerificationAttempts-state.Attempts)
 	}
-	var user *entity.User
+	var newUser *user.User
 
-	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}, func(ctx context.Context) error {
-		network, netErr := s.networkService.CreateForRegistration(ctx, &command.CreateNetworkCommand{
-			Name:        req.NetworkRegisterInfo.Name,
-			Description: req.NetworkRegisterInfo.Description,
-		}, req.Phone)
-		if netErr != nil {
-			return netErr
-		}
-		user, err = s.usersService.GetByPhone(ctx, req.Phone)
-		if err != nil {
-			if !domainErr.IsNotFound(err) {
-				return err
-			}
-			// Надо создать
-			user = &entity.User{
-				Name:        req.Name,
-				Surname:     req.Surname,
-				Phone:       req.Phone,
-				Role:        req.Role,
-				NetworkCode: &network.Code,
-				Active:      true,
-			}
-			err = s.usersService.Create(ctx, user, req.Password)
-		} else {
-			user.Name = req.Name
-			user.Surname = req.Surname
-			user.Role = req.Role
-			user.PointCode = nil
-			user.NetworkCode = &network.Code
-			user.Active = true
-			err = s.usersService.UpdateWithPassword(ctx, user, req.Password)
-		}
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	newUser, err = s.registrationService.RegisterNewOwner(ctx, state.Command)
+
 	if err != nil {
 		return "", "", err
 	}
-	return s.generateTokens(ctx, user)
+	return s.generateTokens(ctx, newUser)
 }
 
 // RegisterStaff регистрирует нового работника (orchestrator)
 // Проверяет права, создает user, генерирует и отправляет ссылку для подтверждения
-func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error {
-	createdBy, err := session.GetSession(ctx)
+func (s *Service) RegisterStaff(ctx context.Context, cmd *auth.RegisterStaffCommand) error {
+	act, err := actor.GetActor(ctx)
 	if err != nil {
 		return err
 	}
+
 	// 1. Валидация прав доступа
-	if validErr := s.validateStaffRegistrationPermissions(ctx, req.PointCode, req.Role, createdBy); validErr != nil {
+	if validErr := s.validateStaffRegistrationPermissions(ctx, cmd.PointCode, cmd.Role, act); validErr != nil {
 		return validErr
 	}
-	req.NetworkCode = createdBy.NetworkCode()
+	cmd.NetworkCode = act.NetworkCode()
 
 	// 2. Проверим что запрос не был создан ранее
-	existedReq, err := s.registerCache.GetStaffRequest(ctx, req.Phone)
+	existedReq, err := s.registerCache.GetStaffRequest(ctx, cmd.Phone)
 	if err != nil {
 		if !domainErr.IsNotFound(err) {
 			return err
@@ -285,126 +247,82 @@ func (s *Service) RegisterStaff(ctx context.Context, req *command.RegisterStaffC
 	}
 
 	// 3. Сохраним данные в кеше чтобы преждевременно не создавать юзера
-	err = s.registerCache.SaveStaffRequest(ctx, req, s.registrationTTL)
+	err = s.registerCache.SaveStaffRequest(ctx, cmd, s.registrationTTL)
 	if err != nil {
 		return err
 	}
 
 	// 4. Генерируем короткий invite токен (8-10 символов)
 	inviteToken := codegen.GenerateAuthToken()
-	payload := &dto.AuthTokenPayload{
-		Phone:       req.Phone,
-		PointCode:   req.PointCode,
-		NetworkCode: req.NetworkCode,
-		Purpose:     enum.AuthTokenPurposeRegister,
+
+	payload := &InviteTokenInfo{
+		Phone:       cmd.Phone,
+		PointCode:   cmd.PointCode,
+		NetworkCode: cmd.NetworkCode,
 	}
 
-	err = s.tokensCache.SaveAuthToken(ctx, inviteToken, payload, s.registrationTTL)
+	err = s.tokensCache.SaveInviteToken(ctx, inviteToken, payload, s.registrationTTL)
 	if err != nil {
 		return err
 	}
 
 	// 5. Отправляем уведомление (WhatsApp с fallback на SMS)
-	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, inviteToken); sendErr != nil {
+	if sendErr := s.notificationService.SendStaffRegistrationLink(ctx, cmd.Phone, inviteToken); sendErr != nil {
 		return sendErr
 	}
 	return nil
 }
 
 func (s *Service) ResendRegisterStaffLink(ctx context.Context, phone string) error {
-	req, err := s.registerCache.GetStaffRequest(ctx, phone)
+	cmd, err := s.registerCache.GetStaffRequest(ctx, phone)
 	if err != nil {
 		return err
 	}
 
 	// Генерируем новый короткий invite токен
 	token := codegen.GenerateAuthToken()
-	payload := &dto.AuthTokenPayload{
-		Phone:       req.Phone,
-		PointCode:   req.PointCode,
-		NetworkCode: req.NetworkCode,
+	payload := &InviteTokenInfo{
+		Phone:       cmd.Phone,
+		PointCode:   cmd.PointCode,
+		NetworkCode: cmd.NetworkCode,
 	}
 
-	if saveErr := s.tokensCache.SaveAuthToken(ctx, token, payload, s.registrationTTL); saveErr != nil {
+	if saveErr := s.tokensCache.SaveInviteToken(ctx, token, payload, s.registrationTTL); saveErr != nil {
 		return saveErr
 	}
 
 	// ВАЖНО: Пересохраняем данные в кэш, чтобы обновить TTL!
 	// Теперь данные будут жить еще registrationTTL (24 часа) от момента resend,
 	// синхронизируя время жизни кэша с временем жизни токена
-	if saveErr := s.registerCache.SaveStaffRequest(ctx, req, s.registrationTTL); saveErr != nil {
+	if saveErr := s.registerCache.SaveStaffRequest(ctx, cmd, s.registrationTTL); saveErr != nil {
 		return domainErr.NewInternalError("failed to refresh staff request TTL", saveErr)
 	}
 
-	return s.notificationService.SendStaffRegistrationLink(ctx, req.Phone, token)
+	return s.notificationService.SendStaffRegistrationLink(ctx, cmd.Phone, token)
 }
 
 // nolint: govet
-func (s *Service) RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error) {
+func (s *Service) RegisterStaffConfirm(ctx context.Context, confirmCmd *auth.RegisterStaffConfirmCommand) (access, refresh string, err error) {
 	// 1. Получаем данные из Redis по короткому токену
-	tokenPayload, err := s.tokensCache.GetAuthToken(ctx, req.Token)
+	tokenPayload, err := s.tokensCache.GetInviteToken(ctx, confirmCmd.Token)
 	if err != nil {
 		return "", "", domainErr.NewUnauthorizedError("invalid or expired registration token").WithError(err)
 	}
 
-	createReq, err := s.registerCache.GetStaffRequest(ctx, tokenPayload.Phone)
+	cmd, err := s.registerCache.GetStaffRequest(ctx, tokenPayload.Phone)
 	if err != nil {
 		return "", "", err
 	}
 
-	// 2. One-time use проверка уже не нужна для invite токенов,
-	// так как мы их удалим после успешного использования
-
-	var (
-		accessToken, refreshToken string
-	)
-
-	err = s.txManager.Transaction(ctx,
-		database.TXOptions{
-			IsolationLevel: coreEnum.IsoLevelReadCommited,
-		},
-		func(txCtx context.Context) error {
-			user, err := s.usersService.GetByPhone(ctx, createReq.Phone)
-			if err != nil {
-				if !domainErr.IsNotFound(err) {
-					return err
-				}
-				// Значит надо создать нового юзера
-				user = &entity.User{
-					Phone:       createReq.Phone,
-					Name:        createReq.Name,
-					Surname:     createReq.Surname,
-					PointCode:   &createReq.PointCode,
-					NetworkCode: ptr.Pointer(createReq.NetworkCode),
-					Role:        createReq.Role,
-					Active:      true,
-				}
-				err = s.usersService.Create(ctx, user, req.Password)
-			} else {
-				user.Name = createReq.Name
-				user.Surname = createReq.Surname
-				user.PointCode = &createReq.PointCode
-				user.NetworkCode = &createReq.NetworkCode
-				user.Role = createReq.Role
-				user.Active = true
-				err = s.usersService.UpdateWithPassword(ctx, user, req.Password)
-			}
-			if err != nil {
-				return err
-			}
-
-			accessToken, refreshToken, err = s.generateTokens(txCtx, user)
-			return err
-		},
-	)
+	// 2. Регистрируем и привязываем юзера
+	newStaff, err := s.registrationService.RegisterNewStaff(ctx, cmd, confirmCmd.Password)
 	if err != nil {
 		return "", "", err
 	}
-
 	// 3. Удаляем использованный invite токен (игнорируем ошибки - токен истечет по TTL)
-	_ = s.tokensCache.DeleteAuthToken(ctx, req.Token)
+	_ = s.tokensCache.DeleteInviteToken(ctx, confirmCmd.Token)
 
-	return accessToken, refreshToken, nil
+	return s.generateTokens(ctx, newStaff)
 }
 
 func (s *Service) SendPasswordChangeLink(ctx context.Context, phone string) error {
@@ -413,26 +331,24 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone string) erro
 		return err
 	}
 	if !exist {
-		return domainErr.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
-
 	// Генерируем короткий auth токен
 	token := codegen.GenerateAuthToken()
-	payload := &dto.AuthTokenPayload{
-		Phone:   phone,
-		Purpose: enum.AuthTokenPurposePasswordChange,
+	payload := &InviteTokenInfo{
+		Phone: phone,
 	}
 
-	if saveErr := s.tokensCache.SaveAuthToken(ctx, token, payload, s.registrationTTL); saveErr != nil {
+	if saveErr := s.tokensCache.SaveInviteToken(ctx, token, payload, s.registrationTTL); saveErr != nil {
 		return saveErr
 	}
 
 	return s.notificationService.SendPasswordChangeLink(ctx, phone, token)
 }
 
-func (s *Service) ChangePassword(ctx context.Context, req *command.ChangePasswordConfirmCommand) error {
+func (s *Service) ChangePassword(ctx context.Context, req *auth.ChangePasswordConfirmCommand) error {
 	// 1. Получаем данные из Redis по короткому токену
-	tokenPayload, err := s.tokensCache.GetAuthToken(ctx, req.Token)
+	tokenPayload, err := s.tokensCache.GetInviteToken(ctx, req.Token)
 	if err != nil {
 		return domainErr.NewUnauthorizedError("invalid or expired token").WithError(err)
 	}
@@ -442,22 +358,22 @@ func (s *Service) ChangePassword(ctx context.Context, req *command.ChangePasswor
 		return err
 	}
 
-	// 2. Удаляем использованный invite токен (игнорируем ошибки - токен истечет по TTL)
-	_ = s.tokensCache.DeleteAuthToken(ctx, req.Token)
+	// 2. Удаляем использованный токен (игнорируем ошибки - токен истечет по TTL)
+	_ = s.tokensCache.DeleteInviteToken(ctx, req.Token)
 
 	return nil
 }
 
 // validateStaffRegistrationPermissions проверяет права на регистрацию работника
-func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, pointCode string, role enum.Role, createdBy *session.Session) error {
+func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, pointCode string, role user.Role, createdBy *actor.Actor) error {
 	switch createdBy.Role() {
-	case enum.RoleStaff:
+	case user.RoleStaff:
 		// Staff не может создавать пользователей
 		return domainErr.NewForbiddenError("staff cannot create users")
 
-	case enum.RoleManager:
+	case user.RoleManager:
 		// Point Manager может создавать только в своей точке
-		if !role.OneOf(enum.RoleStaff) {
+		if !role.OneOf(user.RoleStaff) {
 			return domainErr.NewForbiddenError("manager cannot create (net)managers")
 		}
 		if pointCode != createdBy.PointCode() {
@@ -466,8 +382,8 @@ func (s *Service) validateStaffRegistrationPermissions(ctx context.Context, poin
 				WithDetail("requested_point", pointCode)
 		}
 
-	case enum.RoleNetManager, enum.RoleSelfOwner:
-		if !role.OneOf(enum.RoleManager, enum.RoleStaff) {
+	case user.RoleNetManager, user.RoleSelfOwner:
+		if !role.OneOf(user.RoleManager, user.RoleStaff) {
 			return domainErr.NewForbiddenError("manager cannot create net managers")
 		}
 		// Network Manager и SelfOwner могут создавать в любой точке своей сети
@@ -508,12 +424,12 @@ func (s *Service) Logout(ctx context.Context, refreshToken string) error {
 	return nil
 }
 
-// VerifyAccessToken парсит access токен и создает domain.Session
-// Это метод согласно Clean Architecture (JWT → DTO → Session)
+// VerifyAccessToken парсит access токен и создает domain.Actor
+// Это метод согласно Clean Architecture (JWT → DTO → Actor)
 // Service не зависит от конкретных ошибок JWT - просто оборачивает любую ошибку
-func (s *Service) VerifyAccessToken(_ context.Context, tokenStr string) (*session.Session, error) {
+func (s *Service) VerifyAccessToken(_ context.Context, tokenStr string) (*actor.Actor, error) {
 	// 1. Парсим токен через JWT (получаем DTO из domain)
-	parsed, err := s.tokenManager.ParseAccessToken(tokenStr)
+	payload, err := s.tokenManager.ParseAccessToken(tokenStr)
 	if err != nil {
 		// 2. Любая ошибка парсинга → Unauthorized
 		// Детали ошибки сохраняются через wrapping для логирования
@@ -521,21 +437,21 @@ func (s *Service) VerifyAccessToken(_ context.Context, tokenStr string) (*sessio
 	}
 
 	// 3. Валидируем роль (domain logic!)
-	role, err := enum.RoleString(parsed.Role)
+	role, err := user.RoleString(payload.Role)
 	if err != nil {
-		return nil, domainErr.ErrInvalidTokenClaims.
+		return nil, auth.ErrInvalidTokenClaims.
 			WithDetail("claim", "role").
 			WithError(err)
 	}
 
 	// 4. Создаем Session (domain entity)
-	sess := session.NewSession().
-		SetPhone(parsed.Phone).
+	act := actor.NewActor().
+		SetPhone(payload.Phone).
 		SetRole(role).
-		SetPointCode(parsed.PointCode).
-		SetNetworkCode(parsed.NetworkCode)
+		SetPointCode(payload.PointCode).
+		SetNetworkCode(payload.NetworkCode)
 
-	return sess, nil
+	return act, nil
 }
 
 // Refresh обновляет пару токенов по refresh токену
@@ -566,14 +482,14 @@ func (s *Service) Refresh(ctx context.Context, rawToken string) (string, string,
 	user, err := s.usersService.GetByPhone(ctx, phone)
 	if err != nil {
 		if domainErr.IsNotFound(err) {
-			return "", "", domainErr.ErrInvalidCredentials
+			return "", "", auth.ErrInvalidCredentials
 		}
 		return "", "", domainErr.NewInternalError("failed to get user", err)
 	}
 
 	// 5. Проверяем активность пользователя
 	if !user.Active {
-		return "", "", domainErr.ErrUserInactive
+		return "", "", auth.ErrUserInactive
 	}
 
 	// 6. Генерируем новую пару токенов (автоматически сохраняет новый refresh hash)
@@ -585,8 +501,14 @@ func (s *Service) Refresh(ctx context.Context, rawToken string) (string, string,
 	return accessToken, refreshToken, nil
 }
 
-func (s *Service) generateTokens(ctx context.Context, user *entity.User) (accessToken, refreshToken string, err error) {
-	access, err := s.tokenManager.NewAccessToken(user, s.accessTTL)
+func (s *Service) generateTokens(ctx context.Context, user *user.User) (accessToken, refreshToken string, err error) {
+	payload := newAccessTokenPayload(
+		user.Phone,
+		user.Role.String(),
+		ptr.Deref(user.PointCode),
+		ptr.Deref(user.NetworkCode),
+	)
+	access, err := s.tokenManager.NewAccessToken(payload, s.accessTTL)
 	if err != nil {
 		return "", "", domainErr.NewInternalError("failed to generate access token", err)
 	}
