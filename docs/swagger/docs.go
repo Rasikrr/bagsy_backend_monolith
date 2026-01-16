@@ -1243,6 +1243,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/services/{point_code}": {
+            "get": {
+                "description": "Возвращает список активных услуг для указанной точки",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Получить список услуг по коду точки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код точки",
+                        "name": "point_code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список услуг",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_services.getServicesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/staff": {
             "get": {
                 "security": [
@@ -1911,6 +1955,9 @@ const docTemplate = `{
                 },
                 "point_code": {
                     "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
                 }
             }
         },
@@ -2007,17 +2054,17 @@ const docTemplate = `{
                 "duration_minutes": {
                     "type": "integer"
                 },
-                "masters": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse"
-                    }
-                },
                 "point_code": {
                     "type": "string"
                 },
                 "service_id": {
                     "type": "string"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -2060,23 +2107,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_ports_http_handlers_bagsies.masterSlotsResponse": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "slots": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.timeSlotResponse"
-                    }
-                }
-            }
-        },
         "internal_ports_http_handlers_bagsies.resentCodeRequest": {
             "type": "object",
             "required": [
@@ -2084,17 +2114,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "bagsy_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_ports_http_handlers_bagsies.timeSlotResponse": {
-            "type": "object",
-            "properties": {
-                "end_at": {
-                    "type": "string"
-                },
-                "start_at": {
                     "type": "string"
                 }
             }
@@ -2192,6 +2211,46 @@ const docTemplate = `{
             "properties": {
                 "code": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_services.getServicesResponse": {
+            "type": "object",
+            "properties": {
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_services.serviceDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_services.serviceDTO": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "subcategory_id": {
+                    "type": "integer"
                 }
             }
         },
