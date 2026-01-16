@@ -1,14 +1,93 @@
 package bagsies
 
 import (
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	"github.com/google/uuid"
 )
 
 //go:generate easyjson -all models.go
+
+// Константа для периода слотов (2 недели)
+const defaultSlotsPeriodDays = 14
+
+type getSlotsRequest struct {
+	PointCode   string  `json:"point_code" validate:"required"`
+	ServiceID   string  `json:"service_id" validate:"required,uuid"`
+	MasterPhone *string `json:"master_phone" validate:"omitempty,min=10"`
+}
+
+func (r *getSlotsRequest) Validate() error {
+	if err := request.GetValidator().Struct(r); err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (r *getSlotsRequest) toDomain() (*command.GetAvailableSlotsCommand, error) {
+	serviceID, err := uuid.Parse(r.ServiceID)
+	if err != nil {
+		return nil, domainErr.NewInvalidInputError("invalid service_id format", err)
+	}
+
+	// Используем UTC для всех вычислений
+	now := time.Now().UTC()
+	return &command.GetAvailableSlotsCommand{
+		PointCode:   r.PointCode,
+		ServiceID:   serviceID,
+		MasterPhone: r.MasterPhone,
+		StartDate:   now,
+		EndDate:     now.AddDate(0, 0, defaultSlotsPeriodDays),
+	}, nil
+}
+
+type getSlotsResponse struct {
+	ServiceID       uuid.UUID `json:"service_id"`
+	PointCode       string    `json:"point_code"`
+	DurationMinutes int       `json:"duration_minutes"`
+	AvailableDates  []string  `json:"available_dates"`
+}
+
+func newGetSlotsResponse(slots *dto.AvailableSlots) *getSlotsResponse {
+	// Собираем уникальные даты из всех слотов всех мастеров
+	dateSet := make(map[string]struct{})
+
+	for _, ms := range slots.MasterSlots {
+		for _, ts := range ms.Slots {
+			// Конвертируем в Almaty и берем только дату
+			almatyTime := timeutil.ConvertUTCToAlmatyTime(ts.StartAt)
+			dateStr := almatyTime.Format("2006-01-02")
+			dateSet[dateStr] = struct{}{}
+		}
+	}
+
+	// Конвертируем map в отсортированный slice
+	availableDates := make([]string, 0, len(dateSet))
+	for date := range dateSet {
+		availableDates = append(availableDates, date)
+	}
+
+	// Сортируем даты
+	for i := range len(availableDates) - 1 {
+		for j := i + 1; j < len(availableDates); j++ {
+			if availableDates[i] > availableDates[j] {
+				availableDates[i], availableDates[j] = availableDates[j], availableDates[i]
+			}
+		}
+	}
+
+	return &getSlotsResponse{
+		ServiceID:       slots.ServiceID,
+		PointCode:       slots.PointCode,
+		DurationMinutes: slots.DurationMinutes,
+		AvailableDates:  availableDates,
+	}
+}
 
 type createBagsyRequest struct {
 	ServiceID   uuid.UUID `json:"service_id" validate:"required"`
@@ -70,4 +149,97 @@ func (r *resentCodeRequest) Validate() error {
 		return request.HandleValidationError(err)
 	}
 	return nil
+}
+
+// ========== GET SLOTS FOR DAY ==========
+
+type getSlotsForDayRequest struct {
+	PointCode   string  `json:"point_code" validate:"required"`
+	ServiceID   string  `json:"service_id" validate:"required,uuid"`
+	Date        string  `json:"date" validate:"required"`
+	MasterPhone *string `json:"master_phone" validate:"omitempty,min=10"`
+}
+
+func (r *getSlotsForDayRequest) Validate() error {
+	if err := request.GetValidator().Struct(r); err != nil {
+		return request.HandleValidationError(err)
+	}
+	_, err := time.Parse("2006-01-02", r.Date)
+	if err != nil {
+		return domainErr.NewValidationError("invalid date format, expected YYYY-MM-DD", err.Error())
+	}
+	return nil
+}
+
+func (r *getSlotsForDayRequest) toDomain() (*command.GetAvailableSlotsCommand, error) {
+	serviceID, err := uuid.Parse(r.ServiceID)
+	if err != nil {
+		return nil, domainErr.NewInvalidInputError("invalid service_id format", err)
+	}
+
+	date, _ := time.Parse("2006-01-02", r.Date)
+	almatyLoc := time.FixedZone("Asia/Almaty", 5*60*60)
+	startOfDayAlmaty := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, almatyLoc)
+	endOfDayAlmaty := startOfDayAlmaty.Add(24 * time.Hour)
+
+	return &command.GetAvailableSlotsCommand{
+		PointCode:   r.PointCode,
+		ServiceID:   serviceID,
+		MasterPhone: r.MasterPhone,
+		StartDate:   startOfDayAlmaty.UTC(),
+		EndDate:     endOfDayAlmaty.UTC(),
+	}, nil
+}
+
+type getSlotsForDayResponse struct {
+	ServiceID       uuid.UUID             `json:"service_id"`
+	PointCode       string                `json:"point_code"`
+	Date            string                `json:"date"`
+	DurationMinutes int                   `json:"duration_minutes"`
+	Masters         []masterSlotsResponse `json:"masters"`
+}
+
+type masterSlotsResponse struct {
+	Phone string             `json:"phone"`
+	Name  string             `json:"name"`
+	Slots []timeSlotResponse `json:"slots"`
+}
+
+type timeSlotResponse struct {
+	StartAt string `json:"start_at"`
+	EndAt   string `json:"end_at"`
+}
+
+func newGetSlotsForDayResponse(slots *dto.AvailableSlots, date string) *getSlotsForDayResponse {
+	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
+
+	for _, ms := range slots.MasterSlots {
+		masterResp := masterSlotsResponse{
+			Phone: ms.MasterPhone,
+			Name:  ms.MasterName,
+			Slots: make([]timeSlotResponse, 0, len(ms.Slots)),
+		}
+
+		for _, ts := range ms.Slots {
+			startAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.StartAt)
+			endAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.EndAt)
+
+			masterResp.Slots = append(masterResp.Slots, timeSlotResponse{
+				StartAt: startAlmaty.Format("15:04"),
+				EndAt:   endAlmaty.Format("15:04"),
+			})
+		}
+
+		if len(masterResp.Slots) > 0 {
+			masters = append(masters, masterResp)
+		}
+	}
+
+	return &getSlotsForDayResponse{
+		ServiceID:       slots.ServiceID,
+		PointCode:       slots.PointCode,
+		Date:            date,
+		DurationMinutes: slots.DurationMinutes,
+		Masters:         masters,
+	}
 }

@@ -1,12 +1,12 @@
 package points
 
 import (
-	"time"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 )
 
 //go:generate easyjson -all models.go
@@ -31,13 +31,17 @@ func (r *createPointRequest) Validate() error {
 func (r *createPointRequest) toEntity() (*entity.Point, error) {
 	schedules := make([]entity.Schedule, 0, len(r.Schedule))
 	for _, s := range r.Schedule {
-		openTime, err := time.Parse("15:04:05", s.Open)
+		openTime, err := timeutil.ConvertAlmatyTimeToUTC(s.Open)
 		if err != nil {
-			return nil, err
+			return nil, domainErr.NewValidationError("invalid time format in schedule").
+				WithDetail("from", s.Open).
+				WithError(err)
 		}
-		closeTime, err := time.Parse("15:04:05", s.Close)
+		closeTime, err := timeutil.ConvertAlmatyTimeToUTC(s.Close)
 		if err != nil {
-			return nil, err
+			return nil, domainErr.NewValidationError("invalid time format in schedule").
+				WithDetail("from", s.Close).
+				WithError(err)
 		}
 
 		schedules = append(schedules, entity.Schedule{

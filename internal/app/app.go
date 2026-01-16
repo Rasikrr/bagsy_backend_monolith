@@ -194,6 +194,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.masterServicesService,
 		a.servicesService,
 		a.usersService,
+		a.pointsService,
 		a.notificationsService,
 		a.bagsyConfirmCache,
 	)

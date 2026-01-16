@@ -11,6 +11,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -145,4 +146,35 @@ func (r *Repository) Delete(ctx context.Context, updatedBy string, bagsies ...*e
 		return domainErr.NewInternalError("failed to delete bagsies from db", err)
 	}
 	return nil
+}
+
+// GetOccupiedSlots возвращает все брони, которые пересекаются с заданным временным диапазоном
+func (r *Repository) GetOccupiedSlots(ctx context.Context, filter *query.OccupiedSlotsFilter) ([]*entity.Bagsy, error) {
+	if len(filter.MasterPhones) == 0 {
+		return []*entity.Bagsy{}, nil
+	}
+
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getOccupiedSlots,
+		filter.PointCode,
+		pq.Array(filter.MasterPhones),
+		filter.StartAt,
+		filter.EndAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*entity.Bagsy{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get occupied slots from db", err)
+	}
+
+	if len(mm) == 0 {
+		return []*entity.Bagsy{}, nil
+	}
+
+	out, err := mm.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert bagsies models", err)
+	}
+	return out, nil
 }

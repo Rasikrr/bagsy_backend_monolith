@@ -18,3 +18,12 @@ type CreateBagsyCommand struct {
 	Surname     string
 	Comment     *string
 }
+
+// GetAvailableSlotsCommand - команда для получения свободных слотов
+type GetAvailableSlotsCommand struct {
+	PointCode   string
+	ServiceID   uuid.UUID
+	MasterPhone *string   // optional filter by specific master
+	StartDate   time.Time // start of period (default: now)
+	EndDate     time.Time // end of period (default: now + 2 weeks)
+}

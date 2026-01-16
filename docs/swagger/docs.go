@@ -868,6 +868,110 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/bagsies/slots": {
+            "post": {
+                "description": "Возвращает список доступных временных слотов для записи на услугу на точке за ближайшие 2 недели",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Получить доступные слоты для записи",
+                "parameters": [
+                    {
+                        "description": "Параметры запроса слотов",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.getSlotsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Слоты казик",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.getSlotsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Точка, услуга или мастера не найдены",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bagsies/slots/day": {
+            "post": {
+                "description": "Возвращает список доступных временных слотов для записи на услугу на конкретную дату, сгруппированных по мастерам",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Получить слоты на конкретный день",
+                "parameters": [
+                    {
+                        "description": "Параметры запроса слотов на день",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.getSlotsForDayRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Слоты на выбранный день",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.getSlotsForDayResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Точка, услуга или мастера не найдены",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/forms": {
             "post": {
                 "description": "Создает новую заявку на сотрудничество",
@@ -1871,6 +1975,108 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_bagsies.getSlotsForDayRequest": {
+            "type": "object",
+            "required": [
+                "date",
+                "point_code",
+                "service_id"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.getSlotsForDayResponse": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "masters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse"
+                    }
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.getSlotsRequest": {
+            "type": "object",
+            "required": [
+                "point_code",
+                "service_id"
+            ],
+            "properties": {
+                "master_phone": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.getSlotsResponse": {
+            "type": "object",
+            "properties": {
+                "available_dates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.masterSlotsResponse": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.timeSlotResponse"
+                    }
+                }
+            }
+        },
         "internal_ports_http_handlers_bagsies.resentCodeRequest": {
             "type": "object",
             "required": [
@@ -1878,6 +2084,17 @@ const docTemplate = `{
             ],
             "properties": {
                 "bagsy_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.timeSlotResponse": {
+            "type": "object",
+            "properties": {
+                "end_at": {
+                    "type": "string"
+                },
+                "start_at": {
                     "type": "string"
                 }
             }
