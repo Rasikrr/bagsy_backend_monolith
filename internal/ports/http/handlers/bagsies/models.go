@@ -192,46 +192,34 @@ func (r *getSlotsForDayRequest) toDomain() (*command.GetAvailableSlotsCommand, e
 }
 
 type getSlotsForDayResponse struct {
-	ServiceID       uuid.UUID             `json:"service_id"`
-	PointCode       string                `json:"point_code"`
-	Date            string                `json:"date"`
-	DurationMinutes int                   `json:"duration_minutes"`
-	Masters         []masterSlotsResponse `json:"masters"`
-}
-
-type masterSlotsResponse struct {
-	Phone string             `json:"phone"`
-	Name  string             `json:"name"`
-	Slots []timeSlotResponse `json:"slots"`
-}
-
-type timeSlotResponse struct {
-	StartAt string `json:"start_at"`
-	EndAt   string `json:"end_at"`
+	ServiceID       uuid.UUID `json:"service_id"`
+	PointCode       string    `json:"point_code"`
+	Date            string    `json:"date"`
+	DurationMinutes int       `json:"duration_minutes"`
+	Slots           []string  `json:"slots"`
 }
 
 func newGetSlotsForDayResponse(slots *dto.AvailableSlots, date string) *getSlotsForDayResponse {
-	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
+	slotSet := make(map[string]struct{})
 
 	for _, ms := range slots.MasterSlots {
-		masterResp := masterSlotsResponse{
-			Phone: ms.MasterPhone,
-			Name:  ms.MasterName,
-			Slots: make([]timeSlotResponse, 0, len(ms.Slots)),
-		}
-
 		for _, ts := range ms.Slots {
 			startAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.StartAt)
-			endAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.EndAt)
-
-			masterResp.Slots = append(masterResp.Slots, timeSlotResponse{
-				StartAt: startAlmaty.Format("15:04"),
-				EndAt:   endAlmaty.Format("15:04"),
-			})
+			slotSet[startAlmaty.Format("15:04")] = struct{}{}
 		}
+	}
 
-		if len(masterResp.Slots) > 0 {
-			masters = append(masters, masterResp)
+	slotTimes := make([]string, 0, len(slotSet))
+	for slot := range slotSet {
+		slotTimes = append(slotTimes, slot)
+	}
+
+	// Сортируем по времени
+	for i := range len(slotTimes) - 1 {
+		for j := i + 1; j < len(slotTimes); j++ {
+			if slotTimes[i] > slotTimes[j] {
+				slotTimes[i], slotTimes[j] = slotTimes[j], slotTimes[i]
+			}
 		}
 	}
 
@@ -240,6 +228,6 @@ func newGetSlotsForDayResponse(slots *dto.AvailableSlots, date string) *getSlots
 		PointCode:       slots.PointCode,
 		Date:            date,
 		DurationMinutes: slots.DurationMinutes,
-		Masters:         masters,
+		Slots:           slotTimes,
 	}
 }
