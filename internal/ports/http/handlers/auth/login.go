@@ -9,7 +9,7 @@ import (
 	httputil "github.com/Rasikrr/core/http"
 )
 
-// Login godoc
+// login godoc
 // @Summary Авторизация пользователя
 // @Description Выполняет авторизацию пользователя по номеру телефона и паролю
 // @Tags auth

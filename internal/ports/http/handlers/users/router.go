@@ -3,17 +3,18 @@ package users
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/go-chi/chi/v5"
 )
 
 type userService interface {
-	GetUserProfile(ctx context.Context) (*entity.User, error)
-	GetByFilter(ctx context.Context, filter *query.UserFilter) (*dto.PaginatedUsers, error)
-	Update(ctx context.Context, user *entity.User) error
+	GetUserProfile(ctx context.Context) (*user.User, error)
+	GetListByFilter(ctx context.Context, filter *user.Filter) (*query.Page[*user.User], error)
+	UpdateProfile(ctx context.Context, cmd *user.UpdateUserCommand) (*user.User, error)
+	UpdateSchedule(ctx context.Context, phone string, schedule user.Schedule) error
+	RemoveAvatar(ctx context.Context) error
 }
 
 type Controller struct {
@@ -45,5 +46,6 @@ func (c *Controller) Init(router *chi.Mux) {
 		authenticated.Get("/me", c.getMyProfile)
 		authenticated.Put("/me", c.updateUser)
 		authenticated.Put("/me/schedule", c.updateSchedule)
+		authenticated.Delete("/me/avatar", c.deleteAvatar)
 	})
 }

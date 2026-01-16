@@ -3,7 +3,7 @@ package pointcategories
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 )
 
 type model struct {
@@ -15,7 +15,7 @@ type model struct {
 	UpdatedBy   *string    `db:"updated_by"`
 }
 
-func convert(e *entity.PointCategory) model {
+func convert(e *point.Category) model {
 	return model{
 		ID:          e.ID,
 		Name:        e.Name,
@@ -26,8 +26,8 @@ func convert(e *entity.PointCategory) model {
 	}
 }
 
-func (m model) convert() *entity.PointCategory {
-	return &entity.PointCategory{
+func (m model) convert() *point.Category {
+	return &point.Category{
 		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
@@ -39,8 +39,8 @@ func (m model) convert() *entity.PointCategory {
 
 type models []model
 
-func (m models) convert() []*entity.PointCategory {
-	out := make([]*entity.PointCategory, len(m))
+func (m models) convert() []*point.Category {
+	out := make([]*point.Category, len(m))
 	for i := range m {
 		out[i] = m[i].convert()
 	}

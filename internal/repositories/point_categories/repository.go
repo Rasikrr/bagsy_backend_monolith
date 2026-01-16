@@ -3,8 +3,8 @@ package pointcategories
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -21,19 +21,28 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) GetByID(ctx context.Context, id int) (*entity.PointCategory, error) {
+func (r *Repository) GetByID(ctx context.Context, id int) (*point.Category, error) {
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getPointCategoryByID, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrPointCategoryNotFound.WithError(err)
+			return nil, point.ErrPointCategoryNotFound.WithError(err)
 		}
 		return nil, domainErr.NewInternalError("failed to get point category from db", err)
 	}
 	return m.convert(), nil
 }
 
-func (r *Repository) Create(ctx context.Context, category *entity.PointCategory) error {
+func (r *Repository) ExistsByID(ctx context.Context, id int) (bool, error) {
+	var exists bool
+	err := pgxscan.Get(ctx, r.db, &exists, existsByID, id)
+	if err != nil {
+		return false, domainErr.NewInternalError("failed to get point category from db", err)
+	}
+	return exists, nil
+}
+
+func (r *Repository) Create(ctx context.Context, category *point.Category) error {
 	m := convert(category)
 	err := r.db.QueryRow(ctx, createPointCategory, m.Name, m.Description, m.UpdatedBy).Scan(&category.ID)
 	if err != nil {
@@ -42,7 +51,7 @@ func (r *Repository) Create(ctx context.Context, category *entity.PointCategory)
 	return nil
 }
 
-func (r *Repository) Update(ctx context.Context, category *entity.PointCategory) error {
+func (r *Repository) Update(ctx context.Context, category *point.Category) error {
 	m := convert(category)
 	_, err := r.db.Exec(ctx, updatePointCategory, m.ID, m.Name, m.Description, m.UpdatedBy)
 	if err != nil {
@@ -51,8 +60,8 @@ func (r *Repository) Update(ctx context.Context, category *entity.PointCategory)
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, categories ...*entity.PointCategory) error {
-	ids := lo.Map(categories, func(item *entity.PointCategory, _ int) int {
+func (r *Repository) Delete(ctx context.Context, categories ...*point.Category) error {
+	ids := lo.Map(categories, func(item *point.Category, _ int) int {
 		return item.ID
 	})
 	_, err := r.db.Exec(ctx, deletePointCategory, pq.Array(ids))

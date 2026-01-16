@@ -12,14 +12,12 @@ import (
 )
 
 type Cache struct {
-	cli     *redis.Client
-	codeTTL time.Duration
+	cli *redis.Client
 }
 
-func NewCache(cli *redis.Client, codeTTL time.Duration) *Cache {
+func NewCache(cli *redis.Client) *Cache {
 	return &Cache{
-		cli:     cli,
-		codeTTL: codeTTL,
+		cli: cli,
 	}
 }
 
@@ -34,8 +32,8 @@ func (c *Cache) GetCode(ctx context.Context, id uuid.UUID) (string, error) {
 	return authCode, nil
 }
 
-func (c *Cache) SetCode(ctx context.Context, id uuid.UUID, code string) error {
-	err := c.cli.SetWithExpiration(ctx, genKey(id), code, c.codeTTL)
+func (c *Cache) SetCode(ctx context.Context, id uuid.UUID, code string, ttl time.Duration) error {
+	err := c.cli.SetWithExpiration(ctx, genKey(id), code, ttl)
 	if err != nil {
 		return domainErr.NewInternalError("error setting code", err)
 	}

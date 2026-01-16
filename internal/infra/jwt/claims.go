@@ -9,7 +9,7 @@ type accessClaims struct {
 	jwt.StandardClaims
 
 	Phone       string `json:"phone"`
-	Role        string `json:"role,omitempty"`
+	Role        string `json:"role"`
 	PointCode   string `json:"point_code,omitempty"`
 	NetworkCode string `json:"network_code,omitempty"`
 }

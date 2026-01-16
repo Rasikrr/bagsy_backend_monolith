@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -95,7 +97,7 @@ func TestIsSlotAvailable(t *testing.T) {
 		name      string
 		slotStart time.Time
 		slotEnd   time.Time
-		occupied  []*entity.Bagsy
+		occupied  []*bagsy.Bagsy
 		expected  bool
 	}{
 		{
@@ -109,7 +111,7 @@ func TestIsSlotAvailable(t *testing.T) {
 			name:      "available - no overlap with occupied",
 			slotStart: base,
 			slotEnd:   base.Add(1 * time.Hour),
-			occupied: []*entity.Bagsy{
+			occupied: []*bagsy.Bagsy{
 				{StartAt: base.Add(2 * time.Hour), EndAt: base.Add(3 * time.Hour)},
 			},
 			expected: true,
@@ -118,7 +120,7 @@ func TestIsSlotAvailable(t *testing.T) {
 			name:      "not available - overlaps with occupied",
 			slotStart: base,
 			slotEnd:   base.Add(1 * time.Hour),
-			occupied: []*entity.Bagsy{
+			occupied: []*bagsy.Bagsy{
 				{StartAt: base.Add(30 * time.Minute), EndAt: base.Add(90 * time.Minute)},
 			},
 			expected: false,
@@ -127,7 +129,7 @@ func TestIsSlotAvailable(t *testing.T) {
 			name:      "not available - overlaps with one of many",
 			slotStart: base,
 			slotEnd:   base.Add(1 * time.Hour),
-			occupied: []*entity.Bagsy{
+			occupied: []*bagsy.Bagsy{
 				{StartAt: base.Add(-2 * time.Hour), EndAt: base.Add(-1 * time.Hour)},
 				{StartAt: base.Add(30 * time.Minute), EndAt: base.Add(90 * time.Minute)},
 				{StartAt: base.Add(3 * time.Hour), EndAt: base.Add(4 * time.Hour)},
@@ -138,7 +140,7 @@ func TestIsSlotAvailable(t *testing.T) {
 			name:      "available - adjacent slots",
 			slotStart: base.Add(1 * time.Hour),
 			slotEnd:   base.Add(2 * time.Hour),
-			occupied: []*entity.Bagsy{
+			occupied: []*bagsy.Bagsy{
 				{StartAt: base, EndAt: base.Add(1 * time.Hour)},
 			},
 			expected: true,
@@ -158,7 +160,7 @@ func TestBuildOccupiedMap(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		bagsies  []*entity.Bagsy
+		bagsies  []*bagsy.Bagsy
 		expected map[string]int // phone -> count
 	}{
 		{
@@ -168,7 +170,7 @@ func TestBuildOccupiedMap(t *testing.T) {
 		},
 		{
 			name: "single master",
-			bagsies: []*entity.Bagsy{
+			bagsies: []*bagsy.Bagsy{
 				{MasterPhone: "+77001111111", StartAt: base, EndAt: base.Add(1 * time.Hour)},
 				{MasterPhone: "+77001111111", StartAt: base.Add(2 * time.Hour), EndAt: base.Add(3 * time.Hour)},
 			},
@@ -176,7 +178,7 @@ func TestBuildOccupiedMap(t *testing.T) {
 		},
 		{
 			name: "multiple masters",
-			bagsies: []*entity.Bagsy{
+			bagsies: []*bagsy.Bagsy{
 				{MasterPhone: "+77001111111", StartAt: base, EndAt: base.Add(1 * time.Hour)},
 				{MasterPhone: "+77002222222", StartAt: base, EndAt: base.Add(1 * time.Hour)},
 				{MasterPhone: "+77001111111", StartAt: base.Add(2 * time.Hour), EndAt: base.Add(3 * time.Hour)},
@@ -230,7 +232,7 @@ func TestTruncateToDay(t *testing.T) {
 }
 
 func TestFindScheduleForDay(t *testing.T) {
-	schedule := []entity.Schedule{
+	schedule := point.Schedule{
 		{WeekDay: 1, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 		{WeekDay: 2, Open: timeOnly(10, 0), Close: timeOnly(19, 0)},
 		{WeekDay: 5, Open: timeOnly(9, 0), Close: timeOnly(17, 0)},
@@ -239,17 +241,17 @@ func TestFindScheduleForDay(t *testing.T) {
 	tests := []struct {
 		name     string
 		weekDay  int
-		expected *entity.Schedule
+		expected *point.ScheduleElement
 	}{
 		{
 			name:     "found monday",
 			weekDay:  1,
-			expected: &entity.Schedule{WeekDay: 1, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
+			expected: &point.ScheduleElement{WeekDay: 1, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 		},
 		{
 			name:     "found friday",
 			weekDay:  5,
-			expected: &entity.Schedule{WeekDay: 5, Open: timeOnly(9, 0), Close: timeOnly(17, 0)},
+			expected: &point.ScheduleElement{WeekDay: 5, Open: timeOnly(9, 0), Close: timeOnly(17, 0)},
 		},
 		{
 			name:     "not found - sunday",
@@ -277,7 +279,7 @@ func TestFindScheduleForDay(t *testing.T) {
 }
 
 func TestFindStaffScheduleForDay(t *testing.T) {
-	schedule := []entity.StaffSchedule{
+	schedule := user.Schedule{
 		{WeekDay: 1, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 		{WeekDay: 3, Open: timeOnly(10, 0), Close: timeOnly(17, 0)},
 	}
@@ -285,17 +287,17 @@ func TestFindStaffScheduleForDay(t *testing.T) {
 	tests := []struct {
 		name     string
 		weekDay  int
-		expected *entity.StaffSchedule
+		expected *user.ScheduleElement
 	}{
 		{
 			name:     "found monday",
 			weekDay:  1,
-			expected: &entity.StaffSchedule{WeekDay: 1},
+			expected: &user.ScheduleElement{WeekDay: 1},
 		},
 		{
 			name:     "found wednesday",
 			weekDay:  3,
-			expected: &entity.StaffSchedule{WeekDay: 3},
+			expected: &user.ScheduleElement{WeekDay: 3},
 		},
 		{
 			name:     "not found",
@@ -322,50 +324,50 @@ func TestCalculateEffectiveHours(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		pointSchedule  *entity.Schedule
-		masterSchedule *entity.StaffSchedule
+		pointSchedule  *point.ScheduleElement
+		masterSchedule *user.ScheduleElement
 		expectedStart  time.Time
 		expectedEnd    time.Time
 	}{
 		{
 			name:           "same schedule",
-			pointSchedule:  &entity.Schedule{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
-			masterSchedule: &entity.StaffSchedule{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
+			pointSchedule:  &point.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
+			masterSchedule: &user.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 			expectedStart:  time.Date(2026, 1, 15, 9, 0, 0, 0, time.UTC),
 			expectedEnd:    time.Date(2026, 1, 15, 18, 0, 0, 0, time.UTC),
 		},
 		{
 			name:           "point opens later",
-			pointSchedule:  &entity.Schedule{Open: timeOnly(10, 0), Close: timeOnly(18, 0)},
-			masterSchedule: &entity.StaffSchedule{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
+			pointSchedule:  &point.ScheduleElement{Open: timeOnly(10, 0), Close: timeOnly(18, 0)},
+			masterSchedule: &user.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 			expectedStart:  time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC),
 			expectedEnd:    time.Date(2026, 1, 15, 18, 0, 0, 0, time.UTC),
 		},
 		{
 			name:           "master starts later",
-			pointSchedule:  &entity.Schedule{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
-			masterSchedule: &entity.StaffSchedule{Open: timeOnly(11, 0), Close: timeOnly(18, 0)},
+			pointSchedule:  &point.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
+			masterSchedule: &user.ScheduleElement{Open: timeOnly(11, 0), Close: timeOnly(18, 0)},
 			expectedStart:  time.Date(2026, 1, 15, 11, 0, 0, 0, time.UTC),
 			expectedEnd:    time.Date(2026, 1, 15, 18, 0, 0, 0, time.UTC),
 		},
 		{
 			name:           "point closes earlier",
-			pointSchedule:  &entity.Schedule{Open: timeOnly(9, 0), Close: timeOnly(17, 0)},
-			masterSchedule: &entity.StaffSchedule{Open: timeOnly(9, 0), Close: timeOnly(19, 0)},
+			pointSchedule:  &point.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(17, 0)},
+			masterSchedule: &user.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(19, 0)},
 			expectedStart:  time.Date(2026, 1, 15, 9, 0, 0, 0, time.UTC),
 			expectedEnd:    time.Date(2026, 1, 15, 17, 0, 0, 0, time.UTC),
 		},
 		{
 			name:           "master closes earlier",
-			pointSchedule:  &entity.Schedule{Open: timeOnly(9, 0), Close: timeOnly(19, 0)},
-			masterSchedule: &entity.StaffSchedule{Open: timeOnly(9, 0), Close: timeOnly(16, 0)},
+			pointSchedule:  &point.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(19, 0)},
+			masterSchedule: &user.ScheduleElement{Open: timeOnly(9, 0), Close: timeOnly(16, 0)},
 			expectedStart:  time.Date(2026, 1, 15, 9, 0, 0, 0, time.UTC),
 			expectedEnd:    time.Date(2026, 1, 15, 16, 0, 0, 0, time.UTC),
 		},
 		{
 			name:           "complex intersection",
-			pointSchedule:  &entity.Schedule{Open: timeOnly(8, 0), Close: timeOnly(20, 0)},
-			masterSchedule: &entity.StaffSchedule{Open: timeOnly(10, 30), Close: timeOnly(17, 30)},
+			pointSchedule:  &point.ScheduleElement{Open: timeOnly(8, 0), Close: timeOnly(20, 0)},
+			masterSchedule: &user.ScheduleElement{Open: timeOnly(10, 30), Close: timeOnly(17, 30)},
 			expectedStart:  time.Date(2026, 1, 15, 10, 30, 0, 0, time.UTC),
 			expectedEnd:    time.Date(2026, 1, 15, 17, 30, 0, 0, time.UTC),
 		},
@@ -390,7 +392,7 @@ func TestGenerateDaySlots(t *testing.T) {
 		dayEnd          time.Time
 		durationMinutes int
 		stepMinutes     int
-		occupied        []*entity.Bagsy
+		occupied        []*bagsy.Bagsy
 		now             time.Time
 		expectedCount   int
 	}{
@@ -430,7 +432,7 @@ func TestGenerateDaySlots(t *testing.T) {
 			dayEnd:          day.Add(12 * time.Hour),
 			durationMinutes: 60,
 			stepMinutes:     30,
-			occupied: []*entity.Bagsy{
+			occupied: []*bagsy.Bagsy{
 				{StartAt: day.Add(10 * time.Hour), EndAt: day.Add(11 * time.Hour)}, // 10:00-11:00 occupied
 			},
 			now:           day,
@@ -473,23 +475,23 @@ func TestGenerateSlots(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		pointSchedule   []entity.Schedule
-		masters         []*entity.User
-		occupied        []*entity.Bagsy
+		pointSchedule   point.Schedule
+		masters         []*user.User
+		occupied        []*bagsy.Bagsy
 		durationMinutes int
 		expectedMasters int
 	}{
 		{
 			name: "single master with slots",
-			pointSchedule: []entity.Schedule{
+			pointSchedule: point.Schedule{
 				{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)}, // Wednesday
 			},
-			masters: []*entity.User{
+			masters: []*user.User{
 				{
 					Phone:   "+77001111111",
 					Name:    "Anna",
 					Surname: "Ivanova",
-					Schedule: []entity.StaffSchedule{
+					Schedule: user.Schedule{
 						{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 					},
 				},
@@ -500,10 +502,10 @@ func TestGenerateSlots(t *testing.T) {
 		},
 		{
 			name: "master without schedule - skipped",
-			pointSchedule: []entity.Schedule{
+			pointSchedule: point.Schedule{
 				{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 			},
-			masters: []*entity.User{
+			masters: []*user.User{
 				{
 					Phone:    "+77001111111",
 					Name:     "Anna",
@@ -517,15 +519,15 @@ func TestGenerateSlots(t *testing.T) {
 		},
 		{
 			name: "point closed on that day",
-			pointSchedule: []entity.Schedule{
+			pointSchedule: point.Schedule{
 				{WeekDay: 1, Open: timeOnly(9, 0), Close: timeOnly(18, 0)}, // Monday only
 			},
-			masters: []*entity.User{
+			masters: []*user.User{
 				{
 					Phone:   "+77001111111",
 					Name:    "Anna",
 					Surname: "Ivanova",
-					Schedule: []entity.StaffSchedule{
+					Schedule: user.Schedule{
 						{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 					},
 				},
@@ -536,15 +538,15 @@ func TestGenerateSlots(t *testing.T) {
 		},
 		{
 			name: "master not working on that day",
-			pointSchedule: []entity.Schedule{
+			pointSchedule: point.Schedule{
 				{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 			},
-			masters: []*entity.User{
+			masters: []*user.User{
 				{
 					Phone:   "+77001111111",
 					Name:    "Anna",
 					Surname: "Ivanova",
-					Schedule: []entity.StaffSchedule{
+					Schedule: user.Schedule{
 						{WeekDay: 1, Open: timeOnly(9, 0), Close: timeOnly(18, 0)}, // Monday only
 					},
 				},
@@ -555,15 +557,15 @@ func TestGenerateSlots(t *testing.T) {
 		},
 		{
 			name: "multiple masters",
-			pointSchedule: []entity.Schedule{
+			pointSchedule: point.Schedule{
 				{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 			},
-			masters: []*entity.User{
+			masters: []*user.User{
 				{
 					Phone:   "+77001111111",
 					Name:    "Anna",
 					Surname: "Ivanova",
-					Schedule: []entity.StaffSchedule{
+					Schedule: user.Schedule{
 						{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(18, 0)},
 					},
 				},
@@ -571,7 +573,7 @@ func TestGenerateSlots(t *testing.T) {
 					Phone:   "+77002222222",
 					Name:    "Maria",
 					Surname: "Petrova",
-					Schedule: []entity.StaffSchedule{
+					Schedule: user.Schedule{
 						{WeekDay: 3, Open: timeOnly(10, 0), Close: timeOnly(17, 0)},
 					},
 				},
@@ -582,20 +584,20 @@ func TestGenerateSlots(t *testing.T) {
 		},
 		{
 			name: "all slots occupied",
-			pointSchedule: []entity.Schedule{
+			pointSchedule: point.Schedule{
 				{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(10, 0)}, // only 1 hour
 			},
-			masters: []*entity.User{
+			masters: []*user.User{
 				{
 					Phone:   "+77001111111",
 					Name:    "Anna",
 					Surname: "Ivanova",
-					Schedule: []entity.StaffSchedule{
+					Schedule: user.Schedule{
 						{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(10, 0)},
 					},
 				},
 			},
-			occupied: []*entity.Bagsy{
+			occupied: []*bagsy.Bagsy{
 				{
 					ID:          uuid.New(),
 					MasterPhone: "+77001111111",
@@ -634,18 +636,18 @@ func TestGenerateSlots_MultiDay(t *testing.T) {
 	startDate := time.Date(2026, 1, 14, 0, 0, 0, 0, time.UTC)
 	endDate := startDate.AddDate(0, 0, 3) // 3 days: Wed, Thu, Fri
 
-	pointSchedule := []entity.Schedule{
+	pointSchedule := point.Schedule{
 		{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},  // Wed
 		{WeekDay: 4, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},  // Thu
 		{WeekDay: 5, Open: timeOnly(10, 0), Close: timeOnly(13, 0)}, // Fri
 	}
 
-	masters := []*entity.User{
+	masters := []*user.User{
 		{
 			Phone:   "+77001111111",
 			Name:    "Anna",
 			Surname: "Ivanova",
-			Schedule: []entity.StaffSchedule{
+			Schedule: user.Schedule{
 				{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},
 				{WeekDay: 4, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},
 				{WeekDay: 5, Open: timeOnly(9, 0), Close: timeOnly(12, 0)}, // starts earlier than point

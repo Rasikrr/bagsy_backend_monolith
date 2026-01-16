@@ -5,6 +5,10 @@ const getNetworkByCode = `
 	FROM networks WHERE code = $1 AND deleted_at IS NULL
 `
 
+const existsByCode = `
+	SELECT EXISTS (SELECT 1 FROM networks WHERE code = $1 AND deleted_at IS NULL)
+`
+
 const createNetwork = `
 	INSERT INTO networks (code, name, description, created_by, updated_by)
 	VALUES ($1, $2, $3, $4, $5)

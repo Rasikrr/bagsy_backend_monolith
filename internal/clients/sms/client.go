@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/avast/retry-go"
+	"github.com/cockroachdb/errors"
 )
 
 const (
@@ -37,13 +37,13 @@ func NewClient(login, password string) *Client {
 	}
 }
 
-// Send отправляет SMS на указанный номер телефона
-func (c *Client) Send(ctx context.Context, phone, message string) error {
+// SendMessage отправляет SMS на указанный номер телефона
+func (c *Client) SendMessage(ctx context.Context, phone, message string) error {
 	if message == "" {
-		return domainErr.ErrSMSEmptyMessage
+		return ErrEmptyMessage
 	}
 	if phone == "" {
-		return domainErr.ErrSMSEmptyPhone
+		return ErrEmptyPhone
 	}
 
 	reqBody := sendRequest{
@@ -70,10 +70,10 @@ func (c *Client) Send(ctx context.Context, phone, message string) error {
 // GetStatus проверяет статус отправленного SMS
 func (c *Client) GetStatus(ctx context.Context, phone string, messageID int) (*StatusResponse, error) {
 	if phone == "" {
-		return nil, domainErr.ErrSMSEmptyPhone
+		return nil, ErrEmptyPhone
 	}
 	if messageID == 0 {
-		return nil, domainErr.NewInvalidInputError("invalid message ID", nil)
+		return nil, ErrInvalidMsgID
 	}
 
 	// Формируем URL с query параметрами
@@ -107,13 +107,13 @@ func (c *Client) doWithRetry(ctx context.Context, method, urlStr string, body, o
 		if body != nil {
 			reqBody, err = json.Marshal(body)
 			if err != nil {
-				return domainErr.NewInternalError("failed to marshal request body", err)
+				return errors.Wrap(ErrMarshalFailed, err.Error())
 			}
 		}
 
 		req, err := http.NewRequestWithContext(ctx, method, urlStr, bytes.NewReader(reqBody))
 		if err != nil {
-			return domainErr.NewInternalError("failed to create request", err)
+			return errors.Wrap(ErrCreateRequestFailed, err.Error())
 		}
 
 		if body != nil {
@@ -122,26 +122,23 @@ func (c *Client) doWithRetry(ctx context.Context, method, urlStr string, body, o
 
 		httpResp, err := c.httpClient.Do(req)
 		if err != nil {
-			return domainErr.NewInternalError("failed to execute http request", err)
+			return errors.Wrap(ErrHTTPRequestFailed, err.Error())
 		}
 		defer httpResp.Body.Close()
 
 		if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 			respBody, _ := io.ReadAll(httpResp.Body)
-			return domainErr.NewInternalError("unexpected api status code", nil).
-				WithDetail("status_code", httpResp.StatusCode).
-				WithDetail("body", string(respBody))
+			return errors.Wrapf(ErrUnexpectedStatus, "status_code=%d, body=%s", httpResp.StatusCode, string(respBody))
 		}
 
 		if out != nil {
 			respBody, readErr := io.ReadAll(httpResp.Body)
 			if readErr != nil {
-				return domainErr.NewInternalError("failed to read response body", readErr)
+				return errors.Wrap(ErrReadBodyFailed, readErr.Error())
 			}
 
 			if unmarshallErr := json.Unmarshal(respBody, out); unmarshallErr != nil {
-				return domainErr.NewInternalError("failed to unmarshal response", unmarshallErr).
-					WithDetail("body", string(respBody))
+				return errors.Wrapf(ErrUnmarshalFailed, "%s, body=%s", unmarshallErr.Error(), string(respBody))
 			}
 		}
 		return nil
@@ -153,7 +150,7 @@ func (c *Client) doWithRetry(ctx context.Context, method, urlStr string, body, o
 	)
 
 	if err != nil {
-		return domainErr.ErrSMSRequestFailed.WithError(err)
+		return errors.Wrap(ErrRequestFailed, err.Error())
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ package users
 
 import (
 	json "encoding/json"
+	uuid "github.com/google/uuid"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -66,6 +67,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			}
 		case "active":
 			out.Active = bool(in.Bool())
+		case "avatar_url":
+			out.AvatarURL = string(in.String())
 		case "schedule":
 			if in.IsNull() {
 				in.Skip()
@@ -74,16 +77,24 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Schedule == nil {
 					if !in.IsDelim(']') {
-						out.Schedule = make([]staffScheduleDTO, 0, 1)
+						out.Schedule = make([]*staffScheduleDTO, 0, 8)
 					} else {
-						out.Schedule = []staffScheduleDTO{}
+						out.Schedule = []*staffScheduleDTO{}
 					}
 				} else {
 					out.Schedule = (out.Schedule)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v1 staffScheduleDTO
-					(v1).UnmarshalEasyJSON(in)
+					var v1 *staffScheduleDTO
+					if in.IsNull() {
+						in.Skip()
+						v1 = nil
+					} else {
+						if v1 == nil {
+							v1 = new(staffScheduleDTO)
+						}
+						(*v1).UnmarshalEasyJSON(in)
+					}
 					out.Schedule = append(out.Schedule, v1)
 					in.WantComma()
 				}
@@ -150,6 +161,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix)
 		out.Bool(bool(in.Active))
 	}
+	if in.AvatarURL != "" {
+		const prefix string = ",\"avatar_url\":"
+		out.RawString(prefix)
+		out.String(string(in.AvatarURL))
+	}
 	if len(in.Schedule) != 0 {
 		const prefix string = ",\"schedule\":"
 		out.RawString(prefix)
@@ -159,7 +175,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				if v2 > 0 {
 					out.RawByte(',')
 				}
-				(v3).MarshalEasyJSON(out)
+				if v3 == nil {
+					out.RawString("null")
+				} else {
+					(*v3).MarshalEasyJSON(out)
+				}
 			}
 			out.RawByte(']')
 		}
@@ -223,6 +243,18 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.Name = string(in.String())
 		case "surname":
 			out.Surname = string(in.String())
+		case "avatar_id":
+			if in.IsNull() {
+				in.Skip()
+				out.AvatarID = nil
+			} else {
+				if out.AvatarID == nil {
+					out.AvatarID = new(uuid.UUID)
+				}
+				if data := in.UnsafeBytes(); in.Ok() {
+					in.AddError((*out.AvatarID).UnmarshalText(data))
+				}
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -246,6 +278,15 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"surname\":"
 		out.RawString(prefix)
 		out.String(string(in.Surname))
+	}
+	{
+		const prefix string = ",\"avatar_id\":"
+		out.RawString(prefix)
+		if in.AvatarID == nil {
+			out.RawString("null")
+		} else {
+			out.RawText((*in.AvatarID).MarshalText())
+		}
 	}
 	out.RawByte('}')
 }
@@ -586,16 +627,24 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Users == nil {
 					if !in.IsDelim(']') {
-						out.Users = make([]userDTO, 0, 0)
+						out.Users = make([]*userDTO, 0, 8)
 					} else {
-						out.Users = []userDTO{}
+						out.Users = []*userDTO{}
 					}
 				} else {
 					out.Users = (out.Users)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v7 userDTO
-					(v7).UnmarshalEasyJSON(in)
+					var v7 *userDTO
+					if in.IsNull() {
+						in.Skip()
+						v7 = nil
+					} else {
+						if v7 == nil {
+							v7 = new(userDTO)
+						}
+						(*v7).UnmarshalEasyJSON(in)
+					}
 					out.Users = append(out.Users, v7)
 					in.WantComma()
 				}
@@ -628,7 +677,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				if v8 > 0 {
 					out.RawByte(',')
 				}
-				(v9).MarshalEasyJSON(out)
+				if v9 == nil {
+					out.RawString("null")
+				} else {
+					(*v9).MarshalEasyJSON(out)
+				}
 			}
 			out.RawByte(']')
 		}

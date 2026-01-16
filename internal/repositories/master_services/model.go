@@ -3,7 +3,7 @@ package masterservices
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )
@@ -28,7 +28,7 @@ type model struct {
 	UpdatedBy   *string         `db:"updated_by"`
 }
 
-func convert(e *entity.MasterService) model {
+func convert(e *masterservice.MasterService) model {
 	return model{
 		ID:          e.ID,
 		MasterPhone: e.MasterPhone,
@@ -41,8 +41,8 @@ func convert(e *entity.MasterService) model {
 	}
 }
 
-func (m model) convert() *entity.MasterService {
-	return &entity.MasterService{
+func (m model) convert() *masterservice.MasterService {
+	return &masterservice.MasterService{
 		ID:          m.ID,
 		MasterPhone: m.MasterPhone,
 		ServiceID:   m.ServiceID,
@@ -56,8 +56,8 @@ func (m model) convert() *entity.MasterService {
 
 type models []model
 
-func (m models) convert() []*entity.MasterService {
-	list := make([]*entity.MasterService, len(m))
+func (m models) convert() []*masterservice.MasterService {
+	list := make([]*masterservice.MasterService, len(m))
 	for i, item := range m {
 		list[i] = item.convert()
 	}

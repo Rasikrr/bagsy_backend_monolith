@@ -48,7 +48,7 @@ func (c *Controller) getUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := c.userService.GetByFilter(ctx, filter)
+	result, err := c.userService.GetListByFilter(ctx, filter)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return

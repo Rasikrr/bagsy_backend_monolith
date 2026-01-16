@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/samber/lo"
 )
 
@@ -29,6 +29,7 @@ type model struct {
 	Name        string     `db:"name"`
 	Description *string    `db:"description"`
 	NetworkCode string     `db:"network_code"`
+	Photos      []byte     `db:"photos"`
 	CategoryID  int        `db:"category_id"`
 	Address     []byte     `db:"address"`
 	City        string     `db:"city"`
@@ -42,13 +43,13 @@ type model struct {
 
 type models []model
 
-func (mm models) convert() []*entity.Point {
-	return lo.Map(mm, func(item model, _ int) *entity.Point {
+func (mm models) convert() []*point.Point {
+	return lo.Map(mm, func(item model, _ int) *point.Point {
 		return item.convert()
 	})
 }
 
-func convert(e *entity.Point) (model, error) {
+func convert(e *point.Point) (model, error) {
 	out := model{
 		Code:        e.Code,
 		Name:        e.Name,
@@ -79,8 +80,8 @@ func convert(e *entity.Point) (model, error) {
 	return out, nil
 }
 
-func (m model) convert() *entity.Point {
-	point := &entity.Point{
+func (m model) convert() *point.Point {
+	p := &point.Point{
 		Code:        m.Code,
 		Name:        m.Name,
 		Description: m.Description,
@@ -96,13 +97,18 @@ func (m model) convert() *entity.Point {
 
 	var addrDTO addressDTO
 	if err := json.Unmarshal(m.Address, &addrDTO); err == nil {
-		point.Address = addrDTO.toEntity()
+		p.Address = addrDTO.toEntity()
 	}
 
 	var scheduleDTOs schedulesDTO
 	if err := json.Unmarshal(m.Schedule, &scheduleDTOs); err == nil {
-		point.Schedule = scheduleDTOs.toEntity()
+		p.Schedule = scheduleDTOs.toEntity()
 	}
 
-	return point
+	var photos photoDTOs
+	if err := json.Unmarshal(m.Photos, &photos); err == nil {
+		p.Photos = photos.toEntity()
+	}
+
+	return p
 }

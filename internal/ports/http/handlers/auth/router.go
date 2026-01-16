@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -20,15 +20,15 @@ type authService interface {
 	Login(ctx context.Context, phone, password string) (access, refresh string, err error)
 	Refresh(ctx context.Context, refreshToken string) (access, refresh string, err error)
 	Logout(ctx context.Context, refreshToken string) error
-	InspectAuthToken(ctx context.Context, token string) (*dto.AuthTokenPayload, error)
-	RegisterManagement(ctx context.Context, req *command.RegisterManagementCommand) error
+	InspectAuthToken(ctx context.Context, token string) (*authS.InviteTokenInfo, error)
+	RegisterManagement(ctx context.Context, req *auth.RegisterManagementCommand) error
 	RegisterManagementConfirm(ctx context.Context, phone, code string) (access, refresh string, err error)
 	ResendRegisterManagementCode(ctx context.Context, phone string) error
-	RegisterStaff(ctx context.Context, req *command.RegisterStaffCommand) error
-	RegisterStaffConfirm(ctx context.Context, req *command.RegisterStaffConfirmCommand) (access, refresh string, err error)
+	RegisterStaff(ctx context.Context, req *auth.RegisterStaffCommand) error
+	RegisterStaffConfirm(ctx context.Context, req *auth.RegisterStaffConfirmCommand) (access, refresh string, err error)
 	ResendRegisterStaffLink(ctx context.Context, phone string) error
 	SendPasswordChangeLink(ctx context.Context, phone string) error
-	ChangePassword(ctx context.Context, req *command.ChangePasswordConfirmCommand) error
+	ChangePassword(ctx context.Context, req *auth.ChangePasswordConfirmCommand) error
 }
 
 type Controller struct {
@@ -51,9 +51,9 @@ func New(
 
 func (c *Controller) Init(router *chi.Mux) {
 	managerMiddleware := c.authMiddleware.RequireRole(
-		enum.RoleManager,
-		enum.RoleNetManager,
-		enum.RoleSelfOwner,
+		user.RoleManager,
+		user.RoleNetManager,
+		user.RoleSelfOwner,
 	)
 
 	rateLimiter := c.rateLimiterFactory.NewRateLimiter(rateLimiterLimit, rateLimiterPerDuration)

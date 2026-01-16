@@ -1,8 +1,8 @@
+// nolint: unused
 package networks
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
 )
 
 //go:generate easyjson -all models.go
@@ -12,8 +12,8 @@ type createNetworkRequest struct {
 	Description string `json:"description"`
 }
 
-func (c *createNetworkRequest) toDomain() *command.CreateNetworkCommand {
-	return &command.CreateNetworkCommand{
+func (c *createNetworkRequest) toDomain() *network.CreateNetworkCommand {
+	return &network.CreateNetworkCommand{
 		Name:        c.Name,
 		Description: c.Description,
 	}
@@ -28,7 +28,7 @@ type networkResponse struct {
 	CreatedBy   string  `json:"created_by"`
 }
 
-func toNetworkResponse(network *entity.Network) *networkResponse {
+func toNetworkResponse(network *network.Network) *networkResponse {
 	resp := &networkResponse{
 		Code:        network.Code,
 		Name:        network.Name,

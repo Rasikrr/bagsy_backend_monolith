@@ -3,7 +3,7 @@ package users
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/samber/lo"
 )
 
@@ -18,13 +18,13 @@ type staffScheduleDTO struct {
 
 type schedulesDTO []staffScheduleDTO
 
-func schedulesToDTO(schedules []entity.StaffSchedule) []staffScheduleDTO {
-	return lo.Map(schedules, func(item entity.StaffSchedule, _ int) staffScheduleDTO {
+func schedulesToDTO(schedule user.Schedule) []staffScheduleDTO {
+	return lo.Map(schedule, func(item *user.ScheduleElement, _ int) staffScheduleDTO {
 		return scheduleToDTO(item)
 	})
 }
 
-func scheduleToDTO(s entity.StaffSchedule) staffScheduleDTO {
+func scheduleToDTO(s *user.ScheduleElement) staffScheduleDTO {
 	// Convert from Almaty timezone back to UTC for DB storage
 	return staffScheduleDTO{
 		WeekDay: s.WeekDay,
@@ -35,9 +35,9 @@ func scheduleToDTO(s entity.StaffSchedule) staffScheduleDTO {
 	}
 }
 
-func (dto staffScheduleDTO) toEntity() entity.StaffSchedule {
+func (dto staffScheduleDTO) toEntity() *user.ScheduleElement {
 	// Convert UTC time from DB to Almaty timezone
-	return entity.StaffSchedule{
+	return &user.ScheduleElement{
 		WeekDay: dto.WeekDay,
 		Open:    dto.Open,
 		Close:   dto.Close,
@@ -46,8 +46,8 @@ func (dto staffScheduleDTO) toEntity() entity.StaffSchedule {
 	}
 }
 
-func (dto schedulesDTO) toEntity() []entity.StaffSchedule {
-	return lo.Map(dto, func(item staffScheduleDTO, _ int) entity.StaffSchedule {
+func (dto schedulesDTO) toEntity() user.Schedule {
+	return lo.Map(dto, func(item staffScheduleDTO, _ int) *user.ScheduleElement {
 		return item.toEntity()
 	})
 }

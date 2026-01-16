@@ -3,7 +3,7 @@ package pointcategoryservices
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 )
 
 /*
@@ -19,7 +19,7 @@ type model struct {
 	CreatedAt         time.Time `db:"created_at"`
 }
 
-func convert(e *entity.PointCategoryService) model {
+func convert(e *point.CategoryService) model {
 	return model{
 		ID:                e.ID,
 		PointCategoryID:   e.PointCategoryID,
@@ -28,8 +28,8 @@ func convert(e *entity.PointCategoryService) model {
 	}
 }
 
-func (m model) convert() *entity.PointCategoryService {
-	return &entity.PointCategoryService{
+func (m model) convert() *point.CategoryService {
+	return &point.CategoryService{
 		ID:                m.ID,
 		PointCategoryID:   m.PointCategoryID,
 		ServiceCategoryID: m.ServiceCategoryID,
@@ -39,8 +39,8 @@ func (m model) convert() *entity.PointCategoryService {
 
 type models []model
 
-func (m models) convert() []*entity.PointCategoryService {
-	list := make([]*entity.PointCategoryService, len(m))
+func (m models) convert() []*point.CategoryService {
+	list := make([]*point.CategoryService, len(m))
 	for i, item := range m {
 		list[i] = item.convert()
 	}

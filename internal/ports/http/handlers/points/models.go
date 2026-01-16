@@ -1,23 +1,25 @@
+// nolint
 package points
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"time"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
-	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+	"github.com/google/uuid"
 )
 
 //go:generate easyjson -all models.go
 
 type createPointRequest struct {
 	Name        string            `json:"name" validate:"required"`
-	Description *string           `json:"description"`
 	NetworkCode string            `json:"network_code" validate:"required"`
+	Description *string           `json:"description"`
 	CategoryID  int               `json:"category_id" validate:"required,min=1"`
 	Address     dto.AddressDTO    `json:"address" validate:"required"`
 	Schedule    []dto.ScheduleDTO `json:"schedule"`
+	PhotoIDs    []uuid.UUID       `json:"photo_ids" validate:"omitempty,max=10,dive,uuid"`
 }
 
 func (r *createPointRequest) Validate() error {
@@ -28,23 +30,19 @@ func (r *createPointRequest) Validate() error {
 	return nil
 }
 
-func (r *createPointRequest) toEntity() (*entity.Point, error) {
-	schedules := make([]entity.Schedule, 0, len(r.Schedule))
+func (r *createPointRequest) toCommand() (*point.CreatePointCommand, error) {
+	schedules := make(point.Schedule, 0, len(r.Schedule))
 	for _, s := range r.Schedule {
-		openTime, err := timeutil.ConvertAlmatyTimeToUTC(s.Open)
+		openTime, err := time.Parse("15:04:05", s.Open)
 		if err != nil {
-			return nil, domainErr.NewValidationError("invalid time format in schedule").
-				WithDetail("from", s.Open).
-				WithError(err)
+			return nil, err
 		}
-		closeTime, err := timeutil.ConvertAlmatyTimeToUTC(s.Close)
+		closeTime, err := time.Parse("15:04:05", s.Close)
 		if err != nil {
-			return nil, domainErr.NewValidationError("invalid time format in schedule").
-				WithDetail("from", s.Close).
-				WithError(err)
+			return nil, err
 		}
 
-		schedules = append(schedules, entity.Schedule{
+		schedules = append(schedules, &point.ScheduleElement{
 			WeekDay: s.WeekDay,
 			Open:    openTime,
 			Close:   closeTime,
@@ -52,33 +50,20 @@ func (r *createPointRequest) toEntity() (*entity.Point, error) {
 			Comment: s.Comment,
 		})
 	}
-
-	return &entity.Point{
-		Code:        slug.Generate(r.Name + r.Address.City + r.Address.Street),
+	return &point.CreatePointCommand{
 		Name:        r.Name,
 		Description: r.Description,
-		NetworkCode: r.NetworkCode,
 		CategoryID:  r.CategoryID,
-		Address: entity.Address{
-			Coordinates: entity.Coordinates{
+		NetworkCode: r.NetworkCode,
+		Address: point.Address{
+			Coordinates: point.Coordinates{
 				Latitude:  r.Address.Coordinates.Latitude,
 				Longitude: r.Address.Coordinates.Longitude,
 			},
 			Street: r.Address.Street,
 			City:   r.Address.City,
 		},
-		Active:   true,
-		City:     r.Address.City,
 		Schedule: schedules,
+		PhotoIDs: r.PhotoIDs,
 	}, nil
-}
-
-type pointCreateResponse struct {
-	Code string `json:"code"`
-}
-
-func toPointCreateResponse(code string) *pointCreateResponse {
-	return &pointCreateResponse{
-		Code: code,
-	}
 }

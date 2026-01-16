@@ -4,7 +4,7 @@ name: bagsy_backend # name of application
 
 log:
   level: debug # debug, info, warn, error
-  add_source: true
+  add_source: false
   format: json
 
 metrics:
@@ -197,4 +197,42 @@ env:
     type: "duration"
     env_name: "BAGSY_CONFIRM_TTL"
     value: "300s"
+    required: true
+
+
+  aws_region:
+    type: "string"
+    env_name: "AWS_REGION"
+    required: true
+
+  aws_s3_bucket_name:
+    type: "string"
+    env_name: "AWS_S3_BUCKET_NAME"
+    required: true
+
+  aws_secret_access_key:
+    type: "string"
+    env_name: "AWS_SECRET_ACCESS_KEY"
+    required: true
+
+  aws_access_key_id:
+    type: "string"
+    env_name: "AWS_ACCESS_KEY_ID"
+    required: true
+
+  aws_s3_endpoint:
+    type: "string"
+    env_name: "AWS_S3_ENDPOINT"
+    required: true
+
+  media_ttl:
+    type: "duration"
+    env_name: "MEDIA_TTL"
+    value: "900s"
+    required: true
+
+  point_media_max_count:
+    type: "int"
+    env_name: "POINT_MEDIA_MAX_COUNT"
+    value: 10
     required: true

@@ -22,6 +22,13 @@ definitions:
     - latitude
     - longitude
     type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto:
+    properties:
+      order:
+        type: integer
+      url:
+        type: string
+    type: object
   github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse:
     properties:
       active:
@@ -42,6 +49,10 @@ definitions:
         type: string
       network_code:
         type: string
+      photos:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto'
+        type: array
       schedule:
         items:
           $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
@@ -384,6 +395,28 @@ definitions:
     - phone
     - role
     type: object
+  internal_ports_http_handlers_media.getUploadURLRequest:
+    properties:
+      content_type:
+        type: string
+      filename:
+        type: string
+      purpose:
+        type: string
+    required:
+    - content_type
+    - filename
+    - purpose
+    type: object
+  internal_ports_http_handlers_media.getUploadURLResponse:
+    properties:
+      expires_at:
+        type: string
+      media_id:
+        type: string
+      url:
+        type: string
+    type: object
   internal_ports_http_handlers_networks.networkResponse:
     properties:
       code:
@@ -412,6 +445,11 @@ definitions:
         type: string
       network_code:
         type: string
+      photo_ids:
+        items:
+          type: string
+        maxItems: 10
+        type: array
       schedule:
         items:
           $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
@@ -421,11 +459,6 @@ definitions:
     - category_id
     - name
     - network_code
-    type: object
-  internal_ports_http_handlers_points.pointCreateResponse:
-    properties:
-      code:
-        type: string
     type: object
   internal_ports_http_handlers_services.getServicesResponse:
     properties:
@@ -504,18 +537,19 @@ definitions:
     type: object
   internal_ports_http_handlers_users.updateUserRequest:
     properties:
+      avatar_id:
+        type: string
       name:
         type: string
       surname:
         type: string
-    required:
-    - name
-    - surname
     type: object
   internal_ports_http_handlers_users.userDTO:
     properties:
       active:
         type: boolean
+      avatar_url:
+        type: string
       created_at:
         type: string
       name:
@@ -1279,6 +1313,43 @@ paths:
       summary: Отправка формы для сотрудничества
       tags:
       - forms
+  /api/v1/media/upload:
+    post:
+      consumes:
+      - application/json
+      description: Создает запись в БД со статусом PENDING и генерирует временную
+        S3 URL для загрузки файла напрямую с клиента
+      parameters:
+      - description: Данные о загружаемом файле
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_media.getUploadURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ссылки на загрузку и метаданные
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_media.getUploadURLResponse'
+        "400":
+          description: Неверные параметры запроса или неподдерживаемый тип контента
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получить пресайнд ссылку для загрузки медиафайла
+      tags:
+      - media
   /api/v1/networks/{code}:
     get:
       consumes:
@@ -1352,10 +1423,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Создаёт новую точку обслуживания с указанными параметрами. Создавать
-        могут только NetManager/SelfOwner
+      description: Создаёт новую точку обслуживания с указанными параметрами. Опционально
+        можно прикрепить фото (до 10). Создавать могут только NetManager/SelfOwner
       parameters:
-      - description: Данные для создания точки
+      - description: Данные для создания точки (photo_ids опционально)
         in: body
         name: request
         required: true
@@ -1367,9 +1438,9 @@ paths:
         "201":
           description: Точка успешно создана
           schema:
-            $ref: '#/definitions/internal_ports_http_handlers_points.pointCreateResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
         "400":
-          description: Неверные параметры запроса
+          description: Неверные параметры запроса или некорректный формат photo_id
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
         "401":
@@ -1621,6 +1692,36 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Обновление своего профиля
+      tags:
+      - users
+  /api/v1/users/me/avatar:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет текущий аватар пользователя (soft delete связи user_media
+        и деактивация media)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Аватар успешно удален
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Аватар не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить аватар пользователя
       tags:
       - users
   /api/v1/users/me/schedule:

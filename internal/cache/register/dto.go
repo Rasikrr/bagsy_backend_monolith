@@ -1,20 +1,24 @@
 package register
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
+	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 )
 
-type registerManagementDTO struct {
+type registerManagementStateDTO struct {
+	Command  *registerManagementCommandDTO `json:"command"`
+	AuthCode string                        `json:"auth_code"`
+	Attempts int                           `json:"attempts"`
+}
+
+type registerManagementCommandDTO struct {
 	Name                string               `json:"name"`
 	Surname             string               `json:"surname"`
 	Phone               string               `json:"phone"`
 	Password            string               `json:"password"`
 	Role                string               `json:"role"`
 	NetworkRegisterInfo *networkRegisterInfo `json:"network_register_info"`
-
-	AuthCode string `json:"auth_code"`
-	Attempts int    `json:"attempts"`
 }
 
 type networkRegisterInfo struct {
@@ -22,33 +26,37 @@ type networkRegisterInfo struct {
 	Description string `json:"description"`
 }
 
-func (r *registerManagementDTO) toDomain() *command.RegisterManagementCommand {
-	role, _ := enum.RoleString(r.Role)
-	return &command.RegisterManagementCommand{
-		Name:     r.Name,
-		Surname:  r.Surname,
-		Phone:    r.Phone,
-		Password: r.Password,
-		Role:     role,
-		NetworkRegisterInfo: &command.NetworkRegisterInfo{
-			Name:        r.NetworkRegisterInfo.Name,
-			Description: r.NetworkRegisterInfo.Description,
+func (r *registerManagementStateDTO) toDomain() *authS.ManagementRegistrationState {
+	role, _ := user.RoleString(r.Command.Role)
+	return &authS.ManagementRegistrationState{
+		Command: &auth.RegisterManagementCommand{
+			Name:     r.Command.Name,
+			Surname:  r.Command.Surname,
+			Phone:    r.Command.Phone,
+			Password: r.Command.Password,
+			Role:     role,
+			NetworkRegisterInfo: &auth.RegisterNetworkInfo{
+				Name:        r.Command.NetworkRegisterInfo.Name,
+				Description: r.Command.NetworkRegisterInfo.Description,
+			},
 		},
 		AuthCode: r.AuthCode,
 		Attempts: r.Attempts,
 	}
 }
 
-func toRegisterManagementDTO(req *command.RegisterManagementCommand) *registerManagementDTO {
-	return &registerManagementDTO{
-		Name:     req.Name,
-		Surname:  req.Surname,
-		Phone:    req.Phone,
-		Password: req.Password,
-		Role:     req.Role.String(),
-		NetworkRegisterInfo: &networkRegisterInfo{
-			Name:        req.NetworkRegisterInfo.Name,
-			Description: req.NetworkRegisterInfo.Description,
+func toRegisterManagementDTO(req *authS.ManagementRegistrationState) *registerManagementStateDTO {
+	return &registerManagementStateDTO{
+		Command: &registerManagementCommandDTO{
+			Name:     req.Command.Name,
+			Surname:  req.Command.Surname,
+			Phone:    req.Command.Phone,
+			Password: req.Command.Password,
+			Role:     req.Command.Role.String(),
+			NetworkRegisterInfo: &networkRegisterInfo{
+				Name:        req.Command.NetworkRegisterInfo.Name,
+				Description: req.Command.NetworkRegisterInfo.Description,
+			},
 		},
 		AuthCode: req.AuthCode,
 		Attempts: req.Attempts,
@@ -64,7 +72,7 @@ type registerStaffDTO struct {
 	Role        string `json:"role"`
 }
 
-func toRegisterStaffDTO(c *command.RegisterStaffCommand) *registerStaffDTO {
+func toRegisterStaffDTO(c *auth.RegisterStaffCommand) *registerStaffDTO {
 	return &registerStaffDTO{
 		Phone:       c.Phone,
 		Name:        c.Name,
@@ -75,9 +83,9 @@ func toRegisterStaffDTO(c *command.RegisterStaffCommand) *registerStaffDTO {
 	}
 }
 
-func (r *registerStaffDTO) toDomain() *command.RegisterStaffCommand {
-	role, _ := enum.RoleString(r.Role)
-	return &command.RegisterStaffCommand{
+func (r *registerStaffDTO) toDomain() *auth.RegisterStaffCommand {
+	role, _ := user.RoleString(r.Role)
+	return &auth.RegisterStaffCommand{
 		Name:        r.Name,
 		Surname:     r.Surname,
 		Phone:       r.Phone,

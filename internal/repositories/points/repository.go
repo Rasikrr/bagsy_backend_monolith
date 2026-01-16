@@ -3,8 +3,8 @@ package points
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/Rasikrr/core/log"
 	"github.com/cockroachdb/errors"
@@ -22,8 +22,8 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
-	m, err := convert(point)
+func (r *Repository) Create(ctx context.Context, p *point.Point) error {
+	m, err := convert(p)
 	if err != nil {
 		return domainErr.NewInternalError("failed to convert point entity", err)
 	}
@@ -44,19 +44,19 @@ func (r *Repository) Create(ctx context.Context, point *entity.Point) error {
 	)
 	if err != nil {
 		if postgres.IsUniqueViolation(err) {
-			return domainErr.ErrPointAlreadyExists
+			return point.ErrPointAlreadyExists
 		}
 		return domainErr.NewInternalError("failed to create point in db", err)
 	}
 	return nil
 }
 
-func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point, error) {
+func (r *Repository) GetByCode(ctx context.Context, code string) (*point.Point, error) {
 	var m model
 	err := pgxscan.Get(ctx, r.db, &m, getPointByCode, code)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domainErr.ErrPointNotFound.WithError(err)
+			return nil, point.ErrPointNotFound.WithError(err)
 		}
 		return nil, domainErr.NewInternalError("failed to get point from db", err)
 	}
@@ -64,7 +64,7 @@ func (r *Repository) GetByCode(ctx context.Context, code string) (*entity.Point,
 	return p, nil
 }
 
-func (r *Repository) GetByNetworkCode(ctx context.Context, networkCode string) ([]*entity.Point, error) {
+func (r *Repository) GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error) {
 	var mm models
 	err := pgxscan.Select(ctx, r.db, &mm, getByNetworkCode, networkCode)
 	if err != nil {
@@ -84,7 +84,7 @@ func (r *Repository) ExistsByCode(ctx context.Context, code string) (bool, error
 	return out, nil
 }
 
-func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
+func (r *Repository) Update(ctx context.Context, point *point.Point) error {
 	m, err := convert(point)
 	if err != nil {
 		return domainErr.NewInternalError("failed to convert point entity", err)
@@ -108,8 +108,8 @@ func (r *Repository) Update(ctx context.Context, point *entity.Point) error {
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, points ...*entity.Point) error {
-	codes := lo.Map(points, func(item *entity.Point, _ int) string {
+func (r *Repository) Delete(ctx context.Context, points ...*point.Point) error {
+	codes := lo.Map(points, func(item *point.Point, _ int) string {
 		return item.Code
 	})
 	_, err := r.db.Exec(ctx, deletePoint, pq.Array(codes))
