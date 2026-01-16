@@ -1,0 +1,94 @@
+name: CI/CD Pipeline
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  lint:
+    if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25.1"
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Run linter
+        run: make lint
+
+  test:
+    if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25.1"
+      - name: Install dependencies
+        run: go mod tidy
+      - name: Run tests
+        run: make test
+
+  migrate:
+    # запускаем только когда изменились миграции и только для веток stage/main
+    if: >
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/stage' || github.ref == 'refs/heads/main')
+    needs: [ lint, test ]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'stage' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Apply migrations
+        # можно ограничить срабатывание только если реально менялись файлы миграций
+        if: contains(github.event.head_commit.message, '[force-migrate]') || true
+        env:
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+        run: make migrate-up
+
+
+  release:
+    # только push в main
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25.1"
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [[ -z "$latest_tag" ]]; then latest_tag="v0.0.0"; fi
+          IFS='.' read -r -a parts <<< "${latest_tag#v}"
+          major=${parts[0]} minor=${parts[1]} patch=${parts[2]}
+          new_tag="v$major.$minor.$((patch + 1))"
+          echo "tag=$new_tag" >> $GITHUB_ENV
+          echo "New tag: $new_tag"
+
+      - name: Create and push tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag "${{ env.tag }}"
+          git push origin "${{ env.tag }}"

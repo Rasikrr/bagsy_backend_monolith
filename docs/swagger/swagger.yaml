@@ -1,0 +1,1771 @@
+definitions:
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO:
+    properties:
+      city:
+        type: string
+      coordinates:
+        $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.CoordinatesDTO'
+      street:
+        type: string
+    required:
+    - city
+    - coordinates
+    - street
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.CoordinatesDTO:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    required:
+    - latitude
+    - longitude
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto:
+    properties:
+      order:
+        type: integer
+      url:
+        type: string
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse:
+    properties:
+      active:
+        type: boolean
+      address:
+        $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO'
+      category_id:
+        type: integer
+      city:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      network_code:
+        type: string
+      photos:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto'
+        type: array
+      schedule:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointsResponse:
+    properties:
+      count:
+        type: integer
+      points:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
+        type: array
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO:
+    properties:
+      all_day:
+        type: boolean
+      close:
+        type: string
+      comment:
+        type: string
+      open:
+        type: string
+      week_day:
+        maximum: 6
+        minimum: 0
+        type: integer
+    required:
+    - close
+    - open
+    - week_day
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+    type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.changePasswordRequest:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
+  internal_ports_http_handlers_auth.loginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  internal_ports_http_handlers_auth.loginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.networkInfo:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.passwordChangeConfirmRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  internal_ports_http_handlers_auth.refreshTokensRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.refreshTokensResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.registerConfirmRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  internal_ports_http_handlers_auth.registerConfirmResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.registerManagementConfirmRequest:
+    properties:
+      code:
+        type: string
+      phone:
+        type: string
+    required:
+    - code
+    - phone
+    type: object
+  internal_ports_http_handlers_auth.registerManagementRequest:
+    properties:
+      name:
+        minLength: 2
+        type: string
+      network_info:
+        $ref: '#/definitions/internal_ports_http_handlers_auth.networkInfo'
+      password:
+        type: string
+      phone:
+        type: string
+      role:
+        enum:
+        - net_manager
+        - self_owner
+        type: string
+      surname:
+        minLength: 2
+        type: string
+    required:
+    - name
+    - network_info
+    - password
+    - phone
+    - role
+    - surname
+    type: object
+  internal_ports_http_handlers_auth.registerStaffRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+      point_code:
+        type: string
+      role:
+        enum:
+        - manager
+        - staff
+        type: string
+      surname:
+        type: string
+    required:
+    - name
+    - phone
+    - point_code
+    - role
+    - surname
+    type: object
+  internal_ports_http_handlers_auth.registerStaffResendRequest:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
+  internal_ports_http_handlers_auth.resendRegisterManagementRequest:
+    properties:
+      phone:
+        type: string
+    required:
+    - phone
+    type: object
+  internal_ports_http_handlers_auth.verifyAuthTokenResponse:
+    properties:
+      network_code:
+        type: string
+      phone:
+        type: string
+      point_code:
+        type: string
+      purpose:
+        type: string
+    type: object
+  internal_ports_http_handlers_bagsies.confirmBagsyRequest:
+    properties:
+      bagsy_id:
+        type: string
+      code:
+        type: string
+    required:
+    - bagsy_id
+    - code
+    type: object
+  internal_ports_http_handlers_bagsies.createBagsyRequest:
+    properties:
+      client_phone:
+        type: string
+      comment:
+        type: string
+      master_phone:
+        type: string
+      name:
+        type: string
+      service_id:
+        type: string
+      start_at:
+        type: string
+      surname:
+        type: string
+    required:
+    - client_phone
+    - comment
+    - master_phone
+    - name
+    - service_id
+    - start_at
+    - surname
+    type: object
+  internal_ports_http_handlers_bagsies.createBagsyResponse:
+    properties:
+      bagsy_id:
+        type: string
+    required:
+    - bagsy_id
+    type: object
+  internal_ports_http_handlers_bagsies.getSlotsForDayRequest:
+    properties:
+      date:
+        type: string
+      master_phone:
+        minLength: 10
+        type: string
+      point_code:
+        type: string
+      service_id:
+        type: string
+    required:
+    - date
+    - point_code
+    - service_id
+    type: object
+  internal_ports_http_handlers_bagsies.getSlotsForDayResponse:
+    properties:
+      date:
+        type: string
+      duration_minutes:
+        type: integer
+      point_code:
+        type: string
+      service_id:
+        type: string
+      slots:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_ports_http_handlers_bagsies.getSlotsRequest:
+    properties:
+      master_phone:
+        minLength: 10
+        type: string
+      point_code:
+        type: string
+      service_id:
+        type: string
+    required:
+    - point_code
+    - service_id
+    type: object
+  internal_ports_http_handlers_bagsies.getSlotsResponse:
+    properties:
+      available_dates:
+        items:
+          type: string
+        type: array
+      duration_minutes:
+        type: integer
+      point_code:
+        type: string
+      service_id:
+        type: string
+    type: object
+  internal_ports_http_handlers_bagsies.resentCodeRequest:
+    properties:
+      bagsy_id:
+        type: string
+    required:
+    - bagsy_id
+    type: object
+  internal_ports_http_handlers_form.clientFormRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    required:
+    - description
+    - first_name
+    - last_name
+    - phone
+    - role
+    type: object
+  internal_ports_http_handlers_media.getUploadURLRequest:
+    properties:
+      content_type:
+        type: string
+      filename:
+        type: string
+      purpose:
+        type: string
+    required:
+    - content_type
+    - filename
+    - purpose
+    type: object
+  internal_ports_http_handlers_media.getUploadURLResponse:
+    properties:
+      expires_at:
+        type: string
+      media_id:
+        type: string
+      url:
+        type: string
+    type: object
+  internal_ports_http_handlers_networks.networkResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_points.createPointRequest:
+    properties:
+      address:
+        $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.AddressDTO'
+      category_id:
+        minimum: 1
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      network_code:
+        type: string
+      photo_ids:
+        items:
+          type: string
+        maxItems: 10
+        type: array
+      schedule:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
+        type: array
+    required:
+    - address
+    - category_id
+    - name
+    - network_code
+    type: object
+  internal_ports_http_handlers_services.getServicesResponse:
+    properties:
+      services:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_services.serviceDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_services.serviceDTO:
+    properties:
+      active:
+        type: boolean
+      category_id:
+        type: integer
+      description:
+        type: string
+      duration_minutes:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      point_code:
+        type: string
+      subcategory_id:
+        type: integer
+    type: object
+  internal_ports_http_handlers_users.getUsersResponse:
+    properties:
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_users.userDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_users.scheduleRequestDTO:
+    properties:
+      all_day:
+        type: boolean
+      comment:
+        type: string
+      from:
+        type: string
+      to:
+        type: string
+      week_day:
+        maximum: 6
+        minimum: 0
+        type: integer
+    required:
+    - from
+    - to
+    type: object
+  internal_ports_http_handlers_users.staffScheduleDTO:
+    properties:
+      all_day:
+        type: boolean
+      close:
+        type: string
+      comment:
+        type: string
+      open:
+        type: string
+      week_day:
+        type: integer
+    type: object
+  internal_ports_http_handlers_users.updateScheduleRequest:
+    properties:
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_users.scheduleRequestDTO'
+        type: array
+    required:
+    - schedule
+    type: object
+  internal_ports_http_handlers_users.updateUserRequest:
+    properties:
+      avatar_id:
+        type: string
+      name:
+        type: string
+      surname:
+        type: string
+    type: object
+  internal_ports_http_handlers_users.userDTO:
+    properties:
+      active:
+        type: boolean
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      name:
+        type: string
+      network_code:
+        type: string
+      phone:
+        type: string
+      point_code:
+        type: string
+      role:
+        type: string
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_users.staffScheduleDTO'
+        type: array
+      surname:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@bagsies.com
+    name: API Support
+  description: API для приложения Bagsy
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Bagsy API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет авторизацию пользователя по номеру телефона и паролю
+      parameters:
+      - description: Данные для авторизации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешная авторизация
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Неверный логин или пароль
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Авторизация пользователя
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Выполняет выход пользователя из системы и инвалидирует refresh
+        token
+      parameters:
+      - description: Refresh token для выхода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный выход
+        "400":
+          description: Неверные данные
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Выход из системы
+      tags:
+      - auth
+  /api/v1/auth/management/register:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Запускает двухэтапный процесс регистрации владельца сети или сетевого менеджера: создает сеть и отправляет 4-значный код подтверждения на телефон (SMS/WhatsApp). Пользователь завершит регистрацию через /api/v1/auth/management/register/confirm, введя код из SMS.
+
+        Роли для регистрации:
+        - net_manager: Менеджер сети (управляет точками)
+        - self_owner: Владелец-самозанятый (управляет своей сетью)
+
+        После успешной регистрации код действителен 5 минут. На ввод кода даётся 3 попытки.
+      parameters:
+      - description: 'Данные для регистрации (name, surname, phone, password, role:
+          net_manager|self_owner, network_info)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerManagementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Код подтверждения отправлен на телефон
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Пользователь с таким номером уже существует
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Инициация регистрации менеджмента (шаг 1/2)
+      tags:
+      - auth
+  /api/v1/auth/management/register/confirm:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Завершает двухэтапную регистрацию владельца сети или сетевого менеджера: проверяет 6-значный код из SMS, создает пользователя и сеть в БД, активирует пользователя и возвращает пару токенов (access/refresh) для дальнейшей авторизации.
+
+        Важно:
+        - Код действителен 5 минут после отправки
+        - Даётся максимум 3 попытки ввода кода
+        - После 3 неудачных попыток данные регистрации удаляются, нужно начать заново
+        - Каждая неудачная попытка возвращает количество оставшихся попыток в поле attempts_remaining
+      parameters:
+      - description: Данные для подтверждения (phone, code)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerManagementConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Регистрация успешно завершена, пользователь и сеть созданы
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse'
+        "400":
+          description: Неверный формат данных, валидация или неверный код подтверждения
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Превышен лимит попыток ввода кода (3 попытки)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Код истёк или не найден (истекло 10 минут)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Завершение регистрации менеджмента (шаг 2/2)
+      tags:
+      - auth
+  /api/v1/auth/management/register/resend:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Отправляет новый 4-значный код подтверждения на телефон пользователя, который уже начал регистрацию менеджмента через /api/v1/auth/management/register. Сбрасывает счетчик неудачных попыток ввода кода (даёт еще 3 попытки). Данные регистрации (имя, пароль, роль, сеть) НЕ изменяются.
+
+        Ограничения безопасности:
+        - Между запросами resend должно пройти минимум 60 секунд (cooldown)
+        - Максимум 5 повторных отправок в час на один номер
+        - Код действителен 10 минут с момента отправки
+        - После 3 неудачных попыток ввода кода нужно запросить новый через resend
+
+        Use Case: Пользователь начал регистрацию, но код не пришел или истек
+      parameters:
+      - description: Номер телефона
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.resendRegisterManagementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новый код подтверждения отправлен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Регистрация не найдена или истекла (нужно начать заново через
+            /register)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "429":
+          description: Слишком частые запросы - подождите 60 секунд или превышен лимит
+            (5/час)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Повторная отправка кода подтверждения регистрации
+      tags:
+      - auth
+  /api/v1/auth/password/change:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Отправляет ссылку для сброса пароля на номер телефона пользователя. Ссылка содержит one-time токен, действительный 1 час. Используется когда пользователь забыл пароль и хочет установить новый.
+
+        Важно:
+        - Пользователь с указанным номером должен существовать в системе
+        - Ссылка отправляется через WhatsApp с fallback на SMS
+        - Токен можно использовать только один раз
+        - После получения ссылки используйте /api/v1/auth/password/confirm для установки нового пароля
+      parameters:
+      - description: Номер телефона пользователя
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.changePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ссылка для сброса пароля отправлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Пользователь с таким номером не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Запрос на сброс пароля (шаг 1/2)
+      tags:
+      - auth
+  /api/v1/auth/password/change/confirm:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Завершает процесс сброса пароля: проверяет one-time токен из ссылки и устанавливает новый пароль пользователю. После успешной смены пароля все активные сессии (refresh токены) инвалидируются для безопасности.
+
+        Важно:
+        - Токен можно использовать только один раз (one-time use)
+        - При повторной попытке использования возвращается ошибка 409 Conflict
+        - После смены пароля пользователь должен войти заново (фронт сделать logout) (старые токены недействительны)
+        - Токен действителен 24 часа с момента запроса
+      parameters:
+      - description: Токен и новый пароль
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.passwordChangeConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Пароль успешно изменен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Неверный или просроченный токен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Токен уже использован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Подтверждение сброса пароля (шаг 2/2)
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет токены авторизации
+      parameters:
+      - description: Токен авторизации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токены авторизации успешно обновлены
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.refreshTokensResponse'
+        "400":
+          description: Неверный токен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Обновление токенов авторизации
+      tags:
+      - auth
+  /api/v1/auth/staff/register:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Запускает двухэтапный процесс регистрации работника: создает неактивного пользователя и отправляет ссылку для завершения регистрации (WhatsApp с fallback на SMS). Пользователь завершит регистрацию через /api/v1/auth/staff/confirm с указанием имени, фамилии и пароля.
+
+        Иерархия прав:
+        - Staff: не может создавать пользователей
+        - Manager: может создавать только Staff в своей точке
+        - NetManager/SelfOwner: могут создавать Manager и Staff в любой точке своей сети
+      parameters:
+      - description: 'Данные для регистрации (phone, role: manager|staff, point_code)'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerStaffRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ссылка для завершения регистрации отправлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав (Staff не может создавать, Manager только
+            в своей точке)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Пользователь уже существует
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Инициация регистрации работника (шаг 1/2)
+      tags:
+      - auth
+  /api/v1/auth/staff/register/confirm:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Завершает двухэтапную регистрацию работника: проверяет one-time токен из ссылки, устанавливает имя, фамилию и пароль, активирует пользователя и возвращает пару токенов (access/refresh) для дальнейшей авторизации.
+
+        Важно: токен можно использовать только один раз (one-time use). При повторной попытке использования возвращается ошибка 409 Conflict.
+      parameters:
+      - description: Данные для завершения (token, name, surname, password)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerConfirmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Регистрация успешно завершена, пользователь активирован
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.registerConfirmResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Неверный или просроченный токен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Токен уже использован или пользователь уже активирован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Завершение регистрации работника (шаг 2/2)
+      tags:
+      - auth
+  /api/v1/auth/staff/register/resend:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Отправляет новую ссылку для завершения регистрации работнику, которого менеджер уже зарегистрировал через /api/v1/auth/staff/register. Ссылка содержит one-time токен и отправляется через WhatsApp с fallback на SMS. Данные регистрации (имя, фамилия, роль, точка) НЕ изменяются.
+
+        Права доступа:
+        - Manager: может отправить повторно только для работников своей точки
+        - NetManager/SelfOwner: могут отправить для любого работника своей сети
+        - Staff: не может использовать этот endpoint
+
+        Ограничения безопасности:
+        - Требуется авторизация (Manager+)
+        - Работник должен быть предварительно создан через /staff/register
+        - Токен действителен 24 часа с момента отправки
+        - Максимум 10 повторных отправок в час (rate limiting)
+
+        Use Case: Работник не получил первую ссылку или она истекла
+      parameters:
+      - description: Номер телефона работника
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerStaffResendRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новая ссылка для регистрации отправлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат данных или валидация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав (работник не в вашей точке/сети)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Регистрация работника не найдена (нужно создать через /register)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "429":
+          description: Превышен лимит повторных отправок (10/час)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Повторная отправка ссылки для регистрации работника
+      tags:
+      - auth
+  /api/v1/auth/verify-auth-token/{token}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Позволяет фронтенду проверить валидность короткого токена из ссылки и получить метаданные (телефон, название точки/сети) для отображения пользователю.
+        Метод является Read-only: он НЕ удаляет токен из кэша и НЕ завершает процесс регистрации/смены пароля.
+
+        Поддерживаемые типы токенов (поле type):
+        - `registration`: Инвайт нового сотрудника. Возвращает имя, роль и название точки.
+        - `password_reset`: Ссылка на восстановление пароля. Возвращает только номер телефона.
+
+        Логика работы:
+        1. Проверяет наличие токена в Redis.
+        2. Если тип "registration", обогащает ответ данными из кэша заявок и справочника точек.
+        3. Если токен просрочен или не существует — возвращает 401.
+
+        Use Case: Пользователь кликнул по ссылке из WhatsApp/SMS, фронтенд запрашивает данные, чтобы отобразить под каким номер проходит процесс
+      parameters:
+      - description: Короткий токен из ссылки (10 символов)
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные о токене и владельце
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.verifyAuthTokenResponse'
+        "401":
+          description: Токен недействителен, истек или уже был использован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Токен не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Проверка токена регистрации или сброса пароля
+      tags:
+      - auth
+  /api/v1/bagsies:
+    post:
+      consumes:
+      - application/json
+      description: Создает новую бронь на услугу у мастера. Если клиент с указанным
+        номером не существует, создается автоматически. Отправляется SMS/WhatsApp
+        с кодом подтверждения.
+      parameters:
+      - description: Данные для создания брони
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Бронь успешно создана
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Услуга или мастер не найдены
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Выбранное время уже занято у данного мастера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Создание брони на услугу
+      tags:
+      - bagsies
+  /api/v1/bagsies/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает созданную бронь с помощью кода, отправленного клиенту
+        по SMS/WhatsApp
+      parameters:
+      - description: Данные для подтверждения брони
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.confirmBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Бронь успешно подтверждена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Неверный или просроченный код подтверждения
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Бронь не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Подтверждение брони
+      tags:
+      - bagsies
+  /api/v1/bagsies/resend:
+    post:
+      consumes:
+      - application/json
+      description: Повторно отправляет код подтверждения брони клиенту по SMS/WhatsApp.
+        Используется если клиент не получил код или код истек.
+      parameters:
+      - description: Данные для повторной отправки кода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.resentCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Код успешно отправлен повторно
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Бронь не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "429":
+          description: Превышен лимит запросов на отправку кода
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Повторная отправка кода подтверждения
+      tags:
+      - bagsies
+  /api/v1/bagsies/slots:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список доступных временных слотов для записи на услугу
+        на точке за ближайшие 2 недели
+      parameters:
+      - description: Параметры запроса слотов
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.getSlotsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Слоты казик
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_bagsies.getSlotsResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Точка, услуга или мастера не найдены
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить доступные слоты для записи
+      tags:
+      - bagsies
+  /api/v1/bagsies/slots/day:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает список доступных временных слотов для записи на услугу
+        на конкретную дату, сгруппированных по мастерам
+      parameters:
+      - description: Параметры запроса слотов на день
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.getSlotsForDayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Слоты на выбранный день
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_bagsies.getSlotsForDayResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Точка, услуга или мастера не найдены
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить слоты на конкретный день
+      tags:
+      - bagsies
+  /api/v1/forms:
+    post:
+      consumes:
+      - application/json
+      description: Создает новую заявку на сотрудничество
+      parameters:
+      - description: Форма для создания заявки
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_form.clientFormRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешное создание заявки
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "500":
+          description: ошибка
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Отправка формы для сотрудничества
+      tags:
+      - forms
+  /api/v1/media/upload:
+    post:
+      consumes:
+      - application/json
+      description: Создает запись в БД со статусом PENDING и генерирует временную
+        S3 URL для загрузки файла напрямую с клиента
+      parameters:
+      - description: Данные о загружаемом файле
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_media.getUploadURLRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ссылки на загрузку и метаданные
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_media.getUploadURLResponse'
+        "400":
+          description: Неверные параметры запроса или неподдерживаемый тип контента
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получить пресайнд ссылку для загрузки медиафайла
+      tags:
+      - media
+  /api/v1/networks/{code}:
+    get:
+      consumes:
+      - application/json
+      description: 'Возвращает детальную информацию о сети: название, описание, даты
+        создания/обновления и автора создания'
+      parameters:
+      - description: Код сети (slug)
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о сети
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_networks.networkResponse'
+        "400":
+          description: Неверный формат запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Сеть не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получение информации о сети по коду
+      tags:
+      - networks
+  /api/v1/networks/{code}/points:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех точек (заведений), принадлежащих указанной
+        сети. Каждая точка содержит информацию о названии, адресе, расписании работы
+        и других характеристиках.
+      parameters:
+      - description: Код сети (slug)
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список точек сети
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointsResponse'
+        "400":
+          description: Неверный формат запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Сеть не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получение списка точек сети
+      tags:
+      - networks
+  /api/v1/points:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую точку обслуживания с указанными параметрами. Опционально
+        можно прикрепить фото (до 10). Создавать могут только NetManager/SelfOwner
+      parameters:
+      - description: Данные для создания точки (photo_ids опционально)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_points.createPointRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Точка успешно создана
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
+        "400":
+          description: Неверные параметры запроса или некорректный формат photo_id
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для создания точки
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Точка с таким кодом уже существует
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создать точку обслуживания
+      tags:
+      - points
+  /api/v1/points/{code}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию о точке обслуживания по её коду
+      parameters:
+      - description: Код точки обслуживания
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о точке
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для доступа
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Точка не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить точку обслуживания
+      tags:
+      - points
+  /api/v1/services/{point_code}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список активных услуг для указанной точки
+      parameters:
+      - description: Код точки
+        in: query
+        name: point_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список услуг
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_services.getServicesResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить список услуг по коду точки
+      tags:
+      - services
+  /api/v1/staff:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Возвращает список пользователей с offset-based пагинацией и учетом прав доступа.
+        - NetManager/SelfOwner: пользователи только своей сети
+        - Manager: пользователи только своей точки
+        - Staff/User: доступ запрещен (403)
+      parameters:
+      - description: Код точки для фильтрации
+        in: query
+        name: point_code
+        type: string
+      - description: Код сети для фильтрации
+        in: query
+        name: network_code
+        type: string
+      - collectionFormat: multi
+        description: Фильтр по ролям
+        in: query
+        items:
+          enum:
+          - staff
+          - manager
+          - net_manager
+          - self_owner
+          type: string
+        name: role
+        type: array
+      - description: Поиск по части или полному номеру телефона (поиск в начале, середине
+          и конце)
+        in: query
+        name: phone_search
+        type: string
+      - description: 'Количество записей на странице (default: 20, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Смещение для пагинации (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      - default: created_at
+        description: Поле для сортировки
+        enum:
+        - phone
+        - name
+        - surname
+        - point_code
+        - network_code
+        - created_at
+        - updated_at
+        in: query
+        name: order_by
+        type: string
+      - default: asc
+        description: Направление сортировки
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список пользователей с пагинацией
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_users.getUsersResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для доступа к ресурсу
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получить список пользователей
+      tags:
+      - users
+  /api/v1/users/me:
+    get:
+      consumes:
+      - application/json
+      description: 'Возвращает детальную информацию о текущем авторизованном пользователе:
+        телефон, роль, имя, фамилия, привязанная точка и сеть, статус активности,
+        расписание работы (для staff) и даты создания/обновления.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль пользователя
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_users.userDTO'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение профиля текущего пользователя
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Позволяет пользователю обновить своё имя и фамилию
+      parameters:
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_users.updateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённый профиль пользователя
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_users.userDTO'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление своего профиля
+      tags:
+      - users
+  /api/v1/users/me/avatar:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет текущий аватар пользователя (soft delete связи user_media
+        и деактивация media)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Аватар успешно удален
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Аватар не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить аватар пользователя
+      tags:
+      - users
+  /api/v1/users/me/schedule:
+    put:
+      consumes:
+      - application/json
+      description: Позволяет обновить расписание работы (7 дней). Время передается
+        в формате Almaty timezone и конвертируется в UTC
+      parameters:
+      - description: Расписание на 7 дней
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_users.updateScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Расписание обновлено
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление расписания пользователя
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
