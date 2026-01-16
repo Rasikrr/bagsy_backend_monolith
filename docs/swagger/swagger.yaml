@@ -262,6 +262,8 @@ definitions:
         type: string
       point_code:
         type: string
+      purpose:
+        type: string
     type: object
   internal_ports_http_handlers_bagsies.confirmBagsyRequest:
     properties:

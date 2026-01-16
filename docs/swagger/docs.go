@@ -1927,6 +1927,9 @@ const docTemplate = `{
                 },
                 "point_code": {
                     "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
                 }
             }
         },

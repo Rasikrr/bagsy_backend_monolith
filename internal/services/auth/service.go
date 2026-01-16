@@ -259,6 +259,7 @@ func (s *Service) RegisterStaff(ctx context.Context, cmd *auth.RegisterStaffComm
 		Phone:       cmd.Phone,
 		PointCode:   cmd.PointCode,
 		NetworkCode: cmd.NetworkCode,
+		Purpose:     TokenPurposeRegister,
 	}
 
 	err = s.tokensCache.SaveInviteToken(ctx, inviteToken, payload, s.registrationTTL)
@@ -336,7 +337,8 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone string) erro
 	// Генерируем короткий auth токен
 	token := codegen.GenerateAuthToken()
 	payload := &InviteTokenInfo{
-		Phone: phone,
+		Phone:   phone,
+		Purpose: TokenPurposePasswordChange,
 	}
 
 	if saveErr := s.tokensCache.SaveInviteToken(ctx, token, payload, s.registrationTTL); saveErr != nil {

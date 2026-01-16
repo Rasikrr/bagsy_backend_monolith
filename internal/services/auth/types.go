@@ -19,6 +19,7 @@ type InviteTokenInfo struct {
 	Phone       string
 	PointCode   string
 	NetworkCode string
+	Purpose     TokenPurpose
 }
 
 type AccessTokenPayload struct {
