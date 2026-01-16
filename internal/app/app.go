@@ -118,6 +118,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.bagsiesService,
 		a.pointsService,
 		a.networksService,
+		a.servicesService,
 		a.mediaService,
 	)
 	return nil
@@ -233,6 +234,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.masterServicesService,
 		a.servicesService,
 		a.usersService,
+		a.pointsService,
 		a.notificationsService,
 		a.bagsyConfirmCache,
 		vars.GetDuration(appenv.BagsyConfirmTTL),

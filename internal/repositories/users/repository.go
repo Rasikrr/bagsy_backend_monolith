@@ -84,6 +84,25 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*user.User, 
 	return out, nil
 }
 
+func (r *Repository) GetByPhones(ctx context.Context, phones []string) ([]*user.User, error) {
+	if len(phones) == 0 {
+		return []*user.User{}, nil
+	}
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getUsersByPhones, pq.Array(phones))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*user.User{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get users from db", err)
+	}
+	out, err := mm.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert user models", err)
+	}
+	return out, nil
+}
+
 func (r *Repository) GetByParams(ctx context.Context, filter *user.Filter) ([]*user.User, error) {
 	q, args, err := buildQuery(filter)
 	if err != nil {

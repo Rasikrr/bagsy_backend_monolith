@@ -192,7 +192,7 @@ type Service struct {
 // Интерфейсы зависимостей
 type UserRepository interface {
     GetByPhone(ctx context.Context, phone string) (*entity.User, error)
-    GetByParams(ctx context.Context, filter query.UserFilter) ([]*entity.User, error)
+    GetListByFilter(ctx context.Context, filter query.UserFilter) ([]*entity.User, error)
     Create/Update/Delete...
 }
 

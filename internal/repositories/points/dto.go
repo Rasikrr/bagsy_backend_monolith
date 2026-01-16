@@ -73,8 +73,8 @@ func schedulesToDTO(schedule point.Schedule) []*scheduleDTO {
 func scheduleToDTO(s *point.ScheduleElement) *scheduleDTO {
 	return &scheduleDTO{
 		WeekDay: s.WeekDay,
-		Open:    s.Open,
-		Close:   s.Close,
+		Open:    s.Open.UTC(),
+		Close:   s.Close.UTC(),
 		AllDay:  s.AllDay,
 		Comment: s.Comment,
 	}

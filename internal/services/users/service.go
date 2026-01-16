@@ -18,6 +18,7 @@ import (
 type usersRepository interface {
 	Create(ctx context.Context, user *user.User) error
 	GetByPhone(ctx context.Context, phone string) (*user.User, error)
+	GetByPhones(ctx context.Context, phones []string) ([]*user.User, error)
 	GetByParams(ctx context.Context, filter *user.Filter) ([]*user.User, error)
 	CountByFilter(ctx context.Context, filter *user.Filter) (int, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
@@ -187,6 +188,10 @@ func (s *Service) GetByPhone(ctx context.Context, phone string) (*user.User, err
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *Service) GetByPhones(ctx context.Context, phones []string) ([]*user.User, error) {
+	return s.usersRepo.GetByPhones(ctx, phones)
 }
 
 func (s *Service) GetUserProfile(ctx context.Context) (*user.User, error) {

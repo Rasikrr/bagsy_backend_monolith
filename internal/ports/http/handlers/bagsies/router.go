@@ -13,6 +13,7 @@ type bagsiesService interface {
 	Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uuid.UUID, error)
 	Confirm(ctx context.Context, bagsyID uuid.UUID, code string) error
 	ResendConfirmationCode(ctx context.Context, bagsyID uuid.UUID) error
+	GetAvailableSlots(ctx context.Context, cmd *bagsy.GetAvailableSlotsCommand) (*bagsy.AvailableSlots, error)
 }
 
 type Controller struct {
@@ -35,5 +36,7 @@ func (c *Controller) Init(router *chi.Mux) {
 		r.Post("/", c.createBagsy)
 		r.Post("/resend", c.resendCode)
 		r.Post("/confirm", c.confirmBagsy)
+		r.Post("/slots", c.getSlots)
+		r.Post("/slots/day", c.getSlotsForDay)
 	})
 }

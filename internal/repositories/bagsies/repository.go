@@ -80,8 +80,6 @@ func (r *Repository) Create(ctx context.Context, b *bagsy.Bagsy) (uuid.UUID, err
 		m.EndAt,
 		m.Comment,
 		m.RejectReason,
-		m.CreatedAt,
-		m.UpdatedAt,
 		m.UpdatedBy,
 	)
 
@@ -145,4 +143,35 @@ func (r *Repository) Delete(ctx context.Context, updatedBy string, bagsies ...*b
 		return domainErr.NewInternalError("failed to delete bagsies from db", err)
 	}
 	return nil
+}
+
+// GetOccupiedSlots возвращает все брони, которые пересекаются с заданным временным диапазоном
+func (r *Repository) GetOccupiedSlots(ctx context.Context, filter *bagsy.OccupiedSlotsFilter) ([]*bagsy.Bagsy, error) {
+	if len(filter.MasterPhones) == 0 {
+		return []*bagsy.Bagsy{}, nil
+	}
+
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getOccupiedSlots,
+		filter.PointCode,
+		pq.Array(filter.MasterPhones),
+		filter.StartAt,
+		filter.EndAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*bagsy.Bagsy{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get occupied slots from db", err)
+	}
+
+	if len(mm) == 0 {
+		return []*bagsy.Bagsy{}, nil
+	}
+
+	out, err := mm.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert bagsies models", err)
+	}
+	return out, nil
 }

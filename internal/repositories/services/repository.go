@@ -68,3 +68,15 @@ func (r *Repository) Delete(ctx context.Context, services ...*service.Service) e
 	}
 	return nil
 }
+
+func (r *Repository) GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error) {
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getServicesByPointCode, pointCode)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, service.ErrServiceNotFound.WithError(err)
+		}
+		return nil, domainErr.NewInternalError("failed to get services from db", err)
+	}
+	return mm.convert(), nil
+}

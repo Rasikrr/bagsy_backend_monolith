@@ -5,10 +5,12 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/networks"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/points"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/users"
 	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
+	servicesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/cache/redis"
 	"github.com/Rasikrr/core/environment"
@@ -54,6 +56,7 @@ func NewServer(
 	bagsiesService *bagsiesS.Service,
 	pointsService *pointsS.Service,
 	networksService *networksS.Service,
+	servicesService *servicesS.Service,
 	mediaService *mediaS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
@@ -65,6 +68,7 @@ func NewServer(
 	bagsiesController := bagsies.New(bagsiesService, authMiddleware)
 	pointsController := points.New(pointsService, authMiddleware)
 	networksController := networks.New(networksService, pointsService, authMiddleware)
+	servicesController := services.New(servicesService)
 	mediaController := media.New(mediaService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
@@ -75,6 +79,7 @@ func NewServer(
 		bagsiesController,
 		pointsController,
 		networksController,
+		servicesController,
 		mediaController,
 	)
 
