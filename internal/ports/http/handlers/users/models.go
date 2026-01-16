@@ -19,7 +19,7 @@ type getUsersRequest struct {
 	PointCode   *string  `query:"point_code" validate:""`
 	NetworkCode *string  `query:"network_code"`
 	Roles       []string `query:"role"`
-	Phones      []string `query:"phone"`
+	PhoneSearch *string  `query:"phone_search"` // Частичный или полный поиск по номеру телефона
 	Limit       uint64   `query:"limit" validate:"max=100"`
 	Offset      uint64   `query:"offset" validate:"min=0"`
 	OrderBy     string   `query:"order_by" validate:"oneof=phone name surname point_code network_code created_at updated_at"`
@@ -41,8 +41,8 @@ func (r *getUsersRequest) GetQueryParameters(req *http.Request) error {
 		r.Roles = roles
 	}
 
-	if phones := q["phone"]; len(phones) > 0 {
-		r.Phones = phones
+	if phoneSearch := q.Get("phone_search"); phoneSearch != "" {
+		r.PhoneSearch = &phoneSearch
 	}
 
 	r.Limit = 20
@@ -84,7 +84,7 @@ func (r *getUsersRequest) toFilter() (*user.Filter, error) {
 	q := &user.Filter{
 		PointCode:   r.PointCode,
 		NetworkCode: r.NetworkCode,
-		Phones:      r.Phones,
+		PhoneSearch: r.PhoneSearch,
 		Limit:       r.Limit,
 		Offset:      r.Offset,
 		OrderBy:     r.OrderBy,

@@ -6,7 +6,7 @@ type Filter struct {
 	NetworkCode *string
 	PointCode   *string
 	Roles       []Role
-	Phones      []string
+	PhoneSearch *string // Частичный или полный поиск по номеру телефона (ILIKE %value%)
 	Limit       uint64
 	Offset      uint64
 	OrderBy     string

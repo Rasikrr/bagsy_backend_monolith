@@ -205,8 +205,8 @@ func buildQuery(filter *user.Filter) (string, []any, error) {
 		builder = builder.Where(sq.Eq{"u.role": roleStrings})
 	}
 
-	if len(filter.Phones) > 0 {
-		builder = builder.Where(sq.Eq{"u.phone": filter.Phones})
+	if filter.PhoneSearch != nil && *filter.PhoneSearch != "" {
+		builder = builder.Where(sq.ILike{"u.phone": "%" + *filter.PhoneSearch + "%"})
 	}
 
 	// OrderBy с префиксом u.
@@ -242,8 +242,8 @@ func buildCountQuery(filter *user.Filter) (string, []any, error) {
 		builder = builder.Where(sq.Eq{"u.role": roleStrings})
 	}
 
-	if len(filter.Phones) > 0 {
-		builder = builder.Where(sq.Eq{"u.phone": filter.Phones})
+	if filter.PhoneSearch != nil && *filter.PhoneSearch != "" {
+		builder = builder.Where(sq.ILike{"u.phone": "%" + *filter.PhoneSearch + "%"})
 	}
 
 	return builder.ToSql()

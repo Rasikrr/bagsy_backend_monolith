@@ -1564,13 +1564,11 @@ paths:
           type: string
         name: role
         type: array
-      - collectionFormat: multi
-        description: Фильтр по номерам телефонов
+      - description: Поиск по части или полному номеру телефона (поиск в начале, середине
+          и конце)
         in: query
-        items:
-          type: string
-        name: phone
-        type: array
+        name: phone_search
+        type: string
       - description: 'Количество записей на странице (default: 20, max: 100)'
         in: query
         name: limit

@@ -1392,13 +1392,9 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "multi",
-                        "description": "Фильтр по номерам телефонов",
-                        "name": "phone",
+                        "type": "string",
+                        "description": "Поиск по части или полному номеру телефона (поиск в начале, середине и конце)",
+                        "name": "phone_search",
                         "in": "query"
                     },
                     {

@@ -22,7 +22,7 @@ import (
 // @Param point_code query string false "Код точки для фильтрации"
 // @Param network_code query string false "Код сети для фильтрации"
 // @Param role query []string false "Фильтр по ролям" collectionFormat(multi) Enums(staff,manager,net_manager,self_owner)
-// @Param phone query []string false "Фильтр по номерам телефонов" collectionFormat(multi)
+// @Param phone_search query string false "Поиск по части или полному номеру телефона (поиск в начале, середине и конце)"
 // @Param limit query int false "Количество записей на странице (default: 20, max: 100)"
 // @Param offset query int false "Смещение для пагинации (default: 0)"
 // @Param order_by query string false "Поле для сортировки" Enums(phone,name,surname,point_code,network_code,created_at,updated_at) default(created_at)

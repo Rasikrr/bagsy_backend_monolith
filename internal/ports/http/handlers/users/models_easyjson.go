@@ -779,28 +779,15 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				}
 				in.Delim(']')
 			}
-		case "Phones":
+		case "PhoneSearch":
 			if in.IsNull() {
 				in.Skip()
-				out.Phones = nil
+				out.PhoneSearch = nil
 			} else {
-				in.Delim('[')
-				if out.Phones == nil {
-					if !in.IsDelim(']') {
-						out.Phones = make([]string, 0, 4)
-					} else {
-						out.Phones = []string{}
-					}
-				} else {
-					out.Phones = (out.Phones)[:0]
+				if out.PhoneSearch == nil {
+					out.PhoneSearch = new(string)
 				}
-				for !in.IsDelim(']') {
-					var v11 string
-					v11 = string(in.String())
-					out.Phones = append(out.Phones, v11)
-					in.WantComma()
-				}
-				in.Delim(']')
+				*out.PhoneSearch = string(in.String())
 			}
 		case "Limit":
 			out.Limit = uint64(in.Uint64())
@@ -849,29 +836,22 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v12, v13 := range in.Roles {
-				if v12 > 0 {
+			for v11, v12 := range in.Roles {
+				if v11 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v13))
+				out.String(string(v12))
 			}
 			out.RawByte(']')
 		}
 	}
 	{
-		const prefix string = ",\"Phones\":"
+		const prefix string = ",\"PhoneSearch\":"
 		out.RawString(prefix)
-		if in.Phones == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		if in.PhoneSearch == nil {
 			out.RawString("null")
 		} else {
-			out.RawByte('[')
-			for v14, v15 := range in.Phones {
-				if v14 > 0 {
-					out.RawByte(',')
-				}
-				out.String(string(v15))
-			}
-			out.RawByte(']')
+			out.String(string(*in.PhoneSearch))
 		}
 	}
 	{
