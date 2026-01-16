@@ -43,7 +43,6 @@ type servicesService interface {
 type usersService interface {
 	Create(ctx context.Context, user *entity.User, rawPassword string) error
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
-	GetByFilter(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
 	GetByParams(ctx context.Context, filter *query.UserFilter) ([]*entity.User, error)
 }
 

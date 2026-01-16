@@ -402,7 +402,7 @@ func TestGenerateDaySlots(t *testing.T) {
 			stepMinutes:     30,
 			occupied:        nil,
 			now:             day, // past midnight
-			expectedCount:   5,  // 09:00, 09:30, 10:00, 10:30, 11:00
+			expectedCount:   5,   // 09:00, 09:30, 10:00, 10:30, 11:00
 		},
 		{
 			name:            "no slots - duration longer than day",
