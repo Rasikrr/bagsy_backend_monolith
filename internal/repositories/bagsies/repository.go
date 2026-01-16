@@ -81,8 +81,6 @@ func (r *Repository) Create(ctx context.Context, b *entity.Bagsy) (uuid.UUID, er
 		m.EndAt,
 		m.Comment,
 		m.RejectReason,
-		m.CreatedAt,
-		m.UpdatedAt,
 		m.UpdatedBy,
 	)
 
