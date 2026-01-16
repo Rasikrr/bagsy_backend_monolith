@@ -58,7 +58,7 @@ func (s *Service) AddPointPhotos(ctx context.Context, pointCode string, mediaIDs
 	txOpts := database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}
 
 	return s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
-		pointMediaCount, err := s.pointMediaRepo.Count(ctx, pointCode)
+		pointMediaCount, err := s.pointMediaRepo.Count(txCtx, pointCode)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (s *Service) AddPointPhotos(ctx context.Context, pointCode string, mediaIDs
 				WithDetail("count_left", s.pointMaxMediaCount-pointMediaCount)
 		}
 
-		medias, err := s.mediaService.GetByIDs(ctx, mediaIDs...)
+		medias, err := s.mediaService.GetByIDs(txCtx, mediaIDs...)
 		if err != nil {
 			return err
 		}
@@ -94,11 +94,11 @@ func (s *Service) AddPointPhotos(ctx context.Context, pointCode string, mediaIDs
 				DisplayOrder: pointMediaCount + i,
 			}
 		}
-		err = s.pointMediaRepo.Add(ctx, pointMedias...)
+		err = s.pointMediaRepo.Add(txCtx, pointMedias...)
 		if err != nil {
 			return err
 		}
-		return s.mediaService.UpdateStatuses(ctx, mediaIDs, media.StatusActive)
+		return s.mediaService.UpdateStatuses(txCtx, mediaIDs, media.StatusActive)
 	})
 }
 

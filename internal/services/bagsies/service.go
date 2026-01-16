@@ -85,9 +85,9 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 		err     error
 	)
 	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
-		func(ctx context.Context) error {
+		func(txCtx context.Context) error {
 			// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
-			_, err = s.usersService.CreateUser(ctx, &user.CreateUserCommand{
+			_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
 				Phone:   req.ClientPhone,
 				Name:    req.Name,
 				Surname: req.Surname,
@@ -98,12 +98,12 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 				}
 				// Значит Юзер уже существовал
 			}
-			pointService, serviceErr := s.servicesService.GetByID(ctx, req.ServiceID)
+			pointService, serviceErr := s.servicesService.GetByID(txCtx, req.ServiceID)
 			if serviceErr != nil {
 				return serviceErr
 			}
 
-			masterService, masterServErr := s.masterServicesService.GetByMasterPhoneAndServiceID(ctx, req.MasterPhone, req.ServiceID)
+			masterService, masterServErr := s.masterServicesService.GetByMasterPhoneAndServiceID(txCtx, req.MasterPhone, req.ServiceID)
 			if masterServErr != nil {
 				return masterServErr
 			}
@@ -122,21 +122,21 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 				Comment:     req.Comment,
 			}
 
-			bagsyID, err = s.bagsiesRepository.Create(ctx, bag)
+			bagsyID, err = s.bagsiesRepository.Create(txCtx, bag)
 			if err != nil {
 				return err
 			}
 			log.Infof(ctx, "bagsy created in db: id=%s, point=%s, price=%v", bagsyID, pointService.PointCode, masterService.Price)
 
 			bagsyConfirmCode := codegen.GenerateAuthCode()
-			err = s.notificationsService.SendBagsyConfirmCode(ctx, req.ClientPhone, bagsyConfirmCode)
+			err = s.notificationsService.SendBagsyConfirmCode(txCtx, req.ClientPhone, bagsyConfirmCode)
 			if err != nil {
 				return err
 			}
 
-			log.Infof(ctx, "confirmation code sent to client: phone=%s", req.ClientPhone)
+			log.Infof(txCtx, "confirmation code sent to client: phone=%s", req.ClientPhone)
 
-			err = s.bagsyConfirmCodesCache.SetCode(ctx, bagsyID, bagsyConfirmCode, s.confirmTTL)
+			err = s.bagsyConfirmCodesCache.SetCode(txCtx, bagsyID, bagsyConfirmCode, s.confirmTTL)
 			if err != nil {
 				return err
 			}
