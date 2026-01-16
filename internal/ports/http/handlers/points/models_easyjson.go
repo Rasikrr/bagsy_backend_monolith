@@ -40,6 +40,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		switch key {
 		case "name":
 			out.Name = string(in.String())
+		case "network_code":
+			out.NetworkCode = string(in.String())
 		case "description":
 			if in.IsNull() {
 				in.Skip()
@@ -120,6 +122,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"name\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"network_code\":"
+		out.RawString(prefix)
+		out.String(string(in.NetworkCode))
 	}
 	{
 		const prefix string = ",\"description\":"

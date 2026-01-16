@@ -11,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/lib/pq"
 )
 
 // Repository отвечает за базовую работу с media таблицей
@@ -62,6 +63,17 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*media.Media, e
 	return out, nil
 }
 
+func (r *Repository) GetByIDs(ctx context.Context, ids ...uuid.UUID) ([]*media.Media, error) {
+	var mm models.MediaList
+	err := pgxscan.Select(ctx, r.db, &mm, getMediaByIDsSQL, pq.Array(ids))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+	}
+	return mm.Convert()
+}
+
 // GetByFileKey получает медиа по file_key
 func (r *Repository) GetByFileKey(ctx context.Context, fileKey string) (*media.Media, error) {
 	var m models.Media
@@ -82,6 +94,19 @@ func (r *Repository) GetByFileKey(ctx context.Context, fileKey string) (*media.M
 // UpdateStatus обновляет статус медиа
 func (r *Repository) UpdateStatus(ctx context.Context, id uuid.UUID, status media.Status) error {
 	result, err := r.db.Exec(ctx, updateMediaStatusSQL, id, status.String())
+	if err != nil {
+		return domainErr.NewInternalError("failed to update media status", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return domainErr.NewNotFoundError("media not found", nil)
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateStatuses(ctx context.Context, ids []uuid.UUID, status media.Status) error {
+	result, err := r.db.Exec(ctx, updateMediaStatusesSQL, pq.Array(ids), status.String())
 	if err != nil {
 		return domainErr.NewInternalError("failed to update media status", err)
 	}

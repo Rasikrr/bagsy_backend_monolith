@@ -22,6 +22,13 @@ definitions:
     - latitude
     - longitude
     type: object
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto:
+    properties:
+      order:
+        type: integer
+      url:
+        type: string
+    type: object
   github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse:
     properties:
       active:
@@ -42,6 +49,10 @@ definitions:
         type: string
       network_code:
         type: string
+      photos:
+        items:
+          $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto'
+        type: array
       schedule:
         items:
           $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO'
@@ -373,6 +384,8 @@ definitions:
         type: string
       name:
         type: string
+      network_code:
+        type: string
       photo_ids:
         items:
           type: string
@@ -386,6 +399,7 @@ definitions:
     - address
     - category_id
     - name
+    - network_code
     type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
@@ -444,9 +458,6 @@ definitions:
         type: string
       surname:
         type: string
-    required:
-    - name
-    - surname
     type: object
   internal_ports_http_handlers_users.userDTO:
     properties:

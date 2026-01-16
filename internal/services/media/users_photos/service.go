@@ -1,4 +1,4 @@
-package media
+package usersphotos
 
 import (
 	"context"
@@ -12,13 +12,45 @@ import (
 	"github.com/google/uuid"
 )
 
+type mediaService interface {
+	GenerateDownloadURL(ctx context.Context, fileKey string) (string, error)
+	GetByID(ctx context.Context, mediaID uuid.UUID) (*media.Media, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status media.Status) error
+	SoftDeleteByID(ctx context.Context, id uuid.UUID) error
+}
+
+type userAvatarRepository interface {
+	Get(ctx context.Context, phone string) (*media.UserMedia, error)
+	Set(ctx context.Context, userMedia *media.UserMedia) error
+	GetWithMedia(ctx context.Context, phone string) (*media.Media, error)
+	Remove(ctx context.Context, phone string) error
+}
+
+type Service struct {
+	txManager      database.TXManager
+	mediaService   mediaService
+	userAvatarRepo userAvatarRepository
+}
+
+func NewService(
+	txManager database.TXManager,
+	userAvatarRepo userAvatarRepository,
+	mediaService mediaService,
+) *Service {
+	return &Service{
+		txManager:      txManager,
+		mediaService:   mediaService,
+		userAvatarRepo: userAvatarRepo,
+	}
+}
+
 // SetUserAvatar устанавливает аватар пользователя (UPSERT в user_media)
 func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.UUID) error {
 	txOpts := database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}
 
 	err := s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
 		// 1. Валидация медиа
-		newMedia, mediaErr := s.mediaRepo.GetByID(txCtx, mediaID)
+		newMedia, mediaErr := s.mediaService.GetByID(txCtx, mediaID)
 		if mediaErr != nil {
 			return mediaErr
 		}
@@ -58,17 +90,21 @@ func (s *Service) SetUserAvatar(ctx context.Context, phone string, mediaID uuid.
 		}
 
 		// 7. Обновить статус новой медиа на active
-		if err = s.mediaRepo.UpdateStatus(txCtx, mediaID, media.StatusActive); err != nil {
+		if err = s.mediaService.UpdateStatus(txCtx, mediaID, media.StatusActive); err != nil {
 			return err
 		}
 
 		// 8. Деактивировать старую аватарку (если была и это не та же самая)
 		if oldAvatar != nil && oldAvatar.MediaID != mediaID {
-			_ = s.mediaRepo.UpdateStatus(txCtx, oldAvatar.MediaID, media.StatusInactive)
+			_ = s.mediaService.UpdateStatus(txCtx, oldAvatar.MediaID, media.StatusInactive)
 		}
 		return nil
 	})
 	return err
+}
+
+func (s *Service) GetAvatarURL(ctx context.Context, key string) (string, error) {
+	return s.mediaService.GenerateDownloadURL(ctx, key)
 }
 
 func (s *Service) RemoveUserAvatar(ctx context.Context, phone string) error {
@@ -87,7 +123,7 @@ func (s *Service) RemoveUserAvatar(ctx context.Context, phone string) error {
 		if err != nil {
 			return err
 		}
-		err = s.mediaRepo.SoftDeleteByID(txCtx, userAvatar.ID)
+		err = s.mediaService.SoftDeleteByID(txCtx, userAvatar.ID)
 		if err != nil {
 			return err
 		}

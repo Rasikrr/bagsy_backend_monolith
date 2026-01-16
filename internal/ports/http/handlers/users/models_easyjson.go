@@ -68,15 +68,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "active":
 			out.Active = bool(in.Bool())
 		case "avatar_url":
-			if in.IsNull() {
-				in.Skip()
-				out.AvatarURL = nil
-			} else {
-				if out.AvatarURL == nil {
-					out.AvatarURL = new(string)
-				}
-				*out.AvatarURL = string(in.String())
-			}
+			out.AvatarURL = string(in.String())
 		case "schedule":
 			if in.IsNull() {
 				in.Skip()
@@ -169,10 +161,10 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		out.RawString(prefix)
 		out.Bool(bool(in.Active))
 	}
-	if in.AvatarURL != nil {
+	if in.AvatarURL != "" {
 		const prefix string = ",\"avatar_url\":"
 		out.RawString(prefix)
-		out.String(string(*in.AvatarURL))
+		out.String(string(in.AvatarURL))
 	}
 	if len(in.Schedule) != 0 {
 		const prefix string = ",\"schedule\":"

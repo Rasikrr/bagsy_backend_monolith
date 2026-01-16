@@ -23,19 +23,39 @@ func NewRepository(db *postgres.Postgres) *Repository {
 }
 
 // Add добавляет фото к точке
-func (r *Repository) Add(ctx context.Context, pointMedia *media.PointMedia) error {
-	m := convert(pointMedia)
-
-	_, err := r.db.Exec(ctx, addPointPhotoSQL,
-		m.ID,
-		m.PointCode,
-		m.MediaID,
-		m.DisplayOrder,
-	)
-	if err != nil {
-		return domainErr.NewInternalError("failed to add point photo", err)
+func (r *Repository) Add(
+	ctx context.Context,
+	pointMedias ...*media.PointMedia,
+) error {
+	if len(pointMedias) == 0 {
+		return nil
 	}
 
+	batch := &pgx.Batch{}
+
+	for _, pm := range pointMedias {
+		m := convert(pm)
+
+		batch.Queue(
+			addPointPhotoSQL,
+			m.ID,
+			m.PointCode,
+			m.MediaID,
+			m.DisplayOrder,
+		)
+	}
+
+	br := r.db.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for range pointMedias {
+		if _, err := br.Exec(); err != nil {
+			return domainErr.NewInternalError(
+				"failed to add point photos",
+				err,
+			)
+		}
+	}
 	return nil
 }
 

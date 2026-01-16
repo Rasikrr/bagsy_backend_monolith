@@ -11,23 +11,19 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
-type smsClient interface {
-	Send(ctx context.Context, phone, message string) error
-}
-
-type whatsappClient interface {
+type messenger interface {
 	SendMessage(_ context.Context, phoneNumber, message string) error
 }
 
 type Service struct {
-	smsClient              smsClient
-	whatsApp               whatsappClient
+	smsClient              messenger
+	whatsApp               messenger
 	registrationConfirmURL string
 }
 
 func NewService(
-	smsClient smsClient,
-	whatsApp whatsappClient,
+	smsClient messenger,
+	whatsApp messenger,
 	registrationConfirmURL string,
 ) *Service {
 	return &Service{
@@ -70,7 +66,7 @@ func (s *Service) send(ctx context.Context, phone, message string) error {
 		log.Warnf(ctx, "Failed to send message by whatsapp: %v", whatsappErr)
 
 		// Fallback на SMS
-		smsErr := s.smsClient.Send(ctx, phone, message)
+		smsErr := s.smsClient.SendMessage(ctx, phone, message)
 		if smsErr != nil {
 			// Обе попытки отправки провалились - возвращаем доменную ошибку с деталями обеих ошибок
 			mappedErr := s.mapNotificationError(smsErr)

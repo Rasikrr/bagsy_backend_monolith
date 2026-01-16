@@ -14,6 +14,7 @@ import (
 
 type createPointRequest struct {
 	Name        string            `json:"name" validate:"required"`
+	NetworkCode string            `json:"network_code" validate:"required"`
 	Description *string           `json:"description"`
 	CategoryID  int               `json:"category_id" validate:"required,min=1"`
 	Address     dto.AddressDTO    `json:"address" validate:"required"`
@@ -53,6 +54,7 @@ func (r *createPointRequest) toCommand() (*point.CreatePointCommand, error) {
 		Name:        r.Name,
 		Description: r.Description,
 		CategoryID:  r.CategoryID,
+		NetworkCode: r.NetworkCode,
 		Address: point.Address{
 			Coordinates: point.Coordinates{
 				Latitude:  r.Address.Coordinates.Latitude,

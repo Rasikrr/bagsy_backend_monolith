@@ -28,30 +28,30 @@ type pointsService interface {
 	GetByCode(ctx context.Context, code string) (*point.Point, error)
 }
 
-type mediaService interface {
+type userPhotosService interface {
+	GetAvatarURL(ctx context.Context, fileKey string) (string, error)
 	SetUserAvatar(ctx context.Context, phone string, mediaID uuid.UUID) error
 	RemoveUserAvatar(ctx context.Context, phone string) error
-	GenerateDownloadURL(ctx context.Context, fileKey string) (string, error)
 }
 
 type Service struct {
-	txManager     database.TXManager
-	usersRepo     usersRepository
-	pointsService pointsService
-	mediaService  mediaService
+	txManager         database.TXManager
+	usersRepo         usersRepository
+	pointsService     pointsService
+	userPhotosService userPhotosService
 }
 
 func NewService(
 	txManager database.TXManager,
 	usersRepo usersRepository,
 	pointsService pointsService,
-	mediaService mediaService,
+	mediaService userPhotosService,
 ) *Service {
 	return &Service{
-		txManager:     txManager,
-		usersRepo:     usersRepo,
-		pointsService: pointsService,
-		mediaService:  mediaService,
+		txManager:         txManager,
+		usersRepo:         usersRepo,
+		pointsService:     pointsService,
+		userPhotosService: mediaService,
 	}
 }
 
@@ -269,24 +269,28 @@ func (s *Service) UpdateProfile(ctx context.Context, cmd *user.UpdateUserCommand
 	err = s.txManager.Transaction(ctx, database.TXOptions{
 		IsolationLevel: coreEnum.IsoLevelReadCommited,
 	},
-		func(ctx context.Context) error {
-			user, userErr := s.usersRepo.GetByPhone(ctx, act.Phone())
+		func(txCtx context.Context) error {
+			user, userErr := s.usersRepo.GetByPhone(txCtx, act.Phone())
 			if userErr != nil {
 				return userErr
 			}
 
-			user.Name = cmd.Name
-			user.Surname = cmd.Surname
+			if cmd.Name != "" {
+				user.Name = cmd.Name
+			}
+			if cmd.Surname != "" {
+				user.Surname = cmd.Surname
+			}
 
 			if cmd.AvatarID != nil {
-				err = s.mediaService.SetUserAvatar(ctx, user.Phone, *cmd.AvatarID)
+				err = s.userPhotosService.SetUserAvatar(txCtx, user.Phone, *cmd.AvatarID)
 				if err != nil {
 					return err
 				}
 			}
 
 			// 9. Обновить пользователя (name, surname)
-			err = s.usersRepo.Update(ctx, user)
+			err = s.usersRepo.Update(txCtx, user)
 			if err != nil {
 				return err
 			}
@@ -342,7 +346,7 @@ func (s *Service) RemoveAvatar(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return s.mediaService.RemoveUserAvatar(ctx, act.Phone())
+	return s.userPhotosService.RemoveUserAvatar(ctx, act.Phone())
 }
 
 func (s *Service) enrichUserWithAvatar(ctx context.Context, u *user.User) error {
@@ -353,7 +357,7 @@ func (s *Service) enrichUserWithAvatar(ctx context.Context, u *user.User) error 
 		return nil
 	}
 
-	url, err := s.mediaService.GenerateDownloadURL(ctx, ptr.Deref(u.Avatar.FileKey))
+	url, err := s.userPhotosService.GetAvatarURL(ctx, ptr.Deref(u.Avatar.FileKey))
 	if err != nil {
 		return err
 	}

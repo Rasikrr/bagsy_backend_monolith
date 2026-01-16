@@ -34,7 +34,7 @@ func (c *Controller) getPoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	point, err := c.pointsService.GetByCode(ctx, code)
+	point, err := c.pointsService.GetPublicByCode(ctx, code)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return

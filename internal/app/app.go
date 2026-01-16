@@ -34,6 +34,9 @@ import (
 	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/media/point_photos"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/media/users_photos"
+
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
@@ -71,6 +74,8 @@ type App struct {
 	masterServicesService *masterservices.Service
 	servicesService       *services.Service
 	mediaService          *mediaS.Service
+	pointsMediaService    *pointphotos.Service
+	userPhotosService     *usersphotos.Service
 	registrationService   *registration.Service
 
 	s3Client *s3.Client
@@ -165,16 +170,25 @@ func (a *App) initServices(_ context.Context) error {
 		a.PostgresTXManager(),
 		a.s3Client,
 		a.mediaRepo,
-		a.userAvatarRepo,
-		a.pointMediaRepo,
 		vars.GetDuration(appenv.MediaTTL),
+	)
+	a.pointsMediaService = pointphotos.NewService(
+		a.PostgresTXManager(),
+		a.pointMediaRepo,
+		a.mediaService,
+		vars.GetInt(appenv.PointMediaMaxCount),
+	)
+	a.userPhotosService = usersphotos.NewService(
+		a.PostgresTXManager(),
+		a.userAvatarRepo,
+		a.mediaService,
 	)
 
 	a.pointsService = pointsS.NewService(
 		a.pointsRepo,
 		a.networksService,
 		a.pointCategoriesRepo,
-		a.mediaService,
+		a.pointsMediaService,
 		a.PostgresTXManager(),
 	)
 	a.formsService = formsS.NewService(a.formsRepo)
@@ -190,7 +204,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.PostgresTXManager(),
 		a.usersRepo,
 		a.pointsService,
-		a.mediaService,
+		a.userPhotosService,
 	)
 	a.registrationService = registration.NewService(
 		a.PostgresTXManager(),

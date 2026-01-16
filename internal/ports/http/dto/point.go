@@ -36,8 +36,14 @@ type PointResponse struct {
 	City        string        `json:"city"`
 	Active      bool          `json:"active"`
 	Schedule    []ScheduleDTO `json:"schedule,omitempty"`
+	Photos      []PointPhoto  `json:"photos,omitempty"`
 	CreatedAt   string        `json:"created_at"`
 	UpdatedAt   *string       `json:"updated_at,omitempty"`
+}
+
+type PointPhoto struct {
+	URL   string `json:"url"`
+	Order int    `json:"order"`
 }
 
 type PointsResponse struct {
@@ -57,12 +63,21 @@ func ToPointResponse(point *point.Point) *PointResponse {
 		})
 	}
 
+	photos := make([]PointPhoto, 0, len(point.Photos))
+	for _, photo := range point.Photos {
+		photos = append(photos, PointPhoto{
+			URL:   photo.URL,
+			Order: photo.Order,
+		})
+	}
+
 	resp := &PointResponse{
 		Code:        point.Code,
 		Name:        point.Name,
 		Description: point.Description,
 		NetworkCode: point.NetworkCode,
 		CategoryID:  point.CategoryID,
+		Photos:      photos,
 		Address: AddressDTO{
 			Coordinates: CoordinatesDTO{
 				Latitude:  point.Address.Coordinates.Latitude,

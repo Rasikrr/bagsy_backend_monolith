@@ -23,53 +23,30 @@ type storage interface {
 type mediaRepository interface {
 	Create(ctx context.Context, media *media.Media) error
 	GetByID(ctx context.Context, mediaID uuid.UUID) (*media.Media, error)
+	GetByIDs(ctx context.Context, ids ...uuid.UUID) ([]*media.Media, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status media.Status) error
+	UpdateStatuses(ctx context.Context, ids []uuid.UUID, status media.Status) error
 	SoftDeleteByID(ctx context.Context, id uuid.UUID) error
 }
 
-type userAvatarRepository interface {
-	Get(ctx context.Context, phone string) (*media.UserMedia, error)
-	Set(ctx context.Context, userMedia *media.UserMedia) error
-	GetWithMedia(ctx context.Context, phone string) (*media.Media, error)
-	Remove(ctx context.Context, phone string) error
-}
-
-type pointMediaRepository interface {
-	Add(ctx context.Context, pointMedia *media.PointMedia) error
-	GetAll(ctx context.Context, pointCode string) ([]*media.PointMedia, error)
-	GetWithMedia(ctx context.Context, pointCode string) ([]*media.Media, error)
-	Get(ctx context.Context, pointCode string, mediaID uuid.UUID) (*media.PointMedia, error)
-	UpdateOrder(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error
-	Remove(ctx context.Context, pointCode string, mediaID uuid.UUID) error
-	RemoveAll(ctx context.Context, pointCode string) error
-	Count(ctx context.Context, pointCode string) (int, error)
-	Has(ctx context.Context, pointCode string, mediaID uuid.UUID) (bool, error)
-}
-
 type Service struct {
-	txManager      database.TXManager
-	storage        storage
-	mediaRepo      mediaRepository
-	userAvatarRepo userAvatarRepository
-	pointMediaRepo pointMediaRepository
-	mediaTTL       time.Duration
+	txManager database.TXManager
+	storage   storage
+	mediaRepo mediaRepository
+	mediaTTL  time.Duration
 }
 
 func NewService(
 	txManager database.TXManager,
 	storage storage,
 	mediaRepo mediaRepository,
-	userAvatarRepo userAvatarRepository,
-	pointMediaRepo pointMediaRepository,
 	mediaTTL time.Duration,
 ) *Service {
 	return &Service{
-		txManager:      txManager,
-		storage:        storage,
-		mediaRepo:      mediaRepo,
-		userAvatarRepo: userAvatarRepo,
-		pointMediaRepo: pointMediaRepo,
-		mediaTTL:       mediaTTL,
+		txManager: txManager,
+		storage:   storage,
+		mediaRepo: mediaRepo,
+		mediaTTL:  mediaTTL,
 	}
 }
 
@@ -114,6 +91,58 @@ func (s *Service) GenerateDownloadURL(ctx context.Context, fileKey string) (stri
 		return "", s.mapS3Error(err)
 	}
 	return url, nil
+}
+
+func (s *Service) GenerateDownloadURLs(ctx context.Context, fileKeys []string) ([]string, error) {
+	if len(fileKeys) == 0 {
+		return []string{}, nil
+	}
+	out := make([]string, len(fileKeys))
+	for i, key := range fileKeys {
+		url, err := s.storage.GeneratePresignedDownloadURL(ctx, key, s.mediaTTL)
+		if err != nil {
+			return nil, s.mapS3Error(err)
+		}
+		out[i] = url
+	}
+	return out, nil
+}
+
+func (s *Service) GetByID(ctx context.Context, mediaID uuid.UUID) (*media.Media, error) {
+	med, err := s.mediaRepo.GetByID(ctx, mediaID)
+	if err != nil {
+		return nil, err
+	}
+	return med, nil
+}
+
+func (s *Service) GetByIDs(ctx context.Context, ids ...uuid.UUID) ([]*media.Media, error) {
+	med, err := s.mediaRepo.GetByIDs(ctx, ids...)
+	if err != nil {
+		return nil, err
+	}
+	return med, nil
+}
+
+func (s *Service) UpdateStatus(ctx context.Context, id uuid.UUID, status media.Status) error {
+	err := s.mediaRepo.UpdateStatus(ctx, id, status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) UpdateStatuses(ctx context.Context, ids []uuid.UUID, status media.Status) error {
+	err := s.mediaRepo.UpdateStatuses(ctx, ids, status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) SoftDeleteByID(ctx context.Context, id uuid.UUID) error {
+	err := s.mediaRepo.SoftDeleteByID(ctx, id)
+	return err
 }
 
 func (s *Service) genStorageKey(mediaID uuid.UUID, filename, purpose string) string {

@@ -9,6 +9,7 @@ type Point struct {
 	NetworkCode string
 	CategoryID  int
 	Address     Address
+	Photos      Photos
 	City        string
 	Active      bool
 	Schedule    Schedule
@@ -37,4 +38,12 @@ type ScheduleElement struct {
 	Close   time.Time
 	AllDay  bool
 	Comment string
+}
+
+type Photos []*Photo
+
+type Photo struct {
+	Order   int
+	FileKey string
+	URL     string
 }

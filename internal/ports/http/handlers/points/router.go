@@ -11,7 +11,7 @@ import (
 
 type pointsService interface {
 	Create(ctx context.Context, cmd *point.CreatePointCommand) (*point.Point, error)
-	GetByCode(ctx context.Context, code string) (*point.Point, error)
+	GetPublicByCode(ctx context.Context, code string) (*point.Point, error)
 }
 
 type Controller struct {

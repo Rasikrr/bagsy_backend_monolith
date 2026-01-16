@@ -18,6 +18,14 @@ const (
 		FROM media
 		WHERE id = $1 AND deleted_at IS NULL
 	`
+	getMediaByIDsSQL = `
+		SELECT
+			id, file_key, bucket_name, original_filename, mime_type,
+			size_bytes, width, height, status, uploaded_by,
+			created_at, updated_at, deleted_at
+		FROM media
+		WHERE id = ANY($1) AND deleted_at IS NULL
+	`
 
 	getMediaByFileKeySQL = `
 		SELECT
@@ -34,6 +42,12 @@ const (
 		SET status = $2, updated_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL
 	`
+
+	updateMediaStatusesSQL = `
+		UPDATE media
+		SET status = $2, updated_at = NOW()
+		WHERE id = ANY($1) AND deleted_at IS NULL
+`
 
 	updateMediaMetadataSQL = `
 		UPDATE media

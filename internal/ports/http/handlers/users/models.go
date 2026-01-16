@@ -10,7 +10,6 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
-	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/google/uuid"
 )
 
@@ -127,7 +126,7 @@ type userDTO struct {
 	PointCode   *string             `json:"point_code,omitempty"`
 	NetworkCode *string             `json:"network_code,omitempty"`
 	Active      bool                `json:"active"`
-	AvatarURL   *string             `json:"avatar_url,omitempty"`
+	AvatarURL   string              `json:"avatar_url,omitempty"`
 	Schedule    []*staffScheduleDTO `json:"schedule,omitempty"`
 	CreatedAt   string              `json:"created_at"`
 	UpdatedAt   *string             `json:"updated_at,omitempty"`
@@ -168,7 +167,7 @@ func toUserDTO(user *user.User) *userDTO {
 		d.Schedule = schedules
 	}
 	if user.Avatar != nil {
-		d.AvatarURL = ptr.Pointer(user.Avatar.GetURL())
+		d.AvatarURL = user.Avatar.GetURL()
 	}
 
 	return d
@@ -192,8 +191,8 @@ func toGetUsersResponse(paginated *query.Page[*user.User]) getUsersResponse {
 }
 
 type updateUserRequest struct {
-	Name     string     `json:"name" validate:"required"`
-	Surname  string     `json:"surname" validate:"required"`
+	Name     string     `json:"name"`
+	Surname  string     `json:"surname"`
 	AvatarID *uuid.UUID `json:"avatar_id"`
 }
 

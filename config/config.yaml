@@ -4,7 +4,7 @@ name: bagsy_backend # name of application
 
 log:
   level: debug # debug, info, warn, error
-  add_source: true
+  add_source: false
   format: json
 
 metrics:
@@ -229,4 +229,10 @@ env:
     type: "duration"
     env_name: "MEDIA_TTL"
     value: "900s"
+    required: true
+
+  point_media_max_count:
+    type: "int"
+    env_name: "POINT_MEDIA_MAX_COUNT"
+    value: 10
     required: true

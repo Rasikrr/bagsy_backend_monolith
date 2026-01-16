@@ -1573,6 +1573,17 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto": {
+            "type": "object",
+            "properties": {
+                "order": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse": {
             "type": "object",
             "properties": {
@@ -1602,6 +1613,12 @@ const docTemplate = `{
                 },
                 "network_code": {
                     "type": "string"
+                },
+                "photos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto"
+                    }
                 },
                 "schedule": {
                     "type": "array",
@@ -2078,7 +2095,8 @@ const docTemplate = `{
             "required": [
                 "address",
                 "category_id",
-                "name"
+                "name",
+                "network_code"
             ],
             "properties": {
                 "address": {
@@ -2092,6 +2110,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "network_code": {
                     "type": "string"
                 },
                 "photo_ids": {
@@ -2185,10 +2206,6 @@ const docTemplate = `{
         },
         "internal_ports_http_handlers_users.updateUserRequest": {
             "type": "object",
-            "required": [
-                "name",
-                "surname"
-            ],
             "properties": {
                 "avatar_id": {
                     "type": "string"

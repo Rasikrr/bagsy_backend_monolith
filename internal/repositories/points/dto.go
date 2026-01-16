@@ -27,6 +27,19 @@ type scheduleDTO struct {
 	Comment string    `json:"comment"`
 }
 
+type photoDTO struct {
+	Order   int    `json:"order"`
+	FileKey string `json:"file_key"`
+}
+
+type photoDTOs []photoDTO
+
+func (dto photoDTOs) toEntity() point.Photos {
+	return lo.Map(dto, func(item photoDTO, _ int) *point.Photo {
+		return item.toEntity()
+	})
+}
+
 type schedulesDTO []scheduleDTO
 
 func addressToDTO(a point.Address) addressDTO {
@@ -81,4 +94,11 @@ func (dto schedulesDTO) toEntity() point.Schedule {
 	return lo.Map(dto, func(item scheduleDTO, _ int) *point.ScheduleElement {
 		return item.toEntity()
 	})
+}
+
+func (dto *photoDTO) toEntity() *point.Photo {
+	return &point.Photo{
+		Order:   dto.Order,
+		FileKey: dto.FileKey,
+	}
 }

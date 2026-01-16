@@ -5,12 +5,14 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type networksService interface {
@@ -30,15 +32,16 @@ type pointsRepository interface {
 	Update(ctx context.Context, entity *point.Point) error
 }
 
-type mediaService interface {
-	AddPointPhoto(ctx context.Context, pointCode string, mediaID uuid.UUID, displayOrder int) error
+type pointMediaService interface {
+	GetPhotoURLs(ctx context.Context, keys ...string) ([]string, error)
+	AddPointPhotos(ctx context.Context, pointCode string, mediaIDs ...uuid.UUID) error
 }
 
 type Service struct {
 	pointsRepo          pointsRepository
 	networksService     networksService
 	pointCategoriesRepo pointCategoriesRepository
-	mediaService        mediaService
+	pointMediaService   pointMediaService
 	txManager           database.TXManager
 }
 
@@ -46,24 +49,37 @@ func NewService(
 	repo pointsRepository,
 	networksService networksService,
 	pointCategoriesRepo pointCategoriesRepository,
-	mediaService mediaService,
+	mediaService pointMediaService,
 	txManager database.TXManager,
 ) *Service {
 	return &Service{
 		pointsRepo:          repo,
 		networksService:     networksService,
 		pointCategoriesRepo: pointCategoriesRepo,
-		mediaService:        mediaService,
+		pointMediaService:   mediaService,
 		txManager:           txManager,
 	}
 }
 
-func (s *Service) GetByCode(ctx context.Context, code string) (*point.Point, error) {
-	point, err := s.pointsRepo.GetByCode(ctx, code)
+func (s *Service) GetPublicByCode(ctx context.Context, code string) (*point.Point, error) {
+	p, err := s.pointsRepo.GetByCode(ctx, code)
 	if err != nil {
 		return nil, err
 	}
-	return point, nil
+
+	err = s.enrichPointWithPhotos(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+func (s *Service) GetByCode(ctx context.Context, code string) (*point.Point, error) {
+	p, err := s.pointsRepo.GetByCode(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
 func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error) {
@@ -83,6 +99,11 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 	var (
 		newPoint *point.Point
 	)
+
+	if cmd.NetworkCode != act.NetworkCode() {
+		return nil, domainErr.NewForbiddenError("cannot create a point for this network")
+	}
+
 	txOpts := database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited}
 
 	err = s.txManager.Transaction(ctx, txOpts, func(txCtx context.Context) error {
@@ -93,6 +114,7 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 		if !exist {
 			return network.ErrNetworkNotFound
 		}
+
 		exist, err = s.pointCategoriesRepo.ExistsByID(ctx, cmd.CategoryID)
 		if err != nil {
 			return err
@@ -100,6 +122,7 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 		if !exist {
 			return point.ErrPointCategoryNotFound
 		}
+
 		newPoint = &point.Point{
 			Code:        slug.Generate(cmd.Name, cmd.Address.City, cmd.Address.Street),
 			Name:        cmd.Name,
@@ -115,11 +138,9 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 		if err != nil {
 			return err
 		}
-		// 2. Привязать фото в заданном порядке
-		for i, photoID := range cmd.PhotoIDs {
-			if err := s.mediaService.AddPointPhoto(txCtx, newPoint.Code, photoID, i); err != nil {
-				return err
-			}
+		// 2. Привязать фото
+		if err := s.pointMediaService.AddPointPhotos(txCtx, newPoint.Code, cmd.PhotoIDs...); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -130,5 +151,25 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 	if err != nil {
 		return nil, err
 	}
+
 	return newPoint, nil
+}
+
+func (s *Service) enrichPointWithPhotos(ctx context.Context, p *point.Point) error {
+	if p.Photos == nil {
+		return nil
+	}
+	keys := lo.Map(p.Photos, func(item *point.Photo, index int) string {
+		return item.FileKey
+	})
+
+	urls, err := s.pointMediaService.GetPhotoURLs(ctx, keys...)
+	if err != nil {
+		return err
+	}
+
+	for i, photo := range p.Photos {
+		photo.URL = urls[i]
+	}
+	return nil
 }

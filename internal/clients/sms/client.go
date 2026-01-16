@@ -37,8 +37,8 @@ func NewClient(login, password string) *Client {
 	}
 }
 
-// Send отправляет SMS на указанный номер телефона
-func (c *Client) Send(ctx context.Context, phone, message string) error {
+// SendMessage отправляет SMS на указанный номер телефона
+func (c *Client) SendMessage(ctx context.Context, phone, message string) error {
 	if message == "" {
 		return ErrEmptyMessage
 	}
