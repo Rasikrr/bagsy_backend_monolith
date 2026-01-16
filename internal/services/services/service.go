@@ -10,6 +10,7 @@ import (
 type servicesRepository interface {
 	Create(ctx context.Context, service *entity.Service) error
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.Service, error)
+	GetByPointCode(ctx context.Context, pointCode string) ([]*entity.Service, error)
 	Update(ctx context.Context, service *entity.Service) error
 	Delete(ctx context.Context, service ...*entity.Service) error
 }
@@ -30,4 +31,8 @@ func (s *Service) Create(ctx context.Context, service *entity.Service) error {
 
 func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*entity.Service, error) {
 	return s.serviceRepository.GetByID(ctx, id)
+}
+
+func (s *Service) GetByPointCode(ctx context.Context, pointCode string) ([]*entity.Service, error) {
+	return s.serviceRepository.GetByPointCode(ctx, pointCode)
 }

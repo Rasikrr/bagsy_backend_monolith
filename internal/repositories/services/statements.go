@@ -24,3 +24,11 @@ const updateService = `
 const deleteService = `
 	DELETE FROM services WHERE id = ANY($1)
 `
+
+const getServicesByPointCode = `
+	SELECT id, point_code, category_id, subcategory_id, name, description,
+	       duration_minutes, active, created_at, updated_at, updated_by
+	FROM services
+	WHERE point_code = $1 AND active = true
+	ORDER BY name ASC
+`
