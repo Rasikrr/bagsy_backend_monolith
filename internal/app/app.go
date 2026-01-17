@@ -199,7 +199,7 @@ func (a *App) initServices(_ context.Context) error {
 		vars.GetString(appenv.RegisterConfirmationURL),
 	)
 	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
-	a.servicesService = services.NewService(a.servicesRepo)
+	a.servicesService = services.NewService(a.servicesRepo, a.masterServicesRepo)
 
 	a.usersService = usersS.NewService(
 		a.PostgresTXManager(),

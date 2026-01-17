@@ -1,6 +1,7 @@
 package bagsies
 
 import (
+	"github.com/shopspring/decimal"
 	"sort"
 	"time"
 
@@ -97,7 +98,7 @@ type createBagsyRequest struct {
 	ClientPhone string    `json:"client_phone" validate:"required"`
 	Name        string    `json:"name" validate:"required"`
 	Surname     string    `json:"surname" validate:"required"`
-	Comment     *string   `json:"comment" validate:"required"`
+	Comment     *string   `json:"comment"`
 }
 
 func (c *createBagsyRequest) Validate() error {
@@ -195,6 +196,7 @@ func (r *getSlotsForDayRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, err
 type masterSlotsResponse struct {
 	MasterPhone string   `json:"master_phone"`
 	MasterName  string   `json:"master_name"`
+	MasterServicePrice float64 `json:"master_service_price"`
 	Slots       []string `json:"slots"`
 }
 
@@ -217,9 +219,17 @@ func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlo
 		}
 		sort.Strings(slotTimes)
 
+		var (
+			masterServicePrice float64
+		)
+		if !decimal.Decimal.IsZero(ms.MasterServicePrice) {
+			masterServicePrice, _ = ms.MasterServicePrice.Float64()
+		}
+
 		masters = append(masters, masterSlotsResponse{
 			MasterPhone: ms.MasterPhone,
 			MasterName:  ms.MasterName,
+			MasterServicePrice: masterServicePrice,
 			Slots:       slotTimes,
 		})
 	}

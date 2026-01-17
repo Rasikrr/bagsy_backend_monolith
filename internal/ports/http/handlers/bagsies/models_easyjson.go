@@ -108,6 +108,8 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.MasterPhone = string(in.String())
 		case "master_name":
 			out.MasterName = string(in.String())
+		case "master_service_price":
+			out.MasterServicePrice = float64(in.Float64())
 		case "slots":
 			if in.IsNull() {
 				in.Skip()
@@ -154,6 +156,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"master_name\":"
 		out.RawString(prefix)
 		out.String(string(in.MasterName))
+	}
+	{
+		const prefix string = ",\"master_service_price\":"
+		out.RawString(prefix)
+		out.Float64(float64(in.MasterServicePrice))
 	}
 	{
 		const prefix string = ",\"slots\":"

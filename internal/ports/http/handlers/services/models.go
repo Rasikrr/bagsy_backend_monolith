@@ -16,9 +16,22 @@ type serviceDTO struct {
 	Description     *string   `json:"description,omitempty"`
 	DurationMinutes int       `json:"duration_minutes"`
 	Active          bool      `json:"active"`
+
+	MinPrice float64 `json:"min_price"`
+	MaxPrice float64 `json:"max_price"`
 }
 
 func toServiceDTO(s *service.Service) serviceDTO {
+	var (
+		minPrice float64
+		maxPrice float64
+	)
+	if s.MinPrice != nil {
+		minPrice, _ = s.MinPrice.Float64()
+	}
+	if s.MaxPrice != nil {
+		maxPrice, _ = s.MaxPrice.Float64()
+	}
 	return serviceDTO{
 		ID:              s.ID,
 		PointCode:       s.PointCode,
@@ -28,6 +41,8 @@ func toServiceDTO(s *service.Service) serviceDTO {
 		Description:     s.Description,
 		DurationMinutes: s.DurationMinutes,
 		Active:          s.Active,
+		MinPrice:        minPrice,
+		MaxPrice:        maxPrice,
 	}
 }
 

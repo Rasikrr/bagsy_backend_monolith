@@ -1318,7 +1318,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Код точки",
                         "name": "point_code",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -2096,7 +2096,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "client_phone",
-                "comment",
                 "master_phone",
                 "name",
                 "service_id",
@@ -2231,6 +2230,9 @@ const docTemplate = `{
                 },
                 "master_phone": {
                     "type": "string"
+                },
+                "master_service_price": {
+                    "type": "number"
                 },
                 "slots": {
                     "type": "array",
@@ -2407,6 +2409,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "max_price": {
+                    "type": "number"
+                },
+                "min_price": {
+                    "type": "number"
                 },
                 "name": {
                     "type": "string"

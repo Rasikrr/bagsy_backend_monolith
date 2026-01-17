@@ -74,9 +74,9 @@ func (r *Repository) Delete(ctx context.Context, masterServices ...*masterservic
 	return nil
 }
 
-func (r *Repository) GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*masterservice.MasterService, error) {
+func (r *Repository) GetByPointCodeAndServiceIDs(ctx context.Context, pointCode string, serviceIDs ...uuid.UUID) ([]*masterservice.MasterService, error) {
 	var mm models
-	err := pgxscan.Select(ctx, r.db, &mm, getByPointCodeAndServiceID, serviceID, pointCode)
+	err := pgxscan.Select(ctx, r.db, &mm, getByPointCodeAndServiceID, pq.Array(serviceIDs), pointCode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []*masterservice.MasterService{}, nil

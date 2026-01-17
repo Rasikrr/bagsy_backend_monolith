@@ -33,7 +33,7 @@ type bagsiesRepository interface {
 
 type masterServicesService interface {
 	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*masterservice.MasterService, error)
-	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*masterservice.MasterService, error)
+	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceIDs uuid.UUID) ([]*masterservice.MasterService, error)
 }
 
 type servicesService interface {
@@ -278,6 +278,7 @@ func (s *Service) GetAvailableSlots(ctx context.Context, cmd *bagsy.GetAvailable
 		ctx,
 		point.Schedule,
 		masterUsers,
+		masterServices,
 		occupiedBagsies,
 		service.DurationMinutes,
 		cmd.StartDate,

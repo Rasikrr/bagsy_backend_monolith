@@ -293,7 +293,6 @@ definitions:
         type: string
     required:
     - client_phone
-    - comment
     - master_phone
     - name
     - service_id
@@ -370,6 +369,8 @@ definitions:
         type: string
       master_phone:
         type: string
+      master_service_price:
+        type: number
       slots:
         items:
           type: string
@@ -490,6 +491,10 @@ definitions:
         type: integer
       id:
         type: string
+      max_price:
+        type: number
+      min_price:
+        type: number
       name:
         type: string
       point_code:
@@ -1523,7 +1528,7 @@ paths:
       description: Возвращает список активных услуг для указанной точки
       parameters:
       - description: Код точки
-        in: query
+        in: path
         name: point_code
         required: true
         type: string
