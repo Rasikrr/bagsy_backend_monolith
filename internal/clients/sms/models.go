@@ -1,8 +1,6 @@
 package sms
 
-import (
-	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
-)
+import "github.com/cockroachdb/errors"
 
 // SendRequest структура запроса для отправки SMS
 type sendRequest struct {
@@ -31,32 +29,34 @@ func (r *sendResponse) HasError() bool {
 	return r.Error != "" || r.ErrorCode != 0
 }
 
-// GetError возвращает ошибку из ответа и конвертирует в доменную
+// GetError возвращает ошибку из ответа
 func (r *sendResponse) GetError() error {
 	if !r.HasError() {
 		return nil
 	}
 
-	// Конвертируем коды ошибок API в доменные ошибки
+	// Конвертируем коды ошибок API в SMS ошибки
+	var baseErr error
 	switch r.ErrorCode {
 	case ErrorCodeAuth:
-		return domainErr.ErrSMSAuthFailed.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrAuthFailed
 	case ErrorCodeNoFunds:
-		return domainErr.ErrSMSNoFunds.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrNoFunds
 	case ErrorCodeIPBlocked:
-		return domainErr.ErrSMSIPBlocked.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrIPBlocked
 	case ErrorCodeMessageForbidden:
-		return domainErr.ErrSMSForbidden.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrForbidden
 	case ErrorCodePhoneFormat:
-		return domainErr.ErrSMSInvalidPhone.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrInvalidPhone
 	case ErrorCodeUndeliverable:
-		return domainErr.ErrSMSUndeliverable.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrUndeliverable
 	case ErrorCodeTooManyRequests:
-		return domainErr.ErrSMSTooManyRequests.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrTooManyRequests
 	default:
-		return domainErr.ErrSMSSendFailed.WithError(nil).WithDetail("api_error", r.Error).
-			WithDetail("error_code", int(r.ErrorCode))
+		baseErr = ErrSendFailed
 	}
+
+	return errors.Wrapf(baseErr, "api_error=%s, error_code=%d", r.Error, int(r.ErrorCode))
 }
 
 // StatusResponse структура ответа на проверку статуса
@@ -74,23 +74,26 @@ func (r *StatusResponse) HasError() bool {
 	return r.Error != "" || r.ErrorCode != 0
 }
 
-// GetError возвращает ошибку из ответа и конвертирует в доменную
+// GetError возвращает ошибку из ответа
 func (r *StatusResponse) GetError() error {
 	if !r.HasError() {
 		return nil
 	}
 
-	// Конвертируем коды ошибок API в доменные ошибки
+	// Конвертируем коды ошибок API в SMS ошибки
+	var baseErr error
 	switch r.ErrorCode {
 	case ErrorCodeAuth:
-		return domainErr.ErrSMSAuthFailed.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrAuthFailed
 	case ErrorCodeNoFunds:
-		return domainErr.ErrSMSNoFunds.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrNoFunds
 	case ErrorCodeIPBlocked:
-		return domainErr.ErrSMSIPBlocked.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrIPBlocked
 	case ErrorCodePhoneFormat:
-		return domainErr.ErrSMSInvalidPhone.WithError(nil).WithDetail("api_error", r.Error)
+		baseErr = ErrInvalidPhone
 	default:
-		return domainErr.ErrSMSSendFailed.WithError(nil).WithDetail("api_error", r.Error).WithDetail("error_code", int(r.ErrorCode))
+		baseErr = ErrSendFailed
 	}
+
+	return errors.Wrapf(baseErr, "api_error=%s, error_code=%d", r.Error, int(r.ErrorCode))
 }

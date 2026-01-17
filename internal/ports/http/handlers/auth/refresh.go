@@ -8,7 +8,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
 )
 
-// Refresh godoc
+// refresh godoc
 // @Summary Обновление токенов авторизации
 // @Description Обновляет токены авторизации
 // @Tags auth

@@ -192,7 +192,7 @@ type Service struct {
 // Интерфейсы зависимостей
 type UserRepository interface {
     GetByPhone(ctx context.Context, phone string) (*entity.User, error)
-    GetByParams(ctx context.Context, filter query.UserFilter) ([]*entity.User, error)
+    GetListByFilter(ctx context.Context, filter query.UserFilter) ([]*entity.User, error)
     Create/Update/Delete...
 }
 
@@ -290,7 +290,7 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    access, refresh, err := c.authService.Login(ctx, req.Phone, req.Password)
+    access, refresh, err := c.authService.Login(ctx, req.Phone, req.PasswordHash)
     if err != nil {
         errors.HandleError(ctx, w, err)
         return
@@ -306,7 +306,7 @@ func (c *Controller) login(w http.ResponseWriter, r *http.Request) {
 //go:generate easyjson -all models.go
 type loginRequest struct {
     Phone    string `json:"phone" validate:"required,min=10"`
-    Password string `json:"password" validate:"required"`
+    PasswordHash string `json:"password" validate:"required"`
 }
 
 func (r *loginRequest) validate() error {

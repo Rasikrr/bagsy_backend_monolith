@@ -2,23 +2,25 @@ package bagsies
 
 import (
 	"context"
-	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+
 	"github.com/Rasikrr/core/log"
 )
 
 // generateSlots генерирует доступные слоты для каждого мастера
 func generateSlots(
 	ctx context.Context,
-	pointSchedule []entity.Schedule,
-	masters []*entity.User,
-	occupiedBagsies []*entity.Bagsy,
+	pointSchedule point.Schedule,
+	masters []*user.User,
+	occupiedBagsies []*bagsy.Bagsy,
 	durationMinutes int,
 	startDate, endDate time.Time,
-) []dto.MasterSlot {
+) []bagsy.MasterSlot {
 	log.Infof(ctx, "[slots] generateSlots called: startDate=%s, endDate=%s, durationMinutes=%d",
 		startDate.Format(time.RFC3339), endDate.Format(time.RFC3339), durationMinutes)
 	log.Infof(ctx, "[slots] point schedule count=%d, masters count=%d, occupied count=%d",
@@ -38,7 +40,7 @@ func generateSlots(
 	// Строим карту занятых слотов по телефону мастера
 	occupiedByMaster := buildOccupiedMap(occupiedBagsies)
 
-	var result []dto.MasterSlot
+	var result []bagsy.MasterSlot
 
 	for _, master := range masters {
 		log.Infof(ctx, "[slots] processing master: phone=%s, name=%s, schedule count=%d",
@@ -56,7 +58,7 @@ func generateSlots(
 				master.Phone, ms.WeekDay, ms.Open.Format("15:04"), ms.Close.Format("15:04"))
 		}
 
-		var slots []dto.TimeSlot
+		var slots []bagsy.TimeSlot
 
 		// Итерируем по каждому дню в периоде
 		for day := truncateToDay(startDate); day.Before(endDate); day = day.AddDate(0, 0, 1) {
@@ -107,7 +109,7 @@ func generateSlots(
 		log.Infof(ctx, "[slots] master %s total slots: %d", master.Phone, len(slots))
 
 		if len(slots) > 0 {
-			result = append(result, dto.MasterSlot{
+			result = append(result, bagsy.MasterSlot{
 				MasterPhone: master.Phone,
 				MasterName:  master.Name + " " + master.Surname,
 				Slots:       slots,
@@ -125,20 +127,20 @@ func truncateToDay(t time.Time) time.Time {
 }
 
 // findScheduleForDay находит расписание точки для конкретного дня недели
-func findScheduleForDay(schedule []entity.Schedule, weekDay int) *entity.Schedule {
+func findScheduleForDay(schedule point.Schedule, weekDay int) *point.ScheduleElement {
 	for i := range schedule {
 		if schedule[i].WeekDay == weekDay {
-			return &schedule[i]
+			return schedule[i]
 		}
 	}
 	return nil
 }
 
 // findStaffScheduleForDay находит расписание мастера для конкретного дня недели
-func findStaffScheduleForDay(schedule []entity.StaffSchedule, weekDay int) *entity.StaffSchedule {
+func findStaffScheduleForDay(schedule user.Schedule, weekDay int) *user.ScheduleElement {
 	for i := range schedule {
 		if schedule[i].WeekDay == weekDay {
-			return &schedule[i]
+			return schedule[i]
 		}
 	}
 	return nil
@@ -147,8 +149,8 @@ func findStaffScheduleForDay(schedule []entity.StaffSchedule, weekDay int) *enti
 // calculateEffectiveHours вычисляет пересечение расписания точки и мастера
 func calculateEffectiveHours(
 	day time.Time,
-	pointSchedule *entity.Schedule,
-	masterSchedule *entity.StaffSchedule,
+	pointSchedule *point.ScheduleElement,
+	masterSchedule *user.ScheduleElement,
 ) (start, end time.Time) {
 	// Извлекаем часы и минуты из расписания и применяем к текущему дню
 	pointOpen := combineDateAndTime(day, pointSchedule.Open)
@@ -187,10 +189,10 @@ func generateDaySlots(
 	ctx context.Context,
 	dayStart, dayEnd time.Time,
 	durationMinutes, stepMinutes int,
-	occupied []*entity.Bagsy,
+	occupied []*bagsy.Bagsy,
 	now time.Time,
-) []dto.TimeSlot {
-	var slots []dto.TimeSlot
+) []bagsy.TimeSlot {
+	var slots []bagsy.TimeSlot
 	skippedPast := 0
 	skippedOccupied := 0
 
@@ -212,7 +214,7 @@ func generateDaySlots(
 
 		// Проверяем что слот не пересекается с занятыми
 		if isSlotAvailable(slotStart, slotEnd, occupied) {
-			slots = append(slots, dto.TimeSlot{
+			slots = append(slots, bagsy.TimeSlot{
 				StartAt: slotStart,
 				EndAt:   slotEnd,
 			})
@@ -232,8 +234,8 @@ func generateDaySlots(
 }
 
 // buildOccupiedMap группирует занятые брони по телефону мастера
-func buildOccupiedMap(bagsies []*entity.Bagsy) map[string][]*entity.Bagsy {
-	result := make(map[string][]*entity.Bagsy)
+func buildOccupiedMap(bagsies []*bagsy.Bagsy) map[string][]*bagsy.Bagsy {
+	result := make(map[string][]*bagsy.Bagsy)
 	for _, b := range bagsies {
 		result[b.MasterPhone] = append(result[b.MasterPhone], b)
 	}
@@ -241,7 +243,7 @@ func buildOccupiedMap(bagsies []*entity.Bagsy) map[string][]*entity.Bagsy {
 }
 
 // isSlotAvailable проверяет что слот не пересекается ни с одной бронью
-func isSlotAvailable(slotStart, slotEnd time.Time, occupied []*entity.Bagsy) bool {
+func isSlotAvailable(slotStart, slotEnd time.Time, occupied []*bagsy.Bagsy) bool {
 	for _, bagsy := range occupied {
 		if overlaps(slotStart, slotEnd, bagsy.StartAt, bagsy.EndAt) {
 			return false

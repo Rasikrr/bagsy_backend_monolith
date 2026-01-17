@@ -8,7 +8,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/response"
 )
 
-// Logout godoc
+// logout godoc
 // @Summary Выход из системы
 // @Description Выполняет выход пользователя из системы и инвалидирует refresh token
 // @Tags auth

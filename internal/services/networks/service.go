@@ -3,15 +3,14 @@ package networks
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/session"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
 )
 
 type networksRepository interface {
-	Create(ctx context.Context, network *entity.Network) error
-	GetByCode(ctx context.Context, code string) (*entity.Network, error)
+	Create(ctx context.Context, network *network.Network) error
+	GetByCode(ctx context.Context, code string) (*network.Network, error)
+	ExistsByCode(ctx context.Context, code string) (bool, error)
 }
 
 type Service struct {
@@ -24,34 +23,26 @@ func NewService(networksRepo networksRepository) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, req *command.CreateNetworkCommand) error {
-	ses, err := session.GetSession(ctx)
-	if err != nil {
-		return err
-	}
-	_, err = s.create(ctx, req, ses.Phone())
-	return err
-}
-
-func (s *Service) CreateForRegistration(ctx context.Context, req *command.CreateNetworkCommand, createdBy string) (*entity.Network, error) {
-	return s.create(ctx, req, createdBy)
-}
-
-func (s *Service) create(ctx context.Context, req *command.CreateNetworkCommand, createdBy string) (*entity.Network, error) {
+func (s *Service) RegisterNewNetwork(ctx context.Context, req *network.CreateNetworkCommand, createdBy string) (*network.Network, error) {
 	networkCode := slug.Generate(req.Name)
-	network := &entity.Network{
+	newNetwork := &network.Network{
 		Code:        networkCode,
 		Name:        req.Name,
 		Description: &req.Description,
 		CreatedBy:   createdBy,
 	}
 
-	if err := s.networksRepo.Create(ctx, network); err != nil {
+	err := s.networksRepo.Create(ctx, newNetwork)
+	if err != nil {
 		return nil, err
 	}
-	return network, nil
+	return newNetwork, nil
 }
 
-func (s *Service) GetByCode(ctx context.Context, code string) (*entity.Network, error) {
+func (s *Service) GetByCode(ctx context.Context, code string) (*network.Network, error) {
 	return s.networksRepo.GetByCode(ctx, code)
+}
+
+func (s *Service) ExistsByCode(ctx context.Context, code string) (bool, error) {
+	return s.networksRepo.ExistsByCode(ctx, code)
 }

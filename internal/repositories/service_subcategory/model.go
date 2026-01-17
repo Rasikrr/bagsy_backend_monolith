@@ -3,7 +3,7 @@ package servicesubcategory
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 )
 
 /*
@@ -25,7 +25,7 @@ type model struct {
 	UpdatedBy         *string    `db:"updated_by"`
 }
 
-func convert(e *entity.ServiceSubcategory) model {
+func convert(e *service.Subcategory) model {
 	return model{
 		ID:                e.ID,
 		Name:              e.Name,
@@ -37,8 +37,8 @@ func convert(e *entity.ServiceSubcategory) model {
 	}
 }
 
-func (m model) convert() *entity.ServiceSubcategory {
-	return &entity.ServiceSubcategory{
+func (m model) convert() *service.Subcategory {
+	return &service.Subcategory{
 		ID:                m.ID,
 		Name:              m.Name,
 		Description:       m.Description,
@@ -51,8 +51,8 @@ func (m model) convert() *entity.ServiceSubcategory {
 
 type models []model
 
-func (m models) convert() []*entity.ServiceSubcategory {
-	list := make([]*entity.ServiceSubcategory, len(m))
+func (m models) convert() []*service.Subcategory {
+	list := make([]*service.Subcategory, len(m))
 	for i, item := range m {
 		list[i] = item.convert()
 	}

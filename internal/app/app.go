@@ -6,15 +6,21 @@ import (
 	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/register"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/s3"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
+	mediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/media"
+	pointMediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/point_media"
+	userAvatarR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/user_avatar"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
+	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/registration"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
@@ -28,6 +34,9 @@ import (
 	usersR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/users"
 	authS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/auth"
 	formsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/forms"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/media/point_photos"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/media/users_photos"
+
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
@@ -51,6 +60,9 @@ type App struct {
 	bagsiesRepo         *bagsiesR.Repository
 	masterServicesRepo  *masterServicesR.Repository
 	servicesRepo        *servicesR.Repository
+	mediaRepo           *mediaR.Repository
+	userAvatarRepo      *userAvatarR.Repository
+	pointMediaRepo      *pointMediaR.Repository
 
 	usersService          *usersS.Service
 	pointsService         *pointsS.Service
@@ -61,6 +73,12 @@ type App struct {
 	bagsiesService        *bagsies.Service
 	masterServicesService *masterservices.Service
 	servicesService       *services.Service
+	mediaService          *mediaS.Service
+	pointsMediaService    *pointphotos.Service
+	userPhotosService     *usersphotos.Service
+	registrationService   *registration.Service
+
+	s3Client *s3.Client
 
 	tokenManager *jwt.TokenManager
 }
@@ -87,19 +105,13 @@ func InitApp(ctx context.Context) *App {
 }
 
 func (a *App) initHTTP(_ context.Context) error {
-	swaggerHost, err := a.Config().Variables.GetString(appenv.SwaggerHost)
-	if err != nil {
-		return err
-	}
-	swaggerScheme, err := a.Config().Variables.GetString(appenv.SwaggerScheme)
-	if err != nil {
-		return err
-	}
+	vars := a.Config().Variables
+
 	http.NewServer(
 		a.HTTPServer(),
 		a.Redis(),
-		swaggerHost,
-		swaggerScheme,
+		vars.GetString(appenv.SwaggerHost),
+		vars.GetString(appenv.SwaggerScheme),
 		a.authService,
 		a.formsService,
 		a.usersService,
@@ -107,32 +119,31 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.pointsService,
 		a.networksService,
 		a.servicesService,
+		a.mediaService,
 	)
 	return nil
 }
 
 func (a *App) initInfra(_ context.Context) error {
-	jwtSecret, err := a.Config().Variables.GetString(appenv.JWTSecret)
-	if err != nil {
-		return err
-	}
-	issuer, err := a.Config().Variables.GetString(appenv.JWTIssuer)
-	if err != nil {
-		return err
-	}
-	a.tokenManager = jwt.NewTokenManager(jwtSecret, issuer)
+	vars := a.Config().Variables
+
+	a.tokenManager = jwt.NewTokenManager(
+		vars.GetString(appenv.JWTSecret),
+		vars.GetString(appenv.JWTIssuer),
+	)
 	return nil
 }
 
 func (a *App) initCache(_ context.Context) error {
 	a.tokensCache = tokens.New(a.Redis())
 
-	bagsyConfirmTTL, err := a.Config().Variables.GetDuration(appenv.BagsyConfirmTTL)
-	if err != nil {
-		return err
-	}
-	a.bagsyConfirmCache = bagsyconfirm.NewCache(a.Redis(), bagsyConfirmTTL)
-	a.registerCache = register.NewCache(a.Redis())
+	a.bagsyConfirmCache = bagsyconfirm.NewCache(
+		a.Redis(),
+	)
+
+	a.registerCache = register.NewCache(
+		a.Redis(),
+	)
 	return nil
 }
 
@@ -145,48 +156,76 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
 	a.servicesRepo = servicesR.NewRepository(a.Postgres())
+	a.mediaRepo = mediaR.NewRepository(a.Postgres())
+	a.userAvatarRepo = userAvatarR.NewRepository(a.Postgres())
+	a.pointMediaRepo = pointMediaR.NewRepository(a.Postgres())
 	return nil
 }
 
 func (a *App) initServices(_ context.Context) error {
-	accessTokenTTL, err := a.Config().Variables.GetDuration(appenv.AccessTokenTTL)
-	if err != nil {
-		return err
-	}
-	refreshTokenTTL, err := a.Config().Variables.GetDuration(appenv.RefreshTokenTTL)
-	if err != nil {
-		return err
-	}
-	registrationTTL, err := a.Config().Variables.GetDuration(appenv.RegistrationTTL)
-	if err != nil {
-		return err
-	}
-	registerConfirmationURL, err := a.Config().Variables.GetString(appenv.RegisterConfirmationURL)
-	if err != nil {
-		return err
-	}
+	vars := a.Config().Variables
 
 	a.networksService = networksS.NewService(a.networksRepo)
-	a.pointsService = pointsS.NewService(a.pointsRepo, a.networksService, a.pointCategoriesRepo)
-	a.usersService = usersS.NewService(a.usersRepo, a.pointsService)
+
+	a.mediaService = mediaS.NewService(
+		a.PostgresTXManager(),
+		a.s3Client,
+		a.mediaRepo,
+		vars.GetDuration(appenv.MediaTTL),
+	)
+	a.pointsMediaService = pointphotos.NewService(
+		a.PostgresTXManager(),
+		a.pointMediaRepo,
+		a.mediaService,
+		vars.GetInt(appenv.PointMediaMaxCount),
+	)
+	a.userPhotosService = usersphotos.NewService(
+		a.PostgresTXManager(),
+		a.userAvatarRepo,
+		a.mediaService,
+	)
+
+	a.pointsService = pointsS.NewService(
+		a.pointsRepo,
+		a.networksService,
+		a.pointCategoriesRepo,
+		a.pointsMediaService,
+		a.PostgresTXManager(),
+	)
 	a.formsService = formsS.NewService(a.formsRepo)
-	a.notificationsService = notifications.NewService(a.smsClient, a.whatsappClient, registerConfirmationURL)
+	a.notificationsService = notifications.NewService(
+		a.smsClient,
+		a.whatsappClient,
+		vars.GetString(appenv.RegisterConfirmationURL),
+	)
 	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
 	a.servicesService = services.NewService(a.servicesRepo)
 
+	a.usersService = usersS.NewService(
+		a.PostgresTXManager(),
+		a.usersRepo,
+		a.pointsService,
+		a.userPhotosService,
+	)
+	a.registrationService = registration.NewService(
+		a.PostgresTXManager(),
+		a.usersService,
+		a.networksService,
+	)
+
 	a.authService = authS.NewService(
 		a.PostgresTXManager(),
+		a.registrationService,
 		a.usersService,
 		a.pointsService,
 		a.notificationsService,
-		a.networksService,
 		a.tokenManager,
 		a.tokensCache,
 		a.tokensCache,
 		a.registerCache,
-		accessTokenTTL,
-		refreshTokenTTL,
-		registrationTTL,
+		vars.GetDuration(appenv.AccessTokenTTL),
+		vars.GetDuration(appenv.RefreshTokenTTL),
+		vars.GetDuration(appenv.RegistrationTTL),
 	)
 
 	a.bagsiesService = bagsies.NewService(
@@ -198,46 +237,39 @@ func (a *App) initServices(_ context.Context) error {
 		a.pointsService,
 		a.notificationsService,
 		a.bagsyConfirmCache,
+		vars.GetDuration(appenv.BagsyConfirmTTL),
 	)
 
 	return nil
 }
 
-func (a *App) initClients(_ context.Context) error {
-	smsLogin, err := a.Config().Variables.GetString(appenv.SMSClientLogin)
-	if err != nil {
-		return err
-	}
-	smsPassword, err := a.Config().Variables.GetString(appenv.SMSClientPassword)
-	if err != nil {
-		return err
-	}
-	a.smsClient = sms.NewClient(smsLogin, smsPassword)
+func (a *App) initClients(ctx context.Context) error {
+	vars := a.Config().Variables
 
-	whatsappAPIURL, err := a.Config().Variables.GetString(appenv.WhatsAppAPIURL)
-	if err != nil {
-		return err
-	}
-	whatsappAPIMediaURL, err := a.Config().Variables.GetString(appenv.WhatsAppMediaURL)
-	if err != nil {
-		return err
-	}
-	whatsappAPIIDInstance, err := a.Config().Variables.GetString(appenv.WhatsAppIDInstance)
-	if err != nil {
-		return err
-	}
-	whatsappAPIToken, err := a.Config().Variables.GetString(appenv.WhatsAppAPIToken)
-	if err != nil {
-		return err
-	}
+	a.smsClient = sms.NewClient(
+		vars.GetString(appenv.SMSClientLogin),
+		vars.GetString(appenv.SMSClientPassword),
+	)
 
 	a.whatsappClient = whatsapp.NewClient(
-		whatsappAPIURL,
-		whatsappAPIMediaURL,
-		whatsappAPIIDInstance,
-		whatsappAPIToken,
+		vars.GetString(appenv.WhatsAppAPIURL),
+		vars.GetString(appenv.WhatsAppMediaURL),
+		vars.GetString(appenv.WhatsAppIDInstance),
+		vars.GetString(appenv.WhatsAppAPIToken),
 	)
-	return nil
+	var err error
+	a.s3Client, err = s3.NewClient(
+		ctx,
+		s3.Config{
+			Region:          vars.GetString(appenv.AwsRegion),
+			Endpoint:        vars.GetString(appenv.AwsS3Endpoint),
+			AccessKeyID:     vars.GetString(appenv.AwsAccessKeyID),
+			SecretAccessKey: vars.GetString(appenv.AwsSecretAccessKey),
+			BucketName:      vars.GetString(appenv.AwsS3BucketName),
+		},
+	)
+
+	return err
 }
 
 // nolint

@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +18,7 @@ type serviceDTO struct {
 	Active          bool      `json:"active"`
 }
 
-func toServiceDTO(s *entity.Service) serviceDTO {
+func toServiceDTO(s *service.Service) serviceDTO {
 	return serviceDTO{
 		ID:              s.ID,
 		PointCode:       s.PointCode,
@@ -35,7 +35,7 @@ type getServicesResponse struct {
 	Services []serviceDTO `json:"services"`
 }
 
-func newGetServicesResponse(services []*entity.Service) getServicesResponse {
+func newGetServicesResponse(services []*service.Service) getServicesResponse {
 	dtos := make([]serviceDTO, 0, len(services))
 	for _, svc := range services {
 		dtos = append(dtos, toServiceDTO(svc))

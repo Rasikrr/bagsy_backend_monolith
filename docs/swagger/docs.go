@@ -1012,6 +1012,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/media/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создает запись в БД со статусом PENDING и генерирует временную S3 URL для загрузки файла напрямую с клиента",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Получить пресайнд ссылку для загрузки медиафайла",
+                "parameters": [
+                    {
+                        "description": "Данные о загружаемом файле",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.getUploadURLRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ссылки на загрузку и метаданные",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.getUploadURLResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса или неподдерживаемый тип контента",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/networks/{code}": {
             "get": {
                 "description": "Возвращает детальную информацию о сети: название, описание, даты создания/обновления и автора создания",
@@ -1119,7 +1176,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Создаёт новую точку обслуживания с указанными параметрами. Создавать могут только NetManager/SelfOwner",
+                "description": "Создаёт новую точку обслуживания с указанными параметрами. Опционально можно прикрепить фото (до 10). Создавать могут только NetManager/SelfOwner",
                 "consumes": [
                     "application/json"
                 ],
@@ -1132,7 +1189,7 @@ const docTemplate = `{
                 "summary": "Создать точку обслуживания",
                 "parameters": [
                     {
-                        "description": "Данные для создания точки",
+                        "description": "Данные для создания точки (photo_ids опционально)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1145,11 +1202,11 @@ const docTemplate = `{
                     "201": {
                         "description": "Точка успешно создана",
                         "schema": {
-                            "$ref": "#/definitions/internal_ports_http_handlers_points.pointCreateResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse"
                         }
                     },
                     "400": {
-                        "description": "Неверные параметры запроса",
+                        "description": "Неверные параметры запроса или некорректный формат photo_id",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -1335,13 +1392,9 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "multi",
-                        "description": "Фильтр по номерам телефонов",
-                        "name": "phone",
+                        "type": "string",
+                        "description": "Поиск по части или полному номеру телефона (поиск в начале, середине и конце)",
+                        "name": "phone_search",
                         "in": "query"
                     },
                     {
@@ -1519,6 +1572,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/users/me/avatar": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет текущий аватар пользователя (soft delete связи user_media и деактивация media)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Удалить аватар пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Аватар успешно удален",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_response.EmptySuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Аватар не найден",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/me/schedule": {
             "put": {
                 "security": [
@@ -1618,6 +1717,17 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto": {
+            "type": "object",
+            "properties": {
+                "order": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointResponse": {
             "type": "object",
             "properties": {
@@ -1647,6 +1757,12 @@ const docTemplate = `{
                 },
                 "network_code": {
                     "type": "string"
+                },
+                "photos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.PointPhoto"
+                    }
                 },
                 "schedule": {
                     "type": "array",
@@ -2150,6 +2266,39 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_media.getUploadURLRequest": {
+            "type": "object",
+            "required": [
+                "content_type",
+                "filename",
+                "purpose"
+            ],
+            "properties": {
+                "content_type": {
+                    "type": "string"
+                },
+                "filename": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.getUploadURLResponse": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "media_id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_networks.networkResponse": {
             "type": "object",
             "properties": {
@@ -2198,19 +2347,18 @@ const docTemplate = `{
                 "network_code": {
                     "type": "string"
                 },
+                "photo_ids": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "schedule": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO"
                     }
-                }
-            }
-        },
-        "internal_ports_http_handlers_points.pointCreateResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
                 }
             }
         },
@@ -2330,11 +2478,10 @@ const docTemplate = `{
         },
         "internal_ports_http_handlers_users.updateUserRequest": {
             "type": "object",
-            "required": [
-                "name",
-                "surname"
-            ],
             "properties": {
+                "avatar_id": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2348,6 +2495,9 @@ const docTemplate = `{
             "properties": {
                 "active": {
                     "type": "boolean"
+                },
+                "avatar_url": {
+                    "type": "string"
                 },
                 "created_at": {
                     "type": "string"

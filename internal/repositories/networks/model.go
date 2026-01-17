@@ -3,7 +3,7 @@ package networks
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
 )
 
 type model struct {
@@ -17,7 +17,7 @@ type model struct {
 	UpdatedBy   string     `db:"updated_by"`
 }
 
-func convert(e *entity.Network) model {
+func convert(e *network.Network) model {
 	return model{
 		Code:        e.Code,
 		Name:        e.Name,
@@ -30,8 +30,8 @@ func convert(e *entity.Network) model {
 	}
 }
 
-func (m model) convert() *entity.Network {
-	return &entity.Network{
+func (m model) convert() *network.Network {
+	return &network.Network{
 		Code:        m.Code,
 		Name:        m.Name,
 		Description: m.Description,
@@ -45,8 +45,8 @@ func (m model) convert() *entity.Network {
 
 type models []model
 
-func (m models) convert() []*entity.Network {
-	out := make([]*entity.Network, len(m))
+func (m models) convert() []*network.Network {
+	out := make([]*network.Network, len(m))
 	for i, m := range m {
 		out[i] = m.convert()
 	}

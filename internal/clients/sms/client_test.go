@@ -39,9 +39,9 @@ func TestClient_Send(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := client.Send(context.Background(), tt.phone, tt.message)
+			err := client.SendMessage(context.Background(), tt.phone, tt.message)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Send() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("SendMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

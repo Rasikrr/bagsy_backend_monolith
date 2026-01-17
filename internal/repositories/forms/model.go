@@ -3,7 +3,7 @@ package forms
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/form"
 )
 
 type model struct {
@@ -16,7 +16,7 @@ type model struct {
 	CreatedAt   time.Time `db:"created_at"`
 }
 
-func toModel(form *entity.Form) *model {
+func toModel(form *form.Form) *model {
 	return &model{
 		ID:          form.ID,
 		FirstName:   form.FirstName,

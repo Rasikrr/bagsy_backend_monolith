@@ -1,6 +1,7 @@
 package slug
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/gosimple/slug"
@@ -25,8 +26,8 @@ func setupSlug() {
 	})
 }
 
-func Generate(s string) string {
+func Generate(s ...string) string {
 	setupSlug()
-	result := slug.Make(s)
+	result := slug.Make(strings.Join(s, " "))
 	return result
 }

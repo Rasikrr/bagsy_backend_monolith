@@ -3,7 +3,7 @@ package servicecategories
 import (
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 )
 
 /*
@@ -23,7 +23,7 @@ type model struct {
 	UpdatedBy   *string    `db:"updated_by"`
 }
 
-func convert(e *entity.ServiceCategory) model {
+func convert(e *service.Category) model {
 	return model{
 		ID:          e.ID,
 		Name:        e.Name,
@@ -34,8 +34,8 @@ func convert(e *entity.ServiceCategory) model {
 	}
 }
 
-func (m model) convert() *entity.ServiceCategory {
-	return &entity.ServiceCategory{
+func (m model) convert() *service.Category {
+	return &service.Category{
 		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
@@ -47,8 +47,8 @@ func (m model) convert() *entity.ServiceCategory {
 
 type models []model
 
-func (m models) convert() []*entity.ServiceCategory {
-	cats := make([]*entity.ServiceCategory, len(m))
+func (m models) convert() []*service.Category {
+	cats := make([]*service.Category, len(m))
 	for i, m := range m {
 		cats[i] = m.convert()
 	}

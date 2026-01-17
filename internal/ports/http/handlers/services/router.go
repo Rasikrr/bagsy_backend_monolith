@@ -3,12 +3,12 @@ package services
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/entity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type servicesService interface {
-	GetByPointCode(ctx context.Context, pointCode string) ([]*entity.Service, error)
+	GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error)
 }
 
 type Controller struct {

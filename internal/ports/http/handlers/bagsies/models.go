@@ -4,11 +4,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
-	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"github.com/google/uuid"
 )
 
@@ -30,7 +30,7 @@ func (r *getSlotsRequest) Validate() error {
 	return nil
 }
 
-func (r *getSlotsRequest) toDomain() (*command.GetAvailableSlotsCommand, error) {
+func (r *getSlotsRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, error) {
 	serviceID, err := uuid.Parse(r.ServiceID)
 	if err != nil {
 		return nil, domainErr.NewInvalidInputError("invalid service_id format", err)
@@ -38,7 +38,7 @@ func (r *getSlotsRequest) toDomain() (*command.GetAvailableSlotsCommand, error) 
 
 	// Используем UTC для всех вычислений
 	now := time.Now().UTC()
-	return &command.GetAvailableSlotsCommand{
+	return &bagsy.GetAvailableSlotsCommand{
 		PointCode:   r.PointCode,
 		ServiceID:   serviceID,
 		MasterPhone: r.MasterPhone,
@@ -54,7 +54,7 @@ type getSlotsResponse struct {
 	AvailableDates  []string  `json:"available_dates"`
 }
 
-func newGetSlotsResponse(slots *dto.AvailableSlots) *getSlotsResponse {
+func newGetSlotsResponse(slots *bagsy.AvailableSlots) *getSlotsResponse {
 	// Собираем уникальные даты из всех слотов всех мастеров
 	dateSet := make(map[string]struct{})
 
@@ -107,8 +107,8 @@ func (c *createBagsyRequest) Validate() error {
 	return nil
 }
 
-func (c *createBagsyRequest) toDomain() *command.CreateBagsyCommand {
-	return &command.CreateBagsyCommand{
+func (c *createBagsyRequest) toDomain() *bagsy.CreateBagsyCommand {
+	return &bagsy.CreateBagsyCommand{
 		ServiceID:   c.ServiceID,
 		MasterPhone: c.MasterPhone,
 		StartAt:     c.StartAt,
@@ -172,7 +172,7 @@ func (r *getSlotsForDayRequest) Validate() error {
 	return nil
 }
 
-func (r *getSlotsForDayRequest) toDomain() (*command.GetAvailableSlotsCommand, error) {
+func (r *getSlotsForDayRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, error) {
 	serviceID, err := uuid.Parse(r.ServiceID)
 	if err != nil {
 		return nil, domainErr.NewInvalidInputError("invalid service_id format", err)
@@ -183,7 +183,7 @@ func (r *getSlotsForDayRequest) toDomain() (*command.GetAvailableSlotsCommand, e
 	startOfDayAlmaty := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, almatyLoc)
 	endOfDayAlmaty := startOfDayAlmaty.Add(24 * time.Hour)
 
-	return &command.GetAvailableSlotsCommand{
+	return &bagsy.GetAvailableSlotsCommand{
 		PointCode:   r.PointCode,
 		ServiceID:   serviceID,
 		MasterPhone: r.MasterPhone,
@@ -206,7 +206,7 @@ type getSlotsForDayResponse struct {
 	Masters         []masterSlotsResponse `json:"masters"`
 }
 
-func newGetSlotsForDayResponse(slots *dto.AvailableSlots, date string) *getSlotsForDayResponse {
+func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlotsForDayResponse {
 	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
 
 	for _, ms := range slots.MasterSlots {
