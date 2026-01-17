@@ -16,7 +16,7 @@ import (
 // @Tags services
 // @Accept json
 // @Produce json
-// @Param point_code query string true "Код точки"
+// @Param point_code path string true "Код точки"
 // @Success 200 {object} getServicesResponse "Список услуг"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"
 // @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
