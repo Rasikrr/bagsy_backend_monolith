@@ -329,14 +329,14 @@ definitions:
         type: string
       duration_minutes:
         type: integer
+      masters:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse'
+        type: array
       point_code:
         type: string
       service_id:
         type: string
-      slots:
-        items:
-          type: string
-        type: array
     type: object
   internal_ports_http_handlers_bagsies.getSlotsRequest:
     properties:
@@ -363,6 +363,17 @@ definitions:
         type: string
       service_id:
         type: string
+    type: object
+  internal_ports_http_handlers_bagsies.masterSlotsResponse:
+    properties:
+      master_name:
+        type: string
+      master_phone:
+        type: string
+      slots:
+        items:
+          type: string
+        type: array
     type: object
   internal_ports_http_handlers_bagsies.resentCodeRequest:
     properties:

@@ -2170,17 +2170,17 @@ const docTemplate = `{
                 "duration_minutes": {
                     "type": "integer"
                 },
+                "masters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse"
+                    }
+                },
                 "point_code": {
                     "type": "string"
                 },
                 "service_id": {
                     "type": "string"
-                },
-                "slots": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -2220,6 +2220,23 @@ const docTemplate = `{
                 },
                 "service_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.masterSlotsResponse": {
+            "type": "object",
+            "properties": {
+                "master_name": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
