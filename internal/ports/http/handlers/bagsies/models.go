@@ -1,13 +1,14 @@
 package bagsies
 
 import (
-	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+	"sort"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/command"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/dto"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"github.com/google/uuid"
 )
 
@@ -191,36 +192,36 @@ func (r *getSlotsForDayRequest) toDomain() (*command.GetAvailableSlotsCommand, e
 	}, nil
 }
 
+type masterSlotsResponse struct {
+	MasterPhone string   `json:"master_phone"`
+	MasterName  string   `json:"master_name"`
+	Slots       []string `json:"slots"`
+}
+
 type getSlotsForDayResponse struct {
-	ServiceID       uuid.UUID `json:"service_id"`
-	PointCode       string    `json:"point_code"`
-	Date            string    `json:"date"`
-	DurationMinutes int       `json:"duration_minutes"`
-	Slots           []string  `json:"slots"`
+	ServiceID       uuid.UUID             `json:"service_id"`
+	PointCode       string                `json:"point_code"`
+	Date            string                `json:"date"`
+	DurationMinutes int                   `json:"duration_minutes"`
+	Masters         []masterSlotsResponse `json:"masters"`
 }
 
 func newGetSlotsForDayResponse(slots *dto.AvailableSlots, date string) *getSlotsForDayResponse {
-	slotSet := make(map[string]struct{})
+	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
 
 	for _, ms := range slots.MasterSlots {
+		slotTimes := make([]string, 0, len(ms.Slots))
 		for _, ts := range ms.Slots {
 			startAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.StartAt)
-			slotSet[startAlmaty.Format("15:04")] = struct{}{}
+			slotTimes = append(slotTimes, startAlmaty.Format("15:04"))
 		}
-	}
+		sort.Strings(slotTimes)
 
-	slotTimes := make([]string, 0, len(slotSet))
-	for slot := range slotSet {
-		slotTimes = append(slotTimes, slot)
-	}
-
-	// Сортируем по времени
-	for i := range len(slotTimes) - 1 {
-		for j := i + 1; j < len(slotTimes); j++ {
-			if slotTimes[i] > slotTimes[j] {
-				slotTimes[i], slotTimes[j] = slotTimes[j], slotTimes[i]
-			}
-		}
+		masters = append(masters, masterSlotsResponse{
+			MasterPhone: ms.MasterPhone,
+			MasterName:  ms.MasterName,
+			Slots:       slotTimes,
+		})
 	}
 
 	return &getSlotsForDayResponse{
@@ -228,6 +229,6 @@ func newGetSlotsForDayResponse(slots *dto.AvailableSlots, date string) *getSlots
 		PointCode:       slots.PointCode,
 		Date:            date,
 		DurationMinutes: slots.DurationMinutes,
-		Slots:           slotTimes,
+		Masters:         masters,
 	}
 }
