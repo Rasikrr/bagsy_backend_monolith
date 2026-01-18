@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 )
 
 type Service struct {
@@ -19,4 +20,6 @@ type Service struct {
 	UpdatedAt       *time.Time
 	UpdatedBy       *string
 	Color           Color
+	MinPrice        *decimal.Decimal // Calculated from master_services
+	MaxPrice        *decimal.Decimal // Calculated from master_services
 }

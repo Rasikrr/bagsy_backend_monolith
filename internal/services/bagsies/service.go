@@ -33,7 +33,7 @@ type bagsiesRepository interface {
 
 type masterServicesService interface {
 	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*masterservice.MasterService, error)
-	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*masterservice.MasterService, error)
+	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceIDs uuid.UUID) ([]*masterservice.MasterService, error)
 }
 
 type servicesService interface {
@@ -103,21 +103,27 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 	var (
 		bagsyID uuid.UUID
 		err     error
+		exists  bool
 	)
 	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
 		func(txCtx context.Context) error {
 			// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
-			_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
-				Phone:   req.ClientPhone,
-				Name:    req.Name,
-				Surname: req.Surname,
-			})
+			exists, err = s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
 			if err != nil {
-				if !domainErr.IsConflict(err) {
+				return err
+			}
+
+			if !exists {
+				_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
+					Phone:   req.ClientPhone,
+					Name:    req.Name,
+					Surname: req.Surname,
+				})
+				if err != nil {
 					return err
 				}
-				// Значит Юзер уже существовал
 			}
+
 			pointService, serviceErr := s.servicesService.GetByID(txCtx, req.ServiceID)
 			if serviceErr != nil {
 				return serviceErr
@@ -279,6 +285,7 @@ func (s *Service) GetAvailableSlots(ctx context.Context, cmd *bagsy.GetAvailable
 		ctx,
 		point.Schedule,
 		masterUsers,
+		masterServices,
 		occupiedBagsies,
 		service.DurationMinutes,
 		cmd.StartDate,

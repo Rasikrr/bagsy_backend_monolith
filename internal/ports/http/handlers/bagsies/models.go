@@ -1,6 +1,8 @@
 package bagsies
 
 import (
+	"github.com/shopspring/decimal"
+	"sort"
 	"time"
 
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
@@ -96,7 +98,7 @@ type createBagsyRequest struct {
 	ClientPhone string    `json:"client_phone" validate:"required"`
 	Name        string    `json:"name" validate:"required"`
 	Surname     string    `json:"surname" validate:"required"`
-	Comment     *string   `json:"comment" validate:"required"`
+	Comment     *string   `json:"comment"`
 }
 
 func (c *createBagsyRequest) Validate() error {
@@ -191,36 +193,45 @@ func (r *getSlotsForDayRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, err
 	}, nil
 }
 
+type masterSlotsResponse struct {
+	MasterPhone string   `json:"master_phone"`
+	MasterName  string   `json:"master_name"`
+	MasterServicePrice float64 `json:"master_service_price"`
+	Slots       []string `json:"slots"`
+}
+
 type getSlotsForDayResponse struct {
-	ServiceID       uuid.UUID `json:"service_id"`
-	PointCode       string    `json:"point_code"`
-	Date            string    `json:"date"`
-	DurationMinutes int       `json:"duration_minutes"`
-	Slots           []string  `json:"slots"`
+	ServiceID       uuid.UUID             `json:"service_id"`
+	PointCode       string                `json:"point_code"`
+	Date            string                `json:"date"`
+	DurationMinutes int                   `json:"duration_minutes"`
+	Masters         []masterSlotsResponse `json:"masters"`
 }
 
 func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlotsForDayResponse {
-	slotSet := make(map[string]struct{})
+	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
 
 	for _, ms := range slots.MasterSlots {
+		slotTimes := make([]string, 0, len(ms.Slots))
 		for _, ts := range ms.Slots {
 			startAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.StartAt)
-			slotSet[startAlmaty.Format("15:04")] = struct{}{}
+			slotTimes = append(slotTimes, startAlmaty.Format("15:04"))
 		}
-	}
+		sort.Strings(slotTimes)
 
-	slotTimes := make([]string, 0, len(slotSet))
-	for slot := range slotSet {
-		slotTimes = append(slotTimes, slot)
-	}
-
-	// Сортируем по времени
-	for i := range len(slotTimes) - 1 {
-		for j := i + 1; j < len(slotTimes); j++ {
-			if slotTimes[i] > slotTimes[j] {
-				slotTimes[i], slotTimes[j] = slotTimes[j], slotTimes[i]
-			}
+		var (
+			masterServicePrice float64
+		)
+		if !decimal.Decimal.IsZero(ms.MasterServicePrice) {
+			masterServicePrice, _ = ms.MasterServicePrice.Float64()
 		}
+
+		masters = append(masters, masterSlotsResponse{
+			MasterPhone: ms.MasterPhone,
+			MasterName:  ms.MasterName,
+			MasterServicePrice: masterServicePrice,
+			Slots:       slotTimes,
+		})
 	}
 
 	return &getSlotsForDayResponse{
@@ -228,6 +239,6 @@ func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlo
 		PointCode:       slots.PointCode,
 		Date:            date,
 		DurationMinutes: slots.DurationMinutes,
-		Slots:           slotTimes,
+		Masters:         masters,
 	}
 }

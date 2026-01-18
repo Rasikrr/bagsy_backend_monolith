@@ -1392,7 +1392,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Код точки",
                         "name": "point_code",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -2170,7 +2170,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "client_phone",
-                "comment",
                 "master_phone",
                 "name",
                 "service_id",
@@ -2244,17 +2243,17 @@ const docTemplate = `{
                 "duration_minutes": {
                     "type": "integer"
                 },
+                "masters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse"
+                    }
+                },
                 "point_code": {
                     "type": "string"
                 },
                 "service_id": {
                     "type": "string"
-                },
-                "slots": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -2294,6 +2293,26 @@ const docTemplate = `{
                 },
                 "service_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_bagsies.masterSlotsResponse": {
+            "type": "object",
+            "properties": {
+                "master_name": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "master_service_price": {
+                    "type": "number"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -2567,6 +2586,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "max_price": {
+                    "type": "number"
+                },
+                "min_price": {
+                    "type": "number"
                 },
                 "name": {
                     "type": "string"

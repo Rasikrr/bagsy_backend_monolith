@@ -160,6 +160,10 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			out.Active = bool(in.Bool())
 		case "color":
 			out.Color = string(in.String())
+		case "min_price":
+			out.MinPrice = float64(in.Float64())
+		case "max_price":
+			out.MaxPrice = float64(in.Float64())
 		default:
 			in.SkipRecursive()
 		}
@@ -218,6 +222,14 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"color\":"
 		out.RawString(prefix)
 		out.String(string(in.Color))
+		const prefix string = ",\"min_price\":"
+		out.RawString(prefix)
+		out.Float64(float64(in.MinPrice))
+	}
+	{
+		const prefix string = ",\"max_price\":"
+		out.RawString(prefix)
+		out.Float64(float64(in.MaxPrice))
 	}
 	out.RawByte('}')
 }
