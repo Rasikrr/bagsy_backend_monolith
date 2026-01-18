@@ -53,7 +53,9 @@ type getServicesResponse struct {
 func newGetServicesResponse(services []*service.Service) getServicesResponse {
 	dtos := make([]serviceDTO, 0, len(services))
 	for _, svc := range services {
-		dtos = append(dtos, toServiceDTO(svc))
+		if svc.MinPrice != nil && svc.MaxPrice != nil {
+			dtos = append(dtos, toServiceDTO(svc))
+		}
 	}
 	return getServicesResponse{
 		Services: dtos,
