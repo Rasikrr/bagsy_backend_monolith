@@ -106,17 +106,22 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
 		func(txCtx context.Context) error {
 			// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
-			_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
-				Phone:   req.ClientPhone,
-				Name:    req.Name,
-				Surname: req.Surname,
-			})
+			exists, err := s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
 			if err != nil {
-				if !domainErr.IsConflict(err) {
+				return err
+			}
+
+			if !exists {
+				_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
+					Phone:   req.ClientPhone,
+					Name:    req.Name,
+					Surname: req.Surname,
+				})
+				if err != nil {
 					return err
 				}
-				// Значит Юзер уже существовал
 			}
+
 			pointService, serviceErr := s.servicesService.GetByID(txCtx, req.ServiceID)
 			if serviceErr != nil {
 				return serviceErr
