@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
+	masterservice "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -473,10 +475,13 @@ func TestGenerateSlots(t *testing.T) {
 	startDate := time.Date(2026, 1, 14, 0, 0, 0, 0, time.UTC)
 	endDate := startDate.AddDate(0, 0, 1) // one day
 
+	serviceID := uuid.New()
+
 	tests := []struct {
 		name            string
 		pointSchedule   point.Schedule
 		masters         []*user.User
+		masterServices  []*masterservice.MasterService
 		occupied        []*bagsy.Bagsy
 		durationMinutes int
 		expectedMasters int
@@ -496,6 +501,9 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices: []*masterservice.MasterService{
+				{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+			},
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 1,
@@ -513,6 +521,7 @@ func TestGenerateSlots(t *testing.T) {
 					Schedule: nil, // no schedule
 				},
 			},
+			masterServices:  nil,
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 0,
@@ -532,6 +541,7 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices:  nil,
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 0,
@@ -551,6 +561,7 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices:  nil,
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 0,
@@ -578,6 +589,10 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices: []*masterservice.MasterService{
+				{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+				{MasterPhone: "+77002222222", ServiceID: serviceID, Price: decimal.NewFromInt(6000)},
+			},
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 2,
@@ -597,6 +612,9 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices: []*masterservice.MasterService{
+				{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+			},
 			occupied: []*bagsy.Bagsy{
 				{
 					ID:          uuid.New(),
@@ -612,7 +630,7 @@ func TestGenerateSlots(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := generateSlots(ctx, tt.pointSchedule, tt.masters, tt.occupied, tt.durationMinutes, startDate, endDate)
+			result := generateSlots(ctx, tt.pointSchedule, tt.masters, tt.masterServices, tt.occupied, tt.durationMinutes, startDate, endDate)
 			assert.Len(t, result, tt.expectedMasters)
 
 			// Verify each master has properly formed slots
@@ -636,6 +654,8 @@ func TestGenerateSlots_MultiDay(t *testing.T) {
 	startDate := time.Date(2026, 1, 14, 0, 0, 0, 0, time.UTC)
 	endDate := startDate.AddDate(0, 0, 3) // 3 days: Wed, Thu, Fri
 
+	serviceID := uuid.New()
+
 	pointSchedule := point.Schedule{
 		{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},  // Wed
 		{WeekDay: 4, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},  // Thu
@@ -655,10 +675,17 @@ func TestGenerateSlots_MultiDay(t *testing.T) {
 		},
 	}
 
-	result := generateSlots(ctx, pointSchedule, masters, nil, 60, startDate, endDate)
+	masterServices := []*masterservice.MasterService{
+		{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+	}
+
+	result := generateSlots(ctx, pointSchedule, masters, masterServices, nil, 60, startDate, endDate)
 
 	require.Len(t, result, 1)
 	masterSlots := result[0]
+
+	// Verify price is set
+	assert.True(t, masterSlots.MasterServicePrice.Equal(decimal.NewFromInt(5000)))
 
 	// Count slots per day by checking StartAt dates
 	slotsByDay := make(map[string]int)
