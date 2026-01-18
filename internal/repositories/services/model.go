@@ -7,19 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-/*
-id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-point_code       TEXT NOT NULL,
-category_id      INTEGER NOT NULL,
-subcategory_id   INTEGER,
-name             TEXT NOT NULL,
-description      TEXT,
-duration_minutes INTEGER NOT NULL,
-active           BOOLEAN DEFAULT false,
-created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-updated_at       TIMESTAMPTZ DEFAULT now(),
-updated_by       TEXT NOT NULL DEFAULT 'system'
-*/
 type model struct {
 	ID              uuid.UUID  `db:"id"`
 	PointCode       string     `db:"point_code"`
@@ -32,6 +19,7 @@ type model struct {
 	CreatedAt       time.Time  `db:"created_at"`
 	UpdatedAt       *time.Time `db:"updated_at"`
 	UpdatedBy       *string    `db:"updated_by"`
+	Color           int        `db:"color"`
 }
 
 func convert(e *service.Service) model {
@@ -43,6 +31,7 @@ func convert(e *service.Service) model {
 		Name:            e.Name,
 		Description:     e.Description,
 		DurationMinutes: e.DurationMinutes,
+		Color:           int(e.Color),
 		Active:          e.Active,
 		CreatedAt:       e.CreatedAt,
 		UpdatedAt:       e.UpdatedAt,
@@ -50,6 +39,7 @@ func convert(e *service.Service) model {
 	}
 }
 
+// nolint: gosec
 func (m model) convert() *service.Service {
 	return &service.Service{
 		ID:              m.ID,
@@ -63,6 +53,7 @@ func (m model) convert() *service.Service {
 		CreatedAt:       m.CreatedAt,
 		UpdatedAt:       m.UpdatedAt,
 		UpdatedBy:       m.UpdatedBy,
+		Color:           service.Color(m.Color),
 	}
 }
 

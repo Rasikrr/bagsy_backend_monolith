@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
-	"github.com/samber/lo"
 )
 
 type Repository struct {
@@ -34,11 +33,23 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*service.Servic
 	return m.convert(), nil
 }
 
+func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error) {
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getServicesByIDs, pq.Array(ids))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get services from db", err)
+	}
+	return mm.convert(), nil
+}
+
 func (r *Repository) Create(ctx context.Context, service *service.Service) error {
 	m := convert(service)
 	err := r.db.QueryRow(ctx, createService,
 		m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
-		m.Description, m.DurationMinutes, m.Active, m.UpdatedBy,
+		m.Description, m.DurationMinutes, m.Color, m.Active, m.UpdatedBy,
 	).Scan(&service.ID)
 	if err != nil {
 		return domainErr.NewInternalError("failed to create service in db", err)
@@ -50,7 +61,7 @@ func (r *Repository) Update(ctx context.Context, service *service.Service) error
 	m := convert(service)
 	_, err := r.db.Exec(ctx, updateService,
 		m.ID, m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
-		m.Description, m.DurationMinutes, m.Active, m.UpdatedBy,
+		m.Description, m.DurationMinutes, m.Active, m.Color, m.UpdatedBy,
 	)
 	if err != nil {
 		return domainErr.NewInternalError("failed to update service in db", err)
@@ -58,10 +69,7 @@ func (r *Repository) Update(ctx context.Context, service *service.Service) error
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, services ...*service.Service) error {
-	ids := lo.Map(services, func(item *service.Service, _ int) uuid.UUID {
-		return item.ID
-	})
+func (r *Repository) Delete(ctx context.Context, ids ...uuid.UUID) error {
 	_, err := r.db.Exec(ctx, deleteService, pq.Array(ids))
 	if err != nil {
 		return domainErr.NewInternalError("failed to delete services from db", err)
@@ -74,7 +82,7 @@ func (r *Repository) GetByPointCode(ctx context.Context, pointCode string) ([]*s
 	err := pgxscan.Select(ctx, r.db, &mm, getServicesByPointCode, pointCode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, service.ErrServiceNotFound.WithError(err)
+			return []*service.Service{}, nil
 		}
 		return nil, domainErr.NewInternalError("failed to get services from db", err)
 	}

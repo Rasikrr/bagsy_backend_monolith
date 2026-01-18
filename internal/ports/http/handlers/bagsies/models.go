@@ -194,10 +194,10 @@ func (r *getSlotsForDayRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, err
 }
 
 type masterSlotsResponse struct {
-	MasterPhone string   `json:"master_phone"`
-	MasterName  string   `json:"master_name"`
-	MasterServicePrice float64 `json:"master_service_price"`
-	Slots       []string `json:"slots"`
+	MasterPhone        string   `json:"master_phone"`
+	MasterName         string   `json:"master_name"`
+	MasterServicePrice float64  `json:"master_service_price"`
+	Slots              []string `json:"slots"`
 }
 
 type getSlotsForDayResponse struct {
@@ -227,10 +227,10 @@ func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlo
 		}
 
 		masters = append(masters, masterSlotsResponse{
-			MasterPhone: ms.MasterPhone,
-			MasterName:  ms.MasterName,
+			MasterPhone:        ms.MasterPhone,
+			MasterName:         ms.MasterName,
 			MasterServicePrice: masterServicePrice,
-			Slots:       slotTimes,
+			Slots:              slotTimes,
 		})
 	}
 

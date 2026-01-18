@@ -19,6 +19,7 @@ type Service struct {
 	CreatedAt       time.Time
 	UpdatedAt       *time.Time
 	UpdatedBy       *string
+	Color           Color
 	MinPrice        *decimal.Decimal // Calculated from master_services
 	MaxPrice        *decimal.Decimal // Calculated from master_services
 }

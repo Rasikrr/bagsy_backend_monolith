@@ -12,9 +12,8 @@ import (
 type servicesRepository interface {
 	Create(ctx context.Context, service *service.Service) error
 	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error)
 	GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error)
-	Update(ctx context.Context, service *service.Service) error
-	Delete(ctx context.Context, service ...*service.Service) error
 }
 
 type masterServicesRepository interface {
@@ -42,6 +41,10 @@ func (s *Service) Create(ctx context.Context, service *service.Service) error {
 
 func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error) {
 	return s.serviceRepository.GetByID(ctx, id)
+}
+func (s *Service) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error) {
+	ids = lo.Uniq(ids)
+	return s.serviceRepository.GetByIDs(ctx, ids)
 }
 
 func (s *Service) GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error) {

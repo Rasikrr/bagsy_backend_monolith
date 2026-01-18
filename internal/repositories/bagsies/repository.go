@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/google/uuid"
@@ -146,18 +147,15 @@ func (r *Repository) Delete(ctx context.Context, updatedBy string, bagsies ...*b
 }
 
 // GetOccupiedSlots возвращает все брони, которые пересекаются с заданным временным диапазоном
+// Если MasterPhones пустой - возвращает все записи точки
 func (r *Repository) GetOccupiedSlots(ctx context.Context, filter *bagsy.OccupiedSlotsFilter) ([]*bagsy.Bagsy, error) {
-	if len(filter.MasterPhones) == 0 {
-		return []*bagsy.Bagsy{}, nil
+	query, args, err := buildOccupiedSlotsQuery(filter)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to build query", err)
 	}
 
 	var mm models
-	err := pgxscan.Select(ctx, r.db, &mm, getOccupiedSlots,
-		filter.PointCode,
-		pq.Array(filter.MasterPhones),
-		filter.StartAt,
-		filter.EndAt,
-	)
+	err = pgxscan.Select(ctx, r.db, &mm, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []*bagsy.Bagsy{}, nil
@@ -174,4 +172,26 @@ func (r *Repository) GetOccupiedSlots(ctx context.Context, filter *bagsy.Occupie
 		return nil, domainErr.NewInternalError("failed to convert bagsies models", err)
 	}
 	return out, nil
+}
+
+func buildOccupiedSlotsQuery(filter *bagsy.OccupiedSlotsFilter) (string, []any, error) {
+	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).
+		Select(
+			"id", "service_id", "point_code", "client_phone", "master_phone",
+			"status", "price", "start_at", "end_at", "comment", "reject_reason",
+			"created_at", "updated_at", "updated_by",
+		).
+		From("bagsies").
+		Where(sq.Eq{"point_code": filter.PointCode}).
+		Where(sq.Lt{"start_at": filter.EndAt}).
+		Where(sq.Gt{"end_at": filter.StartAt}).
+		Where(sq.Eq{"deleted_at": nil}).
+		Where(sq.NotEq{"status": "canceled"}).
+		OrderBy("master_phone", "start_at")
+
+	if len(filter.MasterPhones) > 0 {
+		builder = builder.Where(sq.Eq{"master_phone": filter.MasterPhones})
+	}
+
+	return builder.ToSql()
 }

@@ -2,6 +2,7 @@
 package http
 
 import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/calendar"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/networks"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/points"
@@ -70,6 +71,7 @@ func NewServer(
 	networksController := networks.New(networksService, pointsService, authMiddleware)
 	servicesController := services.New(servicesService)
 	mediaController := media.New(mediaService, authMiddleware)
+	calendarController := calendar.New(bagsiesService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(
@@ -81,6 +83,7 @@ func NewServer(
 		networksController,
 		servicesController,
 		mediaController,
+		calendarController,
 	)
 
 	initSwagger(server, swaggerHost, swaggerScheme)
