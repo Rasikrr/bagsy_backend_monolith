@@ -8,7 +8,7 @@
 -- - 5 записей на текущую неделю (13-19 января 2026)
 -- - 3 записи на следующую неделю (20-26 января 2026)
 --
--- Статусы: pending, confirmed, completed, cancelled, rejected
+-- Статусы: pending, created, completed, canceled
 -- ============================================
 
 -- Тестовые клиенты
@@ -27,11 +27,11 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'barbos_almaty_esentai', data.client_phone, '77012345111', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     -- Эта неделя (5 записей)
-    ('77016789001', 'confirmed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789001', 'created', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789002', 'completed', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 14:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789003', 'created', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789004', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789005', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789005', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
     -- Следующая неделя (3 записи)
     ('77016789001', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789003', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:30:00+06'::timestamptz, 'Стрижка бороды'),
@@ -45,9 +45,9 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'barbos_almaty_esentai', data.client_phone, '77012345112', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 11:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789003', 'confirmed', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 17:00:00+06'::timestamptz, 'Королевское бритье'),
-    ('77016789001', 'cancelled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789004', 'confirmed', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 17:00:00+06'::timestamptz, 'Королевское бритье'),
+    ('77016789001', 'canceled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789004', 'created', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 14:40:00+06'::timestamptz, 'Моделирование бороды'),
     ('77016789001', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 11:00:00+06'::timestamptz, 'Королевское бритье'),
     ('77016789002', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:50:00+06'::timestamptz, 'Модельная стрижка'),
@@ -62,9 +62,9 @@ SELECT s.id, 'barbos_almaty_esentai', data.client_phone, '77012345113', data.sta
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 14:00:00+06'::timestamptz, '2026-01-13 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789004', 'completed', '2026-01-14 10:00:00+06'::timestamptz, '2026-01-14 10:30:00+06'::timestamptz, 'Детская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:45:00+06'::timestamptz, 'Окрашивание бороды'),
+    ('77016789002', 'created', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:45:00+06'::timestamptz, 'Окрашивание бороды'),
     ('77016789003', 'pending', '2026-01-18 13:00:00+06'::timestamptz, '2026-01-18 13:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789005', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
+    ('77016789005', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789002', 'pending', '2026-01-20 14:00:00+06'::timestamptz, '2026-01-20 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'pending', '2026-01-22 11:00:00+06'::timestamptz, '2026-01-22 11:45:00+06'::timestamptz, 'Окрашивание бороды'),
     ('77016789001', 'pending', '2026-01-24 16:00:00+06'::timestamptz, '2026-01-24 16:30:00+06'::timestamptz, 'Детская стрижка')
@@ -78,8 +78,8 @@ SELECT s.id, 'barbos_almaty_esentai', data.client_phone, '77012345114', data.sta
 FROM (VALUES
     ('77016789005', 'completed', '2026-01-13 16:00:00+06'::timestamptz, '2026-01-13 17:00:00+06'::timestamptz, 'Королевское бритье'),
     ('77016789001', 'completed', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789003', 'rejected', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:30:00+06'::timestamptz, 'Стрижка бороды'),
-    ('77016789002', 'confirmed', '2026-01-18 17:00:00+06'::timestamptz, '2026-01-18 18:00:00+06'::timestamptz, 'Королевское бритье'),
+    ('77016789003', 'canceled', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789002', 'created', '2026-01-18 17:00:00+06'::timestamptz, '2026-01-18 18:00:00+06'::timestamptz, 'Королевское бритье'),
     ('77016789004', 'pending', '2026-01-19 15:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-21 12:00:00+06'::timestamptz, '2026-01-21 12:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789001', 'pending', '2026-01-23 10:00:00+06'::timestamptz, '2026-01-23 11:00:00+06'::timestamptz, 'Модельная стрижка'),
@@ -97,10 +97,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'barbos_almaty_mega', data.client_phone, '77012345211', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789002', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789002', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789004', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Классическое бритье'),
-    ('77016789005', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789005', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789001', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789005', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:40:00+06'::timestamptz, 'Мужская классическая стрижка')
@@ -113,9 +113,9 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'barbos_almaty_mega', data.client_phone, '77012345212', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 11:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789003', 'confirmed', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
-    ('77016789001', 'cancelled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789004', 'confirmed', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789001', 'canceled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789004', 'created', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 14:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789001', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789002', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:50:00+06'::timestamptz, 'Модельная стрижка'),
@@ -130,9 +130,9 @@ SELECT s.id, 'barbos_almaty_mega', data.client_phone, '77012345213', data.status
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 14:00:00+06'::timestamptz, '2026-01-13 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789004', 'completed', '2026-01-14 10:00:00+06'::timestamptz, '2026-01-14 10:30:00+06'::timestamptz, 'Детская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:40:00+06'::timestamptz, 'Моделирование бороды'),
+    ('77016789002', 'created', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:40:00+06'::timestamptz, 'Моделирование бороды'),
     ('77016789003', 'pending', '2026-01-18 13:00:00+06'::timestamptz, '2026-01-18 13:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789005', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
+    ('77016789005', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789002', 'pending', '2026-01-20 14:00:00+06'::timestamptz, '2026-01-20 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'pending', '2026-01-22 11:00:00+06'::timestamptz, '2026-01-22 11:40:00+06'::timestamptz, 'Моделирование бороды'),
     ('77016789001', 'pending', '2026-01-24 16:00:00+06'::timestamptz, '2026-01-24 16:30:00+06'::timestamptz, 'Детская стрижка')
@@ -149,10 +149,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'barbos_astana_mega', data.client_phone, '77012345311', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789002', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789002', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789004', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789005', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 13:00:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789005', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 13:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789001', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789003', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 17:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:40:00+06'::timestamptz, 'Мужская классическая стрижка')
@@ -165,9 +165,9 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'barbos_astana_mega', data.client_phone, '77012345312', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 12:00:00+06'::timestamptz, 'Королевское бритье'),
-    ('77016789003', 'confirmed', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
-    ('77016789001', 'cancelled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789004', 'confirmed', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789003', 'created', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789001', 'canceled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789004', 'created', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789005', 'pending', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 15:00:00+06'::timestamptz, 'Королевское бритье'),
     ('77016789001', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 10:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789002', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 16:00:00+06'::timestamptz, 'Модельная стрижка'),
@@ -182,9 +182,9 @@ SELECT s.id, 'barbos_astana_mega', data.client_phone, '77012345313', data.status
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 14:00:00+06'::timestamptz, '2026-01-13 15:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789004', 'completed', '2026-01-14 10:00:00+06'::timestamptz, '2026-01-14 10:30:00+06'::timestamptz, 'Детская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:40:00+06'::timestamptz, 'Моделирование бороды'),
+    ('77016789002', 'created', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:40:00+06'::timestamptz, 'Моделирование бороды'),
     ('77016789003', 'pending', '2026-01-18 13:00:00+06'::timestamptz, '2026-01-18 14:00:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789005', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
+    ('77016789005', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789002', 'pending', '2026-01-20 14:00:00+06'::timestamptz, '2026-01-20 15:00:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'pending', '2026-01-22 11:00:00+06'::timestamptz, '2026-01-22 11:40:00+06'::timestamptz, 'Моделирование бороды'),
     ('77016789001', 'pending', '2026-01-24 16:00:00+06'::timestamptz, '2026-01-24 16:30:00+06'::timestamptz, 'Детская стрижка')
@@ -201,10 +201,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_furmanov', data.client_phone, '77013456111', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 10:00:00+06'::timestamptz, 'Женская стрижка'),
-    ('77016789004', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:40:00+06'::timestamptz, 'Укладка феном'),
+    ('77016789004', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:40:00+06'::timestamptz, 'Укладка феном'),
     ('77016789002', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 12:30:00+06'::timestamptz, 'Вечерняя укладка'),
     ('77016789004', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 16:00:00+06'::timestamptz, 'Женская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:40:00+06'::timestamptz, 'Укладка феном'),
+    ('77016789002', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:40:00+06'::timestamptz, 'Укладка феном'),
     ('77016789004', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 11:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789002', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 17:30:00+06'::timestamptz, 'Вечерняя укладка'),
     ('77016789004', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:40:00+06'::timestamptz, 'Укладка феном')
@@ -217,10 +217,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_furmanov', data.client_phone, '77013456112', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 12:00:00+06'::timestamptz, 'Полное окрашивание'),
-    ('77016789004', 'confirmed', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Мелирование'),
+    ('77016789004', 'created', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Мелирование'),
     ('77016789002', 'completed', '2026-01-15 11:00:00+06'::timestamptz, '2026-01-15 14:00:00+06'::timestamptz, 'Балаяж'),
     ('77016789004', 'pending', '2026-01-18 10:00:00+06'::timestamptz, '2026-01-18 12:00:00+06'::timestamptz, 'Полное окрашивание'),
-    ('77016789002', 'confirmed', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 17:00:00+06'::timestamptz, 'Омбре'),
+    ('77016789002', 'created', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 17:00:00+06'::timestamptz, 'Омбре'),
     ('77016789004', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 12:30:00+06'::timestamptz, 'Мелирование'),
     ('77016789002', 'pending', '2026-01-23 11:00:00+06'::timestamptz, '2026-01-23 14:00:00+06'::timestamptz, 'Балаяж'),
     ('77016789004', 'pending', '2026-01-25 10:00:00+06'::timestamptz, '2026-01-25 12:00:00+06'::timestamptz, 'Полное окрашивание')
@@ -233,10 +233,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_furmanov', data.client_phone, '77013456113', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 10:00:00+06'::timestamptz, 'Классический маникюр'),
-    ('77016789004', 'confirmed', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Аппаратный маникюр'),
+    ('77016789004', 'created', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789002', 'completed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 16:30:00+06'::timestamptz, 'Маникюр с покрытием'),
     ('77016789004', 'pending', '2026-01-18 14:00:00+06'::timestamptz, '2026-01-18 15:00:00+06'::timestamptz, 'Классический маникюр'),
-    ('77016789002', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:30:00+06'::timestamptz, 'Маникюр с покрытием'),
+    ('77016789002', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:30:00+06'::timestamptz, 'Маникюр с покрытием'),
     ('77016789004', 'pending', '2026-01-20 15:00:00+06'::timestamptz, '2026-01-20 16:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789002', 'pending', '2026-01-22 10:00:00+06'::timestamptz, '2026-01-22 11:30:00+06'::timestamptz, 'Маникюр с покрытием'),
     ('77016789004', 'pending', '2026-01-24 11:00:00+06'::timestamptz, '2026-01-24 12:00:00+06'::timestamptz, 'Классический маникюр')
@@ -249,10 +249,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_furmanov', data.client_phone, '77013456114', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 11:00:00+06'::timestamptz, 'Классический педикюр'),
-    ('77016789004', 'confirmed', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 15:00:00+06'::timestamptz, 'Аппаратный педикюр'),
+    ('77016789004', 'created', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 15:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789002', 'completed', '2026-01-15 11:00:00+06'::timestamptz, '2026-01-15 12:30:00+06'::timestamptz, 'SPA-педикюр'),
     ('77016789004', 'pending', '2026-01-18 16:00:00+06'::timestamptz, '2026-01-18 17:00:00+06'::timestamptz, 'Классический педикюр'),
-    ('77016789002', 'confirmed', '2026-01-19 15:00:00+06'::timestamptz, '2026-01-19 16:30:00+06'::timestamptz, 'SPA-педикюр'),
+    ('77016789002', 'created', '2026-01-19 15:00:00+06'::timestamptz, '2026-01-19 16:30:00+06'::timestamptz, 'SPA-педикюр'),
     ('77016789004', 'pending', '2026-01-21 14:00:00+06'::timestamptz, '2026-01-21 15:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789002', 'pending', '2026-01-23 10:00:00+06'::timestamptz, '2026-01-23 11:30:00+06'::timestamptz, 'SPA-педикюр'),
     ('77016789004', 'pending', '2026-01-25 16:00:00+06'::timestamptz, '2026-01-25 17:00:00+06'::timestamptz, 'Классический педикюр')
@@ -265,10 +265,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_furmanov', data.client_phone, '77013456115', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 12:00:00+06'::timestamptz, 'Чистка лица'),
-    ('77016789004', 'confirmed', '2026-01-14 15:00:00+06'::timestamptz, '2026-01-14 16:00:00+06'::timestamptz, 'Уходовая процедура'),
+    ('77016789004', 'created', '2026-01-14 15:00:00+06'::timestamptz, '2026-01-14 16:00:00+06'::timestamptz, 'Уходовая процедура'),
     ('77016789002', 'completed', '2026-01-16 10:00:00+06'::timestamptz, '2026-01-16 11:00:00+06'::timestamptz, 'Чистка лица'),
     ('77016789004', 'pending', '2026-01-18 12:00:00+06'::timestamptz, '2026-01-18 13:00:00+06'::timestamptz, 'Уходовая процедура'),
-    ('77016789002', 'confirmed', '2026-01-19 11:00:00+06'::timestamptz, '2026-01-19 12:00:00+06'::timestamptz, 'Чистка лица'),
+    ('77016789002', 'created', '2026-01-19 11:00:00+06'::timestamptz, '2026-01-19 12:00:00+06'::timestamptz, 'Чистка лица'),
     ('77016789004', 'pending', '2026-01-20 16:00:00+06'::timestamptz, '2026-01-20 17:00:00+06'::timestamptz, 'Уходовая процедура'),
     ('77016789002', 'pending', '2026-01-22 14:00:00+06'::timestamptz, '2026-01-22 15:00:00+06'::timestamptz, 'Чистка лица'),
     ('77016789004', 'pending', '2026-01-24 10:00:00+06'::timestamptz, '2026-01-24 11:00:00+06'::timestamptz, 'Уходовая процедура')
@@ -285,10 +285,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_dostyk', data.client_phone, '77013456211', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 10:00:00+06'::timestamptz, 'Женская стрижка'),
-    ('77016789004', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:40:00+06'::timestamptz, 'Укладка феном'),
+    ('77016789004', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:40:00+06'::timestamptz, 'Укладка феном'),
     ('77016789002', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 12:30:00+06'::timestamptz, 'Вечерняя укладка'),
     ('77016789004', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 16:00:00+06'::timestamptz, 'Женская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:40:00+06'::timestamptz, 'Укладка феном'),
+    ('77016789002', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:40:00+06'::timestamptz, 'Укладка феном'),
     ('77016789004', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 11:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789002', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 17:30:00+06'::timestamptz, 'Вечерняя укладка'),
     ('77016789004', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:40:00+06'::timestamptz, 'Укладка феном')
@@ -301,10 +301,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_dostyk', data.client_phone, '77013456212', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 12:00:00+06'::timestamptz, 'Полное окрашивание'),
-    ('77016789004', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 17:00:00+06'::timestamptz, 'Балаяж'),
+    ('77016789004', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 17:00:00+06'::timestamptz, 'Балаяж'),
     ('77016789002', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 13:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789004', 'pending', '2026-01-18 10:00:00+06'::timestamptz, '2026-01-18 13:00:00+06'::timestamptz, 'Балаяж'),
-    ('77016789002', 'confirmed', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Полное окрашивание'),
+    ('77016789002', 'created', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789004', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 13:00:00+06'::timestamptz, 'Балаяж'),
     ('77016789002', 'pending', '2026-01-23 11:00:00+06'::timestamptz, '2026-01-23 13:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789004', 'pending', '2026-01-25 10:00:00+06'::timestamptz, '2026-01-25 13:00:00+06'::timestamptz, 'Балаяж')
@@ -317,10 +317,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_dostyk', data.client_phone, '77013456213', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 10:00:00+06'::timestamptz, 'Аппаратный маникюр'),
-    ('77016789004', 'confirmed', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:30:00+06'::timestamptz, 'Маникюр с покрытием'),
+    ('77016789004', 'created', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:30:00+06'::timestamptz, 'Маникюр с покрытием'),
     ('77016789002', 'completed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 16:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789004', 'pending', '2026-01-18 14:00:00+06'::timestamptz, '2026-01-18 15:30:00+06'::timestamptz, 'Маникюр с покрытием'),
-    ('77016789002', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:00:00+06'::timestamptz, 'Аппаратный маникюр'),
+    ('77016789002', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789004', 'pending', '2026-01-20 15:00:00+06'::timestamptz, '2026-01-20 16:30:00+06'::timestamptz, 'Маникюр с покрытием'),
     ('77016789002', 'pending', '2026-01-22 10:00:00+06'::timestamptz, '2026-01-22 11:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789004', 'pending', '2026-01-24 11:00:00+06'::timestamptz, '2026-01-24 12:30:00+06'::timestamptz, 'Маникюр с покрытием')
@@ -333,10 +333,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'chic_almaty_dostyk', data.client_phone, '77013456214', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 11:00:00+06'::timestamptz, 'Аппаратный педикюр'),
-    ('77016789004', 'confirmed', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 15:00:00+06'::timestamptz, 'Чистка лица'),
+    ('77016789004', 'created', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 15:00:00+06'::timestamptz, 'Чистка лица'),
     ('77016789002', 'completed', '2026-01-15 11:00:00+06'::timestamptz, '2026-01-15 12:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789004', 'pending', '2026-01-18 16:00:00+06'::timestamptz, '2026-01-18 17:00:00+06'::timestamptz, 'Чистка лица'),
-    ('77016789002', 'confirmed', '2026-01-19 15:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Аппаратный педикюр'),
+    ('77016789002', 'created', '2026-01-19 15:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789004', 'pending', '2026-01-21 14:00:00+06'::timestamptz, '2026-01-21 15:00:00+06'::timestamptz, 'Чистка лица'),
     ('77016789002', 'pending', '2026-01-23 10:00:00+06'::timestamptz, '2026-01-23 11:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789004', 'pending', '2026-01-25 16:00:00+06'::timestamptz, '2026-01-25 17:00:00+06'::timestamptz, 'Чистка лица')
@@ -353,10 +353,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'brocode_almaty_abay', data.client_phone, '77014567111', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789003', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:50:00+06'::timestamptz, 'Модельная стрижка')
@@ -369,9 +369,9 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'brocode_almaty_abay', data.client_phone, '77014567112', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789003', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 11:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789001', 'confirmed', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
-    ('77016789005', 'cancelled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789001', 'created', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789005', 'canceled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789003', 'created', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789001', 'pending', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 14:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789005', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 10:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
@@ -386,9 +386,9 @@ SELECT s.id, 'brocode_almaty_abay', data.client_phone, '77014567113', data.statu
 FROM (VALUES
     ('77016789005', 'completed', '2026-01-13 14:00:00+06'::timestamptz, '2026-01-13 14:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789001', 'completed', '2026-01-14 10:00:00+06'::timestamptz, '2026-01-14 10:30:00+06'::timestamptz, 'Детская стрижка'),
-    ('77016789003', 'confirmed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:20:00+06'::timestamptz, 'Укладка волос'),
+    ('77016789003', 'created', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:20:00+06'::timestamptz, 'Укладка волос'),
     ('77016789005', 'pending', '2026-01-18 13:00:00+06'::timestamptz, '2026-01-18 13:40:00+06'::timestamptz, 'Классическое бритье'),
-    ('77016789001', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
+    ('77016789001', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789003', 'pending', '2026-01-20 14:00:00+06'::timestamptz, '2026-01-20 14:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789005', 'pending', '2026-01-22 11:00:00+06'::timestamptz, '2026-01-22 11:20:00+06'::timestamptz, 'Укладка волос'),
     ('77016789001', 'pending', '2026-01-24 16:00:00+06'::timestamptz, '2026-01-24 16:30:00+06'::timestamptz, 'Детская стрижка')
@@ -405,10 +405,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'brocode_astana_respublika', data.client_phone, '77014567211', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789001', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789001', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789003', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:40:00+06'::timestamptz, 'Мужская классическая стрижка')
@@ -421,9 +421,9 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'brocode_astana_respublika', data.client_phone, '77014567212', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789003', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 11:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789001', 'confirmed', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
-    ('77016789005', 'cancelled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789001', 'created', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789005', 'canceled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789003', 'created', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789001', 'pending', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 14:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789005', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789003', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:50:00+06'::timestamptz, 'Модельная стрижка'),
@@ -438,9 +438,9 @@ SELECT s.id, 'brocode_astana_respublika', data.client_phone, '77014567213', data
 FROM (VALUES
     ('77016789005', 'completed', '2026-01-13 14:00:00+06'::timestamptz, '2026-01-13 14:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789001', 'completed', '2026-01-14 10:00:00+06'::timestamptz, '2026-01-14 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789003', 'created', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789005', 'pending', '2026-01-18 13:00:00+06'::timestamptz, '2026-01-18 13:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789001', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:40:00+06'::timestamptz, 'Классическое бритье'),
+    ('77016789001', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789003', 'pending', '2026-01-20 14:00:00+06'::timestamptz, '2026-01-20 14:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789005', 'pending', '2026-01-22 11:00:00+06'::timestamptz, '2026-01-22 11:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789001', 'pending', '2026-01-24 16:00:00+06'::timestamptz, '2026-01-24 16:50:00+06'::timestamptz, 'Модельная стрижка')
@@ -457,10 +457,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'brocode_shymkent_tauke', data.client_phone, '77014567311', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 12:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789003', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 14:50:00+06'::timestamptz, 'Модельная стрижка')
@@ -473,9 +473,9 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'brocode_shymkent_tauke', data.client_phone, '77014567312', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789003', 'completed', '2026-01-13 11:00:00+06'::timestamptz, '2026-01-13 11:50:00+06'::timestamptz, 'Модельная стрижка'),
-    ('77016789001', 'confirmed', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
-    ('77016789005', 'cancelled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
-    ('77016789003', 'confirmed', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789001', 'created', '2026-01-14 16:00:00+06'::timestamptz, '2026-01-14 16:30:00+06'::timestamptz, 'Стрижка бороды'),
+    ('77016789005', 'canceled', '2026-01-15 10:00:00+06'::timestamptz, '2026-01-15 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
+    ('77016789003', 'created', '2026-01-18 11:00:00+06'::timestamptz, '2026-01-18 11:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789001', 'pending', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 14:30:00+06'::timestamptz, 'Стрижка бороды'),
     ('77016789005', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 10:40:00+06'::timestamptz, 'Мужская классическая стрижка'),
     ('77016789003', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:50:00+06'::timestamptz, 'Модельная стрижка'),
@@ -490,9 +490,9 @@ SELECT s.id, 'brocode_shymkent_tauke', data.client_phone, '77014567313', data.st
 FROM (VALUES
     ('77016789005', 'completed', '2026-01-13 14:00:00+06'::timestamptz, '2026-01-13 14:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789001', 'completed', '2026-01-14 10:00:00+06'::timestamptz, '2026-01-14 10:30:00+06'::timestamptz, 'Детская стрижка'),
-    ('77016789003', 'confirmed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:50:00+06'::timestamptz, 'Модельная стрижка'),
+    ('77016789003', 'created', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 15:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-18 13:00:00+06'::timestamptz, '2026-01-18 13:40:00+06'::timestamptz, 'Классическое бритье'),
-    ('77016789001', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
+    ('77016789001', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789003', 'pending', '2026-01-20 14:00:00+06'::timestamptz, '2026-01-20 14:50:00+06'::timestamptz, 'Модельная стрижка'),
     ('77016789005', 'pending', '2026-01-22 11:00:00+06'::timestamptz, '2026-01-22 11:40:00+06'::timestamptz, 'Классическое бритье'),
     ('77016789001', 'pending', '2026-01-24 16:00:00+06'::timestamptz, '2026-01-24 16:30:00+06'::timestamptz, 'Детская стрижка')
@@ -509,10 +509,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'krasotka_almaty_zhibek', data.client_phone, '77015678111', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 09:40:00+06'::timestamptz, 'Мужская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Женская стрижка'),
+    ('77016789002', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789004', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 13:00:00+06'::timestamptz, 'Женская стрижка'),
+    ('77016789002', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 13:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789004', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:40:00+06'::timestamptz, 'Мужская стрижка'),
     ('77016789002', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 15:00:00+06'::timestamptz, 'Женская стрижка')
@@ -525,10 +525,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'krasotka_almaty_zhibek', data.client_phone, '77015678112', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:30:00+06'::timestamptz, 'Укладка волос'),
-    ('77016789004', 'confirmed', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 16:00:00+06'::timestamptz, 'Полное окрашивание'),
+    ('77016789004', 'created', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 16:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789002', 'completed', '2026-01-15 11:00:00+06'::timestamptz, '2026-01-15 12:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789004', 'pending', '2026-01-18 16:00:00+06'::timestamptz, '2026-01-18 16:30:00+06'::timestamptz, 'Укладка волос'),
-    ('77016789002', 'confirmed', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Полное окрашивание'),
+    ('77016789002', 'created', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789004', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 11:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789002', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:30:00+06'::timestamptz, 'Укладка волос'),
     ('77016789004', 'pending', '2026-01-25 12:00:00+06'::timestamptz, '2026-01-25 14:00:00+06'::timestamptz, 'Полное окрашивание')
@@ -541,10 +541,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'krasotka_almaty_zhibek', data.client_phone, '77015678113', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 10:00:00+06'::timestamptz, 'Классический маникюр'),
-    ('77016789004', 'confirmed', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Классический педикюр'),
+    ('77016789004', 'created', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Классический педикюр'),
     ('77016789002', 'completed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 16:00:00+06'::timestamptz, 'Классический маникюр'),
     ('77016789004', 'pending', '2026-01-18 14:00:00+06'::timestamptz, '2026-01-18 15:00:00+06'::timestamptz, 'Классический педикюр'),
-    ('77016789002', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:00:00+06'::timestamptz, 'Классический маникюр'),
+    ('77016789002', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:00:00+06'::timestamptz, 'Классический маникюр'),
     ('77016789004', 'pending', '2026-01-20 15:00:00+06'::timestamptz, '2026-01-20 16:00:00+06'::timestamptz, 'Классический педикюр'),
     ('77016789002', 'pending', '2026-01-22 10:00:00+06'::timestamptz, '2026-01-22 11:00:00+06'::timestamptz, 'Классический маникюр'),
     ('77016789004', 'pending', '2026-01-24 11:00:00+06'::timestamptz, '2026-01-24 12:00:00+06'::timestamptz, 'Классический педикюр')
@@ -561,10 +561,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'krasotka_almaty_alatau', data.client_phone, '77015678211', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789001', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 09:40:00+06'::timestamptz, 'Мужская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Женская стрижка'),
+    ('77016789002', 'created', '2026-01-15 14:00:00+06'::timestamptz, '2026-01-15 15:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789004', 'completed', '2026-01-16 11:00:00+06'::timestamptz, '2026-01-16 11:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-18 15:00:00+06'::timestamptz, '2026-01-18 15:40:00+06'::timestamptz, 'Мужская стрижка'),
-    ('77016789002', 'confirmed', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 13:00:00+06'::timestamptz, 'Женская стрижка'),
+    ('77016789002', 'created', '2026-01-19 12:00:00+06'::timestamptz, '2026-01-19 13:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789004', 'pending', '2026-01-20 10:00:00+06'::timestamptz, '2026-01-20 10:30:00+06'::timestamptz, 'Детская стрижка'),
     ('77016789001', 'pending', '2026-01-22 16:00:00+06'::timestamptz, '2026-01-22 16:40:00+06'::timestamptz, 'Мужская стрижка'),
     ('77016789002', 'pending', '2026-01-24 14:00:00+06'::timestamptz, '2026-01-24 15:00:00+06'::timestamptz, 'Женская стрижка')
@@ -577,10 +577,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'krasotka_almaty_alatau', data.client_phone, '77015678212', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 10:00:00+06'::timestamptz, '2026-01-13 10:30:00+06'::timestamptz, 'Укладка волос'),
-    ('77016789004', 'confirmed', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 16:00:00+06'::timestamptz, 'Полное окрашивание'),
+    ('77016789004', 'created', '2026-01-14 14:00:00+06'::timestamptz, '2026-01-14 16:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789002', 'completed', '2026-01-15 11:00:00+06'::timestamptz, '2026-01-15 12:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789004', 'pending', '2026-01-18 16:00:00+06'::timestamptz, '2026-01-18 16:30:00+06'::timestamptz, 'Укладка волос'),
-    ('77016789002', 'confirmed', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Полное окрашивание'),
+    ('77016789002', 'created', '2026-01-19 14:00:00+06'::timestamptz, '2026-01-19 16:00:00+06'::timestamptz, 'Полное окрашивание'),
     ('77016789004', 'pending', '2026-01-21 10:00:00+06'::timestamptz, '2026-01-21 11:00:00+06'::timestamptz, 'Женская стрижка'),
     ('77016789002', 'pending', '2026-01-23 15:00:00+06'::timestamptz, '2026-01-23 15:30:00+06'::timestamptz, 'Укладка волос'),
     ('77016789004', 'pending', '2026-01-25 12:00:00+06'::timestamptz, '2026-01-25 14:00:00+06'::timestamptz, 'Полное окрашивание')
@@ -593,10 +593,10 @@ INSERT INTO bagsies (service_id, point_code, client_phone, master_phone, status,
 SELECT s.id, 'krasotka_almaty_alatau', data.client_phone, '77015678213', data.status, ms.price, data.start_at, data.end_at, 'bagsy_seed'
 FROM (VALUES
     ('77016789002', 'completed', '2026-01-13 09:00:00+06'::timestamptz, '2026-01-13 10:00:00+06'::timestamptz, 'Аппаратный маникюр'),
-    ('77016789004', 'confirmed', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Аппаратный педикюр'),
+    ('77016789004', 'created', '2026-01-14 11:00:00+06'::timestamptz, '2026-01-14 12:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789002', 'completed', '2026-01-16 15:00:00+06'::timestamptz, '2026-01-16 16:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789004', 'pending', '2026-01-18 14:00:00+06'::timestamptz, '2026-01-18 15:00:00+06'::timestamptz, 'Аппаратный педикюр'),
-    ('77016789002', 'confirmed', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:00:00+06'::timestamptz, 'Аппаратный маникюр'),
+    ('77016789002', 'created', '2026-01-19 10:00:00+06'::timestamptz, '2026-01-19 11:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789004', 'pending', '2026-01-20 15:00:00+06'::timestamptz, '2026-01-20 16:00:00+06'::timestamptz, 'Аппаратный педикюр'),
     ('77016789002', 'pending', '2026-01-22 10:00:00+06'::timestamptz, '2026-01-22 11:00:00+06'::timestamptz, 'Аппаратный маникюр'),
     ('77016789004', 'pending', '2026-01-24 11:00:00+06'::timestamptz, '2026-01-24 12:00:00+06'::timestamptz, 'Аппаратный педикюр')
