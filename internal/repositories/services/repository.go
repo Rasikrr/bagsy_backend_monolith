@@ -45,24 +45,23 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.
 	return mm.convert(), nil
 }
 
-func (r *Repository) Create(ctx context.Context, cmd *service.CreateServiceCommand) (uuid.UUID, error) {
-	m := convertCreateCommand(cmd)
-	var id uuid.UUID
+func (r *Repository) Create(ctx context.Context, service *service.Service) error {
+	m := convert(service)
 	err := r.db.QueryRow(ctx, createService,
 		m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
-		m.Description, m.DurationMinutes, m.Active, m.UpdatedBy, m.Color,
-	).Scan(&id)
+		m.Description, m.DurationMinutes, m.Color, m.Active, m.UpdatedBy,
+	).Scan(&service.ID)
 	if err != nil {
-		return uuid.Nil, domainErr.NewInternalError("failed to create service in db", err)
+		return domainErr.NewInternalError("failed to create service in db", err)
 	}
-	return id, nil
+	return nil
 }
 
-func (r *Repository) Update(ctx context.Context, cmd *service.UpdateServiceCommand) error {
-	m := convertUpdateCommand(cmd)
+func (r *Repository) Update(ctx context.Context, service *service.Service) error {
+	m := convert(service)
 	_, err := r.db.Exec(ctx, updateService,
 		m.ID, m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
-		m.Description, m.DurationMinutes, m.Active, m.UpdatedBy, m.Color,
+		m.Description, m.DurationMinutes, m.Active, m.Color, m.UpdatedBy,
 	)
 	if err != nil {
 		return domainErr.NewInternalError("failed to update service in db", err)

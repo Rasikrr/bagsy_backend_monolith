@@ -10,8 +10,8 @@ import (
 type Service struct {
 	ID              uuid.UUID
 	PointCode       string
-	Category        Category
-	Subcategory     *Subcategory // pointer, т.к. optional
+	CategoryID      int
+	SubcategoryID   *int
 	Name            string
 	Description     *string
 	DurationMinutes int

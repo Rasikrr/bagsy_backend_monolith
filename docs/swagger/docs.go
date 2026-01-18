@@ -2541,20 +2541,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_ports_http_handlers_services.categoryDTO": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "internal_ports_http_handlers_services.getServicesResponse": {
             "type": "object",
             "properties": {
@@ -2572,11 +2558,8 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
-                "category": {
-                    "$ref": "#/definitions/internal_ports_http_handlers_services.categoryDTO"
-                },
-                "color": {
-                    "type": "string"
+                "category_id": {
+                    "type": "integer"
                 },
                 "description": {
                     "type": "string"
@@ -2599,22 +2582,8 @@ const docTemplate = `{
                 "point_code": {
                     "type": "string"
                 },
-                "subcategory": {
-                    "$ref": "#/definitions/internal_ports_http_handlers_services.subcategoryDTO"
-                }
-            }
-        },
-        "internal_ports_http_handlers_services.subcategoryDTO": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
+                "subcategory_id": {
                     "type": "integer"
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         },
