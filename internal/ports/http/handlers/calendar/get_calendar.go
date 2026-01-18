@@ -13,15 +13,17 @@ import (
 // @Summary Получение календаря записей
 // @Description Возвращает записи за указанный период.
 // @Description Для Staff - только свои записи.
-// @Description Для Manager+ - записи всей точки (опционально с фильтром по мастеру).
+// @Description Для Manager - записи всей точки (опционально с фильтром по мастеру).
+// @Description Для SelfOwner/NetManager - записи по любой точке в сети (фильтр по точке). Также доступен фильтр по мастеру
+// @Description Максимальный промежуток между временными рамками - 35 дней
 // @Tags calendar
 // @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param from query string true "Дата начала в формате YYYY-MM-DD"
 // @Param to query string true "Дата окончания в формате YYYY-MM-DD"
-// @Param point_code query string false "Код точки для фильтрации (только для Manager+)"
-// @Param master_phone query string false "Телефон мастера для фильтрации (только для Manager+)"
+// @Param point_code query string false "Код точки для фильтрации (только для SelfOwner/NetManager)"
+// @Param master_phone query string false "Телефон мастера для фильтрации (только для Manager(включительно) и выше)"
 // @Success 200 {object} calendarResponseDTO
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"
 // @Failure 401 {object} errors.ErrorResponse "Требуется авторизация"

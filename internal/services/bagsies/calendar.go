@@ -13,6 +13,10 @@ import (
 	"github.com/samber/lo"
 )
 
+const (
+	maxCalendarRangeDays = 35
+)
+
 // GetCalendar возвращает календарь записей
 // Для Staff - только свои записи
 // Для Manager+ - записи всей точки (опционально с фильтром по мастеру)
@@ -23,6 +27,21 @@ func (s *Service) GetCalendar(
 	act, err := actor.GetActor(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if query.EndDate.Before(query.StartDate) {
+		return nil, domainErr.NewValidationError(
+			"calendar period is invalid",
+			"detail", "end_date is before start_date",
+		)
+	}
+
+	days := int(query.EndDate.Sub(query.StartDate).Hours()/24) + 1
+	if days > maxCalendarRangeDays {
+		return nil, domainErr.NewValidationError(
+			"calendar period is too large",
+			"max_days", "35",
+		).WithDetail("requested days", days)
 	}
 
 	filter, buildErr := s.buildCalendarFilter(ctx, act, query)

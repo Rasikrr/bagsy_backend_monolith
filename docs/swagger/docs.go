@@ -979,7 +979,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Возвращает записи за указанный период.\nДля Staff - только свои записи.\nДля Manager+ - записи всей точки (опционально с фильтром по мастеру).",
+                "description": "Возвращает записи за указанный период.\nДля Staff - только свои записи.\nДля Manager - записи всей точки (опционально с фильтром по мастеру).\nДля SelfOwner/NetManager - записи по любой точке в сети (фильтр по точке). Также доступен фильтр по мастеру\nМаксимальный промежуток между временными рамками - 35 дней",
                 "consumes": [
                     "application/json"
                 ],
@@ -1007,13 +1007,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Код точки для фильтрации (только для Manager+)",
+                        "description": "Код точки для фильтрации (только для SelfOwner/NetManager)",
                         "name": "point_code",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Телефон мастера для фильтрации (только для Manager+)",
+                        "description": "Телефон мастера для фильтрации (только для Manager(включительно) и выше)",
                         "name": "master_phone",
                         "in": "query"
                     }

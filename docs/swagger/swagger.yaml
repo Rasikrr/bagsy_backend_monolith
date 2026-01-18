@@ -1370,7 +1370,9 @@ paths:
       description: |-
         Возвращает записи за указанный период.
         Для Staff - только свои записи.
-        Для Manager+ - записи всей точки (опционально с фильтром по мастеру).
+        Для Manager - записи всей точки (опционально с фильтром по мастеру).
+        Для SelfOwner/NetManager - записи по любой точке в сети (фильтр по точке). Также доступен фильтр по мастеру
+        Максимальный промежуток между временными рамками - 35 дней
       parameters:
       - description: Дата начала в формате YYYY-MM-DD
         in: query
@@ -1382,11 +1384,12 @@ paths:
         name: to
         required: true
         type: string
-      - description: Код точки для фильтрации (только для Manager+)
+      - description: Код точки для фильтрации (только для SelfOwner/NetManager)
         in: query
         name: point_code
         type: string
-      - description: Телефон мастера для фильтрации (только для Manager+)
+      - description: Телефон мастера для фильтрации (только для Manager(включительно)
+          и выше)
         in: query
         name: master_phone
         type: string
