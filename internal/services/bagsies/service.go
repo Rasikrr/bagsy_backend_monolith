@@ -102,11 +102,12 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 	var (
 		bagsyID uuid.UUID
 		err     error
+		exists  bool
 	)
 	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
 		func(txCtx context.Context) error {
 			// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
-			exists, err := s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
+			exists, err = s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
 			if err != nil {
 				return err
 			}
