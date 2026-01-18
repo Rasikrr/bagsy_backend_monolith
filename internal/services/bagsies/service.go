@@ -38,6 +38,7 @@ type masterServicesService interface {
 
 type servicesService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error)
 }
 
 type usersService interface {

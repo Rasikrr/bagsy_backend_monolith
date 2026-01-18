@@ -30,7 +30,7 @@ func convert(e *service.Subcategory) model {
 		ID:                e.ID,
 		Name:              e.Name,
 		Description:       e.Description,
-		ServiceCategoryID: e.ServiceCategoryID,
+		ServiceCategoryID: e.CategoryID,
 		CreatedAt:         e.CreatedAt,
 		UpdatedAt:         e.UpdatedAt,
 		UpdatedBy:         e.UpdatedBy,
@@ -39,13 +39,13 @@ func convert(e *service.Subcategory) model {
 
 func (m model) convert() *service.Subcategory {
 	return &service.Subcategory{
-		ID:                m.ID,
-		Name:              m.Name,
-		Description:       m.Description,
-		ServiceCategoryID: m.ServiceCategoryID,
-		CreatedAt:         m.CreatedAt,
-		UpdatedAt:         m.UpdatedAt,
-		UpdatedBy:         m.UpdatedBy,
+		ID:          m.ID,
+		Name:        m.Name,
+		Description: m.Description,
+		CategoryID:  m.ServiceCategoryID,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+		UpdatedBy:   m.UpdatedBy,
 	}
 }
 

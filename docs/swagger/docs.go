@@ -972,6 +972,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/calendar": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает записи за указанный период.\nДля Staff - только свои записи.\nДля Manager+ - записи всей точки (опционально с фильтром по мастеру).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Получение календаря записей",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Дата начала в формате YYYY-MM-DD",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата окончания в формате YYYY-MM-DD",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Код точки для фильтрации (только для Manager+)",
+                        "name": "point_code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Телефон мастера для фильтрации (только для Manager+)",
+                        "name": "master_phone",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_calendar.calendarResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/forms": {
             "post": {
                 "description": "Создает новую заявку на сотрудничество",
@@ -2234,6 +2308,92 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_calendar.bagsyInfoDTO": {
+            "type": "object",
+            "properties": {
+                "client_phone": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.calendarDTO": {
+            "type": "object",
+            "properties": {
+                "bagsy_info": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_calendar.bagsyInfoDTO"
+                },
+                "service_info": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_calendar.serviceInfoDTO"
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.calendarResponseDTO": {
+            "type": "object",
+            "properties": {
+                "calendar": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_calendar.calendarDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.serviceInfoDTO": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_form.clientFormRequest": {
             "type": "object",
             "required": [
@@ -2362,6 +2522,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_services.categoryDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_services.getServicesResponse": {
             "type": "object",
             "properties": {
@@ -2379,8 +2553,11 @@ const docTemplate = `{
                 "active": {
                     "type": "boolean"
                 },
-                "category_id": {
-                    "type": "integer"
+                "category": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_services.categoryDTO"
+                },
+                "color": {
+                    "type": "string"
                 },
                 "description": {
                     "type": "string"
@@ -2397,8 +2574,22 @@ const docTemplate = `{
                 "point_code": {
                     "type": "string"
                 },
-                "subcategory_id": {
+                "subcategory": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_services.subcategoryDTO"
+                }
+            }
+        },
+        "internal_ports_http_handlers_services.subcategoryDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

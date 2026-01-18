@@ -371,6 +371,62 @@ definitions:
     required:
     - bagsy_id
     type: object
+  internal_ports_http_handlers_calendar.bagsyInfoDTO:
+    properties:
+      client_phone:
+        type: string
+      comment:
+        type: string
+      created_at:
+        type: string
+      end_at:
+        type: string
+      id:
+        type: string
+      master_phone:
+        type: string
+      point_code:
+        type: string
+      price:
+        type: number
+      start_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_calendar.calendarDTO:
+    properties:
+      bagsy_info:
+        $ref: '#/definitions/internal_ports_http_handlers_calendar.bagsyInfoDTO'
+      service_info:
+        $ref: '#/definitions/internal_ports_http_handlers_calendar.serviceInfoDTO'
+    type: object
+  internal_ports_http_handlers_calendar.calendarResponseDTO:
+    properties:
+      calendar:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_calendar.calendarDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_calendar.serviceInfoDTO:
+    properties:
+      color:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      duration_minutes:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
   internal_ports_http_handlers_form.clientFormRequest:
     properties:
       description:
@@ -460,6 +516,15 @@ definitions:
     - name
     - network_code
     type: object
+  internal_ports_http_handlers_services.categoryDTO:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   internal_ports_http_handlers_services.getServicesResponse:
     properties:
       services:
@@ -471,8 +536,10 @@ definitions:
     properties:
       active:
         type: boolean
-      category_id:
-        type: integer
+      category:
+        $ref: '#/definitions/internal_ports_http_handlers_services.categoryDTO'
+      color:
+        type: string
       description:
         type: string
       duration_minutes:
@@ -483,8 +550,17 @@ definitions:
         type: string
       point_code:
         type: string
-      subcategory_id:
+      subcategory:
+        $ref: '#/definitions/internal_ports_http_handlers_services.subcategoryDTO'
+    type: object
+  internal_ports_http_handlers_services.subcategoryDTO:
+    properties:
+      description:
+        type: string
+      id:
         type: integer
+      name:
+        type: string
     type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
@@ -1287,6 +1363,57 @@ paths:
       summary: Получить слоты на конкретный день
       tags:
       - bagsies
+  /api/v1/calendar:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Возвращает записи за указанный период.
+        Для Staff - только свои записи.
+        Для Manager+ - записи всей точки (опционально с фильтром по мастеру).
+      parameters:
+      - description: Дата начала в формате YYYY-MM-DD
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Дата окончания в формате YYYY-MM-DD
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: Код точки для фильтрации (только для Manager+)
+        in: query
+        name: point_code
+        type: string
+      - description: Телефон мастера для фильтрации (только для Manager+)
+        in: query
+        name: master_phone
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_calendar.calendarResponseDTO'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение календаря записей
+      tags:
+      - calendar
   /api/v1/forms:
     post:
       consumes:
