@@ -15,8 +15,8 @@ import (
 
 //go:generate easyjson -all models.go
 
-// Константа для периода слотов (2 недели)
-const defaultSlotsPeriodDays = 14
+// Константа для периода слотов (4 недели)
+const defaultSlotsPeriodDays = 28
 
 type getSlotsRequest struct {
 	PointCode   string  `json:"point_code" validate:"required"`
