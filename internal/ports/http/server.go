@@ -75,7 +75,7 @@ func NewServer(
 	bagsiesController := bagsies.New(bagsiesService, authMiddleware)
 	pointsController := points.New(pointsService, authMiddleware)
 	networksController := networks.New(networksService, pointsService, authMiddleware)
-	servicesController := services.New(servicesService)
+	servicesController := services.New(servicesService, authMiddleware)
 	mediaController := media.New(mediaService, authMiddleware)
 	calendarController := calendar.New(bagsiesService, authMiddleware)
 	pointCategoriesController := pointcategories.New(pointCategoriesService)

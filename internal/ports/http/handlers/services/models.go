@@ -1,11 +1,60 @@
 package services
 
 import (
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	"github.com/google/uuid"
 )
 
 //go:generate easyjson -all models.go
+
+type createServiceRequest struct {
+	PointCode       string  `json:"point_code" validate:"required"`
+	CategoryID      int     `json:"category_id" validate:"required,gt=0"`
+	SubcategoryID   *int    `json:"subcategory_id,omitempty"`
+	Name            string  `json:"name" validate:"required,min=1,max=255"`
+	Description     *string `json:"description,omitempty"`
+	DurationMinutes int     `json:"duration_minutes" validate:"required,gt=0"`
+	Active          bool    `json:"active"`
+	Color           string  `json:"color" validate:"required"`
+}
+
+type createServiceResponse struct {
+	ServiceID uuid.UUID `json:"service_id"`
+}
+
+func newCreateServiceResponse(serviceID uuid.UUID) *createServiceResponse {
+	return &createServiceResponse{
+		ServiceID: serviceID,
+	}
+}
+
+func (r *createServiceRequest) Validate() error {
+	err := request.GetValidator().Struct(r)
+	if err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (r *createServiceRequest) toCommand(updatedBy string) (*service.CreateServiceCommand, error) {
+	color, err := service.ColorString(r.Color)
+	if err != nil {
+		return nil, domainErr.NewInvalidInputError("invalid color value", err)
+	}
+	return &service.CreateServiceCommand{
+		PointCode:       r.PointCode,
+		CategoryID:      r.CategoryID,
+		SubcategoryID:   r.SubcategoryID,
+		Name:            r.Name,
+		Description:     r.Description,
+		DurationMinutes: r.DurationMinutes,
+		Active:          r.Active,
+		UpdatedBy:       updatedBy,
+		Color:           color,
+	}, nil
+}
 
 type serviceDTO struct {
 	ID              uuid.UUID `json:"id"`
@@ -16,6 +65,7 @@ type serviceDTO struct {
 	Description     *string   `json:"description,omitempty"`
 	DurationMinutes int       `json:"duration_minutes"`
 	Active          bool      `json:"active"`
+	Color           string    `json:"color"`
 
 	MinPrice float64 `json:"min_price"`
 	MaxPrice float64 `json:"max_price"`
@@ -41,6 +91,7 @@ func toServiceDTO(s *service.Service) serviceDTO {
 		Description:     s.Description,
 		DurationMinutes: s.DurationMinutes,
 		Active:          s.Active,
+		Color:           s.Color.String(),
 		MinPrice:        minPrice,
 		MaxPrice:        maxPrice,
 	}

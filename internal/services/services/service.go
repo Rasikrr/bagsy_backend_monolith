@@ -10,7 +10,7 @@ import (
 )
 
 type servicesRepository interface {
-	Create(ctx context.Context, service *service.Service) error
+	Create(ctx context.Context, service *service.Service) (uuid.UUID, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
 	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error)
 	GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error)
@@ -35,8 +35,23 @@ func NewService(
 	}
 }
 
-func (s *Service) Create(ctx context.Context, service *service.Service) error {
-	return s.serviceRepository.Create(ctx, service)
+func (s *Service) Create(ctx context.Context, cmd *service.CreateServiceCommand) (uuid.UUID, error) {
+	svc := &service.Service{
+		PointCode:       cmd.PointCode,
+		CategoryID:      cmd.CategoryID,
+		SubcategoryID:   cmd.SubcategoryID,
+		Name:            cmd.Name,
+		Description:     cmd.Description,
+		DurationMinutes: cmd.DurationMinutes,
+		Active:          cmd.Active,
+		UpdatedBy:       &cmd.UpdatedBy,
+		Color:           cmd.Color,
+	}
+	id, err := s.serviceRepository.Create(ctx, svc)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
 }
 
 func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error) {
