@@ -70,6 +70,7 @@ func (s *Service) CreateOwner(ctx context.Context, cmd *user.CreateOwnerCommand)
 		Name:        cmd.Name,
 		Surname:     cmd.Surname,
 		Role:        cmd.Role,
+		Phone:       cmd.Phone,
 		NetworkCode: &cmd.NetworkCode,
 		Active:      true,
 	}
