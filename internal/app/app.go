@@ -6,6 +6,7 @@ import (
 	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
 	pointCategoriesC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/register"
+	serviceCategoriesC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/service_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/s3"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
@@ -17,6 +18,9 @@ import (
 	userAvatarR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/user_avatar"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
+	pointCategoryServicesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_category_services"
+	serviceCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/service_categories"
+	serviceSubcategoryR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/service_subcategory"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
@@ -41,6 +45,7 @@ import (
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
 	pointCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/point_categories"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
+	serviceCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/service_categories"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 )
 
@@ -50,28 +55,33 @@ type App struct {
 	smsClient      *sms.Client
 	whatsappClient *whatsapp.Client
 
-	tokensCache            *tokens.Cache
-	bagsyConfirmCache      *bagsyconfirm.Cache
-	registerCache          *register.Cache
-	pointCategoriesCache   *pointCategoriesC.Cache
+	tokensCache              *tokens.Cache
+	bagsyConfirmCache        *bagsyconfirm.Cache
+	registerCache            *register.Cache
+	pointCategoriesCache     *pointCategoriesC.Cache
+	serviceCategoriesCache   *serviceCategoriesC.Cache
 
-	usersRepo           *usersR.Repository
-	pointsRepo          *pointsR.Repository
-	networksRepo        *networksR.Repository
-	pointCategoriesRepo *pointCategoriesR.Repository
-	formsRepo           *formsR.Repository
-	bagsiesRepo         *bagsiesR.Repository
-	masterServicesRepo  *masterServicesR.Repository
-	servicesRepo        *servicesR.Repository
-	mediaRepo           *mediaR.Repository
-	userAvatarRepo      *userAvatarR.Repository
-	pointMediaRepo      *pointMediaR.Repository
+	usersRepo                 *usersR.Repository
+	pointsRepo                *pointsR.Repository
+	networksRepo              *networksR.Repository
+	pointCategoriesRepo       *pointCategoriesR.Repository
+	pointCategoryServicesRepo *pointCategoryServicesR.Repository
+	serviceCategoriesRepo     *serviceCategoriesR.Repository
+	serviceSubcategoriesRepo  *serviceSubcategoryR.Repository
+	formsRepo                 *formsR.Repository
+	bagsiesRepo               *bagsiesR.Repository
+	masterServicesRepo        *masterServicesR.Repository
+	servicesRepo              *servicesR.Repository
+	mediaRepo                 *mediaR.Repository
+	userAvatarRepo            *userAvatarR.Repository
+	pointMediaRepo            *pointMediaR.Repository
 
-	usersService            *usersS.Service
-	pointsService           *pointsS.Service
-	networksService         *networksS.Service
-	pointCategoriesService  *pointCategoriesS.Service
-	authService           *authS.Service
+	usersService              *usersS.Service
+	pointsService             *pointsS.Service
+	networksService           *networksS.Service
+	pointCategoriesService    *pointCategoriesS.Service
+	serviceCategoriesService  *serviceCategoriesS.Service
+	authService               *authS.Service
 	formsService          *formsS.Service
 	notificationsService  *notifications.Service
 	bagsiesService        *bagsies.Service
@@ -125,6 +135,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.servicesService,
 		a.mediaService,
 		a.pointCategoriesService,
+		a.serviceCategoriesService,
 	)
 	return nil
 }
@@ -151,6 +162,7 @@ func (a *App) initCache(_ context.Context) error {
 	)
 
 	a.pointCategoriesCache = pointCategoriesC.New(a.Redis())
+	a.serviceCategoriesCache = serviceCategoriesC.New(a.Redis())
 	return nil
 }
 
@@ -159,6 +171,9 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.pointsRepo = pointsR.NewRepository(a.Postgres())
 	a.networksRepo = networksR.NewRepository(a.Postgres())
 	a.pointCategoriesRepo = pointCategoriesR.NewRepository(a.Postgres())
+	a.pointCategoryServicesRepo = pointCategoryServicesR.NewRepository(a.Postgres())
+	a.serviceCategoriesRepo = serviceCategoriesR.NewRepository(a.Postgres())
+	a.serviceSubcategoriesRepo = serviceSubcategoryR.NewRepository(a.Postgres())
 	a.formsRepo = formsR.NewRepository(a.Postgres())
 	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
@@ -205,6 +220,16 @@ func (a *App) initServices(_ context.Context) error {
 		a.pointsMediaService,
 		a.PostgresTXManager(),
 	)
+
+	a.serviceCategoriesService = serviceCategoriesS.NewService(
+		a.pointsService,
+		a.pointCategoryServicesRepo,
+		a.serviceCategoriesRepo,
+		a.serviceSubcategoriesRepo,
+		a.serviceCategoriesCache,
+		vars.GetDuration(appenv.ServiceCategoriesTTL),
+	)
+
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(
 		a.smsClient,

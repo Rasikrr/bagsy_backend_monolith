@@ -242,3 +242,9 @@ env:
     env_name: "POINT_CATEGORIES_TTL"
     value: "3600s"
     required: true
+
+  service_categories_ttl:
+    type: "duration"
+    env_name: "SERVICE_CATEGORIES_TTL"
+    value: "3600s"
+    required: true
