@@ -591,11 +591,17 @@ definitions:
     type: object
   internal_ports_http_handlers_services.createServiceRequest:
     properties:
-      active:
-        type: boolean
       category_id:
         type: integer
       color:
+        enum:
+        - black
+        - green
+        - red
+        - yellow
+        - purple
+        - orange
+        - gray
         type: string
       description:
         type: string

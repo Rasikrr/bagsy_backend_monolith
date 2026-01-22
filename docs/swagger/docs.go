@@ -2856,14 +2856,20 @@ const docTemplate = `{
                 "point_code"
             ],
             "properties": {
-                "active": {
-                    "type": "boolean"
-                },
                 "category_id": {
                     "type": "integer"
                 },
                 "color": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "black",
+                        "green",
+                        "red",
+                        "yellow",
+                        "purple",
+                        "orange",
+                        "gray"
+                    ]
                 },
                 "description": {
                     "type": "string"
