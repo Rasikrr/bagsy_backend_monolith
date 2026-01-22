@@ -61,9 +61,9 @@ func (s *Service) Create(ctx context.Context, cmd *service.CreateServiceCommand)
 
 	// Validate subcategory exists and belongs to category (if provided)
 	if cmd.SubcategoryID != nil {
-		subcategory, err := s.serviceSubcategoriesRepo.GetByID(ctx, *cmd.SubcategoryID)
-		if err != nil {
-			return uuid.Nil, err
+		subcategory, subcatErr := s.serviceSubcategoriesRepo.GetByID(ctx, *cmd.SubcategoryID)
+		if subcatErr != nil {
+			return uuid.Nil, subcatErr
 		}
 		if subcategory.CategoryID != cmd.CategoryID {
 			return uuid.Nil, domainErr.NewInvalidInputError("subcategory does not belong to category", nil)
