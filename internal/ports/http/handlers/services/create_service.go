@@ -33,7 +33,7 @@ func (c *Controller) createService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req createServiceRequest
-	if err := request.GetAndValidateData(r, &req); err != nil {
+	if err = request.GetAndValidateData(r, &req); err != nil {
 		errors.HandleError(ctx, w, err)
 		return
 	}
