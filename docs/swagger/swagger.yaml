@@ -589,6 +589,33 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_ports_http_handlers_services.createServiceRequest:
+    properties:
+      active:
+        type: boolean
+      category_id:
+        type: integer
+      color:
+        type: string
+      description:
+        type: string
+      duration_minutes:
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      point_code:
+        type: string
+      subcategory_id:
+        type: integer
+    required:
+    - category_id
+    - color
+    - duration_minutes
+    - name
+    - point_code
+    type: object
   internal_ports_http_handlers_services.getServicesResponse:
     properties:
       services:
@@ -602,6 +629,8 @@ definitions:
         type: boolean
       category_id:
         type: integer
+      color:
+        type: string
       description:
         type: string
       duration_minutes:
@@ -1790,6 +1819,46 @@ paths:
       summary: Получить категории услуг по коду точки
       tags:
       - service-categories
+  /api/v1/services:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую услугу для точки обслуживания
+      parameters:
+      - description: Данные для создания услуги
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_services.createServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Услуга успешно создана
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_services.serviceDTO'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для создания услуги
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создать услугу
+      tags:
+      - services
   /api/v1/services/{point_code}:
     get:
       consumes:

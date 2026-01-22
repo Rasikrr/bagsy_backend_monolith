@@ -1522,6 +1522,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/services": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт новую услугу для точки обслуживания",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Создать услугу",
+                "parameters": [
+                    {
+                        "description": "Данные для создания услуги",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_services.createServiceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Услуга успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_services.serviceDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав для создания услуги",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/services/{point_code}": {
             "get": {
                 "description": "Возвращает список активных услуг для указанной точки",
@@ -2783,6 +2846,44 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_services.createServiceRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "color",
+                "duration_minutes",
+                "name",
+                "point_code"
+            ],
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "color": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "subcategory_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_ports_http_handlers_services.getServicesResponse": {
             "type": "object",
             "properties": {
@@ -2802,6 +2903,9 @@ const docTemplate = `{
                 },
                 "category_id": {
                     "type": "integer"
+                },
+                "color": {
+                    "type": "string"
                 },
                 "description": {
                     "type": "string"
