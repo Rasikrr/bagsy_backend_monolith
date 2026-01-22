@@ -1478,6 +1478,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/service-categories/{point_code}": {
+            "get": {
+                "description": "Возвращает список категорий услуг и их подкатегорий, доступных для указанной точки",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "service-categories"
+                ],
+                "summary": "Получить категории услуг по коду точки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код точки",
+                        "name": "point_code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список категорий услуг с подкатегориями",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_service_categories.getByPointCodeResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Точка не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/services/{point_code}": {
             "get": {
                 "description": "Возвращает список активных услуг для указанной точки",
@@ -2676,6 +2720,66 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_dto.ScheduleDTO"
                     }
+                }
+            }
+        },
+        "internal_ports_http_handlers_service_categories.categoryDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subcategories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_service_categories.subcategoryDTO"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_service_categories.getByPointCodeResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_service_categories.categoryDTO"
+                    }
+                },
+                "count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_service_categories.subcategoryDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
