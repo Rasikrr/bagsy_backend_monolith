@@ -384,8 +384,6 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			}
 		case "duration_minutes":
 			out.DurationMinutes = int(in.Int())
-		case "active":
-			out.Active = bool(in.Bool())
 		case "color":
 			out.Color = string(in.String())
 		default:
@@ -431,11 +429,6 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"duration_minutes\":"
 		out.RawString(prefix)
 		out.Int(int(in.DurationMinutes))
-	}
-	{
-		const prefix string = ",\"active\":"
-		out.RawString(prefix)
-		out.Bool(bool(in.Active))
 	}
 	{
 		const prefix string = ",\"color\":"
