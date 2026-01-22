@@ -236,3 +236,9 @@ env:
     env_name: "POINT_MEDIA_MAX_COUNT"
     value: 10
     required: true
+
+  point_categories_ttl:
+    type: "duration"
+    env_name: "POINT_CATEGORIES_TTL"
+    value: "3600s"
+    required: true

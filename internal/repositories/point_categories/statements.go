@@ -23,3 +23,9 @@ const updatePointCategory = `
 const deletePointCategory = `
 	DELETE FROM point_categories WHERE id = ANY($1)
 `
+
+const getAllPointCategories = `
+	SELECT id, name, description, created_at, updated_at, updated_by
+	FROM point_categories
+	ORDER BY id
+`

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
+	pointCategoriesC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/register"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/s3"
@@ -38,6 +39,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/media/users_photos"
 
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
+	pointCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/point_categories"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 )
@@ -48,9 +50,10 @@ type App struct {
 	smsClient      *sms.Client
 	whatsappClient *whatsapp.Client
 
-	tokensCache       *tokens.Cache
-	bagsyConfirmCache *bagsyconfirm.Cache
-	registerCache     *register.Cache
+	tokensCache            *tokens.Cache
+	bagsyConfirmCache      *bagsyconfirm.Cache
+	registerCache          *register.Cache
+	pointCategoriesCache   *pointCategoriesC.Cache
 
 	usersRepo           *usersR.Repository
 	pointsRepo          *pointsR.Repository
@@ -64,9 +67,10 @@ type App struct {
 	userAvatarRepo      *userAvatarR.Repository
 	pointMediaRepo      *pointMediaR.Repository
 
-	usersService          *usersS.Service
-	pointsService         *pointsS.Service
-	networksService       *networksS.Service
+	usersService            *usersS.Service
+	pointsService           *pointsS.Service
+	networksService         *networksS.Service
+	pointCategoriesService  *pointCategoriesS.Service
 	authService           *authS.Service
 	formsService          *formsS.Service
 	notificationsService  *notifications.Service
@@ -120,6 +124,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.networksService,
 		a.servicesService,
 		a.mediaService,
+		a.pointCategoriesService,
 	)
 	return nil
 }
@@ -144,6 +149,8 @@ func (a *App) initCache(_ context.Context) error {
 	a.registerCache = register.NewCache(
 		a.Redis(),
 	)
+
+	a.pointCategoriesCache = pointCategoriesC.New(a.Redis())
 	return nil
 }
 
@@ -166,6 +173,12 @@ func (a *App) initServices(_ context.Context) error {
 	vars := a.Config().Variables
 
 	a.networksService = networksS.NewService(a.networksRepo)
+
+	a.pointCategoriesService = pointCategoriesS.NewService(
+		a.pointCategoriesRepo,
+		a.pointCategoriesCache,
+		vars.GetDuration(appenv.PointCategoriesTTL),
+	)
 
 	a.mediaService = mediaS.NewService(
 		a.PostgresTXManager(),
