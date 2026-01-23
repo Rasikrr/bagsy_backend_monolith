@@ -150,6 +150,7 @@ func (s *Service) CreateStaff(ctx context.Context, cmd *user.CreateStaffCommand)
 	staff := &user.User{
 		Name:        cmd.Name,
 		Surname:     cmd.Surname,
+		Phone:       cmd.Phone,
 		Role:        cmd.Role,
 		NetworkCode: &cmd.NetworkCode,
 		PointCode:   &cmd.PointCode,

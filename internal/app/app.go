@@ -55,11 +55,11 @@ type App struct {
 	smsClient      *sms.Client
 	whatsappClient *whatsapp.Client
 
-	tokensCache              *tokens.Cache
-	bagsyConfirmCache        *bagsyconfirm.Cache
-	registerCache            *register.Cache
-	pointCategoriesCache     *pointCategoriesC.Cache
-	serviceCategoriesCache   *serviceCategoriesC.Cache
+	tokensCache            *tokens.Cache
+	bagsyConfirmCache      *bagsyconfirm.Cache
+	registerCache          *register.Cache
+	pointCategoriesCache   *pointCategoriesC.Cache
+	serviceCategoriesCache *serviceCategoriesC.Cache
 
 	usersRepo                 *usersR.Repository
 	pointsRepo                *pointsR.Repository
@@ -76,21 +76,21 @@ type App struct {
 	userAvatarRepo            *userAvatarR.Repository
 	pointMediaRepo            *pointMediaR.Repository
 
-	usersService              *usersS.Service
-	pointsService             *pointsS.Service
-	networksService           *networksS.Service
-	pointCategoriesService    *pointCategoriesS.Service
-	serviceCategoriesService  *serviceCategoriesS.Service
-	authService               *authS.Service
-	formsService          *formsS.Service
-	notificationsService  *notifications.Service
-	bagsiesService        *bagsies.Service
-	masterServicesService *masterservices.Service
-	servicesService       *services.Service
-	mediaService          *mediaS.Service
-	pointsMediaService    *pointphotos.Service
-	userPhotosService     *usersphotos.Service
-	registrationService   *registration.Service
+	usersService             *usersS.Service
+	pointsService            *pointsS.Service
+	networksService          *networksS.Service
+	pointCategoriesService   *pointCategoriesS.Service
+	serviceCategoriesService *serviceCategoriesS.Service
+	authService              *authS.Service
+	formsService             *formsS.Service
+	notificationsService     *notifications.Service
+	bagsiesService           *bagsies.Service
+	masterServicesService    *masterservices.Service
+	servicesService          *services.Service
+	mediaService             *mediaS.Service
+	pointsMediaService       *pointphotos.Service
+	userPhotosService        *usersphotos.Service
+	registrationService      *registration.Service
 
 	s3Client *s3.Client
 
