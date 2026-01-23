@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
 	pointCategoriesC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/point_categories"
@@ -12,16 +13,19 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/whatsapp"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
+	bagsyNotificationsJob "github.com/Rasikrr/bagsy_backend_monolith/internal/jobs/bagsy_notifications"
 	formsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/forms"
 	mediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/media"
 	pointMediaR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/point_media"
 	userAvatarR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media/user_avatar"
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
+	notificationsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/notifications"
 	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
 	pointCategoryServicesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_category_services"
 	serviceCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/service_categories"
 	serviceSubcategoryR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/service_subcategory"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
+	bagsyNotificationsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsy_notifications"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/notifications"
@@ -29,6 +33,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	"github.com/Rasikrr/core/application"
 	"github.com/Rasikrr/core/log"
+	"github.com/robfig/cron/v3"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/appenv"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
@@ -65,9 +70,6 @@ type App struct {
 	pointsRepo                *pointsR.Repository
 	networksRepo              *networksR.Repository
 	pointCategoriesRepo       *pointCategoriesR.Repository
-	pointCategoryServicesRepo *pointCategoryServicesR.Repository
-	serviceCategoriesRepo     *serviceCategoriesR.Repository
-	serviceSubcategoriesRepo  *serviceSubcategoryR.Repository
 	formsRepo                 *formsR.Repository
 	bagsiesRepo               *bagsiesR.Repository
 	masterServicesRepo        *masterServicesR.Repository
@@ -75,22 +77,27 @@ type App struct {
 	mediaRepo                 *mediaR.Repository
 	userAvatarRepo            *userAvatarR.Repository
 	pointMediaRepo            *pointMediaR.Repository
+	notificationsRepo         *notificationsR.Repository
+	pointCategoryServicesRepo *pointCategoryServicesR.Repository
+	serviceCategoriesRepo     *serviceCategoriesR.Repository
+	serviceSubcategoriesRepo  *serviceSubcategoryR.Repository
 
-	usersService             *usersS.Service
-	pointsService            *pointsS.Service
-	networksService          *networksS.Service
-	pointCategoriesService   *pointCategoriesS.Service
-	serviceCategoriesService *serviceCategoriesS.Service
-	authService              *authS.Service
-	formsService             *formsS.Service
-	notificationsService     *notifications.Service
-	bagsiesService           *bagsies.Service
-	masterServicesService    *masterservices.Service
-	servicesService          *services.Service
-	mediaService             *mediaS.Service
-	pointsMediaService       *pointphotos.Service
-	userPhotosService        *usersphotos.Service
-	registrationService      *registration.Service
+	usersService              *usersS.Service
+	pointsService             *pointsS.Service
+	networksService           *networksS.Service
+	authService               *authS.Service
+	formsService              *formsS.Service
+	notificationsService      *notifications.Service
+	bagsyNotificationsService *bagsyNotificationsS.Service
+	bagsiesService            *bagsies.Service
+	masterServicesService     *masterservices.Service
+	servicesService           *services.Service
+	mediaService              *mediaS.Service
+	pointsMediaService        *pointphotos.Service
+	userPhotosService         *usersphotos.Service
+	registrationService       *registration.Service
+	pointCategoriesService    *pointCategoriesS.Service
+	serviceCategoriesService  *serviceCategoriesS.Service
 
 	s3Client *s3.Client
 
@@ -181,9 +188,11 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.mediaRepo = mediaR.NewRepository(a.Postgres())
 	a.userAvatarRepo = userAvatarR.NewRepository(a.Postgres())
 	a.pointMediaRepo = pointMediaR.NewRepository(a.Postgres())
+	a.notificationsRepo = notificationsR.NewRepository(a.Postgres())
 	return nil
 }
 
+// nolint
 func (a *App) initServices(_ context.Context) error {
 	vars := a.Config().Variables
 
@@ -244,6 +253,12 @@ func (a *App) initServices(_ context.Context) error {
 		a.serviceSubcategoriesRepo,
 	)
 
+	// Сервис планирования уведомлений о записях
+	a.bagsyNotificationsService = bagsyNotificationsS.NewService(
+		a.notificationsRepo,
+		vars.GetInt(appenv.BagsyNotificationMaxAttempts),
+	)
+
 	a.usersService = usersS.NewService(
 		a.PostgresTXManager(),
 		a.usersRepo,
@@ -279,6 +294,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.usersService,
 		a.pointsService,
 		a.notificationsService,
+		a.bagsyNotificationsService,
 		a.bagsyConfirmCache,
 		vars.GetDuration(appenv.BagsyConfirmTTL),
 	)
@@ -315,31 +331,39 @@ func (a *App) initClients(ctx context.Context) error {
 	return err
 }
 
-// nolint
 func (a *App) initJobs(_ context.Context) error {
-	////1 если хочешь добавить настройки (таймзону, кронджобы в секундах и т.д)
-	//loc, err := time.LoadLocation("Asia/Almaty")
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//inactiveUserTTL, err := a.Config().Variables.GetDuration(appenv.InactiveUserTTL)
-	//if err != nil {
-	//	return err
-	//}
-	//inactiveUserJobSchedule, err := a.Config().Variables.GetString(appenv.InactiveUserJobSchedule)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//a.WithCronOptions(cron.WithSeconds(), cron.WithLocation(loc))
-	//// 2 доавбляешь джобы (расписание: если использовал опцию с секундами "* * * * * *", если не использовал, то "* * * * *")
-	//// ВАЖНО: если используешь секунды, то все джобы должны быть в секундном формате
-	//
-	//a.WithCronJobs(
-	//	jobs.NewExampleJob("example_job_2", "0 */1 * * * *"),
-	//	jobs.NewDeleteUnactivatedUsers("delete_inactive_users", inactiveUserJobSchedule, inactiveUserTTL, a.usersService),
-	//)
+	vars := a.Config().Variables
+
+	// Загружаем таймзону
+	loc, err := time.LoadLocation("Asia/Almaty")
+	if err != nil {
+		return err
+	}
+
+	// Настройки cron с секундами и таймзоной
+	a.WithCronOptions(cron.WithSeconds(), cron.WithLocation(loc))
+
+	// Создаем адаптер для отправки уведомлений
+	messengerAdapter := bagsyNotificationsJob.NewMessengerAdapter(
+		a.notificationsService,
+		a.servicesService,
+		a.usersService,
+		a.pointsService,
+		loc,
+	)
+
+	// Создаем джобу для отправки уведомлений о записях
+	notificationsJob := bagsyNotificationsJob.NewJob(
+		"bagsy_notifications",
+		vars.GetString(appenv.BagsyNotificationSchedule), // например "0 */1 * * * *" (каждую минуту)
+		vars.GetInt(appenv.BagsyNotificationBatchSize),   // например 100
+		vars.GetInt(appenv.BagsyNotificationWorkerCount), // например 5
+		a.bagsyNotificationsService,
+		a.bagsiesService,
+		messengerAdapter,
+	)
+
+	a.WithCronJobs(notificationsJob)
 
 	return nil
 }

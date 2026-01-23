@@ -237,6 +237,30 @@ env:
     value: 10
     required: true
 
+  # Bagsy notifications job settings
+  bagsy_notification_max_attempts:
+    type: "int"
+    env_name: "BAGSY_NOTIFICATION_MAX_ATTEMPTS"
+    value: 3
+    required: true
+
+  bagsy_notification_batch_size:
+    type: "int"
+    env_name: "BAGSY_NOTIFICATION_BATCH_SIZE"
+    value: 100
+    required: true
+
+  bagsy_notification_worker_count:
+    type: "int"
+    env_name: "BAGSY_NOTIFICATION_WORKER_COUNT"
+    value: 5
+    required: true
+
+  bagsy_notification_schedule:
+    type: "string"
+    env_name: "BAGSY_NOTIFICATION_SCHEDULE"
+    value: "0 */1 * * * *"  # каждую минуту (с секундами)
+    
   point_categories_ttl:
     type: "duration"
     env_name: "POINT_CATEGORIES_TTL"
