@@ -55,6 +55,14 @@ type notificationsService interface {
 	SendBagsyConfirmCode(ctx context.Context, phone, code string) error
 }
 
+// notificationScheduler интерфейс для планирования уведомлений о записях
+type notificationScheduler interface {
+	ScheduleForBagsy(ctx context.Context, bagsyID uuid.UUID, startAt time.Time) error
+	RescheduleForBagsy(ctx context.Context, bagsyID uuid.UUID, startAt time.Time) error
+	CancelForBagsy(ctx context.Context, bagsyID uuid.UUID) error
+	CancelForBagsies(ctx context.Context, bagsyIDs []uuid.UUID) error
+}
+
 type bagsyConfirmCodesCache interface {
 	GetCode(ctx context.Context, id uuid.UUID) (string, error)
 	SetCode(ctx context.Context, id uuid.UUID, code string, ttl time.Duration) error
@@ -68,6 +76,7 @@ type Service struct {
 	usersService           usersService
 	pointsService          pointsService
 	notificationsService   notificationsService
+	notificationScheduler  notificationScheduler
 	bagsyConfirmCodesCache bagsyConfirmCodesCache
 	confirmTTL             time.Duration
 }
@@ -80,6 +89,7 @@ func NewService(
 	usersService usersService,
 	pointsService pointsService,
 	notificationsService notificationsService,
+	notificationScheduler notificationScheduler,
 	bagsyConfirmCodesCache bagsyConfirmCodesCache,
 	confirmTTL time.Duration,
 ) *Service {
@@ -91,6 +101,7 @@ func NewService(
 		usersService:           usersService,
 		pointsService:          pointsService,
 		notificationsService:   notificationsService,
+		notificationScheduler:  notificationScheduler,
 		bagsyConfirmCodesCache: bagsyConfirmCodesCache,
 		confirmTTL:             confirmTTL,
 	}
@@ -197,6 +208,13 @@ func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) e
 	if err != nil {
 		return err
 	}
+
+	// Планируем уведомления о записи (за день и за час)
+	if err = s.notificationScheduler.ScheduleForBagsy(ctx, bagsyID, bag.StartAt); err != nil {
+		// Логируем ошибку, но не прерываем процесс подтверждения
+		log.Warnf(ctx, "failed to schedule notifications for bagsy %s: %v", bagsyID, err)
+	}
+
 	return nil
 }
 
@@ -313,4 +331,9 @@ func (s *Service) getMastersForSlots(ctx context.Context, cmd *bagsy.GetAvailabl
 
 	// Иначе получаем всех мастеров на точке с этой услугой
 	return s.masterServicesService.GetByPointCodeAndServiceID(ctx, cmd.PointCode, cmd.ServiceID)
+}
+
+// GetByID получает запись по ID
+func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*bagsy.Bagsy, error) {
+	return s.bagsiesRepository.GetByID(ctx, id)
 }

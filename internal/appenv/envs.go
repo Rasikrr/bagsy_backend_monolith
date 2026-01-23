@@ -25,6 +25,11 @@ const (
 
 	BagsyConfirmTTL = "bagsy_confirm_ttl"
 
+	BagsyNotificationMaxAttempts = "bagsy_notification_max_attempts"
+	BagsyNotificationBatchSize   = "bagsy_notification_batch_size"
+	BagsyNotificationWorkerCount = "bagsy_notification_worker_count"
+	BagsyNotificationSchedule    = "bagsy_notification_schedule"
+
 	AwsRegion          = "aws_region"
 	AwsS3BucketName    = "aws_s3_bucket_name"
 	AwsS3Endpoint      = "aws_s3_endpoint"
