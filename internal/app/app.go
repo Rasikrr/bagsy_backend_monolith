@@ -60,22 +60,27 @@ type App struct {
 	smsClient      *sms.Client
 	whatsappClient *whatsapp.Client
 
-	tokensCache       *tokens.Cache
-	bagsyConfirmCache *bagsyconfirm.Cache
-	registerCache     *register.Cache
+	tokensCache            *tokens.Cache
+	bagsyConfirmCache      *bagsyconfirm.Cache
+	registerCache          *register.Cache
+	pointCategoriesCache   *pointCategoriesC.Cache
+	serviceCategoriesCache *serviceCategoriesC.Cache
 
-	usersRepo           *usersR.Repository
-	pointsRepo          *pointsR.Repository
-	networksRepo        *networksR.Repository
-	pointCategoriesRepo *pointCategoriesR.Repository
-	formsRepo           *formsR.Repository
-	bagsiesRepo         *bagsiesR.Repository
-	masterServicesRepo  *masterServicesR.Repository
-	servicesRepo        *servicesR.Repository
-	mediaRepo           *mediaR.Repository
-	userAvatarRepo      *userAvatarR.Repository
-	pointMediaRepo      *pointMediaR.Repository
-	notificationsRepo   *notificationsR.Repository
+	usersRepo                 *usersR.Repository
+	pointsRepo                *pointsR.Repository
+	networksRepo              *networksR.Repository
+	pointCategoriesRepo       *pointCategoriesR.Repository
+	formsRepo                 *formsR.Repository
+	bagsiesRepo               *bagsiesR.Repository
+	masterServicesRepo        *masterServicesR.Repository
+	servicesRepo              *servicesR.Repository
+	mediaRepo                 *mediaR.Repository
+	userAvatarRepo            *userAvatarR.Repository
+	pointMediaRepo            *pointMediaR.Repository
+	notificationsRepo         *notificationsR.Repository
+	pointCategoryServicesRepo *pointCategoryServicesR.Repository
+	serviceCategoriesRepo     *serviceCategoriesR.Repository
+	serviceSubcategoriesRepo  *serviceSubcategoryR.Repository
 
 	usersService              *usersS.Service
 	pointsService             *pointsS.Service
@@ -91,6 +96,8 @@ type App struct {
 	pointsMediaService        *pointphotos.Service
 	userPhotosService         *usersphotos.Service
 	registrationService       *registration.Service
+	pointCategoriesService    *pointCategoriesS.Service
+	serviceCategoriesService  *serviceCategoriesS.Service
 
 	s3Client *s3.Client
 
@@ -185,6 +192,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	return nil
 }
 
+// nolint
 func (a *App) initServices(_ context.Context) error {
 	vars := a.Config().Variables
 
