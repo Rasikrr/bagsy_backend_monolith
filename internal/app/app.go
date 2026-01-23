@@ -5,7 +5,9 @@ import (
 	"time"
 
 	bagsyconfirm "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/bagsy_confirm"
+	pointCategoriesC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/register"
+	serviceCategoriesC "github.com/Rasikrr/bagsy_backend_monolith/internal/cache/service_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/cache/tokens"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/s3"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/clients/sms"
@@ -19,6 +21,9 @@ import (
 	networksR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/networks"
 	notificationsR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/notifications"
 	pointCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_categories"
+	pointCategoryServicesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/point_category_services"
+	serviceCategoriesR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/service_categories"
+	serviceSubcategoryR "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/service_subcategory"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsies"
 	bagsyNotificationsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/bagsy_notifications"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
@@ -43,7 +48,9 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/services/media/users_photos"
 
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
+	pointCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/point_categories"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
+	serviceCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/service_categories"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 )
 
@@ -127,6 +134,8 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.networksService,
 		a.servicesService,
 		a.mediaService,
+		a.pointCategoriesService,
+		a.serviceCategoriesService,
 	)
 	return nil
 }
@@ -151,6 +160,9 @@ func (a *App) initCache(_ context.Context) error {
 	a.registerCache = register.NewCache(
 		a.Redis(),
 	)
+
+	a.pointCategoriesCache = pointCategoriesC.New(a.Redis())
+	a.serviceCategoriesCache = serviceCategoriesC.New(a.Redis())
 	return nil
 }
 
@@ -159,6 +171,9 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.pointsRepo = pointsR.NewRepository(a.Postgres())
 	a.networksRepo = networksR.NewRepository(a.Postgres())
 	a.pointCategoriesRepo = pointCategoriesR.NewRepository(a.Postgres())
+	a.pointCategoryServicesRepo = pointCategoryServicesR.NewRepository(a.Postgres())
+	a.serviceCategoriesRepo = serviceCategoriesR.NewRepository(a.Postgres())
+	a.serviceSubcategoriesRepo = serviceSubcategoryR.NewRepository(a.Postgres())
 	a.formsRepo = formsR.NewRepository(a.Postgres())
 	a.masterServicesRepo = masterServicesR.NewRepository(a.Postgres())
 	a.bagsiesRepo = bagsiesR.NewRepository(a.Postgres())
@@ -174,6 +189,12 @@ func (a *App) initServices(_ context.Context) error {
 	vars := a.Config().Variables
 
 	a.networksService = networksS.NewService(a.networksRepo)
+
+	a.pointCategoriesService = pointCategoriesS.NewService(
+		a.pointCategoriesRepo,
+		a.pointCategoriesCache,
+		vars.GetDuration(appenv.PointCategoriesTTL),
+	)
 
 	a.mediaService = mediaS.NewService(
 		a.PostgresTXManager(),
@@ -200,6 +221,16 @@ func (a *App) initServices(_ context.Context) error {
 		a.pointsMediaService,
 		a.PostgresTXManager(),
 	)
+
+	a.serviceCategoriesService = serviceCategoriesS.NewService(
+		a.pointsService,
+		a.pointCategoryServicesRepo,
+		a.serviceCategoriesRepo,
+		a.serviceSubcategoriesRepo,
+		a.serviceCategoriesCache,
+		vars.GetDuration(appenv.ServiceCategoriesTTL),
+	)
+
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(
 		a.smsClient,
@@ -207,7 +238,12 @@ func (a *App) initServices(_ context.Context) error {
 		vars.GetString(appenv.RegisterConfirmationURL),
 	)
 	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
-	a.servicesService = services.NewService(a.servicesRepo, a.masterServicesRepo)
+	a.servicesService = services.NewService(
+		a.servicesRepo,
+		a.masterServicesRepo,
+		a.serviceCategoriesRepo,
+		a.serviceSubcategoriesRepo,
+	)
 
 	// Сервис планирования уведомлений о записях
 	a.bagsyNotificationsService = bagsyNotificationsS.NewService(

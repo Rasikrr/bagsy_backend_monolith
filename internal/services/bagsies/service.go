@@ -189,6 +189,77 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 	return bagsyID, nil
 }
 
+// CreateByMaster создаёт бронь напрямую от имени мастера без подтверждения кода.
+// Статус сразу устанавливается в StatusCreated.
+func (s *Service) CreateByMaster(ctx context.Context, req *bagsy.CreateBagsyCommand) (uuid.UUID, error) {
+	log.Infof(ctx, "creating bagsy by master: client=%s, master=%s, service=%s, start_at=%s",
+		req.ClientPhone, req.MasterPhone, req.ServiceID, req.StartAt.Format(time.RFC3339))
+
+	var (
+		bagsyID uuid.UUID
+		err     error
+	)
+
+	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
+		func(txCtx context.Context) error {
+			exists, existsErr := s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
+			if existsErr != nil {
+				return existsErr
+			}
+
+			if !exists {
+				_, createErr := s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
+					Phone:   req.ClientPhone,
+					Name:    req.Name,
+					Surname: req.Surname,
+				})
+				if createErr != nil {
+					return createErr
+				}
+			}
+
+			pointService, serviceErr := s.servicesService.GetByID(txCtx, req.ServiceID)
+			if serviceErr != nil {
+				return serviceErr
+			}
+
+			masterService, masterServErr := s.masterServicesService.GetByMasterPhoneAndServiceID(txCtx, req.MasterPhone, req.ServiceID)
+			if masterServErr != nil {
+				return masterServErr
+			}
+
+			endAt := req.StartAt.Add(time.Minute * time.Duration(pointService.DurationMinutes))
+
+			bag := &bagsy.Bagsy{
+				ServiceID:   req.ServiceID,
+				PointCode:   pointService.PointCode,
+				ClientPhone: req.ClientPhone,
+				MasterPhone: masterService.MasterPhone,
+				Status:      bagsy.StatusCreated,
+				Price:       masterService.Price,
+				StartAt:     req.StartAt,
+				EndAt:       endAt,
+				Comment:     req.Comment,
+			}
+
+			bagsyID, err = s.bagsiesRepository.Create(txCtx, bag)
+			if err != nil {
+				return err
+			}
+
+			log.Infof(txCtx, "bagsy created by master: id=%s, point=%s, price=%v", bagsyID, pointService.PointCode, masterService.Price)
+			return nil
+		})
+
+	if err != nil {
+		log.Errorf(ctx, "failed to create bagsy by master: %v", err)
+		return uuid.Nil, err
+	}
+
+	log.Infof(ctx, "bagsy creation by master completed: id=%s", bagsyID)
+	return bagsyID, nil
+}
+
 func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) error {
 	bag, err := s.bagsiesRepository.GetByID(ctx, bagsyID)
 	if err != nil {

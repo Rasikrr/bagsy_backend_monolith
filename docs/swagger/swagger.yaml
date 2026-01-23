@@ -500,6 +500,28 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_ports_http_handlers_point_categories.categoryDTO:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_point_categories.getCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_point_categories.categoryDTO'
+        type: array
+      count:
+        type: integer
+    type: object
   internal_ports_http_handlers_points.createPointRequest:
     properties:
       address:
@@ -528,6 +550,78 @@ definitions:
     - name
     - network_code
     type: object
+  internal_ports_http_handlers_service_categories.categoryDTO:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      subcategories:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_service_categories.subcategoryDTO'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_service_categories.getByPointCodeResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_service_categories.categoryDTO'
+        type: array
+      count:
+        type: integer
+    type: object
+  internal_ports_http_handlers_service_categories.subcategoryDTO:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_services.createServiceRequest:
+    properties:
+      category_id:
+        type: integer
+      color:
+        enum:
+        - black
+        - green
+        - red
+        - yellow
+        - purple
+        - orange
+        - gray
+        type: string
+      description:
+        type: string
+      duration_minutes:
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      point_code:
+        type: string
+      subcategory_id:
+        type: integer
+    required:
+    - category_id
+    - color
+    - duration_minutes
+    - name
+    - point_code
+    type: object
   internal_ports_http_handlers_services.getServicesResponse:
     properties:
       services:
@@ -541,6 +635,8 @@ definitions:
         type: boolean
       category_id:
         type: integer
+      color:
+        type: string
       description:
         type: string
       duration_minutes:
@@ -1250,6 +1346,55 @@ paths:
       summary: Подтверждение брони
       tags:
       - bagsies
+  /api/v1/bagsies/master:
+    post:
+      consumes:
+      - application/json
+      description: Создает бронь напрямую от имени мастера без подтверждения кода.
+        Статус сразу created.
+      parameters:
+      - description: Данные для создания брони
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Бронь успешно создана
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_bagsies.createBagsyResponse'
+        "400":
+          description: Неверный формат запроса или валидация не пройдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Нет прав доступа
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "404":
+          description: Услуга или мастер не найдены
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "409":
+          description: Выбранное время уже занято у данного мастера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создание брони мастером
+      tags:
+      - bagsies
   /api/v1/bagsies/resend:
     post:
       consumes:
@@ -1545,6 +1690,25 @@ paths:
       summary: Получение списка точек сети
       tags:
       - networks
+  /api/v1/point-categories:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех категорий точек
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список категорий точек
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_point_categories.getCategoriesResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить список категорий точек
+      tags:
+      - point-categories
   /api/v1/points:
     post:
       consumes:
@@ -1631,6 +1795,76 @@ paths:
       summary: Получить точку обслуживания
       tags:
       - points
+  /api/v1/service-categories/{point_code}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список категорий услуг и их подкатегорий, доступных
+        для указанной точки
+      parameters:
+      - description: Код точки
+        in: path
+        name: point_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список категорий услуг с подкатегориями
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_service_categories.getByPointCodeResponse'
+        "404":
+          description: Точка не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      summary: Получить категории услуг по коду точки
+      tags:
+      - service-categories
+  /api/v1/services:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую услугу для точки обслуживания
+      parameters:
+      - description: Данные для создания услуги
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_services.createServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Услуга успешно создана
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_services.serviceDTO'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для создания услуги
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создать услугу
+      tags:
+      - services
   /api/v1/services/{point_code}:
     get:
       consumes:

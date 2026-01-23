@@ -15,8 +15,8 @@ import (
 
 //go:generate easyjson -all models.go
 
-// Константа для периода слотов (2 недели)
-const defaultSlotsPeriodDays = 14
+// Константа для периода слотов (4 недели)
+const defaultSlotsPeriodDays = 28
 
 type getSlotsRequest struct {
 	PointCode   string  `json:"point_code" validate:"required"`
@@ -109,10 +109,19 @@ func (c *createBagsyRequest) Validate() error {
 }
 
 func (c *createBagsyRequest) toDomain() *bagsy.CreateBagsyCommand {
+	// Конвертируем время: входящее время интерпретируем как Almaty и сохраняем в UTC
+	// (аналогично getSlotsForDayRequest.toDomain)
+	almatyLoc := time.FixedZone("Asia/Almaty", 5*60*60)
+	startAtAlmaty := time.Date(
+		c.StartAt.Year(), c.StartAt.Month(), c.StartAt.Day(),
+		c.StartAt.Hour(), c.StartAt.Minute(), c.StartAt.Second(), 0,
+		almatyLoc,
+	)
+
 	return &bagsy.CreateBagsyCommand{
 		ServiceID:   c.ServiceID,
 		MasterPhone: c.MasterPhone,
-		StartAt:     c.StartAt,
+		StartAt:     startAtAlmaty.UTC(),
 		ClientPhone: c.ClientPhone,
 		Name:        c.Name,
 		Surname:     c.Surname,

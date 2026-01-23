@@ -70,6 +70,7 @@ func (s *Service) CreateOwner(ctx context.Context, cmd *user.CreateOwnerCommand)
 		Name:        cmd.Name,
 		Surname:     cmd.Surname,
 		Role:        cmd.Role,
+		Phone:       cmd.Phone,
 		NetworkCode: &cmd.NetworkCode,
 		Active:      true,
 	}
@@ -149,6 +150,7 @@ func (s *Service) CreateStaff(ctx context.Context, cmd *user.CreateStaffCommand)
 	staff := &user.User{
 		Name:        cmd.Name,
 		Surname:     cmd.Surname,
+		Phone:       cmd.Phone,
 		Role:        cmd.Role,
 		NetworkCode: &cmd.NetworkCode,
 		PointCode:   &cmd.PointCode,

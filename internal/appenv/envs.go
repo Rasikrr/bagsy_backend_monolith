@@ -36,6 +36,8 @@ const (
 	AwsSecretAccessKey = "aws_secret_access_key"
 	AwsAccessKeyID     = "aws_access_key_id"
 
-	MediaTTL           = "media_ttl"
-	PointMediaMaxCount = "point_media_max_count"
+	MediaTTL               = "media_ttl"
+	PointMediaMaxCount     = "point_media_max_count"
+	PointCategoriesTTL     = "point_categories_ttl"
+	ServiceCategoriesTTL   = "service_categories_ttl"
 )

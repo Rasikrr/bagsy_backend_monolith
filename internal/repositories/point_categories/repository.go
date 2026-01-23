@@ -70,3 +70,15 @@ func (r *Repository) Delete(ctx context.Context, categories ...*point.Category) 
 	}
 	return nil
 }
+
+func (r *Repository) GetAll(ctx context.Context) ([]*point.Category, error) {
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getAllPointCategories)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*point.Category{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get point categories from db", err)
+	}
+	return mm.convert(), nil
+}

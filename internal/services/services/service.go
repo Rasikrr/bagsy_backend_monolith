@@ -3,14 +3,17 @@ package services
 import (
 	"context"
 
+	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	masterservice "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
 
+const defaultServiceActive = false
+
 type servicesRepository interface {
-	Create(ctx context.Context, service *service.Service) error
+	Create(ctx context.Context, service *service.Service) (uuid.UUID, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
 	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error)
 	GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error)
@@ -20,23 +23,69 @@ type masterServicesRepository interface {
 	GetByPointCodeAndServiceIDs(ctx context.Context, pointCode string, serviceID ...uuid.UUID) ([]*masterservice.MasterService, error)
 }
 
+type serviceCategoriesRepository interface {
+	GetByID(ctx context.Context, id int) (*service.Category, error)
+}
+
+type serviceSubcategoriesRepository interface {
+	GetByID(ctx context.Context, id int) (*service.Subcategory, error)
+}
+
 type Service struct {
-	masterServicesRepo masterServicesRepository
-	serviceRepository  servicesRepository
+	masterServicesRepo       masterServicesRepository
+	serviceRepository        servicesRepository
+	serviceCategoriesRepo    serviceCategoriesRepository
+	serviceSubcategoriesRepo serviceSubcategoriesRepository
 }
 
 func NewService(
 	repository servicesRepository,
 	masterServicesRepo masterServicesRepository,
+	serviceCategoriesRepo serviceCategoriesRepository,
+	serviceSubcategoriesRepo serviceSubcategoriesRepository,
 ) *Service {
 	return &Service{
-		masterServicesRepo: masterServicesRepo,
-		serviceRepository:  repository,
+		masterServicesRepo:       masterServicesRepo,
+		serviceRepository:        repository,
+		serviceCategoriesRepo:    serviceCategoriesRepo,
+		serviceSubcategoriesRepo: serviceSubcategoriesRepo,
 	}
 }
 
-func (s *Service) Create(ctx context.Context, service *service.Service) error {
-	return s.serviceRepository.Create(ctx, service)
+func (s *Service) Create(ctx context.Context, cmd *service.CreateServiceCommand) (uuid.UUID, error) {
+	// Validate category exists
+	_, err := s.serviceCategoriesRepo.GetByID(ctx, cmd.CategoryID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	// Validate subcategory exists and belongs to category (if provided)
+	if cmd.SubcategoryID != nil {
+		subcategory, subcatErr := s.serviceSubcategoriesRepo.GetByID(ctx, *cmd.SubcategoryID)
+		if subcatErr != nil {
+			return uuid.Nil, subcatErr
+		}
+		if subcategory.CategoryID != cmd.CategoryID {
+			return uuid.Nil, domainErr.NewInvalidInputError("subcategory does not belong to category", nil)
+		}
+	}
+
+	svc := &service.Service{
+		PointCode:       cmd.PointCode,
+		CategoryID:      cmd.CategoryID,
+		SubcategoryID:   cmd.SubcategoryID,
+		Name:            cmd.Name,
+		Description:     cmd.Description,
+		DurationMinutes: cmd.DurationMinutes,
+		Active:          defaultServiceActive,
+		UpdatedBy:       &cmd.UpdatedBy,
+		Color:           cmd.Color,
+	}
+	id, err := s.serviceRepository.Create(ctx, svc)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
 }
 
 func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error) {

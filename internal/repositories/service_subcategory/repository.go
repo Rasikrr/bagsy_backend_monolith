@@ -61,3 +61,18 @@ func (r *Repository) Delete(ctx context.Context, subcategories ...*service.Subca
 	}
 	return nil
 }
+
+func (r *Repository) GetByCategoryIDs(ctx context.Context, categoryIDs []int) ([]*service.Subcategory, error) {
+	if len(categoryIDs) == 0 {
+		return []*service.Subcategory{}, nil
+	}
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getServiceSubcategoriesByCategoryIDs, pq.Array(categoryIDs))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*service.Subcategory{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get service subcategories from db", err)
+	}
+	return mm.convert(), nil
+}

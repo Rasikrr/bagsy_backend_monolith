@@ -45,16 +45,17 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.
 	return mm.convert(), nil
 }
 
-func (r *Repository) Create(ctx context.Context, service *service.Service) error {
+func (r *Repository) Create(ctx context.Context, service *service.Service) (uuid.UUID, error) {
 	m := convert(service)
-	err := r.db.QueryRow(ctx, createService,
+	var newID uuid.UUID
+	err := pgxscan.Get(ctx, r.db, &newID, createService,
 		m.PointCode, m.CategoryID, m.SubcategoryID, m.Name,
 		m.Description, m.DurationMinutes, m.Color, m.Active, m.UpdatedBy,
-	).Scan(&service.ID)
+	)
 	if err != nil {
-		return domainErr.NewInternalError("failed to create service in db", err)
+		return uuid.Nil, domainErr.NewInternalError("failed to create service in db", err)
 	}
-	return nil
+	return newID, nil
 }
 
 func (r *Repository) Update(ctx context.Context, service *service.Service) error {

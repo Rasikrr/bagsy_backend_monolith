@@ -260,4 +260,15 @@ env:
     type: "string"
     env_name: "BAGSY_NOTIFICATION_SCHEDULE"
     value: "0 */1 * * * *"  # каждую минуту (с секундами)
+    
+  point_categories_ttl:
+    type: "duration"
+    env_name: "POINT_CATEGORIES_TTL"
+    value: "3600s"
+    required: true
+
+  service_categories_ttl:
+    type: "duration"
+    env_name: "SERVICE_CATEGORIES_TTL"
+    value: "3600s"
     required: true
