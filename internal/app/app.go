@@ -143,6 +143,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.mediaService,
 		a.pointCategoriesService,
 		a.serviceCategoriesService,
+		a.masterServicesService,
 	)
 	return nil
 }
@@ -245,7 +246,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.whatsappClient,
 		vars.GetString(appenv.RegisterConfirmationURL),
 	)
-	a.masterServicesService = masterservices.NewService(a.masterServicesRepo)
+	a.masterServicesService = masterservices.NewService(a.masterServicesRepo, a.usersRepo, a.servicesRepo)
 	a.servicesService = services.NewService(
 		a.servicesRepo,
 		a.masterServicesRepo,

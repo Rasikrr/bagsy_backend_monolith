@@ -41,6 +41,7 @@ func (r *Repository) GetByMasterPhoneAndServiceID(ctx context.Context, phone str
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, masterservice.ErrMasterServiceNotFound.WithError(err)
 		}
+		return nil, domainErr.NewInternalError("failed to get master service from db", err)
 	}
 	return m.convert(), nil
 }

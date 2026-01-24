@@ -3,6 +3,7 @@ package http
 
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/calendar"
+	masterservicesH "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/master_services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/networks"
 	pointcategories "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/point_categories"
@@ -10,6 +11,7 @@ import (
 	servicecategories "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/service_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/users"
+	masterServicesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
 	pointCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/point_categories"
@@ -65,6 +67,7 @@ func NewServer(
 	mediaService *mediaS.Service,
 	pointCategoriesService *pointCategoriesS.Service,
 	serviceCategoriesService *serviceCategoriesS.Service,
+	masterServicesService *masterServicesS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
 	rateLimiterFactory := middlewares.NewRateLimiterFactory(redis)
@@ -80,6 +83,7 @@ func NewServer(
 	calendarController := calendar.New(bagsiesService, authMiddleware)
 	pointCategoriesController := pointcategories.New(pointCategoriesService)
 	serviceCategoriesController := servicecategories.New(serviceCategoriesService)
+	masterServicesController := masterservicesH.New(masterServicesService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(
@@ -94,6 +98,7 @@ func NewServer(
 		calendarController,
 		pointCategoriesController,
 		serviceCategoriesController,
+		masterServicesController,
 	)
 
 	initSwagger(server, swaggerHost, swaggerScheme)

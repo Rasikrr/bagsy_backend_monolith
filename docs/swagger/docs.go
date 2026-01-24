@@ -1161,6 +1161,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/master-services": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт связь между мастером и услугой с указанной ценой. Staff создаёт для себя, Manager — для сотрудников своей точки, NetManager/SelfOwner — для сотрудников своей сети.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "master-services"
+                ],
+                "summary": "Создать связь мастер-услуга",
+                "parameters": [
+                    {
+                        "description": "Данные для создания связи мастер-услуга",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_master_services.createMasterServiceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Связь успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_master_services.createMasterServiceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Связь мастер-услуга уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/media/upload": {
             "post": {
                 "security": [
@@ -2652,6 +2721,45 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_master_services.createMasterServiceRequest": {
+            "type": "object",
+            "required": [
+                "price",
+                "service_id"
+            ],
+            "properties": {
+                "master_phone": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "price": {
+                    "type": "number"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_master_services.createMasterServiceResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "service_id": {
                     "type": "string"
                 }
             }
