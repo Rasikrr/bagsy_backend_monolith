@@ -96,7 +96,7 @@ func (s *Service) Create(ctx context.Context, cmd *masterservice.CreateMasterSer
 		UpdatedBy:   updatedBy,
 	}
 
-	if err := s.masterServicesRepo.Create(ctx, ms); err != nil {
+	if err = s.masterServicesRepo.Create(ctx, ms); err != nil {
 		return nil, err
 	}
 
