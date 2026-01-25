@@ -124,11 +124,20 @@ func (s *Service) authorizeAndGetTarget(ctx context.Context, act *actor.Actor, t
 			return nil, domainErr.NewForbiddenError("target user is not in your point")
 		}
 		return target, nil
-	case user.RoleNetManager, user.RoleSelfOwner:
+	case user.RoleNetManager:
 		// NetManager/SelfOwner cannot create for themselves, only for staff in their network
 		if targetPhone == act.Phone() {
 			return nil, domainErr.NewForbiddenError("net manager cannot create master service for themselves")
 		}
+		target, err := s.usersRepo.GetByPhone(ctx, targetPhone)
+		if err != nil {
+			return nil, err
+		}
+		if target.NetworkCode == nil || *target.NetworkCode != act.NetworkCode() {
+			return nil, domainErr.NewForbiddenError("target user is not in your network")
+		}
+		return target, nil
+	case user.RoleSelfOwner:
 		target, err := s.usersRepo.GetByPhone(ctx, targetPhone)
 		if err != nil {
 			return nil, err

@@ -230,7 +230,7 @@ func (r *updateScheduleRequest) Validate() error {
 		return request.HandleValidationError(err)
 	}
 
-	if len(r.Schedule) != 7 {
+	if len(r.Schedule) < 1 {
 		return domainErr.NewValidationError("schedule must contain exactly 7 days").
 			WithDetail("length", len(r.Schedule))
 	}
