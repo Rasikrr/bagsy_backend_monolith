@@ -16,7 +16,7 @@ type servicesRepository interface {
 	Create(ctx context.Context, service *service.Service) (uuid.UUID, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
 	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error)
-	GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error)
+	GetByPointCode(ctx context.Context, pointCode string, isActive *bool) ([]*service.Service, error)
 }
 
 type masterServicesRepository interface {
@@ -96,8 +96,8 @@ func (s *Service) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Ser
 	return s.serviceRepository.GetByIDs(ctx, ids)
 }
 
-func (s *Service) GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error) {
-	services, err := s.serviceRepository.GetByPointCode(ctx, pointCode)
+func (s *Service) GetByPointCode(ctx context.Context, pointCode string, isActive *bool) ([]*service.Service, error) {
+	services, err := s.serviceRepository.GetByPointCode(ctx, pointCode, isActive)
 	if err != nil {
 		return nil, err
 	}

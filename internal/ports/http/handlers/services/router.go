@@ -10,7 +10,7 @@ import (
 )
 
 type servicesService interface {
-	GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error)
+	GetByPointCode(ctx context.Context, pointCode string, isActive *bool) ([]*service.Service, error)
 	Create(ctx context.Context, cmd *service.CreateServiceCommand) (uuid.UUID, error)
 }
 

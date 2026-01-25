@@ -12,11 +12,12 @@ import (
 
 // getServicesByPointCode godoc
 // @Summary Получить список услуг по коду точки
-// @Description Возвращает список активных услуг для указанной точки
+// @Description Возвращает список услуг для указанной точки. По умолчанию возвращает все услуги.
 // @Tags services
 // @Accept json
 // @Produce json
 // @Param point_code path string true "Код точки"
+// @Param is_active query boolean false "Фильтр по активности услуги"
 // @Success 200 {object} getServicesResponse "Список услуг"
 // @Failure 400 {object} errors.ErrorResponse "Неверные параметры запроса"
 // @Failure 500 {object} errors.ErrorResponse "Внутренняя ошибка сервера"
@@ -30,7 +31,13 @@ func (c *Controller) getServicesByPointCode(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	services, err := c.servicesService.GetByPointCode(ctx, code)
+	var isActive *bool
+	if activeParam := r.URL.Query().Get("is_active"); activeParam != "" {
+		active := activeParam == "true"
+		isActive = &active
+	}
+
+	services, err := c.servicesService.GetByPointCode(ctx, code, isActive)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return

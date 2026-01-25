@@ -6,6 +6,7 @@ import (
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/Rasikrr/core/database/postgres"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
@@ -78,9 +79,14 @@ func (r *Repository) Delete(ctx context.Context, ids ...uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) GetByPointCode(ctx context.Context, pointCode string) ([]*service.Service, error) {
+func (r *Repository) GetByPointCode(ctx context.Context, pointCode string, isActive *bool) ([]*service.Service, error) {
+	query, args, err := buildGetByPointCodeQuery(pointCode, isActive)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to build query", err)
+	}
+
 	var mm models
-	err := pgxscan.Select(ctx, r.db, &mm, getServicesByPointCode, pointCode)
+	err = pgxscan.Select(ctx, r.db, &mm, query, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []*service.Service{}, nil
@@ -88,4 +94,20 @@ func (r *Repository) GetByPointCode(ctx context.Context, pointCode string) ([]*s
 		return nil, domainErr.NewInternalError("failed to get services from db", err)
 	}
 	return mm.convert(), nil
+}
+
+func buildGetByPointCodeQuery(pointCode string, isActive *bool) (string, []any, error) {
+	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).
+		Select("id", "point_code", "category_id", "subcategory_id", "name", "description",
+			"duration_minutes", "active", "color", "created_at", "updated_at", "updated_by").
+		From("services").
+		Where(sq.Eq{"point_code": pointCode})
+
+	if isActive != nil {
+		builder = builder.Where(sq.Eq{"active": *isActive})
+	}
+
+	builder = builder.OrderBy("name ASC")
+
+	return builder.ToSql()
 }
