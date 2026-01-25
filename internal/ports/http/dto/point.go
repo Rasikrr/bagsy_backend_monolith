@@ -3,6 +3,7 @@ package dto
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/samber/lo"
+	"time"
 )
 
 //go:generate easyjson -all point.go
@@ -19,11 +20,11 @@ type AddressDTO struct {
 }
 
 type ScheduleDTO struct {
-	WeekDay int    `json:"week_day" validate:"required,min=0,max=6"`
-	Open    string `json:"open" validate:"required"`
-	Close   string `json:"close" validate:"required"`
-	AllDay  bool   `json:"all_day"`
-	Comment string `json:"comment"`
+	WeekDay int       `json:"week_day" validate:"required,min=0,max=6"`
+	Open    time.Time `json:"open" validate:"required"`
+	Close   time.Time `json:"close" validate:"required"`
+	AllDay  bool      `json:"all_day"`
+	Comment string    `json:"comment"`
 }
 
 type PointResponse struct {
@@ -37,8 +38,8 @@ type PointResponse struct {
 	Active      bool          `json:"active"`
 	Schedule    []ScheduleDTO `json:"schedule,omitempty"`
 	Photos      []PointPhoto  `json:"photos,omitempty"`
-	CreatedAt   string        `json:"created_at"`
-	UpdatedAt   *string       `json:"updated_at,omitempty"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   *time.Time    `json:"updated_at,omitempty"`
 }
 
 type PointPhoto struct {
@@ -56,8 +57,8 @@ func ToPointResponse(point *point.Point) *PointResponse {
 	for _, s := range point.Schedule {
 		schedules = append(schedules, ScheduleDTO{
 			WeekDay: s.WeekDay,
-			Open:    s.Open.Format("15:04:05"),
-			Close:   s.Close.Format("15:04:05"),
+			Open:    s.Open.UTC(),
+			Close:   s.Close.UTC(),
 			AllDay:  s.AllDay,
 			Comment: s.Comment,
 		})
@@ -89,12 +90,12 @@ func ToPointResponse(point *point.Point) *PointResponse {
 		City:      point.City,
 		Active:    point.Active,
 		Schedule:  schedules,
-		CreatedAt: point.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: point.CreatedAt,
 	}
 
 	if point.UpdatedAt != nil {
-		updatedAt := point.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
-		resp.UpdatedAt = &updatedAt
+		updatedAt := point.UpdatedAt
+		resp.UpdatedAt = updatedAt
 	}
 
 	return resp

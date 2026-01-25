@@ -3,13 +3,13 @@ package users
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
-	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"github.com/google/uuid"
 )
 
@@ -112,8 +112,8 @@ func (r *getUsersRequest) toFilter() (*user.Filter, error) {
 
 type staffScheduleDTO struct {
 	WeekDay int    `json:"week_day"`
-	Open    string `json:"open"`
-	Close   string `json:"close"`
+	Open    time.Time `json:"open"`
+	Close   time.Time `json:"close"`
 	AllDay  bool   `json:"all_day"`
 	Comment string `json:"comment"`
 }
@@ -128,15 +128,15 @@ type userDTO struct {
 	Active      bool                `json:"active"`
 	AvatarURL   string              `json:"avatar_url,omitempty"`
 	Schedule    []*staffScheduleDTO `json:"schedule,omitempty"`
-	CreatedAt   string              `json:"created_at"`
-	UpdatedAt   *string             `json:"updated_at,omitempty"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   *time.Time             `json:"updated_at,omitempty"`
 }
 
 func toStaffScheduleDTO(schedule *user.ScheduleElement) *staffScheduleDTO {
 	return &staffScheduleDTO{
 		WeekDay: schedule.WeekDay,
-		Open:    schedule.Open.Format("15:04:05"),
-		Close:   schedule.Close.Format("15:04:05"),
+		Open:    schedule.Open,
+		Close:   schedule.Close,
 		AllDay:  schedule.AllDay,
 		Comment: schedule.Comment,
 	}
@@ -151,12 +151,12 @@ func toUserDTO(user *user.User) *userDTO {
 		PointCode:   user.PointCode,
 		NetworkCode: user.NetworkCode,
 		Active:      user.Active,
-		CreatedAt:   user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt:   user.CreatedAt,
 	}
 
 	if user.UpdatedAt != nil {
-		updatedAt := user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
-		d.UpdatedAt = &updatedAt
+		updatedAt := user.UpdatedAt
+		d.UpdatedAt = updatedAt
 	}
 
 	if len(user.Schedule) > 0 {
@@ -213,15 +213,15 @@ func (r *updateUserRequest) toDomain() *user.UpdateUserCommand {
 }
 
 type scheduleRequestDTO struct {
-	WeekDay int    `json:"week_day" validate:"min=0,max=6"`
-	From    string `json:"from" validate:"required"`
-	To      string `json:"to" validate:"required"`
-	AllDay  bool   `json:"all_day"`
-	Comment string `json:"comment"`
+	WeekDay int       `json:"week_day" validate:"min=0,max=6"`
+	From    time.Time `json:"from" validate:"required"`
+	To      time.Time `json:"to" validate:"required"`
+	AllDay  bool      `json:"all_day"`
+	Comment string    `json:"comment"`
 }
 
 type updateScheduleRequest struct {
-	Schedule []scheduleRequestDTO `json:"schedule" validate:"required,len=7,dive"`
+	Schedule []scheduleRequestDTO `json:"schedule" validate:"required"`
 }
 
 func (r *updateScheduleRequest) Validate() error {
@@ -242,24 +242,10 @@ func (r *updateScheduleRequest) toDomain() (user.Schedule, error) {
 	schedules := make(user.Schedule, 0, len(r.Schedule))
 
 	for _, s := range r.Schedule {
-		opens, err := timeutil.ConvertAlmatyTimeToUTC(s.From)
-		if err != nil {
-			return nil, domainErr.NewValidationError("invalid time format in schedule").
-				WithDetail("from", s.From).
-				WithError(err)
-		}
-
-		closes, err := timeutil.ConvertAlmatyTimeToUTC(s.To)
-		if err != nil {
-			return nil, domainErr.NewValidationError("invalid time format in schedule").
-				WithDetail("to", s.To).
-				WithError(err)
-		}
-
 		schedules = append(schedules, &user.ScheduleElement{
 			WeekDay: s.WeekDay,
-			Open:    opens,
-			Close:   closes,
+			Open:    s.From.UTC(),
+			Close:   s.To.UTC(),
 			AllDay:  s.AllDay,
 			Comment: s.Comment,
 		})

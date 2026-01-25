@@ -253,7 +253,7 @@ env:
   bagsy_notification_worker_count:
     type: "int"
     env_name: "BAGSY_NOTIFICATION_WORKER_COUNT"
-    value: 5
+    value: 0
     required: true
 
   bagsy_notification_schedule:

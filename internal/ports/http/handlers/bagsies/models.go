@@ -162,22 +162,16 @@ func (r *resentCodeRequest) Validate() error {
 	return nil
 }
 
-// ========== GET SLOTS FOR DAY ==========
-
 type getSlotsForDayRequest struct {
-	PointCode   string  `json:"point_code" validate:"required"`
-	ServiceID   string  `json:"service_id" validate:"required,uuid"`
-	Date        string  `json:"date" validate:"required"`
-	MasterPhone *string `json:"master_phone" validate:"omitempty,min=10"`
+	PointCode   string    `json:"point_code" validate:"required"`
+	ServiceID   string    `json:"service_id" validate:"required,uuid"`
+	Date        time.Time `json:"date" validate:"required"`
+	MasterPhone *string   `json:"master_phone" validate:"omitempty,min=10"`
 }
 
 func (r *getSlotsForDayRequest) Validate() error {
 	if err := request.GetValidator().Struct(r); err != nil {
 		return request.HandleValidationError(err)
-	}
-	_, err := time.Parse("2006-01-02", r.Date)
-	if err != nil {
-		return domainErr.NewValidationError("invalid date format, expected YYYY-MM-DD", err.Error())
 	}
 	return nil
 }
@@ -188,17 +182,16 @@ func (r *getSlotsForDayRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, err
 		return nil, domainErr.NewInvalidInputError("invalid service_id format", err)
 	}
 
-	date, _ := time.Parse("2006-01-02", r.Date)
-	almatyLoc := time.FixedZone("Asia/Almaty", 5*60*60)
-	startOfDayAlmaty := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, almatyLoc)
-	endOfDayAlmaty := startOfDayAlmaty.Add(24 * time.Hour)
+	// Вычисляем начало и конец дня в той же timezone, что пришла от клиента
+	startOfDay := time.Date(r.Date.Year(), r.Date.Month(), r.Date.Day(), 0, 0, 0, 0, r.Date.Location())
+	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	return &bagsy.GetAvailableSlotsCommand{
 		PointCode:   r.PointCode,
 		ServiceID:   serviceID,
 		MasterPhone: r.MasterPhone,
-		StartDate:   startOfDayAlmaty.UTC(),
-		EndDate:     endOfDayAlmaty.UTC(),
+		StartDate:   startOfDay.UTC(),
+		EndDate:     endOfDay.UTC(),
 	}, nil
 }
 
@@ -217,7 +210,7 @@ type getSlotsForDayResponse struct {
 	Masters         []masterSlotsResponse `json:"masters"`
 }
 
-func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlotsForDayResponse {
+func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date time.Time) *getSlotsForDayResponse {
 	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
 
 	for _, ms := range slots.MasterSlots {
@@ -246,7 +239,7 @@ func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlo
 	return &getSlotsForDayResponse{
 		ServiceID:       slots.ServiceID,
 		PointCode:       slots.PointCode,
-		Date:            date,
+		Date:            date.Format("2006-01-02"),
 		DurationMinutes: slots.DurationMinutes,
 		Masters:         masters,
 	}

@@ -7,6 +7,7 @@ import (
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
+	time "time"
 )
 
 // suppress unused package warning
@@ -39,9 +40,13 @@ func easyjson3844eb60DecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "week_day":
 			out.WeekDay = int(in.Int())
 		case "open":
-			out.Open = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Open).UnmarshalJSON(data))
+			}
 		case "close":
-			out.Close = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Close).UnmarshalJSON(data))
+			}
 		case "all_day":
 			out.AllDay = bool(in.Bool())
 		case "comment":
@@ -68,12 +73,12 @@ func easyjson3844eb60EncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"open\":"
 		out.RawString(prefix)
-		out.String(string(in.Open))
+		out.Raw((in.Open).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"close\":"
 		out.RawString(prefix)
-		out.String(string(in.Close))
+		out.Raw((in.Close).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"all_day\":"
@@ -279,7 +284,7 @@ func easyjson3844eb60DecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Schedule == nil {
 					if !in.IsDelim(']') {
-						out.Schedule = make([]ScheduleDTO, 0, 1)
+						out.Schedule = make([]ScheduleDTO, 0, 0)
 					} else {
 						out.Schedule = []ScheduleDTO{}
 					}
@@ -318,16 +323,20 @@ func easyjson3844eb60DecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim(']')
 			}
 		case "created_at":
-			out.CreatedAt = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.CreatedAt).UnmarshalJSON(data))
+			}
 		case "updated_at":
 			if in.IsNull() {
 				in.Skip()
 				out.UpdatedAt = nil
 			} else {
 				if out.UpdatedAt == nil {
-					out.UpdatedAt = new(string)
+					out.UpdatedAt = new(time.Time)
 				}
-				*out.UpdatedAt = string(in.String())
+				if data := in.Raw(); in.Ok() {
+					in.AddError((*out.UpdatedAt).UnmarshalJSON(data))
+				}
 			}
 		default:
 			in.SkipRecursive()
@@ -414,12 +423,12 @@ func easyjson3844eb60EncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"created_at\":"
 		out.RawString(prefix)
-		out.String(string(in.CreatedAt))
+		out.Raw((in.CreatedAt).MarshalJSON())
 	}
 	if in.UpdatedAt != nil {
 		const prefix string = ",\"updated_at\":"
 		out.RawString(prefix)
-		out.String(string(*in.UpdatedAt))
+		out.Raw((*in.UpdatedAt).MarshalJSON())
 	}
 	out.RawByte('}')
 }

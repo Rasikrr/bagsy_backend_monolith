@@ -41,7 +41,9 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "url":
 			out.URL = string(in.String())
 		case "expires_at":
-			out.ExpiresAt = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.ExpiresAt).UnmarshalJSON(data))
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -69,7 +71,7 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"expires_at\":"
 		out.RawString(prefix)
-		out.String(string(in.ExpiresAt))
+		out.Raw((in.ExpiresAt).MarshalJSON())
 	}
 	out.RawByte('}')
 }

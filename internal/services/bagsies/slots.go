@@ -105,7 +105,7 @@ func generateSlots(
 				durationMinutes,
 				slotStepMinutes,
 				occupiedByMaster[master.Phone],
-				startDate, // для фильтрации прошлых слотов
+				timeutil.ConvertUTCToAlmatyTime(time.Now()), // текущее время для фильтрации прошлых слотов
 			)
 
 			log.Debugf(ctx, "[slots] day=%s: generated %d slots", day.Format("2006-01-02"), len(daySlots))

@@ -1656,7 +1656,7 @@ const docTemplate = `{
         },
         "/api/v1/services/{point_code}": {
             "get": {
-                "description": "Возвращает список активных услуг для указанной точки",
+                "description": "Возвращает список услуг для указанной точки. По умолчанию возвращает все услуги.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1674,6 +1674,12 @@ const docTemplate = `{
                         "name": "point_code",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Фильтр по активности услуги",
+                        "name": "is_active",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2747,19 +2753,7 @@ const docTemplate = `{
         "internal_ports_http_handlers_master_services.createMasterServiceResponse": {
             "type": "object",
             "properties": {
-                "active": {
-                    "type": "boolean"
-                },
                 "id": {
-                    "type": "string"
-                },
-                "master_phone": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "service_id": {
                     "type": "string"
                 }
             }

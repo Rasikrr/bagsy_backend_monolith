@@ -478,15 +478,7 @@ definitions:
     type: object
   internal_ports_http_handlers_master_services.createMasterServiceResponse:
     properties:
-      active:
-        type: boolean
       id:
-        type: string
-      master_phone:
-        type: string
-      price:
-        type: number
-      service_id:
         type: string
     type: object
   internal_ports_http_handlers_media.getUploadURLRequest:
@@ -1941,13 +1933,18 @@ paths:
     get:
       consumes:
       - application/json
-      description: Возвращает список активных услуг для указанной точки
+      description: Возвращает список услуг для указанной точки. По умолчанию возвращает
+        все услуги.
       parameters:
       - description: Код точки
         in: path
         name: point_code
         required: true
         type: string
+      - description: Фильтр по активности услуги
+        in: query
+        name: is_active
+        type: boolean
       produces:
       - application/json
       responses:

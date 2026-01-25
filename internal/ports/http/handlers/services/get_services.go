@@ -3,6 +3,8 @@ package services
 
 import (
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	"github.com/Rasikrr/core/log"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 
@@ -31,13 +33,15 @@ func (c *Controller) getServicesByPointCode(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var isActive *bool
-	if activeParam := r.URL.Query().Get("is_active"); activeParam != "" {
-		active := activeParam == "true"
-		isActive = &active
+	var req getServicesRequest
+	if err := request.GetAndValidateData(r, &req); err != nil {
+		errors.HandleError(ctx, w, err)
+		return
 	}
 
-	services, err := c.servicesService.GetByPointCode(ctx, code, isActive)
+	log.Info(ctx, "req", log.Any("req", req))
+
+	services, err := c.servicesService.GetByPointCode(ctx, code, req.Active)
 	if err != nil {
 		errors.HandleError(ctx, w, err)
 		return
