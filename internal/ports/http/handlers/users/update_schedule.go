@@ -38,11 +38,7 @@ func (c *Controller) updateSchedule(w http.ResponseWriter, r *http.Request) {
 		errors.HandleError(ctx, w, err)
 		return
 	}
-	schedules, err := req.toDomain()
-	if err != nil {
-		errors.HandleError(ctx, w, err)
-		return
-	}
+	schedules := req.toDomain()
 
 	err = c.userService.UpdateSchedule(ctx, actor.Phone(), schedules)
 	if err != nil {
