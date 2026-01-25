@@ -103,6 +103,7 @@ func (s *Service) Create(ctx context.Context, cmd *masterservice.CreateMasterSer
 	return ms, nil
 }
 
+//nolint
 func (s *Service) authorizeAndGetTarget(ctx context.Context, act *actor.Actor, targetPhone string) (*user.User, error) {
 	switch act.Role() {
 	case user.RoleStaff:
