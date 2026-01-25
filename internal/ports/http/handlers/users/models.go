@@ -111,11 +111,11 @@ func (r *getUsersRequest) toFilter() (*user.Filter, error) {
 }
 
 type staffScheduleDTO struct {
-	WeekDay int    `json:"week_day"`
+	WeekDay int       `json:"week_day"`
 	Open    time.Time `json:"open"`
 	Close   time.Time `json:"close"`
-	AllDay  bool   `json:"all_day"`
-	Comment string `json:"comment"`
+	AllDay  bool      `json:"all_day"`
+	Comment string    `json:"comment"`
 }
 
 type userDTO struct {
@@ -128,8 +128,8 @@ type userDTO struct {
 	Active      bool                `json:"active"`
 	AvatarURL   string              `json:"avatar_url,omitempty"`
 	Schedule    []*staffScheduleDTO `json:"schedule,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   *time.Time             `json:"updated_at,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   *time.Time          `json:"updated_at,omitempty"`
 }
 
 func toStaffScheduleDTO(schedule *user.ScheduleElement) *staffScheduleDTO {
@@ -238,7 +238,7 @@ func (r *updateScheduleRequest) Validate() error {
 	return nil
 }
 
-func (r *updateScheduleRequest) toDomain() (user.Schedule, error) {
+func (r *updateScheduleRequest) toDomain() user.Schedule {
 	schedules := make(user.Schedule, 0, len(r.Schedule))
 
 	for _, s := range r.Schedule {
@@ -250,5 +250,5 @@ func (r *updateScheduleRequest) toDomain() (user.Schedule, error) {
 			Comment: s.Comment,
 		})
 	}
-	return schedules, nil
+	return schedules
 }
