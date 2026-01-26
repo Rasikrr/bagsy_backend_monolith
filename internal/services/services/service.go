@@ -5,6 +5,7 @@ import (
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	masterservice "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
+	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -96,19 +97,52 @@ func (s *Service) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Ser
 }
 
 func (s *Service) GetByPointCode(ctx context.Context, pointCode string, isActive *bool) ([]*service.Service, error) {
+	log.Info(ctx, "GetByPointCode started",
+		log.String("point_code", pointCode),
+		log.Any("is_active", isActive),
+	)
+
 	services, err := s.serviceRepository.GetByPointCode(ctx, pointCode, isActive)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Info(ctx, "services fetched",
+		log.Int("count", len(services)),
+	)
+
 	serviceIDs := lo.Map(services, func(item *service.Service, _ int) uuid.UUID { return item.ID })
+
+	log.Info(ctx, "fetching master services",
+		log.Int("service_ids_count", len(serviceIDs)),
+	)
 
 	masterServices, err := s.masterServicesRepo.GetByPointCodeAndServiceIDs(ctx, pointCode, serviceIDs...)
 	if err != nil {
 		return nil, err
 	}
 
+	log.Info(ctx, "master services fetched",
+		log.Int("count", len(masterServices)),
+	)
+
+	for i, ms := range masterServices {
+		log.Info(ctx, "master service",
+			log.Int("index", i),
+			log.String("service_id", ms.ServiceID.String()),
+			log.Any("price", ms.Price),
+		)
+	}
+
 	enrichWithPrices(services, masterServices)
+
+	for _, serv := range services {
+		log.Info(ctx, "service after enrich",
+			log.String("service_id", serv.ID.String()),
+			log.Any("min_price", serv.MinPrice),
+			log.Any("max_price", serv.MaxPrice),
+		)
+	}
 
 	return services, nil
 }
