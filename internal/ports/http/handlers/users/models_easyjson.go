@@ -8,6 +8,7 @@ import (
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
+	time "time"
 )
 
 // suppress unused package warning
@@ -101,16 +102,20 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim(']')
 			}
 		case "created_at":
-			out.CreatedAt = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.CreatedAt).UnmarshalJSON(data))
+			}
 		case "updated_at":
 			if in.IsNull() {
 				in.Skip()
 				out.UpdatedAt = nil
 			} else {
 				if out.UpdatedAt == nil {
-					out.UpdatedAt = new(string)
+					out.UpdatedAt = new(time.Time)
 				}
-				*out.UpdatedAt = string(in.String())
+				if data := in.Raw(); in.Ok() {
+					in.AddError((*out.UpdatedAt).UnmarshalJSON(data))
+				}
 			}
 		default:
 			in.SkipRecursive()
@@ -187,12 +192,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"created_at\":"
 		out.RawString(prefix)
-		out.String(string(in.CreatedAt))
+		out.Raw((in.CreatedAt).MarshalJSON())
 	}
 	if in.UpdatedAt != nil {
 		const prefix string = ",\"updated_at\":"
 		out.RawString(prefix)
-		out.String(string(*in.UpdatedAt))
+		out.Raw((*in.UpdatedAt).MarshalJSON())
 	}
 	out.RawByte('}')
 }
@@ -341,7 +346,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Schedule == nil {
 					if !in.IsDelim(']') {
-						out.Schedule = make([]scheduleRequestDTO, 0, 1)
+						out.Schedule = make([]scheduleRequestDTO, 0, 0)
 					} else {
 						out.Schedule = []scheduleRequestDTO{}
 					}
@@ -434,9 +439,13 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "week_day":
 			out.WeekDay = int(in.Int())
 		case "open":
-			out.Open = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Open).UnmarshalJSON(data))
+			}
 		case "close":
-			out.Close = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Close).UnmarshalJSON(data))
+			}
 		case "all_day":
 			out.AllDay = bool(in.Bool())
 		case "comment":
@@ -463,12 +472,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"open\":"
 		out.RawString(prefix)
-		out.String(string(in.Open))
+		out.Raw((in.Open).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"close\":"
 		out.RawString(prefix)
-		out.String(string(in.Close))
+		out.Raw((in.Close).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"all_day\":"
@@ -528,9 +537,13 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "week_day":
 			out.WeekDay = int(in.Int())
 		case "from":
-			out.From = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.From).UnmarshalJSON(data))
+			}
 		case "to":
-			out.To = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.To).UnmarshalJSON(data))
+			}
 		case "all_day":
 			out.AllDay = bool(in.Bool())
 		case "comment":
@@ -557,12 +570,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"from\":"
 		out.RawString(prefix)
-		out.String(string(in.From))
+		out.Raw((in.From).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"to\":"
 		out.RawString(prefix)
-		out.String(string(in.To))
+		out.Raw((in.To).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"all_day\":"

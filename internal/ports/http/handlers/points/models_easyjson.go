@@ -64,7 +64,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Schedule == nil {
 					if !in.IsDelim(']') {
-						out.Schedule = make([]dto.ScheduleDTO, 0, 1)
+						out.Schedule = make([]dto.ScheduleDTO, 0, 0)
 					} else {
 						out.Schedule = []dto.ScheduleDTO{}
 					}

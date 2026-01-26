@@ -3,16 +3,18 @@ package services
 import (
 	"context"
 
+	sq "github.com/Masterminds/squirrel"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/Rasikrr/core/database/postgres"
-	sq "github.com/Masterminds/squirrel"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 )
+
+var builder = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 type Repository struct {
 	db *postgres.Postgres
@@ -97,17 +99,28 @@ func (r *Repository) GetByPointCode(ctx context.Context, pointCode string, isAct
 }
 
 func buildGetByPointCodeQuery(pointCode string, isActive *bool) (string, []any, error) {
-	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).
-		Select("id", "point_code", "category_id", "subcategory_id", "name", "description",
-			"duration_minutes", "active", "color", "created_at", "updated_at", "updated_by").
+	query := builder.
+		Select(
+			"id",
+			"point_code",
+			"category_id",
+			"subcategory_id",
+			"name",
+			"description",
+			"duration_minutes",
+			"active",
+			"color",
+			"created_at",
+			"updated_at",
+			"updated_by").
 		From("services").
 		Where(sq.Eq{"point_code": pointCode})
 
 	if isActive != nil {
-		builder = builder.Where(sq.Eq{"active": *isActive})
+		query = query.Where(sq.Eq{"active": *isActive})
 	}
 
-	builder = builder.OrderBy("name ASC")
+	query = query.OrderBy("name ASC")
 
-	return builder.ToSql()
+	return query.ToSql()
 }

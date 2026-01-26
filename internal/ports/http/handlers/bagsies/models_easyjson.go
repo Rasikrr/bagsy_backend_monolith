@@ -569,7 +569,9 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "service_id":
 			out.ServiceID = string(in.String())
 		case "date":
-			out.Date = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Date).UnmarshalJSON(data))
+			}
 		case "master_phone":
 			if in.IsNull() {
 				in.Skip()
@@ -607,7 +609,7 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"date\":"
 		out.RawString(prefix)
-		out.String(string(in.Date))
+		out.Raw((in.Date).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"master_phone\":"

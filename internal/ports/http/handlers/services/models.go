@@ -5,6 +5,8 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/service"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
 	"github.com/google/uuid"
+	"net/http"
+	"strconv"
 )
 
 //go:generate easyjson -all models.go
@@ -102,11 +104,27 @@ type getServicesResponse struct {
 func newGetServicesResponse(services []*service.Service) getServicesResponse {
 	dtos := make([]serviceDTO, 0, len(services))
 	for _, svc := range services {
-		if svc.MinPrice != nil && svc.MaxPrice != nil {
-			dtos = append(dtos, toServiceDTO(svc))
-		}
+		dtos = append(dtos, toServiceDTO(svc))
 	}
 	return getServicesResponse{
 		Services: dtos,
 	}
+}
+
+type getServicesRequest struct {
+	Active *bool `query:"is_active"`
+}
+
+func (g *getServicesRequest) GetQueryParameters(r *http.Request) error {
+	active := r.URL.Query().Get("is_active")
+
+	if active != "" {
+		activeBool, err := strconv.ParseBool(active)
+		if err != nil {
+			return request.HandleValidationError(err)
+		}
+		g.Active = &activeBool
+	}
+
+	return nil
 }

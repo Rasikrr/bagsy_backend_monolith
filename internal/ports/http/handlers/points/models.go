@@ -2,8 +2,6 @@
 package points
 
 import (
-	"time"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/dto"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
@@ -33,19 +31,10 @@ func (r *createPointRequest) Validate() error {
 func (r *createPointRequest) toCommand() (*point.CreatePointCommand, error) {
 	schedules := make(point.Schedule, 0, len(r.Schedule))
 	for _, s := range r.Schedule {
-		openTime, err := time.Parse("15:04", s.Open)
-		if err != nil {
-			return nil, err
-		}
-		closeTime, err := time.Parse("15:04", s.Close)
-		if err != nil {
-			return nil, err
-		}
-
 		schedules = append(schedules, &point.ScheduleElement{
 			WeekDay: s.WeekDay,
-			Open:    openTime,
-			Close:   closeTime,
+			Open:    s.Open,
+			Close:   s.Close,
 			AllDay:  s.AllDay,
 			Comment: s.Comment,
 		})

@@ -3,6 +3,7 @@ package media
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
+	"time"
 )
 
 //go:generate easyjson -all models.go
@@ -23,13 +24,13 @@ func (r *getUploadURLRequest) Validate() error {
 type getUploadURLResponse struct {
 	MediaID   string `json:"media_id"`
 	URL       string `json:"url"`
-	ExpiresAt string `json:"expires_at"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 func toUploadURLResponse(dto *media.UploadedMedia) *getUploadURLResponse {
 	return &getUploadURLResponse{
 		MediaID:   dto.MediaID.String(),
 		URL:       dto.URL,
-		ExpiresAt: dto.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
+		ExpiresAt: dto.ExpiresAt,
 	}
 }
