@@ -75,6 +75,22 @@ func (r *Repository) GetByNetworkCode(ctx context.Context, networkCode string) (
 	return mm.convert(), nil
 }
 
+func (r *Repository) GetByCodes(ctx context.Context, codes []string) ([]*point.Point, error) {
+	if len(codes) == 0 {
+		return []*point.Point{}, nil
+	}
+
+	var mm models
+	err := pgxscan.Select(ctx, r.db, &mm, getByCodes, pq.Array(codes))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*point.Point{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get points from db", err)
+	}
+	return mm.convert(), nil
+}
+
 func (r *Repository) ExistsByCode(ctx context.Context, code string) (bool, error) {
 	var out bool
 	err := pgxscan.Get(ctx, r.db, &out, existByCode, code)

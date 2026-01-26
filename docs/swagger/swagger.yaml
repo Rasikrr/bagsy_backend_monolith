@@ -672,6 +672,15 @@ definitions:
       subcategory_id:
         type: integer
     type: object
+  internal_ports_http_handlers_users.getCustomersResponse:
+    properties:
+      customers:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_users.userDTO'
+        type: array
+      total:
+        type: integer
+    type: object
   internal_ports_http_handlers_users.getUsersResponse:
     properties:
       total:
@@ -1576,6 +1585,86 @@ paths:
       summary: Получение календаря записей
       tags:
       - calendar
+  /api/v1/customers:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Возвращает список клиентов (users с role='user'), обслуживавшихся в точках, с offset-based пагинацией и учетом прав доступа.
+        - Staff: только клиенты которых он обслуживал (можно фильтровать по своей точке)
+        - Manager: все клиенты своей точки (можно указать point_code=своя_точка, можно фильтровать по телефону мастера)
+        - NetManager/SelfOwner: клиенты сети (можно фильтровать по конкретным точкам или получить всех, можно фильтровать по телефону мастера)
+      parameters:
+      - description: Поиск по части или полному номеру телефона клиента
+        in: query
+        name: phone_search
+        type: string
+      - description: Фильтр по телефону мастера (для Manager и выше)
+        in: query
+        name: staff_phone
+        type: string
+      - collectionFormat: multi
+        description: Фильтр по кодам точек (можно указать несколько)
+        in: query
+        items:
+          type: string
+        name: point_code
+        type: array
+      - description: 'Количество записей на странице (default: 20, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Смещение для пагинации (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      - default: created_at
+        description: Поле для сортировки
+        enum:
+        - phone
+        - name
+        - surname
+        - created_at
+        - updated_at
+        in: query
+        name: order_by
+        type: string
+      - default: asc
+        description: Направление сортировки
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список клиентов с пагинацией
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_users.getCustomersResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "403":
+          description: Недостаточно прав для доступа к ресурсу
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получить список клиентов
+      tags:
+      - users
   /api/v1/forms:
     post:
       consumes:

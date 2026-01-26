@@ -248,3 +248,108 @@ func buildCountQuery(filter *user.Filter) (string, []any, error) {
 
 	return builder.ToSql()
 }
+
+// GetCustomersByFilter возвращает клиентов (users с role='user'), обслуживавшихся в точках
+// Применяет фильтры авторизации на основе MasterPhone/PointCode/PointCodes
+func (r *Repository) GetCustomersByFilter(ctx context.Context, filter *user.CustomerFilter) ([]*user.User, error) {
+	q, args, err := buildCustomersQuery(filter)
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to build customers query", err)
+	}
+
+	var mm models
+	err = pgxscan.Select(ctx, r.db, &mm, q, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*user.User{}, nil
+		}
+		return nil, domainErr.NewInternalError("failed to get customers from db", err)
+	}
+
+	out, err := mm.convert()
+	if err != nil {
+		return nil, domainErr.NewInternalError("failed to convert customer models", err)
+	}
+	return out, nil
+}
+
+// CountCustomersByFilter подсчитывает количество клиентов с учетом фильтров
+func (r *Repository) CountCustomersByFilter(ctx context.Context, filter *user.CustomerFilter) (int, error) {
+	q, args, err := buildCustomersCountQuery(filter)
+	if err != nil {
+		return 0, domainErr.NewInternalError("failed to build customers count query", err)
+	}
+
+	var count int
+	err = pgxscan.Get(ctx, r.db, &count, q, args...)
+	if err != nil {
+		return 0, domainErr.NewInternalError("failed to count customers from db", err)
+	}
+	return count, nil
+}
+
+// buildCustomersQuery строит запрос для получения клиентов с JOIN на bagsies
+func buildCustomersQuery(filter *user.CustomerFilter) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	builder := psql.Select(columns...).
+		From("users u").
+		InnerJoin("bagsies b ON u.phone = b.client_phone").
+		LeftJoin("user_media um ON u.phone = um.user_phone").
+		LeftJoin("media m ON um.media_id = m.id AND m.status = 'active' AND m.deleted_at IS NULL").
+		Where(sq.Eq{"u.deleted_at": nil}).
+		Where(sq.Eq{"u.role": user.RoleUser.String()})
+
+	// Авторизация: применяем условия в зависимости от установленных полей
+	if filter.MasterPhone != nil {
+		// Для staff: только клиенты этого мастера
+		builder = builder.Where(sq.Eq{"b.master_phone": *filter.MasterPhone})
+	}
+	if len(filter.PointCodes) > 0 {
+		// Фильтр по точкам (для manager/net_manager/self_owner)
+		builder = builder.Where(sq.Eq{"b.point_code": filter.PointCodes})
+	}
+
+	// Фильтр по телефону
+	if filter.PhoneSearch != nil && *filter.PhoneSearch != "" {
+		builder = builder.Where(sq.ILike{"u.phone": "%" + *filter.PhoneSearch + "%"})
+	}
+
+	// DISTINCT чтобы не дублировать клиентов (один клиент мог быть несколько раз)
+	builder = builder.Distinct()
+
+	// Сортировка
+	orderByColumn := "u." + filter.OrderBy
+	builder = builder.OrderBy(
+		fmt.Sprintf("%s %s", orderByColumn, filter.SortOrder.String()),
+	)
+
+	builder = builder.Limit(filter.Limit)
+	builder = builder.Offset(filter.Offset)
+
+	return builder.ToSql()
+}
+
+// buildCustomersCountQuery строит запрос для подсчета клиентов
+func buildCustomersCountQuery(filter *user.CustomerFilter) (string, []any, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+	builder := psql.Select("COUNT(DISTINCT u.phone)").
+		From("users u").
+		InnerJoin("bagsies b ON u.phone = b.client_phone").
+		Where(sq.Eq{"u.deleted_at": nil}).
+		Where(sq.Eq{"u.role": user.RoleUser.String()})
+
+	// Авторизация
+	if filter.MasterPhone != nil {
+		builder = builder.Where(sq.Eq{"b.master_phone": *filter.MasterPhone})
+	}
+	if len(filter.PointCodes) > 0 {
+		builder = builder.Where(sq.Eq{"b.point_code": filter.PointCodes})
+	}
+
+	// Фильтр по телефону
+	if filter.PhoneSearch != nil && *filter.PhoneSearch != "" {
+		builder = builder.Where(sq.ILike{"u.phone": "%" + *filter.PhoneSearch + "%"})
+	}
+
+	return builder.ToSql()
+}

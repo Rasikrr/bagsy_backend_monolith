@@ -15,6 +15,10 @@ import (
 
 //go:generate easyjson -all models.go
 
+const (
+	defaultOrderBy = "created_at"
+)
+
 type getUsersRequest struct {
 	PointCode   *string  `query:"point_code" validate:""`
 	NetworkCode *string  `query:"network_code"`
@@ -59,7 +63,7 @@ func (r *getUsersRequest) GetQueryParameters(req *http.Request) error {
 		}
 	}
 
-	r.OrderBy = "created_at"
+	r.OrderBy = defaultOrderBy
 	if sortBy := q.Get("sort_by"); sortBy != "" {
 		r.OrderBy = sortBy
 	}
@@ -251,4 +255,101 @@ func (r *updateScheduleRequest) toDomain() user.Schedule {
 		})
 	}
 	return schedules
+}
+
+// getCustomersRequest - запрос для получения клиентов
+type getCustomersRequest struct {
+	PhoneSearch *string  `query:"phone_search"`
+	StaffPhone  *string  `query:"staff_phone"` // Фильтр по телефону мастера (для Manager и выше)
+	PointCodes  []string `query:"point_code"`  // Фильтр по точкам (для NetManager/Manager)
+	Limit       uint64   `query:"limit" validate:"max=100"`
+	Offset      uint64   `query:"offset" validate:"min=0"`
+	OrderBy     string   `query:"order_by" validate:"oneof=phone name surname created_at updated_at"`
+	SortOrder   string   `query:"sort_order" validate:"oneof=asc desc"`
+}
+
+func (r *getCustomersRequest) GetQueryParameters(req *http.Request) error {
+	q := req.URL.Query()
+
+	if phoneSearch := q.Get("phone_search"); phoneSearch != "" {
+		r.PhoneSearch = &phoneSearch
+	}
+
+	if staffPhone := q.Get("staff_phone"); staffPhone != "" {
+		r.StaffPhone = &staffPhone
+	}
+
+	if pointCodes := q["point_code"]; len(pointCodes) > 0 {
+		r.PointCodes = pointCodes
+	}
+
+	r.Limit = 20
+	if limitStr := q.Get("limit"); limitStr != "" {
+		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
+			r.Limit = uint64(limit)
+		}
+	}
+
+	r.Offset = 0
+	if offsetStr := q.Get("offset"); offsetStr != "" {
+		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
+			r.Offset = uint64(offset)
+		}
+	}
+
+	r.OrderBy = defaultOrderBy
+	if orderBy := q.Get("order_by"); orderBy != "" {
+		r.OrderBy = orderBy
+	}
+
+	r.SortOrder = "asc"
+	if sortOrder := q.Get("sort_order"); sortOrder != "" {
+		r.SortOrder = sortOrder
+	}
+
+	return nil
+}
+
+func (r *getCustomersRequest) Validate() error {
+	err := request.GetValidator().Struct(r)
+	if err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (r *getCustomersRequest) toFilter() (*user.CustomerFilter, error) {
+	sortOrder, err := enum.SortOrderString(r.SortOrder)
+	if err != nil {
+		return nil, domainErr.NewValidationError("sort_order contains an invalid value").
+			WithDetail("sort_order", r.SortOrder)
+	}
+
+	return &user.CustomerFilter{
+		PhoneSearch: r.PhoneSearch,
+		MasterPhone: r.StaffPhone, // Мапим напрямую, валидация будет в сервисе
+		PointCodes:  r.PointCodes,
+		Limit:       r.Limit,
+		Offset:      r.Offset,
+		OrderBy:     r.OrderBy,
+		SortOrder:   sortOrder,
+	}, nil
+}
+
+// getCustomersResponse - ответ со списком клиентов
+type getCustomersResponse struct {
+	Customers []*userDTO `json:"customers"`
+	Total     int        `json:"total"`
+}
+
+func toGetCustomersResponse(paginated *query.Page[*user.User]) getCustomersResponse {
+	dtos := make([]*userDTO, 0, len(paginated.Items))
+	for _, u := range paginated.Items {
+		dtos = append(dtos, toUserDTO(u))
+	}
+
+	return getCustomersResponse{
+		Customers: dtos,
+		Total:     paginated.Total,
+	}
 }

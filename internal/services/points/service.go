@@ -28,6 +28,7 @@ type pointCategoriesRepository interface {
 type pointsRepository interface {
 	Create(ctx context.Context, entity *point.Point) error
 	GetByCode(ctx context.Context, code string) (*point.Point, error)
+	GetByCodes(ctx context.Context, codes []string) ([]*point.Point, error)
 	GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error)
 	Update(ctx context.Context, entity *point.Point) error
 }
@@ -88,6 +89,10 @@ func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*
 		return nil, err
 	}
 	return points, nil
+}
+
+func (s *Service) GetByCodes(ctx context.Context, codes []string) ([]*point.Point, error) {
+	return s.pointsRepo.GetByCodes(ctx, codes)
 }
 
 // Create создает точку и привязывает к ней фотографии в транзакции
