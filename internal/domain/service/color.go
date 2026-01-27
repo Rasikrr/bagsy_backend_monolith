@@ -5,7 +5,7 @@ package service
 type Color uint8
 
 const (
-	ColorBlack Color = iota
+	ColorBlue Color = iota
 	ColorGreen
 	ColorRed
 	ColorYellow

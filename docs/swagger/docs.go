@@ -3077,7 +3077,7 @@ const docTemplate = `{
                 "color": {
                     "type": "string",
                     "enum": [
-                        "black",
+                        "blue",
                         "green",
                         "red",
                         "yellow",
