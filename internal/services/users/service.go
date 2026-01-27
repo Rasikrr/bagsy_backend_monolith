@@ -2,8 +2,6 @@ package users
 
 import (
 	"context"
-	"github.com/Rasikrr/core/log"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
@@ -270,13 +268,10 @@ func (s *Service) UpdateSchedule(ctx context.Context, phone string, schedule use
 }
 
 func (s *Service) UpdatePointCode(ctx context.Context, phone, pointCode string) error {
-	log.Infof(ctx, "before Getting %v", phone)
 	u, err := s.usersRepo.GetByPhone(ctx, phone)
 	if err != nil {
 		return err
 	}
-	log.Infof(ctx, "after getting %v", phone)
-	log.Infof(ctx, "before inserting %v", pointCode)
 	u.PointCode = &pointCode
 
 	return s.usersRepo.Update(ctx, u)

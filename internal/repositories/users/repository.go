@@ -3,8 +3,6 @@ package users
 import (
 	"context"
 	"fmt"
-	"github.com/Rasikrr/core/log"
-
 	sq "github.com/Masterminds/squirrel"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
@@ -71,7 +69,6 @@ func (r *Repository) Create(ctx context.Context, u *user.User) error {
 
 func (r *Repository) GetByPhone(ctx context.Context, phone string) (*user.User, error) {
 	var m model
-	log.Infof(ctx, "before GetByPhone %v", phone)
 	err := pgxscan.Get(ctx, r.db, &m, getUserByPhone, phone)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -79,7 +76,6 @@ func (r *Repository) GetByPhone(ctx context.Context, phone string) (*user.User, 
 		}
 		return nil, domainErr.NewInternalError("failed to get user from db", err)
 	}
-	log.Infof(ctx, "after GetByPhone %v", phone)
 	out, err := m.convert()
 	if err != nil {
 		return nil, domainErr.NewInternalError("failed to convert user model", err)

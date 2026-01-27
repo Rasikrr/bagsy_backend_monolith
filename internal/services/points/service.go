@@ -3,13 +3,11 @@ package points
 
 import (
 	"context"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
-	"github.com/Rasikrr/core/log"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
@@ -157,9 +155,7 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 			return err
 		}
 
-		log.Info(ctx, "before updating")
 		if act.Role() == user.RoleSelfOwner {
-			log.Infof(ctx, "before updating %v %v", act.Phone(), newPoint.Code)
 			err := s.usersService.UpdatePointCode(ctx, act.Phone(), newPoint.Code)
 			if err != nil {
 				return err
