@@ -613,7 +613,7 @@ definitions:
         type: integer
       color:
         enum:
-        - black
+        - blue
         - green
         - red
         - yellow

@@ -18,7 +18,7 @@ type createServiceRequest struct {
 	Name            string  `json:"name" validate:"required,min=1,max=255"`
 	Description     *string `json:"description,omitempty"`
 	DurationMinutes int     `json:"duration_minutes" validate:"required,gt=0"`
-	Color           string  `json:"color" validate:"required" enums:"black,green,red,yellow,purple,orange,gray"`
+	Color           string  `json:"color" validate:"required" enums:"blue,green,red,yellow,purple,orange,gray"`
 }
 
 type createServiceResponse struct {

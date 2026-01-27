@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-const _ColorName = "blackgreenredyellowpurpleorangegray"
+const _ColorName = "bluegreenredyellowpurpleorangegray"
 
-var _ColorIndex = [...]uint8{0, 5, 10, 13, 19, 25, 31, 35}
+var _ColorIndex = [...]uint8{0, 4, 9, 12, 18, 24, 30, 34}
 
-const _ColorLowerName = "blackgreenredyellowpurpleorangegray"
+const _ColorLowerName = "bluegreenredyellowpurpleorangegray"
 
 func (i Color) String() string {
 	if i >= Color(len(_ColorIndex)-1) {
@@ -25,7 +25,7 @@ func (i Color) String() string {
 // Re-run the stringer command to generate them again.
 func _ColorNoOp() {
 	var x [1]struct{}
-	_ = x[ColorBlack-(0)]
+	_ = x[ColorBlue-(0)]
 	_ = x[ColorGreen-(1)]
 	_ = x[ColorRed-(2)]
 	_ = x[ColorYellow-(3)]
@@ -34,33 +34,33 @@ func _ColorNoOp() {
 	_ = x[ColorGray-(6)]
 }
 
-var _ColorValues = []Color{ColorBlack, ColorGreen, ColorRed, ColorYellow, ColorPurple, ColorOrange, ColorGray}
+var _ColorValues = []Color{ColorBlue, ColorGreen, ColorRed, ColorYellow, ColorPurple, ColorOrange, ColorGray}
 
 var _ColorNameToValueMap = map[string]Color{
-	_ColorName[0:5]:        ColorBlack,
-	_ColorLowerName[0:5]:   ColorBlack,
-	_ColorName[5:10]:       ColorGreen,
-	_ColorLowerName[5:10]:  ColorGreen,
-	_ColorName[10:13]:      ColorRed,
-	_ColorLowerName[10:13]: ColorRed,
-	_ColorName[13:19]:      ColorYellow,
-	_ColorLowerName[13:19]: ColorYellow,
-	_ColorName[19:25]:      ColorPurple,
-	_ColorLowerName[19:25]: ColorPurple,
-	_ColorName[25:31]:      ColorOrange,
-	_ColorLowerName[25:31]: ColorOrange,
-	_ColorName[31:35]:      ColorGray,
-	_ColorLowerName[31:35]: ColorGray,
+	_ColorName[0:4]:        ColorBlue,
+	_ColorLowerName[0:4]:   ColorBlue,
+	_ColorName[4:9]:        ColorGreen,
+	_ColorLowerName[4:9]:   ColorGreen,
+	_ColorName[9:12]:       ColorRed,
+	_ColorLowerName[9:12]:  ColorRed,
+	_ColorName[12:18]:      ColorYellow,
+	_ColorLowerName[12:18]: ColorYellow,
+	_ColorName[18:24]:      ColorPurple,
+	_ColorLowerName[18:24]: ColorPurple,
+	_ColorName[24:30]:      ColorOrange,
+	_ColorLowerName[24:30]: ColorOrange,
+	_ColorName[30:34]:      ColorGray,
+	_ColorLowerName[30:34]: ColorGray,
 }
 
 var _ColorNames = []string{
-	_ColorName[0:5],
-	_ColorName[5:10],
-	_ColorName[10:13],
-	_ColorName[13:19],
-	_ColorName[19:25],
-	_ColorName[25:31],
-	_ColorName[31:35],
+	_ColorName[0:4],
+	_ColorName[4:9],
+	_ColorName[9:12],
+	_ColorName[12:18],
+	_ColorName[18:24],
+	_ColorName[24:30],
+	_ColorName[30:34],
 }
 
 // ColorString retrieves an enum value from the enum constants string name.
