@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const defaultActive = false
+const defaultActive = true
 
 type masterServicesRepository interface {
 	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*masterservice.MasterService, error)
