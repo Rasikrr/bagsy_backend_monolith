@@ -7,6 +7,7 @@ import (
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
+	time "time"
 )
 
 // suppress unused package warning
@@ -51,16 +52,20 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				*out.Description = string(in.String())
 			}
 		case "created_at":
-			out.CreatedAt = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.CreatedAt).UnmarshalJSON(data))
+			}
 		case "updated_at":
 			if in.IsNull() {
 				in.Skip()
 				out.UpdatedAt = nil
 			} else {
 				if out.UpdatedAt == nil {
-					out.UpdatedAt = new(string)
+					out.UpdatedAt = new(time.Time)
 				}
-				*out.UpdatedAt = string(in.String())
+				if data := in.Raw(); in.Ok() {
+					in.AddError((*out.UpdatedAt).UnmarshalJSON(data))
+				}
 			}
 		case "created_by":
 			out.CreatedBy = string(in.String())
@@ -96,12 +101,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"created_at\":"
 		out.RawString(prefix)
-		out.String(string(in.CreatedAt))
+		out.Raw((in.CreatedAt).MarshalJSON())
 	}
 	if in.UpdatedAt != nil {
 		const prefix string = ",\"updated_at\":"
 		out.RawString(prefix)
-		out.String(string(*in.UpdatedAt))
+		out.Raw((*in.UpdatedAt).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"created_by\":"

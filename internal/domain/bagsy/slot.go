@@ -1,6 +1,7 @@
 package bagsy
 
 import (
+	"github.com/shopspring/decimal"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,9 +15,10 @@ type TimeSlot struct {
 
 // MasterSlot represents available slots for a specific master
 type MasterSlot struct {
-	MasterPhone string
-	MasterName  string
-	Slots       []TimeSlot
+	MasterPhone        string
+	MasterName         string
+	MasterServicePrice decimal.Decimal
+	Slots              []TimeSlot
 }
 
 // AvailableSlots represents the response for available slots query

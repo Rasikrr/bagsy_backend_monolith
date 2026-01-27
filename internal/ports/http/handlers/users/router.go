@@ -12,6 +12,7 @@ import (
 type userService interface {
 	GetUserProfile(ctx context.Context) (*user.User, error)
 	GetListByFilter(ctx context.Context, filter *user.Filter) (*query.Page[*user.User], error)
+	GetCustomers(ctx context.Context, filter *user.CustomerFilter) (*query.Page[*user.User], error)
 	UpdateProfile(ctx context.Context, cmd *user.UpdateUserCommand) (*user.User, error)
 	UpdateSchedule(ctx context.Context, phone string, schedule user.Schedule) error
 	RemoveAvatar(ctx context.Context) error
@@ -35,10 +36,16 @@ func New(
 func (c *Controller) Init(router *chi.Mux) {
 	auth := c.authMiddleware.Handle
 	management := c.authMiddleware.AuthorizeManagement()
+	workers := c.authMiddleware.AuthorizeWorkers()
 
 	router.Route("/api/v1/staff", func(r chi.Router) {
 		managersRoutes := r.With(management)
 		managersRoutes.Get("/", c.getUsers)
+	})
+
+	router.Route("/api/v1/customers", func(r chi.Router) {
+		workersRoutes := r.With(workers)
+		workersRoutes.Get("/", c.getCustomers)
 	})
 
 	router.Route("/api/v1/users", func(r chi.Router) {

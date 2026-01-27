@@ -19,3 +19,8 @@ const updateServiceCategory = `
 const deleteServiceCategory = `
 	DELETE FROM service_categories WHERE id = ANY($1)
 `
+
+const getServiceCategoriesByIDs = `
+	SELECT id, name, description, created_at, updated_at, updated_by
+	FROM service_categories WHERE id = ANY($1) ORDER BY id
+`

@@ -3,11 +3,11 @@ package points
 
 import (
 	"context"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/network"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/util/slug"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
@@ -28,6 +28,7 @@ type pointCategoriesRepository interface {
 type pointsRepository interface {
 	Create(ctx context.Context, entity *point.Point) error
 	GetByCode(ctx context.Context, code string) (*point.Point, error)
+	GetByCodes(ctx context.Context, codes []string) ([]*point.Point, error)
 	GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error)
 	Update(ctx context.Context, entity *point.Point) error
 }
@@ -37,11 +38,16 @@ type pointMediaService interface {
 	AddPointPhotos(ctx context.Context, pointCode string, mediaIDs ...uuid.UUID) error
 }
 
+type usersService interface {
+	UpdatePointCode(ctx context.Context, phone, pointCode string) error
+}
+
 type Service struct {
 	pointsRepo          pointsRepository
 	networksService     networksService
 	pointCategoriesRepo pointCategoriesRepository
 	pointMediaService   pointMediaService
+	usersService        usersService
 	txManager           database.TXManager
 }
 
@@ -50,6 +56,7 @@ func NewService(
 	networksService networksService,
 	pointCategoriesRepo pointCategoriesRepository,
 	mediaService pointMediaService,
+	usersService usersService,
 	txManager database.TXManager,
 ) *Service {
 	return &Service{
@@ -57,6 +64,7 @@ func NewService(
 		networksService:     networksService,
 		pointCategoriesRepo: pointCategoriesRepo,
 		pointMediaService:   mediaService,
+		usersService:        usersService,
 		txManager:           txManager,
 	}
 }
@@ -88,6 +96,10 @@ func (s *Service) GetByNetworkCode(ctx context.Context, networkCode string) ([]*
 		return nil, err
 	}
 	return points, nil
+}
+
+func (s *Service) GetByCodes(ctx context.Context, codes []string) ([]*point.Point, error) {
+	return s.pointsRepo.GetByCodes(ctx, codes)
 }
 
 // Create создает точку и привязывает к ней фотографии в транзакции
@@ -141,6 +153,13 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 		// 2. Привязать фото
 		if err := s.pointMediaService.AddPointPhotos(txCtx, newPoint.Code, cmd.PhotoIDs...); err != nil {
 			return err
+		}
+
+		if act.Role() == user.RoleSelfOwner {
+			err := s.usersService.UpdatePointCode(ctx, act.Phone(), newPoint.Code)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})

@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
+	masterservice "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -469,14 +471,17 @@ func TestGenerateDaySlots(t *testing.T) {
 
 func TestGenerateSlots(t *testing.T) {
 	ctx := context.Background()
-	// Wednesday, January 14, 2026 (weekday=3)
-	startDate := time.Date(2026, 1, 14, 0, 0, 0, 0, time.UTC)
+	// Use next Wednesday (weekday=3) to ensure date is always in the future
+	startDate := nextWeekday(3) // Wednesday
 	endDate := startDate.AddDate(0, 0, 1) // one day
+
+	serviceID := uuid.New()
 
 	tests := []struct {
 		name            string
 		pointSchedule   point.Schedule
 		masters         []*user.User
+		masterServices  []*masterservice.MasterService
 		occupied        []*bagsy.Bagsy
 		durationMinutes int
 		expectedMasters int
@@ -496,6 +501,9 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices: []*masterservice.MasterService{
+				{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+			},
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 1,
@@ -513,6 +521,7 @@ func TestGenerateSlots(t *testing.T) {
 					Schedule: nil, // no schedule
 				},
 			},
+			masterServices:  nil,
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 0,
@@ -532,6 +541,7 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices:  nil,
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 0,
@@ -551,6 +561,7 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices:  nil,
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 0,
@@ -578,6 +589,10 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices: []*masterservice.MasterService{
+				{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+				{MasterPhone: "+77002222222", ServiceID: serviceID, Price: decimal.NewFromInt(6000)},
+			},
 			occupied:        nil,
 			durationMinutes: 60,
 			expectedMasters: 2,
@@ -597,12 +612,15 @@ func TestGenerateSlots(t *testing.T) {
 					},
 				},
 			},
+			masterServices: []*masterservice.MasterService{
+				{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+			},
 			occupied: []*bagsy.Bagsy{
 				{
 					ID:          uuid.New(),
 					MasterPhone: "+77001111111",
-					StartAt:     time.Date(2026, 1, 14, 9, 0, 0, 0, time.UTC),
-					EndAt:       time.Date(2026, 1, 14, 10, 0, 0, 0, time.UTC),
+					StartAt:     startDate.Add(9 * time.Hour),  // 09:00 on startDate
+					EndAt:       startDate.Add(10 * time.Hour), // 10:00 on startDate
 				},
 			},
 			durationMinutes: 60,
@@ -612,7 +630,7 @@ func TestGenerateSlots(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := generateSlots(ctx, tt.pointSchedule, tt.masters, tt.occupied, tt.durationMinutes, startDate, endDate)
+			result := generateSlots(ctx, tt.pointSchedule, tt.masters, tt.masterServices, tt.occupied, tt.durationMinutes, startDate, endDate)
 			assert.Len(t, result, tt.expectedMasters)
 
 			// Verify each master has properly formed slots
@@ -632,9 +650,11 @@ func TestGenerateSlots(t *testing.T) {
 
 func TestGenerateSlots_MultiDay(t *testing.T) {
 	ctx := context.Background()
-	// Start from Wednesday, January 14, 2026 (weekday=3)
-	startDate := time.Date(2026, 1, 14, 0, 0, 0, 0, time.UTC)
+	// Start from next Wednesday (weekday=3) to ensure dates are always in the future
+	startDate := nextWeekday(3) // Wednesday
 	endDate := startDate.AddDate(0, 0, 3) // 3 days: Wed, Thu, Fri
+
+	serviceID := uuid.New()
 
 	pointSchedule := point.Schedule{
 		{WeekDay: 3, Open: timeOnly(9, 0), Close: timeOnly(12, 0)},  // Wed
@@ -655,10 +675,17 @@ func TestGenerateSlots_MultiDay(t *testing.T) {
 		},
 	}
 
-	result := generateSlots(ctx, pointSchedule, masters, nil, 60, startDate, endDate)
+	masterServices := []*masterservice.MasterService{
+		{MasterPhone: "+77001111111", ServiceID: serviceID, Price: decimal.NewFromInt(5000)},
+	}
+
+	result := generateSlots(ctx, pointSchedule, masters, masterServices, nil, 60, startDate, endDate)
 
 	require.Len(t, result, 1)
 	masterSlots := result[0]
+
+	// Verify price is set
+	assert.True(t, masterSlots.MasterServicePrice.Equal(decimal.NewFromInt(5000)))
 
 	// Count slots per day by checking StartAt dates
 	slotsByDay := make(map[string]int)
@@ -667,15 +694,30 @@ func TestGenerateSlots_MultiDay(t *testing.T) {
 		slotsByDay[dayStr]++
 	}
 
-	// Wed (2026-01-14): 09:00-12:00, 60min slots with 30min step = 5 slots (09:00, 09:30, 10:00, 10:30, 11:00)
-	assert.Equal(t, 5, slotsByDay["2026-01-14"], "Wednesday slots")
-	// Thu (2026-01-15): same
-	assert.Equal(t, 5, slotsByDay["2026-01-15"], "Thursday slots")
-	// Fri (2026-01-16): effective hours 10:00-12:00 (intersection), 60min = 3 slots (10:00, 10:30, 11:00)
-	assert.Equal(t, 3, slotsByDay["2026-01-16"], "Friday slots")
+	// Wed: 09:00-12:00, 60min slots with 30min step = 5 slots (09:00, 09:30, 10:00, 10:30, 11:00)
+	wedDate := startDate.Format("2006-01-02")
+	assert.Equal(t, 5, slotsByDay[wedDate], "Wednesday slots")
+	// Thu: same
+	thuDate := startDate.AddDate(0, 0, 1).Format("2006-01-02")
+	assert.Equal(t, 5, slotsByDay[thuDate], "Thursday slots")
+	// Fri: effective hours 10:00-12:00 (intersection), 60min = 3 slots (10:00, 10:30, 11:00)
+	friDate := startDate.AddDate(0, 0, 2).Format("2006-01-02")
+	assert.Equal(t, 3, slotsByDay[friDate], "Friday slots")
 }
 
 // timeOnly creates a time.Time with only hours and minutes set (for schedule testing)
 func timeOnly(hour, minute int) time.Time {
 	return time.Date(0, 1, 1, hour, minute, 0, 0, time.UTC)
+}
+
+// nextWeekday returns the next occurrence of the given weekday (0=Sunday, 1=Monday, ..., 6=Saturday)
+// starting from tomorrow to ensure the date is always in the future
+func nextWeekday(weekday int) time.Time {
+	now := time.Now().UTC()
+	// Start from tomorrow
+	date := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.UTC)
+	for date.Weekday() != time.Weekday(weekday) {
+		date = date.AddDate(0, 0, 1)
+	}
+	return date
 }

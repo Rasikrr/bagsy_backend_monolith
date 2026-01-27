@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/bagsy"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/master_service"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
+	"github.com/shopspring/decimal"
 
 	"github.com/Rasikrr/core/log"
 )
@@ -17,6 +19,7 @@ func generateSlots(
 	ctx context.Context,
 	pointSchedule point.Schedule,
 	masters []*user.User,
+	masterServices []*masterservice.MasterService,
 	occupiedBagsies []*bagsy.Bagsy,
 	durationMinutes int,
 	startDate, endDate time.Time,
@@ -25,6 +28,9 @@ func generateSlots(
 		startDate.Format(time.RFC3339), endDate.Format(time.RFC3339), durationMinutes)
 	log.Infof(ctx, "[slots] point schedule count=%d, masters count=%d, occupied count=%d",
 		len(pointSchedule), len(masters), len(occupiedBagsies))
+
+	// Строим карту цен по телефону мастера
+	priceByMaster := buildPriceMap(masterServices)
 
 	// Логируем расписание точки (с конвертацией в локальное время)
 	for _, ps := range pointSchedule {
@@ -99,7 +105,7 @@ func generateSlots(
 				durationMinutes,
 				slotStepMinutes,
 				occupiedByMaster[master.Phone],
-				startDate, // для фильтрации прошлых слотов
+				timeutil.ConvertUTCToAlmatyTime(time.Now()), // текущее время для фильтрации прошлых слотов
 			)
 
 			log.Debugf(ctx, "[slots] day=%s: generated %d slots", day.Format("2006-01-02"), len(daySlots))
@@ -110,9 +116,10 @@ func generateSlots(
 
 		if len(slots) > 0 {
 			result = append(result, bagsy.MasterSlot{
-				MasterPhone: master.Phone,
-				MasterName:  master.Name + " " + master.Surname,
-				Slots:       slots,
+				MasterPhone:        master.Phone,
+				MasterName:         master.Name + " " + master.Surname,
+				MasterServicePrice: priceByMaster[master.Phone],
+				Slots:              slots,
 			})
 		}
 	}
@@ -255,4 +262,13 @@ func isSlotAvailable(slotStart, slotEnd time.Time, occupied []*bagsy.Bagsy) bool
 // overlaps проверяет пересечение двух временных интервалов
 func overlaps(start1, end1, start2, end2 time.Time) bool {
 	return start1.Before(end2) && end1.After(start2)
+}
+
+// buildPriceMap строит карту цен по телефону мастера
+func buildPriceMap(masterServices []*masterservice.MasterService) map[string]decimal.Decimal {
+	result := make(map[string]decimal.Decimal, len(masterServices))
+	for _, ms := range masterServices {
+		result[ms.MasterPhone] = ms.Price
+	}
+	return result
 }

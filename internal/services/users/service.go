@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/point"
@@ -12,7 +11,9 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
+	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
+	"github.com/samber/lo"
 )
 
 type usersRepository interface {
@@ -21,12 +22,16 @@ type usersRepository interface {
 	GetByPhones(ctx context.Context, phones []string) ([]*user.User, error)
 	GetByParams(ctx context.Context, filter *user.Filter) ([]*user.User, error)
 	CountByFilter(ctx context.Context, filter *user.Filter) (int, error)
+	GetCustomersByFilter(ctx context.Context, filter *user.CustomerFilter) ([]*user.User, error)
+	CountCustomersByFilter(ctx context.Context, filter *user.CustomerFilter) (int, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 	Update(ctx context.Context, user *user.User) error
 }
 
 type pointsService interface {
 	GetByCode(ctx context.Context, code string) (*point.Point, error)
+	GetByCodes(ctx context.Context, codes []string) ([]*point.Point, error)
+	GetByNetworkCode(ctx context.Context, networkCode string) ([]*point.Point, error)
 }
 
 type userPhotosService interface {
@@ -150,6 +155,7 @@ func (s *Service) CreateStaff(ctx context.Context, cmd *user.CreateStaffCommand)
 	staff := &user.User{
 		Name:        cmd.Name,
 		Surname:     cmd.Surname,
+		Phone:       cmd.Phone,
 		Role:        cmd.Role,
 		NetworkCode: &cmd.NetworkCode,
 		PointCode:   &cmd.PointCode,
@@ -231,7 +237,7 @@ func (s *Service) GetListByFilter(ctx context.Context, requestedFilter *user.Fil
 	if err != nil {
 		return nil, err
 	}
-
+	log.Info(ctx, "log")
 	// Получаем пользователей с пагинацией
 	users, err := s.usersRepo.GetByParams(ctx, authorizedFilter)
 	if err != nil {
@@ -260,6 +266,16 @@ func (s *Service) UpdateSchedule(ctx context.Context, phone string, schedule use
 	user.Schedule = schedule
 
 	return s.usersRepo.Update(ctx, user)
+}
+
+func (s *Service) UpdatePointCode(ctx context.Context, phone, pointCode string) error {
+	u, err := s.usersRepo.GetByPhone(ctx, phone)
+	if err != nil {
+		return err
+	}
+	u.PointCode = &pointCode
+
+	return s.usersRepo.Update(ctx, u)
 }
 
 func (s *Service) UpdateProfile(ctx context.Context, cmd *user.UpdateUserCommand) (*user.User, error) {
@@ -382,6 +398,174 @@ func (s *Service) enrichUsersWithAvatars(ctx context.Context, users []*user.User
 		}
 	}
 	return nil
+}
+
+// GetCustomers возвращает список клиентов (users с role='user'), обслуживавшихся в точках
+// Применяет ограничения на основе роли текущего пользователя:
+// - Staff: только клиенты которых он обслуживал
+// - Manager: все клиенты точки менеджера
+// - NetManager/SelfOwner: все клиенты сети
+func (s *Service) GetCustomers(ctx context.Context, requestedFilter *user.CustomerFilter) (*query.Page[*user.User], error) {
+	act, err := actor.GetActor(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Применяем ограничения на основе роли
+	authorizedFilter, err := s.authorizeCustomerFilter(ctx, act, requestedFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем клиентов с пагинацией
+	customers, err := s.usersRepo.GetCustomersByFilter(ctx, authorizedFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.enrichUsersWithAvatars(ctx, customers)
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем общее количество клиентов по фильтру (без limit/offset)
+	total, err := s.usersRepo.CountCustomersByFilter(ctx, authorizedFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	return query.NewPage(customers, total), nil
+}
+
+// authorizeCustomerFilter применяет ограничения доступа для получения клиентов
+// nolint: gocognit, nestif, funlen
+func (s *Service) authorizeCustomerFilter(
+	ctx context.Context,
+	userSession *actor.Actor,
+	requestedFilter *user.CustomerFilter,
+) (*user.CustomerFilter, error) {
+	switch userSession.Role() {
+	case user.RoleStaff:
+		// Staff может видеть только клиентов которых он обслуживал
+		// Игнорируем любой запрошенный MasterPhone и устанавливаем свой телефон
+		requestedFilter.MasterPhone = ptr.Pointer(userSession.Phone())
+
+		// Если staff запросил фильтр по точкам - проверяем что это его точка
+		if len(requestedFilter.PointCodes) > 0 {
+			userPointCode := userSession.PointCode()
+			for _, code := range requestedFilter.PointCodes {
+				if code != userPointCode {
+					return nil, domainErr.NewForbiddenError("cannot access customers from other points").
+						WithDetail("requested_point", code).
+						WithDetail("user_point", userPointCode)
+				}
+			}
+		} else {
+			// Если не запросил - ставим его точку
+			requestedFilter.PointCodes = []string{userSession.PointCode()}
+		}
+		return requestedFilter, nil
+
+	case user.RoleManager:
+		// Manager может видеть клиентов своей точки
+		userPointCode := userSession.PointCode()
+
+		// Если manager запросил конкретные точки - проверяем что это его точка
+		if len(requestedFilter.PointCodes) > 0 {
+			for _, code := range requestedFilter.PointCodes {
+				if code != userPointCode {
+					return nil, domainErr.NewForbiddenError("cannot access customers from other points").
+						WithDetail("77016789004requested_point", code).
+						WithDetail("user_point", userPointCode)
+				}
+			}
+		} else {
+			// Если не запросил - ставим его точку
+			requestedFilter.PointCodes = []string{userPointCode}
+		}
+
+		// Если manager запросил фильтр по телефону мастера - проверяем что мастер из его точки
+		if requestedFilter.MasterPhone != nil {
+			staff, err := s.usersRepo.GetByPhone(ctx, *requestedFilter.MasterPhone)
+			if err != nil {
+				return nil, err
+			}
+			if staff.PointCode == nil || *staff.PointCode != userPointCode {
+				return nil, domainErr.NewForbiddenError("cannot filter by staff from other points").
+					WithDetail("staff_phone", *requestedFilter.MasterPhone).
+					WithDetail("user_point", userPointCode)
+			}
+		}
+
+		return requestedFilter, nil
+
+	case user.RoleNetManager, user.RoleSelfOwner:
+		// NetManager/SelfOwner могут видеть клиентов своей сети
+		networkCode := userSession.NetworkCode()
+
+		// Если запросили конкретные точки - проверяем что они из его сети
+		if len(requestedFilter.PointCodes) > 0 {
+			// Запрашиваем все точки одним запросом
+			points, err := s.pointsService.GetByCodes(ctx, requestedFilter.PointCodes)
+			if err != nil {
+				return nil, err
+			}
+
+			// Проверяем что все точки из его сети
+			for _, p := range points {
+				if p.NetworkCode != networkCode {
+					return nil, domainErr.NewForbiddenError("cannot access customers from other network").
+						WithDetail("point", p.Code).
+						WithDetail("user_network", networkCode)
+				}
+			}
+			// Проверяем что все запрошенные точки найдены
+			if len(points) != len(requestedFilter.PointCodes) {
+				foundCodes := lo.Map(points, func(p *point.Point, _ int) string { return p.Code })
+				missingCodes := lo.Filter(requestedFilter.PointCodes, func(code string, _ int) bool {
+					return !lo.Contains(foundCodes, code)
+				})
+				return nil, domainErr.NewNotFoundError("some points not found", nil).
+					WithDetail("missing_points", missingCodes)
+			}
+		} else {
+			// Если не запросили - возвращаем клиентов всей сети
+			points, err := s.pointsService.GetByNetworkCode(ctx, networkCode)
+			if err != nil {
+				return nil, err
+			}
+			requestedFilter.PointCodes = lo.Map(points, func(p *point.Point, _ int) string {
+				return p.Code
+			})
+		}
+
+		// Если запросили фильтр по телефону мастера - проверяем что мастер из его сети
+		if requestedFilter.MasterPhone != nil {
+			staff, err := s.usersRepo.GetByPhone(ctx, *requestedFilter.MasterPhone)
+			if err != nil {
+				return nil, err
+			}
+			if staff.NetworkCode == nil || *staff.NetworkCode != networkCode {
+				return nil, domainErr.NewForbiddenError("cannot filter by staff from other network").
+					WithDetail("staff_phone", *requestedFilter.MasterPhone).
+					WithDetail("user_network", networkCode)
+			}
+		}
+
+		return requestedFilter, nil
+
+	case user.RoleAdmin:
+		// Admin может видеть всех клиентов (без ограничений)
+		return requestedFilter, nil
+
+	case user.RoleUser:
+		return nil, domainErr.NewForbiddenError("insufficient permissions to list customers").
+			WithDetail("role", userSession.Role().String())
+
+	default:
+		return nil, domainErr.NewForbiddenError("unknown role").
+			WithDetail("role", userSession.Role().String())
+	}
 }
 
 // authorizeFilter применяет ограничения доступа на основе роли пользователя

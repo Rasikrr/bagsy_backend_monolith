@@ -59,6 +59,96 @@ func (s *Service) SendPasswordChangeLink(ctx context.Context, phone, token strin
 	return s.send(ctx, phone, message)
 }
 
+// BagsyReminder содержит информацию для уведомления о записи
+type BagsyReminder struct {
+	ServiceName string
+	MasterName  string
+	PointName   string
+	StartAt     string // Форматированное время
+}
+
+// SendBagsyReminder отправляет напоминание о предстоящей записи
+func (s *Service) SendBagsyReminder(ctx context.Context, phone string, reminder *BagsyReminder, reminderType string, recipientType string) error {
+	var message string
+
+	if recipientType == "master" {
+		switch reminderType {
+		case "day_before":
+			message = fmt.Sprintf(
+				"Напоминание: у вас запись завтра!\n\n"+
+					"📅 %s\n"+
+					"💇 %s\n"+
+					"📍 %s",
+				reminder.StartAt,
+				reminder.ServiceName,
+				reminder.PointName,
+			)
+		case "hour_before":
+			message = fmt.Sprintf(
+				"Напоминание: у вас запись через час!\n\n"+
+					"⏰ %s\n"+
+					"💇 %s\n"+
+					"📍 %s",
+				reminder.StartAt,
+				reminder.ServiceName,
+				reminder.PointName,
+			)
+		default:
+			message = fmt.Sprintf(
+				"Напоминание о записи\n\n"+
+					"📅 %s\n"+
+					"💇 %s\n"+
+					"📍 %s",
+				reminder.StartAt,
+				reminder.ServiceName,
+				reminder.PointName,
+			)
+		}
+	} else {
+		// Default to client message
+		switch reminderType {
+		case "day_before":
+			message = fmt.Sprintf(
+				"Напоминаем о вашей записи завтра!\n\n"+
+					"📅 %s\n"+
+					"💇 %s\n"+
+					"👤 %s\n"+
+					"📍 %s",
+				reminder.StartAt,
+				reminder.ServiceName,
+				reminder.MasterName,
+				reminder.PointName,
+			)
+		case "hour_before":
+			message = fmt.Sprintf(
+				"Ваша запись через час!\n\n"+
+					"⏰ %s\n"+
+					"💇 %s\n"+
+					"👤 %s\n"+
+					"📍 %s",
+				reminder.StartAt,
+				reminder.ServiceName,
+				reminder.MasterName,
+				reminder.PointName,
+			)
+		default:
+			message = fmt.Sprintf(
+				"Напоминание о записи\n\n"+
+					"📅 %s\n"+
+					"💇 %s\n"+
+					"👤 %s\n"+
+					"📍 %s",
+				reminder.StartAt,
+				reminder.ServiceName,
+				reminder.MasterName,
+				reminder.PointName,
+			)
+		}
+	}
+
+	return s.send(ctx, phone, message)
+}
+
 func (s *Service) send(ctx context.Context, phone, message string) error {
 	// Пытаемся отправить через WhatsApp
 	whatsappErr := s.whatsApp.SendMessage(ctx, phone, message)

@@ -2,14 +2,21 @@
 package http
 
 import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/calendar"
+	masterservicesH "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/master_services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/networks"
+	pointcategories "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/point_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/points"
+	servicecategories "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/service_categories"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/services"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/users"
+	masterServicesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/master_services"
 	mediaS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/media"
 	networksS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/networks"
+	pointCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/point_categories"
 	pointsS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/points"
+	serviceCategoriesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/service_categories"
 	servicesS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/services"
 	usersS "github.com/Rasikrr/bagsy_backend_monolith/internal/services/users"
 	"github.com/Rasikrr/core/cache/redis"
@@ -58,6 +65,9 @@ func NewServer(
 	networksService *networksS.Service,
 	servicesService *servicesS.Service,
 	mediaService *mediaS.Service,
+	pointCategoriesService *pointCategoriesS.Service,
+	serviceCategoriesService *serviceCategoriesS.Service,
+	masterServicesService *masterServicesS.Service,
 ) {
 	authMiddleware := middlewares.NewAuth(authService)
 	rateLimiterFactory := middlewares.NewRateLimiterFactory(redis)
@@ -68,8 +78,12 @@ func NewServer(
 	bagsiesController := bagsies.New(bagsiesService, authMiddleware)
 	pointsController := points.New(pointsService, authMiddleware)
 	networksController := networks.New(networksService, pointsService, authMiddleware)
-	servicesController := services.New(servicesService)
+	servicesController := services.New(servicesService, authMiddleware)
 	mediaController := media.New(mediaService, authMiddleware)
+	calendarController := calendar.New(bagsiesService, authMiddleware)
+	pointCategoriesController := pointcategories.New(pointCategoriesService)
+	serviceCategoriesController := servicecategories.New(serviceCategoriesService)
+	masterServicesController := masterservicesH.New(masterServicesService, authMiddleware)
 
 	server.WithMiddlewares(initCORSMiddleware())
 	server.WithControllers(
@@ -81,6 +95,10 @@ func NewServer(
 		networksController,
 		servicesController,
 		mediaController,
+		calendarController,
+		pointCategoriesController,
+		serviceCategoriesController,
+		masterServicesController,
 	)
 
 	initSwagger(server, swaggerHost, swaggerScheme)

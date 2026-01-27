@@ -105,7 +105,50 @@ const deletePoint = `
 
 const existByCode = `
 	SELECT EXISTS (
-	    SELECT 1 
+	    SELECT 1
 	    FROM points WHERE code = $1
 	)
+	`
+
+const getByCodes = `
+	SELECT
+		p.code,
+		p.name,
+		p.description,
+		p.network_code,
+		p.category_id,
+		p.address,
+		p.city,
+		p.active,
+		p.schedule,
+		p.created_at,
+		p.updated_at,
+		p.deleted_at,
+		p.updated_by,
+
+		COALESCE(
+			jsonb_agg(
+				jsonb_build_object(
+					'order', pm.display_order,
+					'file_key', m.file_key
+				)
+				ORDER BY pm.display_order
+			) FILTER (WHERE m.id IS NOT NULL),
+			'[]'::jsonb
+		) AS photos
+
+	FROM points p
+	LEFT JOIN point_media pm
+		   ON pm.point_code = p.code
+		  AND pm.deleted_at IS NULL
+	LEFT JOIN media m
+		   ON m.id = pm.media_id
+		  AND m.status = 'active'
+		  AND m.deleted_at IS NULL
+
+	WHERE p.code = ANY($1)
+	  AND p.active = true
+	  AND p.deleted_at IS NULL
+
+	GROUP BY p.code
 	`

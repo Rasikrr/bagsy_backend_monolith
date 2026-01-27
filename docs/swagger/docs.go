@@ -810,6 +810,81 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/bagsies/master": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создает бронь напрямую от имени мастера без подтверждения кода. Статус сразу created.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bagsies"
+                ],
+                "summary": "Создание брони мастером",
+                "parameters": [
+                    {
+                        "description": "Данные для создания брони",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.createBagsyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Бронь успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_bagsies.createBagsyResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный формат запроса или валидация не пройдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Нет прав доступа",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Услуга или мастер не найдены",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Выбранное время уже занято у данного мастера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bagsies/resend": {
             "post": {
                 "description": "Повторно отправляет код подтверждения брони клиенту по SMS/WhatsApp. Используется если клиент не получил код или код истек.",
@@ -972,6 +1047,193 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/calendar": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает записи за указанный период.\nДля Staff - только свои записи.\nДля Manager - записи всей точки (опционально с фильтром по мастеру).\nДля SelfOwner/NetManager - записи по любой точке в сети (фильтр по точке). Также доступен фильтр по мастеру\nМаксимальный промежуток между временными рамками - 35 дней",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Получение календаря записей",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Дата начала в формате YYYY-MM-DD",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата окончания в формате YYYY-MM-DD",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Код точки для фильтрации (только для SelfOwner/NetManager)",
+                        "name": "point_code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Телефон мастера для фильтрации (только для Manager(включительно) и выше)",
+                        "name": "master_phone",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_calendar.calendarResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает список клиентов (users с role='user'), обслуживавшихся в точках, с offset-based пагинацией и учетом прав доступа.\n- Staff: только клиенты которых он обслуживал (можно фильтровать по своей точке)\n- Manager: все клиенты своей точки (можно указать point_code=своя_точка, можно фильтровать по телефону мастера)\n- NetManager/SelfOwner: клиенты сети (можно фильтровать по конкретным точкам или получить всех, можно фильтровать по телефону мастера)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Получить список клиентов",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Поиск по части или полному номеру телефона клиента",
+                        "name": "phone_search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Фильтр по телефону мастера (для Manager и выше)",
+                        "name": "staff_phone",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Фильтр по кодам точек (можно указать несколько)",
+                        "name": "point_code",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Количество записей на странице (default: 20, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "phone",
+                            "name",
+                            "surname",
+                            "created_at",
+                            "updated_at"
+                        ],
+                        "type": "string",
+                        "default": "created_at",
+                        "description": "Поле для сортировки",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "default": "asc",
+                        "description": "Направление сортировки",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список клиентов с пагинацией",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_users.getCustomersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав для доступа к ресурсу",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/forms": {
             "post": {
                 "description": "Создает новую заявку на сотрудничество",
@@ -1005,6 +1267,75 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "ошибка",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/master-services": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт связь между мастером и услугой с указанной ценой. Staff создаёт для себя, Manager — для сотрудников своей точки, NetManager/SelfOwner — для сотрудников своей сети.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "master-services"
+                ],
+                "summary": "Создать связь мастер-услуга",
+                "parameters": [
+                    {
+                        "description": "Данные для создания связи мастер-услуга",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_master_services.createMasterServiceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Связь успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_master_services.createMasterServiceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Связь мастер-услуга уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
                         }
@@ -1169,6 +1500,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/point-categories": {
+            "get": {
+                "description": "Возвращает список всех категорий точек",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "point-categories"
+                ],
+                "summary": "Получить список категорий точек",
+                "responses": {
+                    "200": {
+                        "description": "Список категорий точек",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_point_categories.getCategoriesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/points": {
             "post": {
                 "security": [
@@ -1300,9 +1660,116 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/service-categories/{point_code}": {
+            "get": {
+                "description": "Возвращает список категорий услуг и их подкатегорий, доступных для указанной точки",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "service-categories"
+                ],
+                "summary": "Получить категории услуг по коду точки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код точки",
+                        "name": "point_code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список категорий услуг с подкатегориями",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_service_categories.getByPointCodeResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Точка не найдена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/services": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт новую услугу для точки обслуживания",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "services"
+                ],
+                "summary": "Создать услугу",
+                "parameters": [
+                    {
+                        "description": "Данные для создания услуги",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_services.createServiceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Услуга успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_services.serviceDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав для создания услуги",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/services/{point_code}": {
             "get": {
-                "description": "Возвращает список активных услуг для указанной точки",
+                "description": "Возвращает список услуг для указанной точки. По умолчанию возвращает все услуги.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1318,8 +1785,14 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Код точки",
                         "name": "point_code",
-                        "in": "query",
+                        "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Фильтр по активности услуги",
+                        "name": "is_active",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2096,7 +2569,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "client_phone",
-                "comment",
                 "master_phone",
                 "name",
                 "service_id",
@@ -2170,17 +2642,17 @@ const docTemplate = `{
                 "duration_minutes": {
                     "type": "integer"
                 },
+                "masters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_bagsies.masterSlotsResponse"
+                    }
+                },
                 "point_code": {
                     "type": "string"
                 },
                 "service_id": {
                     "type": "string"
-                },
-                "slots": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -2223,6 +2695,26 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_bagsies.masterSlotsResponse": {
+            "type": "object",
+            "properties": {
+                "master_name": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "master_service_price": {
+                    "type": "number"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "internal_ports_http_handlers_bagsies.resentCodeRequest": {
             "type": "object",
             "required": [
@@ -2230,6 +2722,92 @@ const docTemplate = `{
             ],
             "properties": {
                 "bagsy_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.bagsyInfoDTO": {
+            "type": "object",
+            "properties": {
+                "client_phone": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "master_phone": {
+                    "type": "string"
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.calendarDTO": {
+            "type": "object",
+            "properties": {
+                "bagsy_info": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_calendar.bagsyInfoDTO"
+                },
+                "service_info": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_calendar.serviceInfoDTO"
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.calendarResponseDTO": {
+            "type": "object",
+            "properties": {
+                "calendar": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_calendar.calendarDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_calendar.serviceInfoDTO": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -2262,6 +2840,33 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_master_services.createMasterServiceRequest": {
+            "type": "object",
+            "required": [
+                "price",
+                "service_id"
+            ],
+            "properties": {
+                "master_phone": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "price": {
+                    "type": "number"
+                },
+                "service_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_master_services.createMasterServiceResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
                     "type": "string"
                 }
             }
@@ -2322,6 +2927,40 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_point_categories.categoryDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_point_categories.getCategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_point_categories.categoryDTO"
+                    }
+                },
+                "count": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_ports_http_handlers_points.createPointRequest": {
             "type": "object",
             "required": [
@@ -2362,6 +3001,110 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_service_categories.categoryDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subcategories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_service_categories.subcategoryDTO"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_service_categories.getByPointCodeResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_service_categories.categoryDTO"
+                    }
+                },
+                "count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_service_categories.subcategoryDTO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_services.createServiceRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "color",
+                "duration_minutes",
+                "name",
+                "point_code"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "color": {
+                    "type": "string",
+                    "enum": [
+                        "black",
+                        "green",
+                        "red",
+                        "yellow",
+                        "purple",
+                        "orange",
+                        "gray"
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "point_code": {
+                    "type": "string"
+                },
+                "subcategory_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_ports_http_handlers_services.getServicesResponse": {
             "type": "object",
             "properties": {
@@ -2382,6 +3125,9 @@ const docTemplate = `{
                 "category_id": {
                     "type": "integer"
                 },
+                "color": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -2391,6 +3137,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "max_price": {
+                    "type": "number"
+                },
+                "min_price": {
+                    "type": "number"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2398,6 +3150,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "subcategory_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_users.getCustomersResponse": {
+            "type": "object",
+            "properties": {
+                "customers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_users.userDTO"
+                    }
+                },
+                "total": {
                     "type": "integer"
                 }
             }

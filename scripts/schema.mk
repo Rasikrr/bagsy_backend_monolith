@@ -3,7 +3,7 @@ GOOSE := go run github.com/pressly/goose/v3/cmd/goose@v3.25.0
 
 # Создать файл миграции
 migration:
-	$(GOOSE) -dir $(MIGRATIONS_DIR) create $(name) sql
+	$(GOOSE) -dir $(MIGRATIONS_DIR) create $(NAME) sql
 
 migrate-up:
 	$(GOOSE) -dir $(MIGRATIONS_DIR) postgres "$(POSTGRES_DSN)" up

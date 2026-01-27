@@ -33,11 +33,12 @@ type bagsiesRepository interface {
 
 type masterServicesService interface {
 	GetByMasterPhoneAndServiceID(ctx context.Context, phone string, serviceID uuid.UUID) (*masterservice.MasterService, error)
-	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceID uuid.UUID) ([]*masterservice.MasterService, error)
+	GetByPointCodeAndServiceID(ctx context.Context, pointCode string, serviceIDs uuid.UUID) ([]*masterservice.MasterService, error)
 }
 
 type servicesService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*service.Service, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*service.Service, error)
 }
 
 type usersService interface {
@@ -54,6 +55,14 @@ type notificationsService interface {
 	SendBagsyConfirmCode(ctx context.Context, phone, code string) error
 }
 
+// notificationScheduler интерфейс для планирования уведомлений о записях
+type notificationScheduler interface {
+	ScheduleForBagsy(ctx context.Context, bagsyID uuid.UUID, startAt time.Time) error
+	RescheduleForBagsy(ctx context.Context, bagsyID uuid.UUID, startAt time.Time) error
+	CancelForBagsy(ctx context.Context, bagsyID uuid.UUID) error
+	CancelForBagsies(ctx context.Context, bagsyIDs []uuid.UUID) error
+}
+
 type bagsyConfirmCodesCache interface {
 	GetCode(ctx context.Context, id uuid.UUID) (string, error)
 	SetCode(ctx context.Context, id uuid.UUID, code string, ttl time.Duration) error
@@ -67,6 +76,7 @@ type Service struct {
 	usersService           usersService
 	pointsService          pointsService
 	notificationsService   notificationsService
+	notificationScheduler  notificationScheduler
 	bagsyConfirmCodesCache bagsyConfirmCodesCache
 	confirmTTL             time.Duration
 }
@@ -79,6 +89,7 @@ func NewService(
 	usersService usersService,
 	pointsService pointsService,
 	notificationsService notificationsService,
+	notificationScheduler notificationScheduler,
 	bagsyConfirmCodesCache bagsyConfirmCodesCache,
 	confirmTTL time.Duration,
 ) *Service {
@@ -90,6 +101,7 @@ func NewService(
 		usersService:           usersService,
 		pointsService:          pointsService,
 		notificationsService:   notificationsService,
+		notificationScheduler:  notificationScheduler,
 		bagsyConfirmCodesCache: bagsyConfirmCodesCache,
 		confirmTTL:             confirmTTL,
 	}
@@ -102,21 +114,27 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 	var (
 		bagsyID uuid.UUID
 		err     error
+		exists  bool
 	)
 	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
 		func(txCtx context.Context) error {
 			// У юзеров нет паролей, будут входить по auth коду (whatsapp/sms) в будущем
-			_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
-				Phone:   req.ClientPhone,
-				Name:    req.Name,
-				Surname: req.Surname,
-			})
+			exists, err = s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
 			if err != nil {
-				if !domainErr.IsConflict(err) {
+				return err
+			}
+
+			if !exists {
+				_, err = s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
+					Phone:   req.ClientPhone,
+					Name:    req.Name,
+					Surname: req.Surname,
+				})
+				if err != nil {
 					return err
 				}
-				// Значит Юзер уже существовал
 			}
+
 			pointService, serviceErr := s.servicesService.GetByID(txCtx, req.ServiceID)
 			if serviceErr != nil {
 				return serviceErr
@@ -171,6 +189,77 @@ func (s *Service) Create(ctx context.Context, req *bagsy.CreateBagsyCommand) (uu
 	return bagsyID, nil
 }
 
+// CreateByMaster создаёт бронь напрямую от имени мастера без подтверждения кода.
+// Статус сразу устанавливается в StatusCreated.
+func (s *Service) CreateByMaster(ctx context.Context, req *bagsy.CreateBagsyCommand) (uuid.UUID, error) {
+	log.Infof(ctx, "creating bagsy by master: client=%s, master=%s, service=%s, start_at=%s",
+		req.ClientPhone, req.MasterPhone, req.ServiceID, req.StartAt.Format(time.RFC3339))
+
+	var (
+		bagsyID uuid.UUID
+		err     error
+	)
+
+	err = s.txManager.Transaction(ctx, database.TXOptions{IsolationLevel: coreEnum.IsoLevelReadCommited},
+		func(txCtx context.Context) error {
+			exists, existsErr := s.usersService.ExistsByPhone(txCtx, req.ClientPhone)
+			if existsErr != nil {
+				return existsErr
+			}
+
+			if !exists {
+				_, createErr := s.usersService.CreateUser(txCtx, &user.CreateUserCommand{
+					Phone:   req.ClientPhone,
+					Name:    req.Name,
+					Surname: req.Surname,
+				})
+				if createErr != nil {
+					return createErr
+				}
+			}
+
+			pointService, serviceErr := s.servicesService.GetByID(txCtx, req.ServiceID)
+			if serviceErr != nil {
+				return serviceErr
+			}
+
+			masterService, masterServErr := s.masterServicesService.GetByMasterPhoneAndServiceID(txCtx, req.MasterPhone, req.ServiceID)
+			if masterServErr != nil {
+				return masterServErr
+			}
+
+			endAt := req.StartAt.Add(time.Minute * time.Duration(pointService.DurationMinutes))
+
+			bag := &bagsy.Bagsy{
+				ServiceID:   req.ServiceID,
+				PointCode:   pointService.PointCode,
+				ClientPhone: req.ClientPhone,
+				MasterPhone: masterService.MasterPhone,
+				Status:      bagsy.StatusCreated,
+				Price:       masterService.Price,
+				StartAt:     req.StartAt,
+				EndAt:       endAt,
+				Comment:     req.Comment,
+			}
+
+			bagsyID, err = s.bagsiesRepository.Create(txCtx, bag)
+			if err != nil {
+				return err
+			}
+
+			log.Infof(txCtx, "bagsy created by master: id=%s, point=%s, price=%v", bagsyID, pointService.PointCode, masterService.Price)
+			return nil
+		})
+
+	if err != nil {
+		log.Errorf(ctx, "failed to create bagsy by master: %v", err)
+		return uuid.Nil, err
+	}
+
+	log.Infof(ctx, "bagsy creation by master completed: id=%s", bagsyID)
+	return bagsyID, nil
+}
+
 func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) error {
 	bag, err := s.bagsiesRepository.GetByID(ctx, bagsyID)
 	if err != nil {
@@ -190,6 +279,13 @@ func (s *Service) Confirm(ctx context.Context, bagsyID uuid.UUID, code string) e
 	if err != nil {
 		return err
 	}
+
+	// Планируем уведомления о записи (за день и за час)
+	if err = s.notificationScheduler.ScheduleForBagsy(ctx, bagsyID, bag.StartAt); err != nil {
+		// Логируем ошибку, но не прерываем процесс подтверждения
+		log.Warnf(ctx, "failed to schedule notifications for bagsy %s: %v", bagsyID, err)
+	}
+
 	return nil
 }
 
@@ -278,6 +374,7 @@ func (s *Service) GetAvailableSlots(ctx context.Context, cmd *bagsy.GetAvailable
 		ctx,
 		point.Schedule,
 		masterUsers,
+		masterServices,
 		occupiedBagsies,
 		service.DurationMinutes,
 		cmd.StartDate,
@@ -305,4 +402,9 @@ func (s *Service) getMastersForSlots(ctx context.Context, cmd *bagsy.GetAvailabl
 
 	// Иначе получаем всех мастеров на точке с этой услугой
 	return s.masterServicesService.GetByPointCodeAndServiceID(ctx, cmd.PointCode, cmd.ServiceID)
+}
+
+// GetByID получает запись по ID
+func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*bagsy.Bagsy, error) {
+	return s.bagsiesRepository.GetByID(ctx, id)
 }

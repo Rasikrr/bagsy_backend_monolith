@@ -1,6 +1,8 @@
 package bagsies
 
 import (
+	"github.com/shopspring/decimal"
+	"sort"
 	"time"
 
 	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
@@ -13,8 +15,8 @@ import (
 
 //go:generate easyjson -all models.go
 
-// Константа для периода слотов (2 недели)
-const defaultSlotsPeriodDays = 14
+// Константа для периода слотов (4 недели)
+const defaultSlotsPeriodDays = 28
 
 type getSlotsRequest struct {
 	PointCode   string  `json:"point_code" validate:"required"`
@@ -96,7 +98,7 @@ type createBagsyRequest struct {
 	ClientPhone string    `json:"client_phone" validate:"required"`
 	Name        string    `json:"name" validate:"required"`
 	Surname     string    `json:"surname" validate:"required"`
-	Comment     *string   `json:"comment" validate:"required"`
+	Comment     *string   `json:"comment"`
 }
 
 func (c *createBagsyRequest) Validate() error {
@@ -107,10 +109,19 @@ func (c *createBagsyRequest) Validate() error {
 }
 
 func (c *createBagsyRequest) toDomain() *bagsy.CreateBagsyCommand {
+	// Конвертируем время: входящее время интерпретируем как Almaty и сохраняем в UTC
+	// (аналогично getSlotsForDayRequest.toDomain)
+	almatyLoc := time.FixedZone("Asia/Almaty", 5*60*60)
+	startAtAlmaty := time.Date(
+		c.StartAt.Year(), c.StartAt.Month(), c.StartAt.Day(),
+		c.StartAt.Hour(), c.StartAt.Minute(), c.StartAt.Second(), 0,
+		almatyLoc,
+	)
+
 	return &bagsy.CreateBagsyCommand{
 		ServiceID:   c.ServiceID,
 		MasterPhone: c.MasterPhone,
-		StartAt:     c.StartAt,
+		StartAt:     startAtAlmaty.UTC(),
 		ClientPhone: c.ClientPhone,
 		Name:        c.Name,
 		Surname:     c.Surname,
@@ -151,22 +162,16 @@ func (r *resentCodeRequest) Validate() error {
 	return nil
 }
 
-// ========== GET SLOTS FOR DAY ==========
-
 type getSlotsForDayRequest struct {
-	PointCode   string  `json:"point_code" validate:"required"`
-	ServiceID   string  `json:"service_id" validate:"required,uuid"`
-	Date        string  `json:"date" validate:"required"`
-	MasterPhone *string `json:"master_phone" validate:"omitempty,min=10"`
+	PointCode   string    `json:"point_code" validate:"required"`
+	ServiceID   string    `json:"service_id" validate:"required,uuid"`
+	Date        time.Time `json:"date" validate:"required"`
+	MasterPhone *string   `json:"master_phone" validate:"omitempty,min=10"`
 }
 
 func (r *getSlotsForDayRequest) Validate() error {
 	if err := request.GetValidator().Struct(r); err != nil {
 		return request.HandleValidationError(err)
-	}
-	_, err := time.Parse("2006-01-02", r.Date)
-	if err != nil {
-		return domainErr.NewValidationError("invalid date format, expected YYYY-MM-DD", err.Error())
 	}
 	return nil
 }
@@ -177,57 +182,65 @@ func (r *getSlotsForDayRequest) toDomain() (*bagsy.GetAvailableSlotsCommand, err
 		return nil, domainErr.NewInvalidInputError("invalid service_id format", err)
 	}
 
-	date, _ := time.Parse("2006-01-02", r.Date)
-	almatyLoc := time.FixedZone("Asia/Almaty", 5*60*60)
-	startOfDayAlmaty := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, almatyLoc)
-	endOfDayAlmaty := startOfDayAlmaty.Add(24 * time.Hour)
+	// Вычисляем начало и конец дня в той же timezone, что пришла от клиента
+	startOfDay := time.Date(r.Date.Year(), r.Date.Month(), r.Date.Day(), 0, 0, 0, 0, r.Date.Location())
+	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	return &bagsy.GetAvailableSlotsCommand{
 		PointCode:   r.PointCode,
 		ServiceID:   serviceID,
 		MasterPhone: r.MasterPhone,
-		StartDate:   startOfDayAlmaty.UTC(),
-		EndDate:     endOfDayAlmaty.UTC(),
+		StartDate:   startOfDay.UTC(),
+		EndDate:     endOfDay.UTC(),
 	}, nil
 }
 
-type getSlotsForDayResponse struct {
-	ServiceID       uuid.UUID `json:"service_id"`
-	PointCode       string    `json:"point_code"`
-	Date            string    `json:"date"`
-	DurationMinutes int       `json:"duration_minutes"`
-	Slots           []string  `json:"slots"`
+type masterSlotsResponse struct {
+	MasterPhone        string   `json:"master_phone"`
+	MasterName         string   `json:"master_name"`
+	MasterServicePrice float64  `json:"master_service_price"`
+	Slots              []string `json:"slots"`
 }
 
-func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date string) *getSlotsForDayResponse {
-	slotSet := make(map[string]struct{})
+type getSlotsForDayResponse struct {
+	ServiceID       uuid.UUID             `json:"service_id"`
+	PointCode       string                `json:"point_code"`
+	Date            string                `json:"date"`
+	DurationMinutes int                   `json:"duration_minutes"`
+	Masters         []masterSlotsResponse `json:"masters"`
+}
+
+func newGetSlotsForDayResponse(slots *bagsy.AvailableSlots, date time.Time) *getSlotsForDayResponse {
+	masters := make([]masterSlotsResponse, 0, len(slots.MasterSlots))
 
 	for _, ms := range slots.MasterSlots {
+		slotTimes := make([]string, 0, len(ms.Slots))
 		for _, ts := range ms.Slots {
 			startAlmaty := timeutil.ConvertUTCToAlmatyTime(ts.StartAt)
-			slotSet[startAlmaty.Format("15:04")] = struct{}{}
+			slotTimes = append(slotTimes, startAlmaty.Format("15:04"))
 		}
-	}
+		sort.Strings(slotTimes)
 
-	slotTimes := make([]string, 0, len(slotSet))
-	for slot := range slotSet {
-		slotTimes = append(slotTimes, slot)
-	}
-
-	// Сортируем по времени
-	for i := range len(slotTimes) - 1 {
-		for j := i + 1; j < len(slotTimes); j++ {
-			if slotTimes[i] > slotTimes[j] {
-				slotTimes[i], slotTimes[j] = slotTimes[j], slotTimes[i]
-			}
+		var (
+			masterServicePrice float64
+		)
+		if !decimal.Decimal.IsZero(ms.MasterServicePrice) {
+			masterServicePrice, _ = ms.MasterServicePrice.Float64()
 		}
+
+		masters = append(masters, masterSlotsResponse{
+			MasterPhone:        ms.MasterPhone,
+			MasterName:         ms.MasterName,
+			MasterServicePrice: masterServicePrice,
+			Slots:              slotTimes,
+		})
 	}
 
 	return &getSlotsForDayResponse{
 		ServiceID:       slots.ServiceID,
 		PointCode:       slots.PointCode,
-		Date:            date,
+		Date:            date.Format("2006-01-02"),
 		DurationMinutes: slots.DurationMinutes,
-		Slots:           slotTimes,
+		Masters:         masters,
 	}
 }

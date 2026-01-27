@@ -8,6 +8,7 @@ import (
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
+	time "time"
 )
 
 // suppress unused package warning
@@ -101,16 +102,20 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim(']')
 			}
 		case "created_at":
-			out.CreatedAt = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.CreatedAt).UnmarshalJSON(data))
+			}
 		case "updated_at":
 			if in.IsNull() {
 				in.Skip()
 				out.UpdatedAt = nil
 			} else {
 				if out.UpdatedAt == nil {
-					out.UpdatedAt = new(string)
+					out.UpdatedAt = new(time.Time)
 				}
-				*out.UpdatedAt = string(in.String())
+				if data := in.Raw(); in.Ok() {
+					in.AddError((*out.UpdatedAt).UnmarshalJSON(data))
+				}
 			}
 		default:
 			in.SkipRecursive()
@@ -187,12 +192,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"created_at\":"
 		out.RawString(prefix)
-		out.String(string(in.CreatedAt))
+		out.Raw((in.CreatedAt).MarshalJSON())
 	}
 	if in.UpdatedAt != nil {
 		const prefix string = ",\"updated_at\":"
 		out.RawString(prefix)
-		out.String(string(*in.UpdatedAt))
+		out.Raw((*in.UpdatedAt).MarshalJSON())
 	}
 	out.RawByte('}')
 }
@@ -341,7 +346,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				in.Delim('[')
 				if out.Schedule == nil {
 					if !in.IsDelim(']') {
-						out.Schedule = make([]scheduleRequestDTO, 0, 1)
+						out.Schedule = make([]scheduleRequestDTO, 0, 0)
 					} else {
 						out.Schedule = []scheduleRequestDTO{}
 					}
@@ -434,9 +439,13 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "week_day":
 			out.WeekDay = int(in.Int())
 		case "open":
-			out.Open = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Open).UnmarshalJSON(data))
+			}
 		case "close":
-			out.Close = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Close).UnmarshalJSON(data))
+			}
 		case "all_day":
 			out.AllDay = bool(in.Bool())
 		case "comment":
@@ -463,12 +472,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"open\":"
 		out.RawString(prefix)
-		out.String(string(in.Open))
+		out.Raw((in.Open).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"close\":"
 		out.RawString(prefix)
-		out.String(string(in.Close))
+		out.Raw((in.Close).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"all_day\":"
@@ -528,9 +537,13 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		case "week_day":
 			out.WeekDay = int(in.Int())
 		case "from":
-			out.From = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.From).UnmarshalJSON(data))
+			}
 		case "to":
-			out.To = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.To).UnmarshalJSON(data))
+			}
 		case "all_day":
 			out.AllDay = bool(in.Bool())
 		case "comment":
@@ -557,12 +570,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	{
 		const prefix string = ",\"from\":"
 		out.RawString(prefix)
-		out.String(string(in.From))
+		out.Raw((in.From).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"to\":"
 		out.RawString(prefix)
-		out.String(string(in.To))
+		out.Raw((in.To).MarshalJSON())
 	}
 	{
 		const prefix string = ",\"all_day\":"
@@ -899,4 +912,285 @@ func (v *getUsersRequest) UnmarshalJSON(data []byte) error {
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *getUsersRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers6(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers7(in *jlexer.Lexer, out *getCustomersResponse) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "customers":
+			if in.IsNull() {
+				in.Skip()
+				out.Customers = nil
+			} else {
+				in.Delim('[')
+				if out.Customers == nil {
+					if !in.IsDelim(']') {
+						out.Customers = make([]*userDTO, 0, 8)
+					} else {
+						out.Customers = []*userDTO{}
+					}
+				} else {
+					out.Customers = (out.Customers)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v13 *userDTO
+					if in.IsNull() {
+						in.Skip()
+						v13 = nil
+					} else {
+						if v13 == nil {
+							v13 = new(userDTO)
+						}
+						(*v13).UnmarshalEasyJSON(in)
+					}
+					out.Customers = append(out.Customers, v13)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "total":
+			out.Total = int(in.Int())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers7(out *jwriter.Writer, in getCustomersResponse) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"customers\":"
+		out.RawString(prefix[1:])
+		if in.Customers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v14, v15 := range in.Customers {
+				if v14 > 0 {
+					out.RawByte(',')
+				}
+				if v15 == nil {
+					out.RawString("null")
+				} else {
+					(*v15).MarshalEasyJSON(out)
+				}
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"total\":"
+		out.RawString(prefix)
+		out.Int(int(in.Total))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v getCustomersResponse) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers7(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v getCustomersResponse) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers7(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *getCustomersResponse) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers7(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *getCustomersResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers7(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers8(in *jlexer.Lexer, out *getCustomersRequest) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "PhoneSearch":
+			if in.IsNull() {
+				in.Skip()
+				out.PhoneSearch = nil
+			} else {
+				if out.PhoneSearch == nil {
+					out.PhoneSearch = new(string)
+				}
+				*out.PhoneSearch = string(in.String())
+			}
+		case "StaffPhone":
+			if in.IsNull() {
+				in.Skip()
+				out.StaffPhone = nil
+			} else {
+				if out.StaffPhone == nil {
+					out.StaffPhone = new(string)
+				}
+				*out.StaffPhone = string(in.String())
+			}
+		case "PointCodes":
+			if in.IsNull() {
+				in.Skip()
+				out.PointCodes = nil
+			} else {
+				in.Delim('[')
+				if out.PointCodes == nil {
+					if !in.IsDelim(']') {
+						out.PointCodes = make([]string, 0, 4)
+					} else {
+						out.PointCodes = []string{}
+					}
+				} else {
+					out.PointCodes = (out.PointCodes)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v16 string
+					v16 = string(in.String())
+					out.PointCodes = append(out.PointCodes, v16)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "Limit":
+			out.Limit = uint64(in.Uint64())
+		case "Offset":
+			out.Offset = uint64(in.Uint64())
+		case "OrderBy":
+			out.OrderBy = string(in.String())
+		case "SortOrder":
+			out.SortOrder = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers8(out *jwriter.Writer, in getCustomersRequest) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"PhoneSearch\":"
+		out.RawString(prefix[1:])
+		if in.PhoneSearch == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.PhoneSearch))
+		}
+	}
+	{
+		const prefix string = ",\"StaffPhone\":"
+		out.RawString(prefix)
+		if in.StaffPhone == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.StaffPhone))
+		}
+	}
+	{
+		const prefix string = ",\"PointCodes\":"
+		out.RawString(prefix)
+		if in.PointCodes == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v17, v18 := range in.PointCodes {
+				if v17 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v18))
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"Limit\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.Limit))
+	}
+	{
+		const prefix string = ",\"Offset\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.Offset))
+	}
+	{
+		const prefix string = ",\"OrderBy\":"
+		out.RawString(prefix)
+		out.String(string(in.OrderBy))
+	}
+	{
+		const prefix string = ",\"SortOrder\":"
+		out.RawString(prefix)
+		out.String(string(in.SortOrder))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v getCustomersRequest) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers8(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v getCustomersRequest) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers8(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *getCustomersRequest) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers8(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *getCustomersRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersUsers8(l, v)
 }

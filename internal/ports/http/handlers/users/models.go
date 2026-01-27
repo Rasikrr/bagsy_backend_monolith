@@ -3,17 +3,21 @@ package users
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/enum"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/query"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/request"
-	timeutil "github.com/Rasikrr/bagsy_backend_monolith/internal/util/time"
 	"github.com/google/uuid"
 )
 
 //go:generate easyjson -all models.go
+
+const (
+	defaultOrderBy = "created_at"
+)
 
 type getUsersRequest struct {
 	PointCode   *string  `query:"point_code" validate:""`
@@ -59,7 +63,7 @@ func (r *getUsersRequest) GetQueryParameters(req *http.Request) error {
 		}
 	}
 
-	r.OrderBy = "created_at"
+	r.OrderBy = defaultOrderBy
 	if sortBy := q.Get("sort_by"); sortBy != "" {
 		r.OrderBy = sortBy
 	}
@@ -111,11 +115,11 @@ func (r *getUsersRequest) toFilter() (*user.Filter, error) {
 }
 
 type staffScheduleDTO struct {
-	WeekDay int    `json:"week_day"`
-	Open    string `json:"open"`
-	Close   string `json:"close"`
-	AllDay  bool   `json:"all_day"`
-	Comment string `json:"comment"`
+	WeekDay int       `json:"week_day"`
+	Open    time.Time `json:"open"`
+	Close   time.Time `json:"close"`
+	AllDay  bool      `json:"all_day"`
+	Comment string    `json:"comment"`
 }
 
 type userDTO struct {
@@ -128,15 +132,15 @@ type userDTO struct {
 	Active      bool                `json:"active"`
 	AvatarURL   string              `json:"avatar_url,omitempty"`
 	Schedule    []*staffScheduleDTO `json:"schedule,omitempty"`
-	CreatedAt   string              `json:"created_at"`
-	UpdatedAt   *string             `json:"updated_at,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   *time.Time          `json:"updated_at,omitempty"`
 }
 
 func toStaffScheduleDTO(schedule *user.ScheduleElement) *staffScheduleDTO {
 	return &staffScheduleDTO{
 		WeekDay: schedule.WeekDay,
-		Open:    schedule.Open.Format("15:04:05"),
-		Close:   schedule.Close.Format("15:04:05"),
+		Open:    schedule.Open,
+		Close:   schedule.Close,
 		AllDay:  schedule.AllDay,
 		Comment: schedule.Comment,
 	}
@@ -151,12 +155,12 @@ func toUserDTO(user *user.User) *userDTO {
 		PointCode:   user.PointCode,
 		NetworkCode: user.NetworkCode,
 		Active:      user.Active,
-		CreatedAt:   user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt:   user.CreatedAt,
 	}
 
 	if user.UpdatedAt != nil {
-		updatedAt := user.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
-		d.UpdatedAt = &updatedAt
+		updatedAt := user.UpdatedAt
+		d.UpdatedAt = updatedAt
 	}
 
 	if len(user.Schedule) > 0 {
@@ -213,15 +217,15 @@ func (r *updateUserRequest) toDomain() *user.UpdateUserCommand {
 }
 
 type scheduleRequestDTO struct {
-	WeekDay int    `json:"week_day" validate:"min=0,max=6"`
-	From    string `json:"from" validate:"required"`
-	To      string `json:"to" validate:"required"`
-	AllDay  bool   `json:"all_day"`
-	Comment string `json:"comment"`
+	WeekDay int       `json:"week_day" validate:"min=0,max=6"`
+	From    time.Time `json:"from" validate:"required"`
+	To      time.Time `json:"to" validate:"required"`
+	AllDay  bool      `json:"all_day"`
+	Comment string    `json:"comment"`
 }
 
 type updateScheduleRequest struct {
-	Schedule []scheduleRequestDTO `json:"schedule" validate:"required,len=7,dive"`
+	Schedule []scheduleRequestDTO `json:"schedule" validate:"required"`
 }
 
 func (r *updateScheduleRequest) Validate() error {
@@ -230,7 +234,7 @@ func (r *updateScheduleRequest) Validate() error {
 		return request.HandleValidationError(err)
 	}
 
-	if len(r.Schedule) != 7 {
+	if len(r.Schedule) < 1 {
 		return domainErr.NewValidationError("schedule must contain exactly 7 days").
 			WithDetail("length", len(r.Schedule))
 	}
@@ -238,31 +242,114 @@ func (r *updateScheduleRequest) Validate() error {
 	return nil
 }
 
-func (r *updateScheduleRequest) toDomain() (user.Schedule, error) {
+func (r *updateScheduleRequest) toDomain() user.Schedule {
 	schedules := make(user.Schedule, 0, len(r.Schedule))
 
 	for _, s := range r.Schedule {
-		opens, err := timeutil.ConvertAlmatyTimeToUTC(s.From)
-		if err != nil {
-			return nil, domainErr.NewValidationError("invalid time format in schedule").
-				WithDetail("from", s.From).
-				WithError(err)
-		}
-
-		closes, err := timeutil.ConvertAlmatyTimeToUTC(s.To)
-		if err != nil {
-			return nil, domainErr.NewValidationError("invalid time format in schedule").
-				WithDetail("to", s.To).
-				WithError(err)
-		}
-
 		schedules = append(schedules, &user.ScheduleElement{
 			WeekDay: s.WeekDay,
-			Open:    opens,
-			Close:   closes,
+			Open:    s.From.UTC(),
+			Close:   s.To.UTC(),
 			AllDay:  s.AllDay,
 			Comment: s.Comment,
 		})
 	}
-	return schedules, nil
+	return schedules
+}
+
+// getCustomersRequest - запрос для получения клиентов
+type getCustomersRequest struct {
+	PhoneSearch *string  `query:"phone_search"`
+	StaffPhone  *string  `query:"staff_phone"` // Фильтр по телефону мастера (для Manager и выше)
+	PointCodes  []string `query:"point_code"`  // Фильтр по точкам (для NetManager/Manager)
+	Limit       uint64   `query:"limit" validate:"max=100"`
+	Offset      uint64   `query:"offset" validate:"min=0"`
+	OrderBy     string   `query:"order_by" validate:"oneof=phone name surname created_at updated_at"`
+	SortOrder   string   `query:"sort_order" validate:"oneof=asc desc"`
+}
+
+func (r *getCustomersRequest) GetQueryParameters(req *http.Request) error {
+	q := req.URL.Query()
+
+	if phoneSearch := q.Get("phone_search"); phoneSearch != "" {
+		r.PhoneSearch = &phoneSearch
+	}
+
+	if staffPhone := q.Get("staff_phone"); staffPhone != "" {
+		r.StaffPhone = &staffPhone
+	}
+
+	if pointCodes := q["point_code"]; len(pointCodes) > 0 {
+		r.PointCodes = pointCodes
+	}
+
+	r.Limit = 20
+	if limitStr := q.Get("limit"); limitStr != "" {
+		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
+			r.Limit = uint64(limit)
+		}
+	}
+
+	r.Offset = 0
+	if offsetStr := q.Get("offset"); offsetStr != "" {
+		if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
+			r.Offset = uint64(offset)
+		}
+	}
+
+	r.OrderBy = defaultOrderBy
+	if orderBy := q.Get("order_by"); orderBy != "" {
+		r.OrderBy = orderBy
+	}
+
+	r.SortOrder = "asc"
+	if sortOrder := q.Get("sort_order"); sortOrder != "" {
+		r.SortOrder = sortOrder
+	}
+
+	return nil
+}
+
+func (r *getCustomersRequest) Validate() error {
+	err := request.GetValidator().Struct(r)
+	if err != nil {
+		return request.HandleValidationError(err)
+	}
+	return nil
+}
+
+func (r *getCustomersRequest) toFilter() (*user.CustomerFilter, error) {
+	sortOrder, err := enum.SortOrderString(r.SortOrder)
+	if err != nil {
+		return nil, domainErr.NewValidationError("sort_order contains an invalid value").
+			WithDetail("sort_order", r.SortOrder)
+	}
+
+	return &user.CustomerFilter{
+		PhoneSearch: r.PhoneSearch,
+		MasterPhone: r.StaffPhone, // Мапим напрямую, валидация будет в сервисе
+		PointCodes:  r.PointCodes,
+		Limit:       r.Limit,
+		Offset:      r.Offset,
+		OrderBy:     r.OrderBy,
+		SortOrder:   sortOrder,
+	}, nil
+}
+
+// getCustomersResponse - ответ со списком клиентов
+type getCustomersResponse struct {
+	Customers []*userDTO `json:"customers"`
+	Total     int        `json:"total"`
+}
+
+func toGetCustomersResponse(paginated *query.Page[*user.User]) getCustomersResponse {
+	dtos := make([]*userDTO, 0, len(paginated.Items))
+	for _, u := range paginated.Items {
+		dtos = append(dtos, toUserDTO(u))
+	}
+
+	return getCustomersResponse{
+		Customers: dtos,
+		Total:     paginated.Total,
+	}
 }
