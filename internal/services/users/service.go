@@ -268,6 +268,16 @@ func (s *Service) UpdateSchedule(ctx context.Context, phone string, schedule use
 	return s.usersRepo.Update(ctx, user)
 }
 
+func (s *Service) UpdatePointCode(ctx context.Context, phone, pointCode string) error {
+	user, err := s.usersRepo.GetByPhone(ctx, phone)
+	if err != nil {
+		return err
+	}
+	user.PointCode = &pointCode
+
+	return s.usersRepo.Update(ctx, user)
+}
+
 func (s *Service) UpdateProfile(ctx context.Context, cmd *user.UpdateUserCommand) (*user.User, error) {
 	act, err := actor.GetActor(ctx)
 	if err != nil {

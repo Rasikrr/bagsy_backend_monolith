@@ -228,6 +228,7 @@ func (a *App) initServices(_ context.Context) error {
 		a.networksService,
 		a.pointCategoriesRepo,
 		a.pointsMediaService,
+		a.usersService,
 		a.PostgresTXManager(),
 	)
 

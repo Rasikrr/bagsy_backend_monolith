@@ -3,6 +3,7 @@ package points
 
 import (
 	"context"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/user"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/actor"
 	domainErr "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/errors"
@@ -38,11 +39,16 @@ type pointMediaService interface {
 	AddPointPhotos(ctx context.Context, pointCode string, mediaIDs ...uuid.UUID) error
 }
 
+type usersService interface {
+	UpdatePointCode(ctx context.Context, phone, pointCode string) error
+}
+
 type Service struct {
 	pointsRepo          pointsRepository
 	networksService     networksService
 	pointCategoriesRepo pointCategoriesRepository
 	pointMediaService   pointMediaService
+	usersService        usersService
 	txManager           database.TXManager
 }
 
@@ -51,6 +57,7 @@ func NewService(
 	networksService networksService,
 	pointCategoriesRepo pointCategoriesRepository,
 	mediaService pointMediaService,
+	usersService usersService,
 	txManager database.TXManager,
 ) *Service {
 	return &Service{
@@ -58,6 +65,7 @@ func NewService(
 		networksService:     networksService,
 		pointCategoriesRepo: pointCategoriesRepo,
 		pointMediaService:   mediaService,
+		usersService:        usersService,
 		txManager:           txManager,
 	}
 }
@@ -146,6 +154,13 @@ func (s *Service) Create(ctx context.Context, cmd *point.CreatePointCommand) (*p
 		// 2. Привязать фото
 		if err := s.pointMediaService.AddPointPhotos(txCtx, newPoint.Code, cmd.PhotoIDs...); err != nil {
 			return err
+		}
+
+		if act.Role() == user.RoleSelfOwner {
+			err := s.usersService.UpdatePointCode(ctx, act.Phone(), newPoint.Code)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
