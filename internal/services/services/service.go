@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-const defaultServiceActive = false
+const defaultServiceActive = true
 
 type servicesRepository interface {
 	Create(ctx context.Context, service *service.Service) (uuid.UUID, error)
