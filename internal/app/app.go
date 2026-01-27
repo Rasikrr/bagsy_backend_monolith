@@ -223,15 +223,6 @@ func (a *App) initServices(_ context.Context) error {
 		a.mediaService,
 	)
 
-	a.pointsService = pointsS.NewService(
-		a.pointsRepo,
-		a.networksService,
-		a.pointCategoriesRepo,
-		a.pointsMediaService,
-		a.usersService,
-		a.PostgresTXManager(),
-	)
-
 	a.serviceCategoriesService = serviceCategoriesS.NewService(
 		a.pointsService,
 		a.pointCategoryServicesRepo,
@@ -267,6 +258,16 @@ func (a *App) initServices(_ context.Context) error {
 		a.pointsService,
 		a.userPhotosService,
 	)
+
+	a.pointsService = pointsS.NewService(
+		a.pointsRepo,
+		a.networksService,
+		a.pointCategoriesRepo,
+		a.pointsMediaService,
+		a.usersService,
+		a.PostgresTXManager(),
+	)
+
 	a.registrationService = registration.NewService(
 		a.PostgresTXManager(),
 		a.usersService,
