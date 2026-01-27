@@ -223,15 +223,6 @@ func (a *App) initServices(_ context.Context) error {
 		a.mediaService,
 	)
 
-	a.serviceCategoriesService = serviceCategoriesS.NewService(
-		a.pointsService,
-		a.pointCategoryServicesRepo,
-		a.serviceCategoriesRepo,
-		a.serviceSubcategoriesRepo,
-		a.serviceCategoriesCache,
-		vars.GetDuration(appenv.ServiceCategoriesTTL),
-	)
-
 	a.formsService = formsS.NewService(a.formsRepo)
 	a.notificationsService = notifications.NewService(
 		a.smsClient,
@@ -255,7 +246,7 @@ func (a *App) initServices(_ context.Context) error {
 	a.usersService = usersS.NewService(
 		a.PostgresTXManager(),
 		a.usersRepo,
-		a.pointsService,
+		a.pointsRepo,
 		a.userPhotosService,
 	)
 
@@ -266,6 +257,15 @@ func (a *App) initServices(_ context.Context) error {
 		a.pointsMediaService,
 		a.usersService,
 		a.PostgresTXManager(),
+	)
+
+	a.serviceCategoriesService = serviceCategoriesS.NewService(
+		a.pointsService,
+		a.pointCategoryServicesRepo,
+		a.serviceCategoriesRepo,
+		a.serviceSubcategoriesRepo,
+		a.serviceCategoriesCache,
+		vars.GetDuration(appenv.ServiceCategoriesTTL),
 	)
 
 	a.registrationService = registration.NewService(
