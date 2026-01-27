@@ -11,6 +11,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/util/ptr"
 	"github.com/Rasikrr/core/database"
 	coreEnum "github.com/Rasikrr/core/enum"
+	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 )
@@ -236,7 +237,7 @@ func (s *Service) GetListByFilter(ctx context.Context, requestedFilter *user.Fil
 	if err != nil {
 		return nil, err
 	}
-
+	log.Info(ctx, "log")
 	// Получаем пользователей с пагинацией
 	users, err := s.usersRepo.GetByParams(ctx, authorizedFilter)
 	if err != nil {
