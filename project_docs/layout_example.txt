@@ -1,0 +1,220 @@
+bagsy/
+├── cmd/
+│   ├── api/
+│   │   └── main.go
+│   └── worker/
+│       └── main.go
+│
+├── config/
+│   └── config.go
+│
+├── migrations/
+│   └── *.sql
+│
+├── pkg/                            # Публичные библиотеки (можно импортировать извне)
+│   ├── postgres/
+│   │   └── postgres.go
+│   ├── redis/
+│   │   └── redis.go
+│   └── logger/
+│       └── logger.go
+│
+├── internal/
+│   │
+│   ├── domain/                     # ═══ ВСЕ ДОМЕННЫЕ СУЩНОСТИ ═══
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── otp.go              # OTPCode aggregate
+│   │   │   ├── token.go            # Token value objects
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── identity/
+│   │   │   ├── employee.go         # Employee aggregate
+│   │   │   ├── invite.go           # EmployeeInvite aggregate
+│   │   │   ├── customer.go         # Customer aggregate
+│   │   │   ├── customer_base.go    # CustomerBase aggregate
+│   │   │   ├── role.go             # Role value object
+│   │   │   ├── permissions.go      # Permissions value object
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── organization/
+│   │   │   ├── organization.go
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── billing/
+│   │   │   ├── plan.go
+│   │   │   ├── subscription.go
+│   │   │   ├── payment.go
+│   │   │   ├── payment_method.go
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── location/
+│   │   │   ├── location.go
+│   │   │   ├── category.go
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── schedule/
+│   │   │   ├── day_schedule.go
+│   │   │   ├── time_slot.go
+│   │   │   ├── time_block.go
+│   │   │   ├── availability.go     # Domain Service
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── catalog/
+│   │   │   ├── service.go
+│   │   │   ├── category.go
+│   │   │   ├── employee_service.go
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── appointment.go
+│   │   │   ├── status.go
+│   │   │   ├── snapshot.go
+│   │   │   ├── booking_service.go  # Domain Service
+│   │   │   └── errors.go
+│   │   │
+│   │   ├── notification/
+│   │   │   ├── task.go
+│   │   │   └── errors.go
+│   │   │
+│   │   └── shared/
+│   │       ├── types.go            # Phone, Slug, Money
+│   │       ├── org_context.go      # OrgContext
+│   │       └── events.go           # Domain Events
+│   │
+│   ├── service/                    # ═══ APPLICATION LAYER (Use Cases) ═══
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── send_otp.go
+│   │   │   ├── verify_otp.go
+│   │   │   ├── login.go
+│   │   │   └── logout.go
+│   │   │
+│   │   ├── identity/
+│   │   │   ├── invite_employee.go
+│   │   │   ├── accept_invite.go
+│   │   │   ├── fire_employee.go
+│   │   │   ├── create_customer.go
+│   │   │   └── get_employee.go
+│   │   │
+│   │   ├── organization/
+│   │   │   ├── create_organization.go
+│   │   │   └── update_organization.go
+│   │   │
+│   │   ├── billing/
+│   │   │   ├── create_subscription.go
+│   │   │   ├── process_payment.go
+│   │   │   └── change_plan.go
+│   │   │
+│   │   ├── location/
+│   │   │   ├── create_location.go
+│   │   │   └── update_location.go
+│   │   │
+│   │   ├── schedule/
+│   │   │   ├── set_location_schedule.go
+│   │   │   ├── set_employee_schedule.go
+│   │   │   └── get_available_slots.go
+│   │   │
+│   │   ├── catalog/
+│   │   │   ├── create_service.go
+│   │   │   ├── assign_to_employee.go
+│   │   │   └── update_price.go
+│   │   │
+│   │   ├── booking/
+│   │   │   ├── create_appointment.go
+│   │   │   ├── cancel_appointment.go
+│   │   │   ├── complete_appointment.go
+│   │   │   └── list_appointments.go
+│   │   │
+│   │   └── notification/
+│   │       ├── schedule_reminder.go
+│   │       └── process_outbox.go
+│   │
+│   ├── repository/                 # ═══ REPOSITORY INTERFACES + IMPLEMENTATIONS ═══
+│   │   │
+│   │   ├── interfaces.go           # Все интерфейсы в одном файле
+│   │   │
+│   │   ├── postgres/
+│   │   │   ├── employee.go
+│   │   │   ├── customer.go
+│   │   │   ├── organization.go
+│   │   │   ├── subscription.go
+│   │   │   ├── location.go
+│   │   │   ├── schedule.go
+│   │   │   ├── service.go
+│   │   │   ├── appointment.go
+│   │   │   └── outbox.go
+│   │   │
+│   │   └── redis/
+│   │       └── token.go
+│   │
+│   ├── gateway/                    # ═══ EXTERNAL SERVICES ═══
+│   │   ├── sms/
+│   │   │   ├── interface.go
+│   │   │   └── mobizon.go
+│   │   │
+│   │   ├── payment/
+│   │   │   ├── interface.go
+│   │   │   └── kaspi.go
+│   │   │
+│   │   └── whatsapp/
+│   │       ├── interface.go
+│   │       └── wapi.go
+│   │
+│   ├── handler/                    # ═══ HTTP HANDLERS ═══
+│   │   ├── auth.go
+│   │   ├── employee.go
+│   │   ├── customer.go
+│   │   ├── organization.go
+│   │   ├── location.go
+│   │   ├── schedule.go
+│   │   ├── service.go
+│   │   ├── appointment.go
+│   │   ├── billing.go
+│   │   └── response.go             # Общие response helpers
+│   │
+│   ├── dto/                        # ═══ REQUEST/RESPONSE DTOs ═══
+│   │   ├── request/
+│   │   │   ├── auth.go
+│   │   │   ├── employee.go
+│   │   │   ├── appointment.go
+│   │   │   └── ...
+│   │   │
+│   │   └── response/
+│   │       ├── employee.go
+│   │       ├── appointment.go
+│   │       └── ...
+│   │
+│   ├── middleware/                 # ═══ HTTP MIDDLEWARE ═══
+│   │   ├── auth.go
+│   │   ├── org_context.go
+│   │   ├── logging.go
+│   │   └── recovery.go
+│   │
+│   ├── policy/                     # ═══ AUTHORIZATION POLICIES ═══
+│   │   ├── employee.go
+│   │   ├── appointment.go
+│   │   ├── schedule.go
+│   │   └── analytics.go
+│   │
+│   ├── adapter/                    # ═══ CROSS-CONTEXT ADAPTERS ═══
+│   │   ├── schedule_checker.go
+│   │   ├── catalog_reader.go
+│   │   └── employee_reader.go
+│   │
+│   ├── worker/                     # ═══ BACKGROUND WORKERS ═══
+│   │   └── notification.go
+│   │
+│   └── app/                        # ═══ APPLICATION BOOTSTRAP ═══
+│       ├── app.go
+│       ├── container.go
+│       └── router.go
+│
+├── api/
+│   └── openapi.yaml
+│
+├── Makefile
+├── Dockerfile
+├── docker-compose.yaml
+├── go.mod
+└── README.md
