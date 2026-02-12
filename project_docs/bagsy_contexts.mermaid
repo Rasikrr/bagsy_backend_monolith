@@ -1,0 +1,82 @@
+flowchart TB
+    subgraph BAGSY["🏢 BAGSY PLATFORM"]
+        
+        subgraph AUTH["🔐 AUTH CONTEXT"]
+            OTP[("otp_codes")]
+            REDIS[("Redis: tokens")]
+        end
+
+        subgraph IDENTITY["👤 IDENTITY CONTEXT"]
+            EMP[("employees")]
+            EMP_SCH[("employee_schedules")]
+            EMP_HIST[("employees_work_history")]
+            CUST[("customers")]
+            CUST_BASE[("customers_base")]
+            CUST_NOTES[("customers_notes")]
+        end
+
+        subgraph ORG["🏛️ ORGANIZATION CONTEXT"]
+            ORGS[("organizations")]
+        end
+
+        subgraph BILLING["💳 BILLING CONTEXT"]
+            PLANS[("plans")]
+            CAPS[("plan_capabilities")]
+            SUBS[("subscriptions")]
+            PAYS[("subscription_payments")]
+        end
+
+        subgraph LOCATION["📍 LOCATION CONTEXT"]
+            LOC[("locations")]
+            LOC_CAT[("location_categories")]
+            LOC_SCH[("location_schedules")]
+        end
+
+        subgraph SCHEDULE["📅 SCHEDULE CONTEXT"]
+            direction TB
+            SCH_LOC["Location Schedules"]
+            SCH_EMP["Employee Schedules"]
+            TIME_BLK["Time Blocks"]
+        end
+
+        subgraph CATALOG["📋 CATALOG CONTEXT"]
+            SVC[("services")]
+            SVC_CAT[("service_categories")]
+            EMP_SVC[("employee_services")]
+        end
+
+        subgraph BOOKING["📝 BOOKING CONTEXT"]
+            APPT[("appointments")]
+            APPT_HIST[("appointment_histories")]
+        end
+
+        subgraph NOTIFICATION["🔔 NOTIFICATION CONTEXT"]
+            OUTBOX[("notification_outbox")]
+        end
+
+    end
+
+    %% Cross-context relationships
+    AUTH -->|"verifies"| IDENTITY
+    IDENTITY -->|"belongs to"| ORG
+    ORG -->|"subscribes"| BILLING
+    ORG -->|"owns"| LOCATION
+    LOCATION -->|"has"| SCHEDULE
+    IDENTITY -->|"works at"| LOCATION
+    LOCATION -->|"offers"| CATALOG
+    IDENTITY -->|"provides"| CATALOG
+    
+    BOOKING -->|"uses"| CATALOG
+    BOOKING -->|"involves"| IDENTITY
+    BOOKING -->|"at"| LOCATION
+    BOOKING -->|"checks"| SCHEDULE
+    
+    BOOKING -->|"triggers"| NOTIFICATION
+
+    %% Styling
+    classDef contextBox fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef coreContext fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px
+    classDef supportContext fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    
+    class BOOKING coreContext
+    class AUTH,NOTIFICATION supportContext

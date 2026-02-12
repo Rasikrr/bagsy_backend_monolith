@@ -74,7 +74,7 @@ CREATE TABLE customers (
     phone VARCHAR(20) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100),
-    birth_date TIMESTAMPTZ,
+    birth_date DATE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
