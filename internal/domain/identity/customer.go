@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +14,7 @@ import (
 
 type Customer struct {
 	ID        uuid.UUID
-	Phone     Phone
+	Phone     shared.Phone
 	FirstName string
 	LastName  *string
 	BirthDate *time.Time
@@ -23,7 +24,7 @@ type Customer struct {
 	DeletedAt *time.Time
 }
 
-func NewCustomer(phone Phone, firstName string, lastName *string) (*Customer, error) {
+func NewCustomer(phone shared.Phone, firstName string, lastName *string) (*Customer, error) {
 	if phone.IsEmpty() {
 		return nil, ErrCustomerPhoneRequired
 	}

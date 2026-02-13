@@ -1,4 +1,4 @@
-package identity
+package shared
 
 import "strings"
 
@@ -9,7 +9,7 @@ type Phone struct {
 func NewPhone(val string) (Phone, error) {
 	val = strings.TrimSpace(val)
 	if val == "" {
-		return Phone{}, ErrPhoneRequired
+		return Phone{}, ErrInvalidPhone
 	}
 	if val[0] == '+' {
 		val = val[1:]

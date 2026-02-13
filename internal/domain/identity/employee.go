@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/google/uuid"
 )
 
@@ -13,7 +14,7 @@ import (
 
 type Employee struct {
 	ID           uuid.UUID
-	Phone        Phone
+	Phone        shared.Phone
 	PasswordHash *string
 	FirstName    string
 	LastName     *string
@@ -31,7 +32,7 @@ type Employee struct {
 }
 
 type CreateEmployeeParams struct {
-	Phone          Phone
+	Phone          shared.Phone
 	FirstName      string
 	LastName       *string
 	OrganizationID uuid.UUID

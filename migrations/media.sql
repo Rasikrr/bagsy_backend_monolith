@@ -35,6 +35,9 @@ CREATE INDEX idx_media_assets_status ON media_assets(status);
 -- Media Junctions --
 --------------------------------------
 
+ALTER TABLE employees
+    ADD COLUMN avatar_id UUID REFERENCES media_assets(id) ON DELETE SET NULL;
+
 -- Фотографии организации (логотип, обложка, фото интерьера)
 CREATE TABLE organization_media (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

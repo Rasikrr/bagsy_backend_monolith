@@ -8,4 +8,6 @@ var (
 	ErrNegativeAmount = errors.New("negative amount")
 
 	ErrEmptySlug = errors.New("empty slug")
+
+	ErrInvalidPhone = errors.New("phone is invalid")
 )

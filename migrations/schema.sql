@@ -135,7 +135,6 @@ CREATE TABLE organizations(
 
 CREATE TABLE plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(50) UNIQUE NOT NULL,     -- 'solo', 'business', 'enterprise'
     name VARCHAR(100) NOT NULL,            -- 'Solo', 'Business', 'Enterprise'
     description TEXT,
 
@@ -155,22 +154,23 @@ CREATE TABLE plans (
 -- ═══════════════════════════════════════════════════════════════
 -- Тут также будут лимиты:
 -- Лимиты
---     max_locations INT NOT NULL DEFAULT 1,      -- -1 = безлимит
---     max_employees INT NOT NULL DEFAULT 1,      -- -1 = безлимит
---     max_services INT NOT NULL DEFAULT -1
+--     max_locations 1,      -- -1 = безлимит
+--     max_employees 1,      -- -1 = безлимит
+--     max_services  1       -- -1 = безлимит
+--     analytics_enabled NULL -- если строки нет - недоступно
 
 CREATE TABLE plan_capabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
-    feature VARCHAR(100) NOT NULL,     -- 'analytics', 'push_notifications', 'api_access'
 
+    resource VARCHAR(255) NOT NULL,
     -- Лимит для фичи (опционально)
     limit_value INT,  -- NULL = безлимит, число = лимит
 
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ,
 
-    UNIQUE (plan_id, feature)
+    UNIQUE (plan_id, resource)
 );
 -- ═══════════════════════════════════════════════════════════════
 -- ПОДПИСКИ (ссылается на plan)
