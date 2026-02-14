@@ -1,0 +1,274 @@
+# !!! environment replaced to .env
+
+name: bagsy_backend # name of application
+
+log:
+  level: debug # debug, info, warn, error
+  add_source: false
+  format: json
+
+metrics:
+  enabled: false
+  namespace: bagsy_backend
+  prometheus:
+    port: 9100
+
+sentry:
+  enabled: false
+  sample_rate: 1.0 # [0.0, 1.0]
+  tracing: false # don't use tracing. use OTel
+  traces_sample_rate: 0.0 # [0.0, 1.0]
+  debug: false
+  enable_logs: false # for logs collecting (info, warn, debug). don't use, use loki, elk etc.
+
+tracing:
+  enabled: false
+
+http:
+  host: 0.0.0.0
+  port: 8080
+  required: true
+
+grpc:
+  host: 0.0.0.0
+  port: 3000
+  required: false
+
+postgres:
+  required: true
+  max_conns: 10
+  min_conns: 3
+  max_idle_conn_time: 10m
+
+redis:
+  required: true
+  pool_size: 10
+  min_idle_conns: 3
+  max_idle_conns: 10
+  read_timeout: 1m
+
+nats:
+  required: false
+  queue: example_queue
+
+# If you not provide 'required' field or set it to false, then variable will be ignored
+# 'env_name' is name of variable in .env file.
+# !!! IMPORTANT !!! .env variables has more priority than config variables
+# Available variable types: 'string', 'int', 'float', 'bool', 'duration'
+
+env:
+  environment: #dev, stage, prod
+    type: "string"
+    env_name: "ENVIRONMENT"
+    required: true
+
+  config_path:
+    type: "string"
+    env_name: "CONFIG_PATH"
+    required: true
+
+
+  postgres_dsn:
+    type: "string"
+    env_name: "POSTGRES_DSN"
+    required: true
+
+
+
+  redis_host:
+    type: "string"
+    env_name: "REDIS_HOST"
+    required: true
+
+  redis_port:
+    type: "int"
+    env_name: "REDIS_PORT"
+    required: true
+
+  redis_user:
+    type: "string"
+    env_name: "REDIS_USER"
+    required: true
+
+  redis_password:
+    type: "string"
+    env_name: "REDIS_PASSWORD"
+    required: true
+
+  redis_db:
+    type: "int"
+    env_name: "REDIS_DB"
+    required: true
+
+
+
+  sms_client_login:
+    type: "string"
+    env_name: "SMS_CLIENT_LOGIN"
+    required: true
+
+  sms_client_password:
+    type: "string"
+    env_name: "SMS_CLIENT_PASSWORD"
+    required: true
+
+
+
+
+  dev_sms_bot_token:
+    type: "string"
+    env_name: "DEV_SMS_BOT_TOKEN"
+    required: true
+
+  dev_sms_chat_id:
+    type: "int"
+    env_name: "DEV_SMS_CHAT_ID"
+    required: true
+
+
+  whatsapp_api_url:
+    type: "string"
+    env_name: "WHATSAPP_API_URL"
+    required: true
+
+  whatsapp_media_url:
+    type: "string"
+    env_name: "WHATSAPP_MEDIA_URL"
+    required: true
+
+  whatsapp_api_id_instance:
+    type: "string"
+    env_name: "WHATSAPP_API_ID_INSTANCE"
+    required: true
+
+  whatsapp_api_token:
+    type: "string"
+    env_name: "WHATSAPP_API_TOKEN"
+    required: true
+
+
+
+  jwt_secret:
+    type: "string"
+    env_name: "JWT_SECRET"
+    required: true
+
+  jwt_issuer:
+    type: "string"
+    env_name: "JWT_ISSUER"
+    required: true
+
+  access_token_ttl:
+    type: "duration"
+    env_name: "ACCESS_TOKEN_TTL"
+    required: true
+    value: "900s"
+
+  refresh_token_ttl:
+    type: "duration"
+    env_name: "REFRESH_TOKEN_TTL"
+    required: true
+    value: "86400s"
+
+  registration_ttl:
+    type: "duration"
+    env_name: "REGISTRATION_TTL"
+    required: true
+    value: "3600s"
+
+  register_confirmation_url:
+    type: "string"
+    env_name: "REGISTER_CONFIRMATION_URL"
+    value: "https://app.bagsy.kz/ru/invite"
+    required: true
+
+
+  swagger_host:
+    type: "string"
+    env_name: "SWAGGER_HOST"
+    required: true
+
+  swagger_scheme:
+    type: "string"
+    env_name: "SWAGGER_SCHEME"
+    required: true
+
+  bagsy_confirm_ttl:
+    type: "duration"
+    env_name: "BAGSY_CONFIRM_TTL"
+    value: "300s"
+    required: true
+
+
+  aws_region:
+    type: "string"
+    env_name: "AWS_REGION"
+    required: true
+
+  aws_s3_bucket_name:
+    type: "string"
+    env_name: "AWS_S3_BUCKET_NAME"
+    required: true
+
+  aws_secret_access_key:
+    type: "string"
+    env_name: "AWS_SECRET_ACCESS_KEY"
+    required: true
+
+  aws_access_key_id:
+    type: "string"
+    env_name: "AWS_ACCESS_KEY_ID"
+    required: true
+
+  aws_s3_endpoint:
+    type: "string"
+    env_name: "AWS_S3_ENDPOINT"
+    required: true
+
+  media_ttl:
+    type: "duration"
+    env_name: "MEDIA_TTL"
+    value: "900s"
+    required: true
+
+  point_media_max_count:
+    type: "int"
+    env_name: "POINT_MEDIA_MAX_COUNT"
+    value: 10
+    required: true
+
+  # Bagsy notifications job settings
+  bagsy_notification_max_attempts:
+    type: "int"
+    env_name: "BAGSY_NOTIFICATION_MAX_ATTEMPTS"
+    value: 3
+    required: true
+
+  bagsy_notification_batch_size:
+    type: "int"
+    env_name: "BAGSY_NOTIFICATION_BATCH_SIZE"
+    value: 100
+    required: true
+
+  bagsy_notification_worker_count:
+    type: "int"
+    env_name: "BAGSY_NOTIFICATION_WORKER_COUNT"
+    value: 0
+    required: true
+
+  bagsy_notification_schedule:
+    type: "string"
+    env_name: "BAGSY_NOTIFICATION_SCHEDULE"
+    value: "0 */1 * * * *"  # каждую минуту (с секундами)
+
+  point_categories_ttl:
+    type: "duration"
+    env_name: "POINT_CATEGORIES_TTL"
+    value: "3600s"
+    required: true
+
+  service_categories_ttl:
+    type: "duration"
+    env_name: "SERVICE_CATEGORIES_TTL"
+    value: "3600s"
+    required: true
