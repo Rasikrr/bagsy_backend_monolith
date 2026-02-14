@@ -19,6 +19,8 @@ type Employee struct {
 	FirstName    string
 	LastName     *string
 
+	AvatarID *uuid.UUID
+
 	OrganizationID uuid.UUID
 	LocationID     uuid.UUID
 
@@ -80,6 +82,18 @@ func (e *Employee) UpdateProfile(firstName string, lastName *string) error {
 
 	e.FirstName = strings.TrimSpace(firstName)
 	e.LastName = lastName
+	e.touch()
+	return nil
+}
+
+func (e *Employee) ChangeAvatar(avatarID uuid.UUID) error {
+	if e.IsDeleted() {
+		return ErrEmployeeDeleted
+	}
+	if e.AvatarID != nil && *e.AvatarID == avatarID {
+		return nil
+	}
+	e.AvatarID = &avatarID
 	e.touch()
 	return nil
 }

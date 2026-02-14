@@ -9,3 +9,18 @@ type ObjectInfo struct {
 	LastModified time.Time
 	ETag         string
 }
+
+// UploadPolicyOptions содержит параметры для генерации POST-формы загрузки
+type UploadPolicyOptions struct {
+	Key              string
+	ContentType      string
+	ContentLengthMin int64
+	ContentLengthMax int64
+	Expires          time.Duration
+}
+
+// UploadPolicyResponse содержит URL и поля формы для загрузки файла фронтендом
+type UploadPolicyResponse struct {
+	URL    string            `json:"url"`
+	Fields map[string]string `json:"fields"`
+}

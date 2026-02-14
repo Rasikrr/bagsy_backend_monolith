@@ -399,3 +399,49 @@ func (c *Client) GeneratePresignedDownloadURL(ctx context.Context, key string, e
 
 	return presignedReq.URL, nil
 }
+
+// GeneratePresignedPostURL генерирует подписанный URL и поля формы для загрузки файла через POST запрос
+// Это позволяет устанавливать ограничения на размер файла и другие условия
+func (c *Client) GeneratePresignedPostURL(ctx context.Context, options UploadPolicyOptions) (*UploadPolicyResponse, error) {
+	if options.Key == "" {
+		return nil, ErrS3EmptyKey
+	}
+	if options.Expires <= 0 {
+		return nil, errors.New("s3: expiration time must be positive")
+	}
+
+	input := &s3.PutObjectInput{
+		Bucket: aws.String(c.bucketName),
+		Key:    aws.String(options.Key),
+	}
+
+	if options.ContentType != "" {
+		input.ContentType = aws.String(options.ContentType)
+	}
+
+	// Настройка условий политики
+	var conditions []interface{}
+	if options.ContentLengthMax > 0 {
+		// Условие на размер файла: ["content-length-range", min, max]
+		conditions = append(conditions, []interface{}{
+			"content-length-range",
+			options.ContentLengthMin,
+			options.ContentLengthMax,
+		})
+	}
+
+	presignedReq, err := c.presignClient.PresignPostObject(ctx, input, func(opts *s3.PresignPostOptions) {
+		opts.Expires = options.Expires
+		if len(conditions) > 0 {
+			opts.Conditions = conditions
+		}
+	})
+	if err != nil {
+		return nil, fmt.Errorf("s3: failed to generate presigned POST URL: %w", err)
+	}
+
+	return &UploadPolicyResponse{
+		URL:    presignedReq.URL,
+		Fields: presignedReq.Values,
+	}, nil
+}
