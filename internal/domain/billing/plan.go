@@ -14,7 +14,7 @@ import (
 
 type Plan struct {
 	ID           uuid.UUID
-	Slug         shared.Slug // 'solo', 'point', 'network'
+	Code         shared.Slug // 'solo', 'point', 'network'
 	Name         string
 	Description  *string
 	PriceMonthly shared.Money
@@ -27,10 +27,10 @@ type Plan struct {
 }
 
 type PlanCapability struct {
-	ID         uuid.UUID
-	PlanID     uuid.UUID
-	Resource   Resource // 'analytics', 'max_locations'
-	LimitValue *int     // NULL = unlimited
+	ID       uuid.UUID
+	PlanID   uuid.UUID
+	Resource Resource // 'analytics', 'max_locations'
+	Limit    Limit
 }
 
 func NewPlan(
@@ -49,7 +49,7 @@ func NewPlan(
 
 	return &Plan{
 		ID:           uuid.New(),
-		Slug:         slug,
+		Code:         slug,
 		Name:         strings.TrimSpace(name),
 		Description:  description,
 		PriceMonthly: priceMonthly,
@@ -60,15 +60,48 @@ func NewPlan(
 	}, nil
 }
 
-func (p *Plan) AddCapability(resource Resource, limit *int) {
+func (p *Plan) AddCapability(resource Resource, limit Limit) {
+	for i, capability := range p.Capabilities {
+		if capability.Resource == resource {
+			// If already exists, update the limit
+			p.Capabilities[i].Limit = limit
+			p.touch()
+			return
+		}
+	}
+
+	// If doesn't exist, append new one
 	capability := PlanCapability{
-		ID:         uuid.New(),
-		PlanID:     p.ID,
-		Resource:   resource,
-		LimitValue: limit,
+		ID:       uuid.New(),
+		PlanID:   p.ID,
+		Resource: resource,
+		Limit:    limit,
 	}
 	p.Capabilities = append(p.Capabilities, capability)
 	p.touch()
+}
+
+func (p *Plan) ChangeCapabilityLimit(resource Resource, limit Limit) error {
+	for i, capability := range p.Capabilities {
+		if capability.Resource == resource {
+			p.Capabilities[i].Limit = limit
+			p.touch()
+			return nil
+		}
+	}
+	return ErrPlanCapabilityNotFound
+
+}
+
+func (p *Plan) RemoveCapability(resource Resource) {
+	for i, capability := range p.Capabilities {
+		if capability.Resource == resource {
+			p.Capabilities = append(p.Capabilities[:i], p.Capabilities[i+1:]...)
+			p.touch()
+			return
+		}
+	}
+	return
 }
 
 func (p *Plan) Deactivate() {

@@ -1,47 +1,39 @@
 package access
 
+import (
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
+)
+
 type PlanInfo struct {
-	Code         string
+	Code         shared.Slug
 	Capabilities Capabilities
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Capabilities — набор ресурсов/фич плана с лимитами.
-//
-// Value object. Nil-safe: безопасно вызывать методы
-// даже если внутренняя map не инициализирована.
-// Ключи — строковые константы из billing.Resource.
-// ─────────────────────────────────────────────────────────────────
-
 type Capabilities struct {
-	m map[string]*int // resource → limit (nil = безлимит)
+	m map[billing.Resource]billing.Limit // resource → limit
 }
 
-func NewCapabilities(m map[string]*int) Capabilities {
+func NewCapabilities(m map[billing.Resource]billing.Limit) Capabilities {
 	return Capabilities{m: m}
 }
 
-// Has проверяет наличие ресурса/фичи в плане.
-func (c Capabilities) Has(resource string) bool {
+// IsAllowed проверяет, разрешена ли конкретная фича (булево).
+func (c Capabilities) IsAllowed(feature billing.Resource) bool {
 	if c.m == nil {
 		return false
 	}
-	_, ok := c.m[resource]
-	return ok
-}
-
-// GetLimit возвращает лимит ресурса (nil = безлимит).
-func (c Capabilities) GetLimit(resource string) *int {
-	if c.m == nil {
-		return nil
+	limit, ok := c.m[feature]
+	if !ok {
+		return false
 	}
-	return c.m[resource]
+	// Если лимит безлимитный или больше 0 — разрешено.
+	return limit.IsUnlimited() || limit.Value() > 0
 }
 
-// CheckLimit проверяет, не превышен ли лимит.
-// Возвращает true если ресурс безлимитный или count < limit.
-// Возвращает false если ресурса нет в плане.
-func (c Capabilities) CheckLimit(resource string, count int) bool {
+// CanUse проверяет, можно ли использовать количественный ресурс.
+// Возвращает false если ресурса нет в плане или лимит исчерпан.
+func (c Capabilities) CanUse(resource billing.Resource, count int) bool {
 	if c.m == nil {
 		return false
 	}
@@ -49,8 +41,5 @@ func (c Capabilities) CheckLimit(resource string, count int) bool {
 	if !ok {
 		return false
 	}
-	if limit == nil {
-		return true
-	}
-	return count < *limit
+	return !limit.IsExceeded(count)
 }

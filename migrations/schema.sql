@@ -180,6 +180,7 @@ CREATE TABLE subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id),
     plan_id UUID NOT NULL REFERENCES plans(id),
+    status VARCHAR(50) NOT NULL DEFAULT 'trial',
     billing_cycle VARCHAR(100) NOT NULL,
 
     -- !!! SNAPSHOT ЦЕНЫ !!!
@@ -189,15 +190,24 @@ CREATE TABLE subscriptions (
 
     current_period_start TIMESTAMPTZ,
     current_period_end TIMESTAMPTZ,
-    trial_ends_at TIMESTAMPTZ,
     next_billing_at TIMESTAMPTZ,
+
+    -- Payment retry (past_due)
+    next_retry_at TIMESTAMPTZ,
+    retry_count INT DEFAULT 0,
+
+    -- Suspension / Cancellation
     suspended_at TIMESTAMPTZ,
     canceled_at TIMESTAMPTZ,
+    data_delete_at TIMESTAMPTZ,         -- canceled + 90 дней → удаление данных
 
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ,
 
-    CONSTRAINT subscription_per_organization UNIQUE (organization_id)
+    CONSTRAINT subscription_per_organization UNIQUE (organization_id),
+    CONSTRAINT valid_subscription_status CHECK (
+        status IN ('trial', 'active', 'past_due', 'suspended', 'canceled')
+    )
 );
 
 -- ═══════════════════════════════════════════════════════════════

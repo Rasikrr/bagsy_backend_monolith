@@ -2,7 +2,15 @@ package billing
 
 type Resource string
 
+// Quotas (Quantitative limits)
+
 const (
 	ResourceMaxLocations Resource = "max_locations"
-	ResourceMaxEmployers Resource = "max_employers"
+	ResourceMaxEmployees Resource = "max_employees"
+)
+
+// Features (Boolean flags)
+
+const (
+	FeatureAnalytics Resource = "analytics"
 )

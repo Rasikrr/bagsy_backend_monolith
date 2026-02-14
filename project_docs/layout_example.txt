@@ -78,7 +78,7 @@ bagsy/
 │   │   │   └── errors.go
 │   │   │
 │   │   └── shared/
-│   │       ├── types.go            # Phone, Slug, Money
+│   │       ├── types.go            # Phone, Code, Money
 │   │       ├── org_context.go      # OrgContext
 │   │       └── events.go           # Domain Events
 │   │

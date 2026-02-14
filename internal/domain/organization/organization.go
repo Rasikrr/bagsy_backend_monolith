@@ -17,7 +17,7 @@ type Organization struct {
 	OwnerID     uuid.UUID
 	Name        string
 	Description *string
-	Slug        *shared.Slug
+	Slug        shared.Slug
 	Active      bool
 	CreatedAt   time.Time
 	UpdatedAt   *time.Time
@@ -53,7 +53,7 @@ func (o *Organization) SetupProfile(name string, description *string) error {
 	}
 	o.Name = name
 	o.Description = description
-	o.Slug = &slug
+	o.Slug = slug
 
 	o.touch()
 
@@ -71,7 +71,7 @@ func (o *Organization) UpdateInfo(name string, description *string) error {
 	}
 	name = strings.TrimSpace(name)
 
-	// Мы меняем отображаемое имя, но URL (Slug) оставляем старым!
+	// Мы меняем отображаемое имя, но URL (Code) оставляем старым!
 	o.Name = name
 	o.Description = description
 	o.touch()
@@ -80,7 +80,7 @@ func (o *Organization) UpdateInfo(name string, description *string) error {
 }
 
 func (o *Organization) IsProfileComplete() bool {
-	return o.Name != "" && o.Slug != nil
+	return o.Name != "" && !o.Slug.IsEmpty()
 }
 
 // ChangeSlug - Опасное обновление слага (Ребрендинг)
@@ -102,7 +102,7 @@ func (o *Organization) ChangeSlug(newSlug shared.Slug) error {
 		return nil
 	}
 
-	o.Slug = &newSlug
+	o.Slug = newSlug
 	o.touch()
 
 	return nil
