@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 --------------------------------------
 -- Media Assets --
 --------------------------------------
@@ -81,3 +83,9 @@ CREATE TABLE service_media (
 
     PRIMARY KEY (service_id, media_id)
 );
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+SELECT 'down SQL query';
+-- +goose StatementEnd

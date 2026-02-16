@@ -18,6 +18,7 @@ type Location struct {
 	CategoryID          uuid.UUID
 	Name                string
 	Description         *string
+	Phone               *shared.Phone
 	Slug                shared.Slug
 	Address             *Address
 	Coordinates         *Coordinates
@@ -34,6 +35,7 @@ type CreateLocationParams struct {
 	CategoryID          uuid.UUID
 	Name                string
 	Description         *string
+	Phone               *shared.Phone
 	Address             *Address
 	Coordinates         *Coordinates
 	ScheduleType        ScheduleType
@@ -60,6 +62,7 @@ func NewLocation(params CreateLocationParams) (*Location, error) {
 		CategoryID:          params.CategoryID,
 		Name:                params.Name,
 		Description:         params.Description,
+		Phone:               params.Phone,
 		Slug:                slug,
 		Address:             params.Address,
 		Coordinates:         params.Coordinates,
@@ -96,6 +99,17 @@ func (l *Location) ChangeCategory(categoryID uuid.UUID) error {
 	}
 
 	l.CategoryID = categoryID
+	l.touch()
+
+	return nil
+}
+
+func (l *Location) ChangePhone(phone *shared.Phone) error {
+	if l.IsDeleted() {
+		return ErrLocationDeleted
+	}
+
+	l.Phone = phone
 	l.touch()
 
 	return nil

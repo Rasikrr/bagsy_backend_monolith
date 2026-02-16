@@ -14,7 +14,6 @@ import (
 
 type Organization struct {
 	ID          uuid.UUID
-	OwnerID     uuid.UUID
 	Name        string
 	Description *string
 	Slug        shared.Slug
@@ -26,12 +25,9 @@ type Organization struct {
 
 // NewStubOrganization создает техническую организацию-контейнер.
 // Используется при регистрации первой точки.
-func NewStubOrganization(
-	ownerID uuid.UUID,
-) (*Organization, error) {
+func NewStubOrganization() (*Organization, error) {
 	org := &Organization{
 		ID:        uuid.New(),
-		OwnerID:   ownerID,
 		Active:    true,
 		CreatedAt: time.Now(),
 	}
@@ -108,25 +104,6 @@ func (o *Organization) ChangeSlug(newSlug shared.Slug) error {
 	return nil
 }
 
-func (o *Organization) ChangeOwnership(newOwnerID uuid.UUID) error {
-	if o.IsDeleted() {
-		return ErrOrganizationDeleted
-	}
-
-	if !o.IsActive() {
-		return ErrOrganizationInactive
-	}
-
-	if o.OwnerID == newOwnerID {
-		return ErrSameOwner
-	}
-
-	o.OwnerID = newOwnerID
-	o.touch()
-
-	return nil
-}
-
 func (o *Organization) IsActive() bool {
 	return o.Active
 }
@@ -159,10 +136,6 @@ func (o *Organization) Deactivate() error {
 	o.touch()
 
 	return nil
-}
-
-func (o *Organization) IsOwnedBy(employeeID uuid.UUID) bool {
-	return o.OwnerID == employeeID
 }
 
 func (o *Organization) CanOperate() bool {

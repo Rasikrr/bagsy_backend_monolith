@@ -15,7 +15,7 @@ import (
 type Employee struct {
 	ID           uuid.UUID
 	Phone        shared.Phone
-	PasswordHash *string
+	PasswordHash string
 	FirstName    string
 	LastName     *string
 
@@ -160,7 +160,7 @@ func (e *Employee) Delete() error {
 }
 
 func (e *Employee) SetPassword(hash string) {
-	e.PasswordHash = &hash
+	e.PasswordHash = hash
 	e.touch()
 }
 

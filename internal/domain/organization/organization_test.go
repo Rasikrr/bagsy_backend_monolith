@@ -9,19 +9,16 @@ import (
 )
 
 func TestNewOrganization(t *testing.T) {
-	ownerID := uuid.New()
-	org, err := NewStubOrganization(ownerID)
+	org, err := NewStubOrganization()
 
 	require.NoError(t, err)
-	assert.Equal(t, ownerID, org.OwnerID)
 	assert.NotEqual(t, uuid.Nil, org.ID)
 	assert.True(t, org.Active)
 	assert.False(t, org.CreatedAt.IsZero())
 }
 
 func TestOrganization_UpdateInfo(t *testing.T) {
-	ownerID := uuid.New()
-	org, _ := NewStubOrganization(ownerID)
+	org, _ := NewStubOrganization()
 
 	name := "Test Org"
 	desc := "Test Description"
@@ -41,43 +38,8 @@ func TestOrganization_UpdateInfo(t *testing.T) {
 	assert.ErrorIs(t, err, ErrOrganizationDeleted)
 }
 
-func TestOrganization_ChangeOwnership(t *testing.T) {
-	ownerID := uuid.New()
-	org, _ := NewStubOrganization(ownerID)
-	_ = org.SetupProfile("Test Org", nil)
-
-	newOwnerID := uuid.New()
-
-	t.Run("successful ownership change", func(t *testing.T) {
-		err := org.ChangeOwnership(newOwnerID)
-		assert.NoError(t, err)
-		assert.Equal(t, newOwnerID, org.OwnerID)
-	})
-
-	t.Run("change to same owner", func(t *testing.T) {
-		err := org.ChangeOwnership(newOwnerID)
-		assert.ErrorIs(t, err, ErrSameOwner)
-	})
-
-	t.Run("change on inactive organization", func(t *testing.T) {
-		err := org.Deactivate()
-		require.NoError(t, err)
-		err = org.ChangeOwnership(uuid.New())
-		assert.ErrorIs(t, err, ErrOrganizationInactive)
-		_ = org.Activate()
-	})
-
-	t.Run("change on deleted organization", func(t *testing.T) {
-		err := org.Delete()
-		require.NoError(t, err)
-		err = org.ChangeOwnership(uuid.New())
-		assert.ErrorIs(t, err, ErrOrganizationDeleted)
-	})
-}
-
 func TestOrganization_Activation(t *testing.T) {
-	ownerID := uuid.New()
-	org, _ := NewStubOrganization(ownerID)
+	org, _ := NewStubOrganization()
 
 	t.Run("deactivate active organization", func(t *testing.T) {
 		err := org.Deactivate()
@@ -104,8 +66,7 @@ func TestOrganization_Activation(t *testing.T) {
 }
 
 func TestOrganization_Delete(t *testing.T) {
-	ownerID := uuid.New()
-	org, _ := NewStubOrganization(ownerID)
+	org, _ := NewStubOrganization()
 
 	err := org.Delete()
 	assert.NoError(t, err)
@@ -118,17 +79,8 @@ func TestOrganization_Delete(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestOrganization_IsOwnedBy(t *testing.T) {
-	ownerID := uuid.New()
-	org, _ := NewStubOrganization(ownerID)
-
-	assert.True(t, org.IsOwnedBy(ownerID))
-	assert.False(t, org.IsOwnedBy(uuid.New()))
-}
-
 func TestOrganization_CanOperate(t *testing.T) {
-	ownerID := uuid.New()
-	org, _ := NewStubOrganization(ownerID)
+	org, _ := NewStubOrganization()
 
 	assert.True(t, org.CanOperate())
 
@@ -138,18 +90,4 @@ func TestOrganization_CanOperate(t *testing.T) {
 	_ = org.Activate()
 	_ = org.Delete()
 	assert.False(t, org.CanOperate())
-}
-
-func TestSlug(t *testing.T) {
-	t.Run("NewSlug with value", func(t *testing.T) {
-		s, err := NewSlug("Test Name")
-		require.NoError(t, err)
-		assert.Equal(t, "test_name", s.String())
-		assert.False(t, s.IsEmpty())
-	})
-
-	t.Run("NewSlug with empty value", func(t *testing.T) {
-		_, err := NewSlug("")
-		assert.ErrorIs(t, err, ErrEmptySlug)
-	})
 }

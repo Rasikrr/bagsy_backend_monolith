@@ -8,5 +8,4 @@ var (
 	ErrEmptySlug                     = errors.New("empty slug of organization")
 	ErrOrganizationDeleted           = errors.New("organization deleted")
 	ErrOrganizationInactive          = errors.New("organization is inactive")
-	ErrSameOwner                     = errors.New("same owner")
 )

@@ -7,7 +7,10 @@ import (
 	"github.com/google/uuid"
 )
 
-const maxRetryCount = 3
+const (
+	maxRetryCount = 3
+	trialDays     = 60
+)
 
 // ─────────────────────────────────────────────────────────────────
 // Aggregate Root: Subscription

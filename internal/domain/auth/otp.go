@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	codeLength = 6
+	codeLength = 4
 )
 
 // OTPCode is an aggregate representing a temporary authentication code.
