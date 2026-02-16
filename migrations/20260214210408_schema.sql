@@ -43,9 +43,10 @@ CREATE TABLE organizations(
 -- 2. PLANS & SUBSCRIPTIONS (Тарифы и Подписки)
 -- ═══════════════════════════════════════════════════════════════
 
-CREATE TABLE plansRepo (
+CREATE TABLE plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
+    code VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
 
     -- Цены
@@ -61,7 +62,7 @@ CREATE TABLE plansRepo (
 
 CREATE TABLE plan_capabilities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    plan_id UUID NOT NULL REFERENCES plansRepo(id) ON DELETE CASCADE,
+    plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
 
     resource VARCHAR(255) NOT NULL,
     limit_value INT,
@@ -75,7 +76,7 @@ CREATE TABLE plan_capabilities (
 CREATE TABLE subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
-    plan_id UUID NOT NULL REFERENCES plansRepo(id) ON DELETE RESTRICT,
+    plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE RESTRICT,
     status VARCHAR(50) NOT NULL,
     billing_cycle VARCHAR(50) NOT NULL,
 
@@ -408,5 +409,70 @@ CREATE TABLE notification_outbox (
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+
+-- ═══════════════════════════════════════════════════════════════
+-- 8. NOTIFICATIONS
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS notification_outbox;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 7. APPOINTMENTS
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS appointment_histories;
+DROP TABLE IF EXISTS appointments;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 6. SERVICES
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS employee_services;
+DROP TABLE IF EXISTS services;
+DROP TABLE IF EXISTS service_categories;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 5. CUSTOMERS
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS customers_notes;
+DROP TABLE IF EXISTS customers_base;
+DROP TABLE IF EXISTS customers;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 4. EMPLOYEES
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS employees_work_history;
+DROP TABLE IF EXISTS employee_schedules;
+DROP TABLE IF EXISTS employees;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 3. LOCATIONS
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS location_schedules;
+DROP TABLE IF EXISTS locations;
+DROP TABLE IF EXISTS location_categories;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 2. PLANS & SUBSCRIPTIONS
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS subscriptions;
+DROP TABLE IF EXISTS plan_capabilities;
+DROP TABLE IF EXISTS plans;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 1. ORGANIZATIONS
+-- ═══════════════════════════════════════════════════════════════
+DROP TABLE IF EXISTS organizations;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 0.1 CUSTOM TYPES
+-- ═══════════════════════════════════════════════════════════════
+-- Удаляем кастомный тип timerange.
+-- Используем CASCADE, чтобы удалить и зависимые от него операторы/функции, если они создались неявно.
+DROP TYPE IF EXISTS timerange CASCADE;
+
+-- ═══════════════════════════════════════════════════════════════
+-- 0. EXTENSIONS
+-- ═══════════════════════════════════════════════════════════════
+-- Удаляем расширение.
+-- Внимание: если btree_gist используется в других миграциях, эту строку лучше закомментировать.
+DROP EXTENSION IF EXISTS btree_gist;
+
 -- +goose StatementEnd

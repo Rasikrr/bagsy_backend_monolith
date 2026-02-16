@@ -87,5 +87,18 @@ CREATE TABLE service_media (
 
 -- +goose Down
 -- +goose StatementBegin
-SELECT 'down SQL query';
+-- 1. Удаляем связующие таблицы (Junction Tables)
+DROP TABLE IF EXISTS service_media;
+DROP TABLE IF EXISTS service_category_media;
+DROP TABLE IF EXISTS location_media;
+DROP TABLE IF EXISTS organization_media;
+
+-- 2. Удаляем колонку аватара у сотрудников
+-- Используем IF EXISTS, чтобы миграция не упала, если колонки уже нет
+ALTER TABLE IF EXISTS employees DROP COLUMN IF EXISTS avatar_id;
+
+-- 3. Удаляем основную таблицу ассетов
+-- Индекс idx_media_assets_status удалится автоматически вместе с таблицей
+DROP TABLE IF EXISTS media_assets;
+
 -- +goose StatementEnd
