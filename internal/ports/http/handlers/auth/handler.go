@@ -15,6 +15,7 @@ type registerOwnerUseCase interface {
 
 type authUseCase interface {
 	LoginEmployee(ctx context.Context, phone, password string) (*uc.TokensOutput, error)
+	Logout(ctx context.Context, token string) error
 }
 
 // Handler serves owner registration HTTP endpoints.
@@ -35,10 +36,11 @@ func New(
 
 func (h *Handler) Init(router *chi.Mux) {
 	router.Route("/api/v1/auth", func(r chi.Router) {
-		r.Post("/register", h.Register)
-		r.Post("/register/verify", h.Verify)
-		r.Post("/register/resend", h.Resend)
+		r.Post("/register", h.registerOwner)
+		r.Post("/register/verify", h.verifyOwner)
+		r.Post("/register/resend", h.resendOwner)
 
-		r.Post("/login", h.Login)
+		r.Post("/login", h.loginEmployee)
+		r.Post("/logout", h.logout)
 	})
 }

@@ -2,6 +2,7 @@ package employee
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
@@ -22,7 +23,7 @@ func NewRepository(db *postgres.Postgres) *Repository {
 func (r *Repository) ExistsByPhone(ctx context.Context, phone shared.Phone) (bool, error) {
 	var exists bool
 	if err := pgxscan.Get(ctx, r.db, &exists, existsByPhone, phone.String()); err != nil {
-		return false, err
+		return false, fmt.Errorf("employee exists by phone: %w", err)
 	}
 	return exists, nil
 }
@@ -33,7 +34,7 @@ func (r *Repository) GetByPhone(ctx context.Context, phone shared.Phone) (*ident
 		if pgxscan.NotFound(err) {
 			return nil, identity.ErrEmployeeNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("get employee by phone: %w", err)
 	}
 	return m.toDomain()
 }
@@ -57,5 +58,8 @@ func (r *Repository) Save(ctx context.Context, emp *identity.Employee) error {
 		m.DeletedAt,
 		m.AvatarID,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("save employee: %w", err)
+	}
+	return nil
 }

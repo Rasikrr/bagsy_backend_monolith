@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
@@ -54,17 +55,14 @@ func (s *TokenService) GenerateTokens(ctx context.Context, userID uuid.UUID, pho
 	tokenInfo := auth.NewToken(userID, phone, s.accessTokenTTL)
 	accessToken, err := s.tokenGenerator.NewAccessToken(tokenInfo)
 	if err != nil {
-		//TODO: handler error (business error)
-		return "", "", err
+		return "", "", fmt.Errorf("generate access token: %w", err)
 	}
 	refreshToken, refreshHash, err := s.tokenGenerator.NewRefreshToken()
 	if err != nil {
-		//TODO: handler error (business error)
-		return "", "", err
+		return "", "", fmt.Errorf("generate refresh token: %w", err)
 	}
-	err = s.refreshTokenRepo.SaveToken(ctx, refreshHash, userID, s.refreshTokenTTL)
-	if err != nil {
-		return "", "", err
+	if err := s.refreshTokenRepo.SaveToken(ctx, refreshHash, userID, s.refreshTokenTTL); err != nil {
+		return "", "", fmt.Errorf("save refresh token: %w", err)
 	}
 
 	return accessToken, refreshToken, nil
@@ -73,8 +71,7 @@ func (s *TokenService) GenerateTokens(ctx context.Context, userID uuid.UUID, pho
 func (s *TokenService) VerifyAccessToken(_ context.Context, tokenStr string) (*auth.Token, error) {
 	tokenInfo, err := s.tokenGenerator.ParseAccessToken(tokenStr)
 	if err != nil {
-		// TODO: error
-		return nil, err
+		return nil, fmt.Errorf("verify access token: %w", err)
 	}
 	return &tokenInfo, nil
 }

@@ -37,11 +37,13 @@ func (s *PendingRegistrationStore) Save(ctx context.Context, reg *auth.PendingRe
 
 	ttl := time.Until(reg.ExpiresAt)
 	if ttl <= 0 {
-		// TODO: error
-		return fmt.Errorf("")
+		return fmt.Errorf("pending registration already expired")
 	}
 
-	return s.client.SetWithExpiration(ctx, key, data, ttl)
+	if err := s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
+		return fmt.Errorf("save pending registration: %w", err)
+	}
+	return nil
 }
 
 func (s *PendingRegistrationStore) Get(ctx context.Context, phone shared.Phone) (*auth.PendingRegistration, error) {
@@ -65,7 +67,10 @@ func (s *PendingRegistrationStore) Get(ctx context.Context, phone shared.Phone) 
 
 func (s *PendingRegistrationStore) Delete(ctx context.Context, phone shared.Phone) error {
 	key := s.makeKey(phone)
-	return s.client.Delete(ctx, key)
+	if err := s.client.Delete(ctx, key); err != nil {
+		return fmt.Errorf("delete pending registration: %w", err)
+	}
+	return nil
 }
 
 func (s *PendingRegistrationStore) makeKey(phone shared.Phone) string {

@@ -2,6 +2,7 @@ package plan
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/core/database/postgres"
@@ -24,12 +25,12 @@ func (r *Repository) FindActiveByCode(ctx context.Context, code billing.PlanCode
 		if pgxscan.NotFound(err) {
 			return nil, billing.ErrPlanNotFound
 		}
-		return nil, err
+		return nil, fmt.Errorf("find plan by code: %w", err)
 	}
 
 	var caps []capabilityModel
 	if err := pgxscan.Select(ctx, r.db, &caps, findCapabilitiesByPlanID, m.ID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("find plan capabilities: %w", err)
 	}
 
 	return m.toDomain(caps)

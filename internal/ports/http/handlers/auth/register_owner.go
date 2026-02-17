@@ -21,7 +21,7 @@ import (
 // @Failure      409   {object}  coreHTTP.ErrorResponse  "Пользователь с таким номером уже существует"
 // @Failure      500   {object}  coreHTTP.ErrorResponse
 // @Router       /api/v1/auth/register [post]
-func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) registerOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req registerRequest

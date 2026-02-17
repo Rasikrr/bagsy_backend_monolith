@@ -21,7 +21,7 @@ import (
 // @Failure      429   {object}  coreHTTP.ErrorResponse  "Слишком рано для повторной отправки"
 // @Failure      500   {object}  coreHTTP.ErrorResponse
 // @Router       /api/v1/auth/register/resend [post]
-func (h *Handler) Resend(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) resendOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req resendRequest

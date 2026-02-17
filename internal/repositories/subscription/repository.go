@@ -2,6 +2,7 @@ package subscription
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/core/database/postgres"
@@ -37,5 +38,8 @@ func (r *Repository) Save(ctx context.Context, sub *billing.Subscription) error 
 		m.CreatedAt,
 		m.UpdatedAt,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("save subscription: %w", err)
+	}
+	return nil
 }

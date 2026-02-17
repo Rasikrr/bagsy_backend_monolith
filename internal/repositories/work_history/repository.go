@@ -2,6 +2,7 @@ package workhistory
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/core/database/postgres"
@@ -31,5 +32,8 @@ func (r *Repository) Save(ctx context.Context, wh *identity.WorkHistory) error {
 		m.Comment,
 		m.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("save work history: %w", err)
+	}
+	return nil
 }

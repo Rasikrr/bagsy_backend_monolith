@@ -10,6 +10,8 @@ var (
 )
 
 var (
-	ErrPhoneAlreadyExists  = errors.New("phone already exists")
-	ErrRegistrationExpired = errors.New("registration has expired")
+	ErrPhoneAlreadyExists   = errors.New("phone already exists")
+	ErrRegistrationExpired  = errors.New("registration has expired")
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
+	ErrRefreshTokenExpired  = errors.New("refresh token has expired")
 )

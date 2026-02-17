@@ -19,7 +19,7 @@ import (
 // @Failure      401   {object}  coreHTTP.ErrorResponse  "Неверный телефон или пароль"
 // @Failure      500   {object}  coreHTTP.ErrorResponse
 // @Router       /api/v1/auth/login [post]
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) loginEmployee(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req loginRequest

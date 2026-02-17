@@ -104,9 +104,79 @@ func (f *Foo) touch() { now := time.Now(); f.UpdatedAt = &now }
 
 ### Error Handling
 
-- Domain: sentinel errors (`var ErrXxx = errors.New(...)`) in per-context `errors.go`.
-- Use `github.com/cockroachdb/errors` for wrapping in infra/use case layers.
-- Handler layer maps domain errors → HTTP codes.
+Ошибки делятся на два типа: **доменные** (бизнес-логика) и **инфраструктурные** (БД, Redis, сеть, внешние API).
+
+#### 1. Domain Layer — sentinel errors
+
+- Объявляются в `errors.go` каждого bounded context: `var ErrXxx = errors.New("...")`.
+- Используется **только** `errors` из stdlib. Никакого `cockroachdb/errors` в domain.
+- Sentinel errors представляют бизнес-ситуации: `ErrEmployeeNotFound`, `ErrOTPExpired`, `ErrPhoneAlreadyExists`.
+
+#### 2. Repository / Infra Layer — обёртка через `fmt.Errorf`
+
+- **Инфраструктурные ошибки** (DB/Redis/сеть) оборачиваются через `fmt.Errorf("описание операции: %w", err)`.
+- Описание операции — что делал репозиторий: `"save employee"`, `"get refresh token"`, `"find plan by code"`.
+- **Никогда** не возвращаем голый `return err` из репозитория — всегда оборачиваем для трассировки.
+- Если ошибка означает "не найдено" — возвращаем доменный sentinel: `return nil, identity.ErrEmployeeNotFound`.
+- Репозиторий **не импортирует** ошибки внешних библиотек наверх — конвертирует `redis.Nil` → `authDomain.ErrRefreshTokenNotFound`, `pgxscan.NotFound` → `identity.ErrEmployeeNotFound`.
+
+```go
+// Repository — правильно
+func (r *Repository) GetByPhone(ctx context.Context, phone shared.Phone) (*identity.Employee, error) {
+    var m model
+    if err := pgxscan.Get(ctx, r.db, &m, getByPhone, phone.String()); err != nil {
+        if pgxscan.NotFound(err) {
+            return nil, identity.ErrEmployeeNotFound  // доменный sentinel
+        }
+        return nil, fmt.Errorf("get employee by phone: %w", err)  // инфра обёртка
+    }
+    return m.toDomain()
+}
+```
+
+#### 3. Use Case Layer — `cockroachdb/errors` для обёртки
+
+- Оборачивает ошибки инфра-вызовов: `errors.Wrap(err, "описание шага")`.
+- **Не** проверяет инфраструктурные ошибки (никогда `errors.Is(err, redis.SomeError)`).
+- Проверяет **только** доменные sentinel: `errors.Is(err, authDomain.ErrPhoneAlreadyExists)`.
+- Доменные ошибки возвращаются as-is, без обёртки: `return nil, authDomain.ErrOTPAlreadySent`.
+
+#### 4. HTTP Handler Layer — маппинг ошибок
+
+- Каждый handler-пакет имеет свой `errors.go` с `ErrorMap` — маппинг доменных ошибок → HTTP status + клиентский код.
+- `internal/ports/http/util/response.go` — общий `SendError()` как fallback (логирует + возвращает 500).
+- Клиенту **никогда** не отдаём внутренние сообщения ошибок — только slug-коды: `"otp_expired"`, `"phone_exists"`, `"internal_error"`.
+- Полная ошибка (с инфра-деталями) пишется **только** в логи.
+
+```go
+// Handler errors.go — декларативная карта
+var authErrors = util.ErrorMap{
+    authDomain.ErrOTPExpired:         {http.StatusGone, "otp_expired"},
+    authDomain.ErrPhoneAlreadyExists: {http.StatusConflict, "phone_exists"},
+}
+
+// В хендлере — одна строка
+if err != nil {
+    util.SendError(ctx, w, err, authErrors)
+    return
+}
+```
+
+#### 5. Pkg Layer (whatsapp, sms, s3) — собственные sentinel errors
+
+- Каждый пакет в `pkg/` объявляет свои sentinel errors в `errors.go`.
+- Внутренние ошибки оборачиваются: `errors.Wrap(ErrSendFailed, err.Error())`.
+- Пакеты изолированы — не импортируют domain errors.
+
+#### Поток ошибки (сводка)
+
+```
+Repository: redis.Nil → authDomain.ErrRefreshTokenNotFound (конвертация)
+Repository: pgx timeout → fmt.Errorf("save employee: %w", err) (обёртка)
+UseCase:    получает ошибку → errors.Wrap(err, "шаг") или return as-is
+Handler:    errors.Is(err, sentinel) → HTTP код + slug
+Handler:    неизвестная ошибка → log.Error + 500 "internal_error"
+```
 
 ### Naming
 

@@ -2,6 +2,7 @@ package organization
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/organization"
 	"github.com/Rasikrr/core/database/postgres"
@@ -29,5 +30,8 @@ func (r *Repository) Save(ctx context.Context, org *organization.Organization) e
 		m.UpdatedAt,
 		m.DeletedAt,
 	)
-	return err
+	if err != nil {
+		return fmt.Errorf("save organization: %w", err)
+	}
+	return nil
 }

@@ -21,7 +21,7 @@ import (
 // @Failure      404   {object}  coreHTTP.ErrorResponse  "Pending-запрос не найден"
 // @Failure      500   {object}  coreHTTP.ErrorResponse
 // @Router       /api/v1/auth/register/verify [post]
-func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) verifyOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req verifyRequest
