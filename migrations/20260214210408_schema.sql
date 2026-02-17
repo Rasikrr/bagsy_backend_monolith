@@ -233,7 +233,7 @@ CREATE TABLE employees_work_history (
     employee_id UUID NOT NULL REFERENCES employees(id),
 
     organization_id UUID NOT NULL REFERENCES organizations(id),
-    location_id UUID NOT NULL REFERENCES locations(id),
+    location_id UUID REFERENCES locations(id),
 
     role VARCHAR(50) NOT NULL,
 

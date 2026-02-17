@@ -25,7 +25,7 @@ bagsy/
 │   │   │
 │   │   ├── auth/
 │   │   │   ├── otp.go              # OTPCode aggregate
-│   │   │   ├── token.go            # Token value objects
+│   │   │   ├── tokenGenerator.go            # Token value objects
 │   │   │   └── errors.go
 │   │   │
 │   │   ├── identity/
@@ -146,7 +146,7 @@ bagsy/
 │   │   │   └── outbox.go
 │   │   │
 │   │   └── redis/
-│   │       └── token.go
+│   │       └── tokenGenerator.go
 │   │
 │   ├── gateway/                    # ═══ EXTERNAL SERVICES ═══
 │   │   ├── sms/

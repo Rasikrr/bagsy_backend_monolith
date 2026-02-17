@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	maxRetryCount = 3
-	trialDays     = 60
+	DefaultTrialDays = 60
+	maxRetryCount    = 3
 )
 
 // ─────────────────────────────────────────────────────────────────
@@ -17,12 +17,14 @@ const (
 // ─────────────────────────────────────────────────────────────────
 
 type Subscription struct {
-	ID              uuid.UUID
-	OrganizationID  uuid.UUID
-	PlanID          uuid.UUID
-	Status          SubscriptionStatus
+	ID             uuid.UUID
+	OrganizationID uuid.UUID
+	PlanID         uuid.UUID
+	Status         SubscriptionStatus
+
+	// Заполняются при активации (после оплаты).
 	BillingCycle    Cycle
-	RecurringAmount shared.Money // Snapshot цены на момент подписки
+	RecurringAmount shared.Money
 
 	CurrentPeriodStart *time.Time
 	CurrentPeriodEnd   *time.Time
@@ -35,65 +37,54 @@ type Subscription struct {
 	// Suspension / Cancellation
 	SuspendedAt  *time.Time
 	CanceledAt   *time.Time
-	DataDeleteAt *time.Time // canceled + 90 дней → удаление данных (soft?)
+	DataDeleteAt *time.Time
 
 	CreatedAt time.Time
 	UpdatedAt *time.Time
 }
 
-func NewSubscription(
-	orgID uuid.UUID,
-	planID uuid.UUID,
-	cycle Cycle,
-	amount shared.Money,
-	trialDays int,
-) (*Subscription, error) {
-	if !cycle.IsValid() {
-		return nil, ErrInvalidBillingCycle
-	}
-
+// NewTrialSubscription создаёт подписку в статусе trial.
+// Cycle и Amount не нужны — пользователь выберет их при оплате.
+func NewTrialSubscription(orgID, planID uuid.UUID, trialDays int) *Subscription {
 	now := time.Now()
-	sub := &Subscription{
-		ID:              uuid.New(),
-		OrganizationID:  orgID,
-		PlanID:          planID,
-		BillingCycle:    cycle,
-		RecurringAmount: amount,
-		CreatedAt:       now,
+	trialEnd := now.Add(time.Duration(trialDays) * 24 * time.Hour)
+
+	return &Subscription{
+		ID:                 uuid.New(),
+		OrganizationID:     orgID,
+		PlanID:             planID,
+		Status:             SubscriptionStatusTrial,
+		CurrentPeriodStart: &now,
+		CurrentPeriodEnd:   &trialEnd,
+		NextBillingAt:      &trialEnd,
+		CreatedAt:          now,
 	}
-
-	if trialDays > 0 {
-		trialEnd := now.Add(time.Duration(trialDays) * 24 * time.Hour)
-
-		sub.Status = SubscriptionStatusTrial
-		sub.CurrentPeriodStart = &now
-		sub.CurrentPeriodEnd = &trialEnd
-		sub.NextBillingAt = &trialEnd
-	} else {
-		sub.Status = SubscriptionStatusActive
-	}
-
-	return sub, nil
 }
 
 // ─────────────────────────────────────────────────────────────────
 // State Transitions
 // ─────────────────────────────────────────────────────────────────
 
-// Activate — переводит подписку в active.
+// Activate — пользователь оплатил, выбирает cycle.
 // Допустимо из: trial (оплатил досрочно), past_due (оплатил), suspended (оплатил).
-func (s *Subscription) Activate(periodStart time.Time, duration time.Duration) error {
+func (s *Subscription) Activate(cycle Cycle, amount shared.Money) error {
 	if !s.Status.CanTransitionTo(SubscriptionStatusActive) {
 		return ErrInvalidStatusTransition
 	}
+	if !cycle.IsValid() {
+		return ErrInvalidBillingCycle
+	}
 
-	end := periodStart.Add(duration)
+	now := time.Now()
+	end := now.Add(cycle.Duration())
+
 	s.Status = SubscriptionStatusActive
-	s.CurrentPeriodStart = &periodStart
+	s.BillingCycle = cycle
+	s.RecurringAmount = amount
+	s.CurrentPeriodStart = &now
 	s.CurrentPeriodEnd = &end
 	s.NextBillingAt = &end
 
-	// Сбрасываем retry и suspension
 	s.NextRetryAt = nil
 	s.RetryCount = 0
 	s.SuspendedAt = nil

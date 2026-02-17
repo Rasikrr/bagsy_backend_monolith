@@ -17,12 +17,12 @@ type Token struct {
 func NewToken(
 	userID uuid.UUID,
 	phone shared.Phone,
-	expiresAt time.Time,
+	ttl time.Duration,
 ) Token {
 	return Token{
 		Phone:     phone,
 		UserID:    userID,
-		ExpiresAt: expiresAt,
+		ExpiresAt: time.Now().Add(ttl),
 	}
 }
 

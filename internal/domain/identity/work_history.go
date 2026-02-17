@@ -44,7 +44,7 @@ type WorkHistory struct {
 	ID             uuid.UUID
 	EmployeeID     uuid.UUID
 	OrganizationID uuid.UUID
-	LocationID     uuid.UUID
+	LocationID     *uuid.UUID
 	Role           Role
 	StartedAt      time.Time
 	EndedAt        *time.Time
@@ -56,7 +56,7 @@ type WorkHistory struct {
 func NewWorkHistory(
 	employeeID uuid.UUID,
 	organizationID uuid.UUID,
-	locationID uuid.UUID,
+	locationID *uuid.UUID,
 	role Role,
 	changeType ChangeType,
 	comment *string,

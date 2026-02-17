@@ -1,0 +1,50 @@
+package employee
+
+import (
+	"context"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
+	"github.com/Rasikrr/core/database/postgres"
+	"github.com/georgysavva/scany/v2/pgxscan"
+)
+
+type Repository struct {
+	db *postgres.Postgres
+}
+
+func NewRepository(db *postgres.Postgres) *Repository {
+	return &Repository{
+		db: db,
+	}
+}
+
+func (r *Repository) ExistsByPhone(ctx context.Context, phone shared.Phone) (bool, error) {
+	var exists bool
+	if err := pgxscan.Get(ctx, r.db, &exists, "", phone.String()); err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *Repository) Save(ctx context.Context, emp *identity.Employee) error {
+	m := fromDomain(emp)
+	_, err := r.db.Exec(ctx, saveEmployee,
+		m.ID,
+		m.Phone,
+		m.PasswordHash,
+		m.FirstName,
+		m.LastName,
+		m.OrganizationID,
+		m.LocationID,
+		m.Role,
+		m.CanProvideServices,
+		m.CanManageLocationSchedule,
+		m.Active,
+		m.CreatedAt,
+		m.UpdatedAt,
+		m.DeletedAt,
+		m.AvatarID,
+	)
+	return err
+}

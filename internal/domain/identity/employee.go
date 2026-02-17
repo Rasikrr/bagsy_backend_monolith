@@ -43,6 +43,35 @@ type CreateEmployeeParams struct {
 	Permissions    Permissions
 }
 
+type CreateOwnerParams struct {
+	Phone          shared.Phone
+	FirstName      string
+	LastName       *string
+	OrganizationID uuid.UUID
+	Permissions    Permissions
+}
+
+func NewOwnerEmployee(params CreateOwnerParams) (*Employee, error) {
+	if err := validateEmployeeName(params.FirstName); err != nil {
+		return nil, err
+	}
+	if params.Phone.IsEmpty() {
+		return nil, ErrEmployeePhoneRequired
+	}
+
+	return &Employee{
+		ID:             uuid.New(),
+		Phone:          params.Phone,
+		FirstName:      strings.TrimSpace(params.FirstName),
+		LastName:       params.LastName,
+		OrganizationID: params.OrganizationID,
+		Role:           RoleOwner,
+		Permissions:    params.Permissions,
+		Active:         true,
+		CreatedAt:      time.Now(),
+	}, nil
+}
+
 func NewEmployee(params CreateEmployeeParams) (*Employee, error) {
 	if err := validateEmployeeName(params.FirstName); err != nil {
 		return nil, err

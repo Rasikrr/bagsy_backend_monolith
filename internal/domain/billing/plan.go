@@ -14,7 +14,7 @@ import (
 
 type Plan struct {
 	ID           uuid.UUID
-	Code         shared.Slug // 'solo', 'point', 'network'
+	Code         PlanCode
 	Name         string
 	Description  *string
 	PriceMonthly shared.Money
@@ -36,20 +36,16 @@ type PlanCapability struct {
 func NewPlan(
 	name string,
 	description *string,
+	planCode PlanCode,
 	priceMonthly, priceAnnual shared.Money,
 ) (*Plan, error) {
 	if strings.TrimSpace(name) == "" {
 		return nil, ErrPlanNameRequired
 	}
 
-	slug, err := shared.NewSlug(name)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Plan{
 		ID:           uuid.New(),
-		Code:         slug,
+		Code:         planCode,
 		Name:         strings.TrimSpace(name),
 		Description:  description,
 		PriceMonthly: priceMonthly,

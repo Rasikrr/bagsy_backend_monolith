@@ -15,19 +15,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type TokenManager struct {
+type TokenGenerator struct {
 	secretKey string
 	issuer    string
 }
 
-func NewTokenManager(secretKey, issuer string) *TokenManager {
-	return &TokenManager{
+func NewTokenManager(secretKey, issuer string) *TokenGenerator {
+	return &TokenGenerator{
 		secretKey: secretKey,
 		issuer:    issuer,
 	}
 }
 
-func (t *TokenManager) NewAccessToken(authToken auth.Token) (string, error) {
+func (t *TokenGenerator) NewAccessToken(authToken auth.Token) (string, error) {
 	claims := t.createAccessClaims(authToken)
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -39,7 +39,7 @@ func (t *TokenManager) NewAccessToken(authToken auth.Token) (string, error) {
 	return tokenStr, nil
 }
 
-func (t *TokenManager) NewRefreshToken() (raw, hash string, err error) {
+func (t *TokenGenerator) NewRefreshToken() (raw, hash string, err error) {
 	b := make([]byte, 32)
 	if _, readErr := rand.Read(b); readErr != nil {
 		return "", "", readErr
@@ -54,7 +54,7 @@ func (t *TokenManager) NewRefreshToken() (raw, hash string, err error) {
 }
 
 // ParseAccessToken парсит access токен и возвращает auth.Token
-func (t *TokenManager) ParseAccessToken(accessToken string) (auth.Token, error) {
+func (t *TokenGenerator) ParseAccessToken(accessToken string) (auth.Token, error) {
 	claims := new(accessClaims)
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -81,7 +81,7 @@ func (t *TokenManager) ParseAccessToken(accessToken string) (auth.Token, error) 
 	return auth.NewToken(userID, phone, expiresAt), nil
 }
 
-func (t *TokenManager) createAccessClaims(token auth.Token) *accessClaims {
+func (t *TokenGenerator) createAccessClaims(token auth.Token) *accessClaims {
 	jwtID := uuid.New().String()
 	claims := &accessClaims{
 		StandardClaims: jwt.StandardClaims{
