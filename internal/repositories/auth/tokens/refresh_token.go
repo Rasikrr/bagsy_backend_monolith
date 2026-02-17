@@ -33,18 +33,18 @@ func (r *RefreshTokenRepository) SaveToken(ctx context.Context, tokenHash string
 	return nil
 }
 
-func (r *RefreshTokenRepository) GetToken(ctx context.Context, tokenHash string) (string, error) {
+func (r *RefreshTokenRepository) GetToken(ctx context.Context, tokenHash string) (uuid.UUID, error) {
 	key := r.makeKey(tokenHash)
 
-	data, err := r.client.GetString(ctx, key)
+	data, err := r.client.GetBytes(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		return "", authDomain.ErrRefreshTokenNotFound
+		return uuid.Nil, authDomain.ErrRefreshTokenNotFound
 	}
 	if err != nil {
-		return "", fmt.Errorf("get refresh token: %w", err)
+		return uuid.Nil, fmt.Errorf("get refresh token: %w", err)
 	}
 
-	return data, nil
+	return uuid.ParseBytes(data)
 }
 
 func (r *RefreshTokenRepository) DeleteToken(ctx context.Context, tokenHash string) error {

@@ -158,7 +158,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.otpSender,
 	)
 
-	a.authUseCase = authUC.NewUseCase(a.employeeRepo, a.tokenService)
+	a.authUseCase = authUC.NewUseCase(a.employeeRepo, a.employeeRepo, a.tokenService)
 
 	return nil
 }

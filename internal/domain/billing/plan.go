@@ -86,7 +86,6 @@ func (p *Plan) ChangeCapabilityLimit(resource Resource, limit Limit) error {
 		}
 	}
 	return ErrPlanCapabilityNotFound
-
 }
 
 func (p *Plan) RemoveCapability(resource Resource) {

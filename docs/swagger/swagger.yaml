@@ -1,9 +1,7 @@
 definitions:
-  http.ErrorResponse:
+  github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse:
     properties:
-      code:
-        type: integer
-      message:
+      error:
         type: string
     type: object
   internal_ports_http_handlers_auth.loginRequest:
@@ -17,6 +15,16 @@ definitions:
     properties:
       access_token:
         type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.logoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.refreshRequest:
+    properties:
       refresh_token:
         type: string
     type: object
@@ -108,16 +116,80 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "401":
           description: Неверный телефон или пароль
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
       summary: Вход сотрудника
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Инвалидирует refresh-токен. Access-токен продолжает действовать
+        до истечения TTL.
+      parameters:
+      - description: Refresh-токен для инвалидации
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.logoutRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Токен успешно инвалидирован
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Выход из системы
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Принимает refresh-токен, ротирует его и возвращает новую пару access
+        + refresh токенов.
+      parameters:
+      - description: Refresh-токен
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.tokensResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Токен не найден или истёк
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Обновление токенов
       tags:
       - auth
   /api/v1/auth/register:
@@ -143,15 +215,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "409":
           description: Пользователь с таким номером уже существует
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
       summary: Регистрация владельца
       tags:
       - auth
@@ -178,19 +250,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "404":
           description: Pending-запрос не найден
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "429":
           description: Слишком рано для повторной отправки
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
       summary: Повторная отправка OTP
       tags:
       - auth
@@ -217,15 +289,15 @@ paths:
         "400":
           description: Неверный код или истёк срок действия
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "404":
           description: Pending-запрос не найден
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/http.ErrorResponse'
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
       summary: Подтверждение регистрации
       tags:
       - auth

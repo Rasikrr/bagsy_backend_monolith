@@ -8,6 +8,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/google/uuid"
 )
 
 type Repository struct {
@@ -18,6 +19,17 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{
 		db: db,
 	}
+}
+
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*identity.Employee, error) {
+	var m model
+	if err := pgxscan.Get(ctx, r.db, &m, getByID, id); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, identity.ErrEmployeeNotFound
+		}
+		return nil, fmt.Errorf("get employee by id: %w", err)
+	}
+	return m.toDomain()
 }
 
 func (r *Repository) ExistsByPhone(ctx context.Context, phone shared.Phone) (bool, error) {

@@ -20,7 +20,7 @@ type tokenManager interface {
 
 type refreshTokenRepository interface {
 	SaveToken(ctx context.Context, tokenHash string, userID uuid.UUID, ttl time.Duration) error
-	GetToken(ctx context.Context, tokenHash string) (string, error)
+	GetToken(ctx context.Context, tokenHash string) (userID uuid.UUID, err error)
 	DeleteToken(ctx context.Context, tokenHash string) error
 }
 
@@ -74,6 +74,24 @@ func (s *TokenService) VerifyAccessToken(_ context.Context, tokenStr string) (*a
 		return nil, fmt.Errorf("verify access token: %w", err)
 	}
 	return &tokenInfo, nil
+}
+
+func (s *TokenService) RefreshTokens(ctx context.Context, oldRefreshToken string) (userID uuid.UUID, err error) {
+	h := sha256.Sum256([]byte(oldRefreshToken))
+	oldHash := hex.EncodeToString(h[:])
+
+	// 1. Validate old refresh token, get userID.
+	userID, err = s.refreshTokenRepo.GetToken(ctx, oldHash)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("get refresh token: %w", err)
+	}
+
+	// 2. Delete old refresh token (rotation).
+	if err := s.refreshTokenRepo.DeleteToken(ctx, oldHash); err != nil {
+		return uuid.Nil, fmt.Errorf("delete old refresh token: %w", err)
+	}
+
+	return userID, nil
 }
 
 func (s *TokenService) DeleteRefreshToken(ctx context.Context, token string) error {

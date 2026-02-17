@@ -7,6 +7,18 @@ import (
 	coreHTTP "github.com/Rasikrr/core/http"
 )
 
+// logout handles POST /api/v1/auth/logout.
+//
+// @Summary      Выход из системы
+// @Description  Инвалидирует refresh-токен. Access-токен продолжает действовать до истечения TTL.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      logoutRequest    true  "Refresh-токен для инвалидации"
+// @Success      204   "Токен успешно инвалидирован"
+// @Failure      400   {object}  util.errorResponse
+// @Failure      500   {object}  util.errorResponse
+// @Router       /api/v1/auth/logout [post]
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -63,6 +63,14 @@ type loginResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// ── Refresh ─────────────────────────────────────────────────────
+
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// ── Logout ──────────────────────────────────────────────────────
+
 type logoutRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }

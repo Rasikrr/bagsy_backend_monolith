@@ -57,19 +57,114 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "401": {
                         "description": "Неверный телефон или пароль",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "Инвалидирует refresh-токен. Access-токен продолжает действовать до истечения TTL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Выход из системы",
+                "parameters": [
+                    {
+                        "description": "Refresh-токен для инвалидации",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.logoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Токен успешно инвалидирован"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "description": "Принимает refresh-токен, ротирует его и возвращает новую пару access + refresh токенов.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Обновление токенов",
+                "parameters": [
+                    {
+                        "description": "Refresh-токен",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.refreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_auth.tokensResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Токен не найден или истёк",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     }
                 }
@@ -109,19 +204,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "409": {
                         "description": "Пользователь с таким номером уже существует",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     }
                 }
@@ -161,25 +256,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "404": {
                         "description": "Pending-запрос не найден",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "429": {
                         "description": "Слишком рано для повторной отправки",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     }
                 }
@@ -219,19 +314,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Неверный код или истёк срок действия",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "404": {
                         "description": "Pending-запрос не найден",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/http.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     }
                 }
@@ -239,13 +334,10 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "http.ErrorResponse": {
+        "github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse": {
             "type": "object",
             "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "message": {
+                "error": {
                     "type": "string"
                 }
             }
@@ -267,6 +359,22 @@ const docTemplate = `{
                 "access_token": {
                     "type": "string"
                 },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.logoutRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_auth.refreshRequest": {
+            "type": "object",
+            "properties": {
                 "refresh_token": {
                     "type": "string"
                 }

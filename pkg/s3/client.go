@@ -423,7 +423,7 @@ func (c *Client) GeneratePresignedPostURL(ctx context.Context, options UploadPol
 	var conditions []interface{}
 	if options.ContentLengthMax > 0 {
 		// Условие на размер файла: ["content-length-range", min, max]
-		conditions = append(conditions, []interface{}{
+		conditions = append(conditions, []any{
 			"content-length-range",
 			options.ContentLengthMin,
 			options.ContentLengthMax,

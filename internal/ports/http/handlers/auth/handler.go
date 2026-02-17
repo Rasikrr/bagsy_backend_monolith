@@ -15,6 +15,7 @@ type registerOwnerUseCase interface {
 
 type authUseCase interface {
 	LoginEmployee(ctx context.Context, phone, password string) (*uc.TokensOutput, error)
+	RefreshTokens(ctx context.Context, refreshToken string) (*uc.TokensOutput, error)
 	Logout(ctx context.Context, token string) error
 }
 
@@ -41,6 +42,7 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Post("/register/resend", h.resendOwner)
 
 		r.Post("/login", h.loginEmployee)
+		r.Post("/refresh", h.refreshTokens)
 		r.Post("/logout", h.logout)
 	})
 }
