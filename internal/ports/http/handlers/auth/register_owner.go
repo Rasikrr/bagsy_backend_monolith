@@ -1,12 +1,8 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
 
-	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	coreHTTP "github.com/Rasikrr/core/http"
 )
@@ -20,7 +16,6 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		// TODO: error
 		return
 	}
-
 	out, err := h.registerOwnerUseCase.Register(ctx, uc.RegisterInput{
 		Phone:     req.Phone,
 		FirstName: req.FirstName,
@@ -29,33 +24,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		PlanCode:  req.PlanCode,
 	})
 	if err != nil {
-		mapRegisterError(w, err)
+		// TODO: error
 		return
 	}
 
-	coreHTTP.SendData(w, registerResponse{
+	coreHTTP.SendData(ctx, w, registerResponse{
 		Message:    "code_sent",
 		Phone:      out.Phone,
 		ExpiresIn:  out.ExpiresIn,
 		RetryAfter: out.RetryAfter,
 	}, http.StatusOK)
-}
 
-//// ── Error mapping ───────────────────────────────────────────────
-//
-//func mapRegisterError(w http.ResponseWriter, err error) {
-//	switch {
-//	case errors.Is(err, shared.ErrInvalidPhone):
-//		writeValidationError(w, map[string]string{"phone": "invalid_format"})
-//	case errors.Is(err, authDomain.ErrPhoneAlreadyExists):
-//		writeError(w, http.StatusConflict, "phone_already_exists", nil)
-//	case errors.Is(err, billing.ErrPlanNotFound),
-//		errors.Is(err, billing.ErrPlanInactive),
-//		errors.Is(err, billing.ErrInvalidPlanCode):
-//		writeError(w, http.StatusUnprocessableEntity, "invalid_plan", nil)
-//	case errors.Is(err, authDomain.ErrOTPAlreadySent):
-//		writeError(w, http.StatusTooManyRequests, "too_many_requests", nil)
-//	default:
-//		writeError(w, http.StatusInternalServerError, "internal_error", nil)
-//	}
-//}
+}

@@ -1,0 +1,19 @@
+host: localhost:8080
+info:
+  contact:
+    email: support@bagsies.com
+    name: API Support
+  description: API для приложения Bagsy
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Bagsy API
+  version: "1.0"
+paths: {}
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,11 +1,8 @@
 package auth
 
 import (
-	"errors"
 	"net/http"
 
-	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	coreHTTP "github.com/Rasikrr/core/http"
 )
@@ -24,26 +21,13 @@ func (h *Handler) Resend(w http.ResponseWriter, r *http.Request) {
 		Phone: req.Phone,
 	})
 	if err != nil {
-		mapResendError(w, err)
+		// TODO: error
 		return
 	}
 
-	writeJSON(w, http.StatusOK, resendResponse{
+	coreHTTP.SendData(ctx, w, resendResponse{
 		Message:    "code_sent",
 		ExpiresIn:  out.ExpiresIn,
 		RetryAfter: out.RetryAfter,
-	})
-}
-
-// ── Error mapping ───────────────────────────────────────────────
-
-func mapResendError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, authDomain.ErrRegistrationExpired):
-		writeError(w, http.StatusNotFound, "registration_expired", nil)
-	case errors.Is(err, authDomain.ErrOTPAlreadySent):
-		writeError(w, http.StatusTooManyRequests, "too_many_requests", nil)
-	default:
-		writeError(w, http.StatusInternalServerError, "internal_error", nil)
-	}
+	}, http.StatusOK)
 }

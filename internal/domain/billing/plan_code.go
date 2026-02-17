@@ -31,3 +31,11 @@ func (c PlanCode) IsNetwork() bool {
 func (c PlanCode) String() string {
 	return string(c)
 }
+
+func ParsePlanCode(s string) (PlanCode, error) {
+	plan := PlanCode(s)
+	if !plan.IsValid() {
+		return PlanCodeSolo, ErrInvalidPlanCode
+	}
+	return plan, nil
+}

@@ -1,8 +1,22 @@
 package employee
 
 const (
-	existsByPhone = ``
-	saveEmployee  = `
+	existsByPhone = `
+		SELECT EXISTS(
+			SELECT 1 FROM employees
+			WHERE phone = $1 AND deleted_at IS NULL
+		);
+	`
+
+	getByPhone = `
+		SELECT id, phone, password_hash, first_name, last_name, avatar_id,
+			   organization_id, location_id, role,
+			   can_provide_services, can_manage_location_schedule,
+			   active, created_at, updated_at, deleted_at
+		FROM employees
+		WHERE phone = $1 AND deleted_at IS NULL;
+	`
+	saveEmployee = `
 		INSERT INTO employees (
 			id, phone, password_hash, first_name, last_name, organization_id, 
 			location_id, role, can_provide_services, can_manage_location_schedule, 

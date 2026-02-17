@@ -27,6 +27,17 @@ func (r *Repository) ExistsByPhone(ctx context.Context, phone shared.Phone) (boo
 	return exists, nil
 }
 
+func (r *Repository) GetByPhone(ctx context.Context, phone shared.Phone) (*identity.Employee, error) {
+	var m model
+	if err := pgxscan.Get(ctx, r.db, &m, getByPhone, phone.String()); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, identity.ErrEmployeeNotFound
+		}
+		return nil, err
+	}
+	return m.toDomain()
+}
+
 func (r *Repository) Save(ctx context.Context, emp *identity.Employee) error {
 	m := fromDomain(emp)
 	_, err := r.db.Exec(ctx, saveEmployee,

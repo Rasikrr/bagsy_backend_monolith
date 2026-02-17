@@ -1,7 +1,9 @@
-package auth
+package jwt
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
@@ -9,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type tokenGenerator interface {
+type tokenManager interface {
 	NewAccessToken(authToken auth.Token) (string, error)
 	NewRefreshToken() (raw, hash string, err error)
 	ParseAccessToken(accessToken string) (auth.Token, error)
@@ -28,14 +30,14 @@ type refreshTokenRepository interface {
 //}
 
 type TokenService struct {
-	tokenGenerator   tokenGenerator
+	tokenGenerator   tokenManager
 	refreshTokenRepo refreshTokenRepository
 	accessTokenTTL   time.Duration
 	refreshTokenTTL  time.Duration
 }
 
 func NewTokenService(
-	tokenGenerator tokenGenerator,
+	tokenGenerator tokenManager,
 	accessTokenTTL time.Duration,
 	refreshTokenTTL time.Duration,
 	refreshTokenRepo refreshTokenRepository,
@@ -48,22 +50,38 @@ func NewTokenService(
 	}
 }
 
-func (t *TokenService) GenerateTokens(ctx context.Context, userID uuid.UUID, phone shared.Phone) (access, refresh string, err error) {
-	tokenInfo := auth.NewToken(userID, phone, t.accessTokenTTL)
-	accessToken, err := t.tokenGenerator.NewAccessToken(tokenInfo)
+func (s *TokenService) GenerateTokens(ctx context.Context, userID uuid.UUID, phone shared.Phone) (access, refresh string, err error) {
+	tokenInfo := auth.NewToken(userID, phone, s.accessTokenTTL)
+	accessToken, err := s.tokenGenerator.NewAccessToken(tokenInfo)
 	if err != nil {
 		//TODO: handler error (business error)
 		return "", "", err
 	}
-	refreshToken, refreshHash, err := t.tokenGenerator.NewRefreshToken()
+	refreshToken, refreshHash, err := s.tokenGenerator.NewRefreshToken()
 	if err != nil {
 		//TODO: handler error (business error)
 		return "", "", err
 	}
-	err = t.refreshTokenRepo.SaveToken(ctx, refreshHash, userID, t.refreshTokenTTL)
+	err = s.refreshTokenRepo.SaveToken(ctx, refreshHash, userID, s.refreshTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func (s *TokenService) VerifyAccessToken(_ context.Context, tokenStr string) (*auth.Token, error) {
+	tokenInfo, err := s.tokenGenerator.ParseAccessToken(tokenStr)
+	if err != nil {
+		// TODO: error
+		return nil, err
+	}
+	return &tokenInfo, nil
+}
+
+func (s *TokenService) DeleteRefreshToken(ctx context.Context, token string) error {
+	h := sha256.Sum256([]byte(token))
+	tokenHash := hex.EncodeToString(h[:])
+
+	return s.refreshTokenRepo.DeleteToken(ctx, tokenHash)
 }

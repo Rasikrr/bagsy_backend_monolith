@@ -1,4 +1,4 @@
-package authrepo
+package pending_registraion
 
 import (
 	"context"

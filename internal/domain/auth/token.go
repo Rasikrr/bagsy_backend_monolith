@@ -26,6 +26,16 @@ func NewToken(
 	}
 }
 
+// ReconstructToken восстанавливает Token из распарсенных данных (JWT claims).
+// В отличие от NewToken, принимает абсолютное время истечения, а не TTL.
+func ReconstructToken(userID uuid.UUID, phone shared.Phone, expiresAt time.Time) Token {
+	return Token{
+		UserID:    userID,
+		Phone:     phone,
+		ExpiresAt: expiresAt,
+	}
+}
+
 func (t Token) IsExpired() bool {
 	return time.Now().After(t.ExpiresAt)
 }

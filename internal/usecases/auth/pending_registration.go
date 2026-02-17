@@ -3,6 +3,7 @@ package auth
 import (
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 )
 
@@ -14,7 +15,7 @@ type PendingRegistration struct {
 	FirstName    string
 	LastName     *string
 	PasswordHash string
-	PlanCode     shared.Slug
+	PlanCode     billing.PlanCode
 	OTPCode      string
 	Attempts     int
 	MaxAttempts  int

@@ -1,6 +1,10 @@
 package http
 
 import (
+	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
+	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/environment"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -25,16 +29,27 @@ import (
 // @name Authorization
 func NewServer(
 	server *coreHTTP.Server,
+	swaggerHost, swaggerScheme string,
+	registerOwnerUseCase *auth.RegisterOwnerUseCase,
+	authUseCase *auth.UseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
+
+	authHandler := authC.New(registerOwnerUseCase, authUseCase)
+
+	server.WithControllers(
+		authHandler,
+	)
 }
 
 func initSwagger(server *coreHTTP.Server, swaggerHost, swaggerScheme string) {
 	if environment.GetEnv() != enum.EnvironmentProd {
 		docs.SwaggerInfo.Host = swaggerHost
 		docs.SwaggerInfo.Schemes = []string{swaggerScheme}
-		server.WithControllers(swagger.New(swaggerScheme, swaggerHost))
+		server.WithControllers(
+			swagger.New(swaggerScheme, swaggerHost),
+		)
 		return
 	}
 }

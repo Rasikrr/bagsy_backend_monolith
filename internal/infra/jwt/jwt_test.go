@@ -19,12 +19,11 @@ func TestAccessToken(t *testing.T) {
 	mgr := NewTokenManager(testSecret, testIssuer)
 	ttl := time.Minute * 15
 
-	expiresAt := time.Now().Add(ttl)
 	userID := uuid.New()
 	phone, err := shared.NewPhone("+77715275251")
 	require.NoError(t, err)
 
-	authToken := auth.NewToken(userID, phone, expiresAt)
+	authToken := auth.NewToken(userID, phone, ttl)
 
 	token, err := mgr.NewAccessToken(authToken)
 	require.NoError(t, err)

@@ -25,10 +25,9 @@ type verifyRequest struct {
 	Code  string `json:"code"`
 }
 
-type verifyResponse struct {
-	AccessToken  string     `json:"access_token"`
-	RefreshToken string     `json:"refresh_token"`
-	User         verifyUser `json:"user"`
+type tokensResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type verifyUser struct {
@@ -50,4 +49,16 @@ type resendResponse struct {
 	Message    string `json:"message"`
 	ExpiresIn  int    `json:"expires_in"`
 	RetryAfter int    `json:"retry_after"`
+}
+
+// ── Login ──────────────────────────────────────────────────────
+
+type loginRequest struct {
+	Phone    string `json:"phone"`
+	Password string `json:"password"`
+}
+
+type loginResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }

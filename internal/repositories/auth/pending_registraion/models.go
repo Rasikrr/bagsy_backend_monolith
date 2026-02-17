@@ -1,8 +1,9 @@
-package authrepo
+package pending_registraion
 
 import (
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 )
@@ -26,7 +27,7 @@ func fromPendingRegistration(reg *auth.PendingRegistration) *pendingRegistration
 		FirstName:    reg.FirstName,
 		LastName:     reg.LastName,
 		PasswordHash: reg.PasswordHash,
-		PlanCode:     reg.PlanCode.Value(),
+		PlanCode:     reg.PlanCode.String(),
 		OTPCode:      reg.OTPCode,
 		Attempts:     reg.Attempts,
 		MaxAttempts:  reg.MaxAttempts,
@@ -41,7 +42,7 @@ func (m *pendingRegistrationModel) toUseCase() (*auth.PendingRegistration, error
 		return nil, err
 	}
 
-	planCode, err := shared.NewSlug(m.PlanCode)
+	planCode, err := billing.ParsePlanCode(m.PlanCode)
 	if err != nil {
 		return nil, err
 	}
