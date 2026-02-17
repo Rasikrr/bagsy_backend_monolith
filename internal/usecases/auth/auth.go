@@ -12,6 +12,13 @@ type UseCase struct {
 	tokenService       tokenService
 }
 
+func NewUseCase(employeeRepository employeeRepository, tokenService tokenService) *UseCase {
+	return &UseCase{
+		employeeRepository: employeeRepository,
+		tokenService:       tokenService,
+	}
+}
+
 func (u *UseCase) LoginEmployee(ctx context.Context, phone, password string) (*TokensOutput, error) {
 	phoneVo, err := shared.NewPhone(phone)
 	if err != nil {

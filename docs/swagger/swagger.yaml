@@ -1,3 +1,77 @@
+definitions:
+  http.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.loginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.loginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.registerRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      plan_code:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.registerResponse:
+    properties:
+      expires_in:
+        type: integer
+      message:
+        type: string
+      phone:
+        type: string
+      retry_after:
+        type: integer
+    type: object
+  internal_ports_http_handlers_auth.resendRequest:
+    properties:
+      phone:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.resendResponse:
+    properties:
+      expires_in:
+        type: integer
+      message:
+        type: string
+      retry_after:
+        type: integer
+    type: object
+  internal_ports_http_handlers_auth.tokensResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.verifyRequest:
+    properties:
+      code:
+        type: string
+      phone:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -10,7 +84,151 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Bagsy API
   version: "1.0"
-paths: {}
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентификация сотрудника по номеру телефона и паролю. Возвращает
+        пару JWT-токенов (access + refresh).
+      parameters:
+      - description: Телефон и пароль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.loginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "401":
+          description: Неверный телефон или пароль
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Вход сотрудника
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Начинает процесс регистрации владельца организации. Создаёт pending-запрос
+        и отправляет OTP-код на указанный номер телефона.
+      parameters:
+      - description: Данные регистрации
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.registerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "409":
+          description: Пользователь с таким номером уже существует
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Регистрация владельца
+      tags:
+      - auth
+  /api/v1/auth/register/resend:
+    post:
+      consumes:
+      - application/json
+      description: Повторно отправляет OTP-код на телефон. Доступно только если прошёл
+        retry_after интервал с предыдущей отправки.
+      parameters:
+      - description: Номер телефона
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.resendRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.resendResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Pending-запрос не найден
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "429":
+          description: Слишком рано для повторной отправки
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Повторная отправка OTP
+      tags:
+      - auth
+  /api/v1/auth/register/verify:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает регистрацию владельца OTP-кодом. При успехе создаёт
+        организацию, сотрудника, подписку и возвращает JWT-токены.
+      parameters:
+      - description: Телефон и OTP-код
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.verifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.tokensResponse'
+        "400":
+          description: Неверный код или истёк срок действия
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "404":
+          description: Pending-запрос не найден
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Подтверждение регистрации
+      tags:
+      - auth
 securityDefinitions:
   ApiKeyAuth:
     in: header

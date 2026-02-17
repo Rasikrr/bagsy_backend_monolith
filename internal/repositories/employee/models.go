@@ -16,8 +16,8 @@ type model struct {
 	LastName     *string    `db:"last_name"`
 	AvatarID     *uuid.UUID `db:"avatar_id"`
 
-	OrganizationID uuid.UUID `db:"organization_id"`
-	LocationID     uuid.UUID `db:"location_id"`
+	OrganizationID uuid.UUID  `db:"organization_id"`
+	LocationID     *uuid.UUID `db:"location_id"`
 
 	Role string `db:"role"`
 

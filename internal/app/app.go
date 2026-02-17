@@ -5,7 +5,20 @@ import (
 	"time"
 
 	appenv "github.com/Rasikrr/bagsy_backend_monolith/internal/appenvs"
+	jwtinfra "github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/messenger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
+	employeeRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/employee"
+	orgRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/organization"
+	planRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/plan"
+	subscriptionRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/subscription"
+	workHistoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/work_history"
+
+	pendingReg "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/pending_registraion"
+	refreshTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/tokens"
+
+	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/s3"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/sms"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/whatsapp"
@@ -17,9 +30,28 @@ import (
 type App struct {
 	application.App
 
+	// Clients
 	smsClient      *sms.Client
 	whatsappClient *whatsapp.Client
 	s3Client       *s3.Client
+
+	// Repositories
+	employeeRepo     *employeeRepo.Repository
+	organizationRepo *orgRepo.Repository
+	planRepo         *planRepo.Repository
+	subscriptionRepo *subscriptionRepo.Repository
+	workHistoryRepo  *workHistoryRepo.Repository
+	pendingRegStore  *pendingReg.PendingRegistrationStore
+	refreshTokenRepo *refreshTokenRepo.RefreshTokenRepository
+
+	// Infra
+	tokenManager *jwtinfra.TokenManager
+	tokenService *jwtinfra.TokenService
+	otpSender    *messenger.OTPSender
+
+	// Use Cases
+	registerOwnerUC *authUC.RegisterOwnerUseCase
+	authUseCase     *authUC.UseCase
 }
 
 func InitApp(ctx context.Context) *App {
@@ -27,10 +59,10 @@ func InitApp(ctx context.Context) *App {
 		App: *application.NewApp(ctx),
 	}
 	for _, initFn := range []func(context.Context) error{
-		app.initInfra,
-		app.initRepositories,
 		app.initClients,
-		app.initServices,
+		app.initRepositories,
+		app.initInfra,
+		app.initUseCases,
 		app.initHTTP,
 		app.initJobs,
 	} {
@@ -40,34 +72,6 @@ func InitApp(ctx context.Context) *App {
 	}
 	log.Infof(ctx, "env: %s", app.Config().Environment)
 	return app
-}
-
-func (a *App) initHTTP(_ context.Context) error {
-	vars := a.Config().Variables
-
-	http.NewServer(
-		a.HTTPServer(),
-		vars.GetString(appenv.SwaggerHost),
-		vars.GetString(appenv.SwaggerScheme),
-		// TODO
-		nil,
-	)
-	return nil
-}
-
-func (a *App) initInfra(_ context.Context) error {
-	vars := a.Config().Variables
-	return nil
-}
-
-func (a *App) initRepositories(_ context.Context) error {
-	return nil
-}
-
-// nolint
-func (a *App) initServices(_ context.Context) error {
-	vars := a.Config().Variables
-	return nil
 }
 
 func (a *App) initClients(ctx context.Context) error {
@@ -84,6 +88,7 @@ func (a *App) initClients(ctx context.Context) error {
 		vars.GetString(appenv.WhatsAppIDInstance),
 		vars.GetString(appenv.WhatsAppAPIToken),
 	)
+
 	var err error
 	a.s3Client, err = s3.NewClient(
 		ctx,
@@ -95,20 +100,88 @@ func (a *App) initClients(ctx context.Context) error {
 			BucketName:      vars.GetString(appenv.AwsS3BucketName),
 		},
 	)
-
 	return err
 }
 
-func (a *App) initJobs(_ context.Context) error {
+func (a *App) initRepositories(_ context.Context) error {
+	db := a.Postgres()
+
+	a.employeeRepo = employeeRepo.NewRepository(db)
+	a.organizationRepo = orgRepo.NewRepository(db)
+	a.planRepo = planRepo.NewRepository(db)
+	a.subscriptionRepo = subscriptionRepo.NewRepository(db)
+	a.workHistoryRepo = workHistoryRepo.NewRepository(db)
+
+	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
+	a.refreshTokenRepo = refreshTokenRepo.NewRefreshTokenRepository(a.Redis())
+
+	return nil
+}
+
+func (a *App) initInfra(_ context.Context) error {
 	vars := a.Config().Variables
 
-	// Загружаем таймзону
+	// JWT
+	a.tokenManager = jwtinfra.NewTokenManager(
+		vars.GetString(appenv.JWTSecret),
+		vars.GetString(appenv.JWTIssuer),
+	)
+
+	accessTTL := vars.GetDuration(appenv.AccessTokenTTL)
+	refreshTTL := vars.GetDuration(appenv.RefreshTokenTTL)
+
+	a.tokenService = jwtinfra.NewTokenService(
+		a.tokenManager,
+		accessTTL,
+		refreshTTL,
+		a.refreshTokenRepo,
+	)
+
+	// OTP Sender (WhatsApp → SMS fallback)
+	a.otpSender = messenger.NewOTPSender(a.whatsappClient, a.smsClient)
+
+	return nil
+}
+
+func (a *App) initUseCases(_ context.Context) error {
+	txm := a.PostgresTXManager()
+
+	a.registerOwnerUC = authUC.NewRegisterOwnerUseCase(
+		a.employeeRepo,
+		a.planRepo,
+		a.organizationRepo,
+		a.subscriptionRepo,
+		a.workHistoryRepo,
+		a.tokenService,
+		a.pendingRegStore,
+		txm,
+		a.otpSender,
+	)
+
+	a.authUseCase = authUC.NewUseCase(a.employeeRepo, a.tokenService)
+
+	return nil
+}
+
+func (a *App) initHTTP(_ context.Context) error {
+	vars := a.Config().Variables
+
+	http.NewServer(
+		a.HTTPServer(),
+		vars.GetString(appenv.SwaggerHost),
+		vars.GetString(appenv.SwaggerScheme),
+		a.registerOwnerUC,
+		a.authUseCase,
+	)
+	return nil
+}
+
+func (a *App) initJobs(_ context.Context) error {
 	loc, err := time.LoadLocation("Asia/Almaty")
 	if err != nil {
 		return err
 	}
 
-	// Настройки cron с секундами и таймзоной
 	a.WithCronOptions(
 		cron.WithSeconds(),
 		cron.WithLocation(loc),

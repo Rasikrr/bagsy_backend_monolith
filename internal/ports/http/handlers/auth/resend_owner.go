@@ -8,6 +8,19 @@ import (
 )
 
 // Resend handles POST /api/v1/auth/register/resend.
+//
+// @Summary      Повторная отправка OTP
+// @Description  Повторно отправляет OTP-код на телефон. Доступно только если прошёл retry_after интервал с предыдущей отправки.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      resendRequest    true  "Номер телефона"
+// @Success      200   {object}  resendResponse
+// @Failure      400   {object}  coreHTTP.ErrorResponse
+// @Failure      404   {object}  coreHTTP.ErrorResponse  "Pending-запрос не найден"
+// @Failure      429   {object}  coreHTTP.ErrorResponse  "Слишком рано для повторной отправки"
+// @Failure      500   {object}  coreHTTP.ErrorResponse
+// @Router       /api/v1/auth/register/resend [post]
 func (h *Handler) Resend(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

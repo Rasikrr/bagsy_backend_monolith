@@ -21,7 +21,7 @@ func NewRepository(db *postgres.Postgres) *Repository {
 
 func (r *Repository) ExistsByPhone(ctx context.Context, phone shared.Phone) (bool, error) {
 	var exists bool
-	if err := pgxscan.Get(ctx, r.db, &exists, "", phone.String()); err != nil {
+	if err := pgxscan.Get(ctx, r.db, &exists, existsByPhone, phone.String()); err != nil {
 		return false, err
 	}
 	return exists, nil

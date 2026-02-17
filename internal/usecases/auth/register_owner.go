@@ -177,6 +177,9 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 
 	reg, err := u.pendingRequestsStore.Get(ctx, phone)
 	if err != nil {
+		return nil, errors.Wrap(err, "get pending registration")
+	}
+	if reg == nil {
 		return nil, authDomain.ErrRegistrationExpired
 	}
 
@@ -225,7 +228,7 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 
 		employeePermissions := identity.NewPermissions(false, true)
 
-		if plan.Code.IsPoint() {
+		if plan.Code.IsSolo() {
 			employeePermissions = identity.NewPermissions(true, true)
 		}
 
@@ -296,6 +299,9 @@ func (u *RegisterOwnerUseCase) Resend(ctx context.Context, req ResendInput) (*Re
 
 	reg, err := u.pendingRequestsStore.Get(ctx, phone)
 	if err != nil {
+		return nil, errors.Wrap(err, "get pending registration")
+	}
+	if reg == nil {
 		return nil, authDomain.ErrRegistrationExpired
 	}
 

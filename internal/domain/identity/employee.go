@@ -22,7 +22,7 @@ type Employee struct {
 	AvatarID *uuid.UUID
 
 	OrganizationID uuid.UUID
-	LocationID     uuid.UUID
+	LocationID     *uuid.UUID
 
 	Role        Role
 	Permissions Permissions
@@ -38,7 +38,7 @@ type CreateEmployeeParams struct {
 	FirstName      string
 	LastName       *string
 	OrganizationID uuid.UUID
-	LocationID     uuid.UUID
+	LocationID     *uuid.UUID
 	Role           Role
 	Permissions    Permissions
 }
@@ -155,7 +155,7 @@ func (e *Employee) Transfer(locationID uuid.UUID) error {
 		return ErrEmployeeDeleted
 	}
 
-	e.LocationID = locationID
+	e.LocationID = &locationID
 	e.touch()
 	return nil
 }
