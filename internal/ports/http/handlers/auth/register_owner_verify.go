@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	coreHTTP "github.com/Rasikrr/core/http"
-	"github.com/Rasikrr/core/log"
 )
 
 // Verify handles POST /api/v1/auth/register/verify.
@@ -17,17 +17,16 @@ import (
 // @Produce      json
 // @Param        body  body      verifyRequest    true  "Телефон и OTP-код"
 // @Success      200   {object}  tokensResponse
-// @Failure      400   {object}  coreHTTP.ErrorResponse  "Неверный код или истёк срок действия"
-// @Failure      404   {object}  coreHTTP.ErrorResponse  "Pending-запрос не найден"
-// @Failure      500   {object}  coreHTTP.ErrorResponse
+// @Failure      400   {object}  util.errorResponse  "Неверный код или истёк срок действия"
+// @Failure      404   {object}  util.errorResponse  "Pending-запрос не найден"
+// @Failure      500   {object}  util.errorResponse
 // @Router       /api/v1/auth/register/verify [post]
 func (h *Handler) verifyOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req verifyRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		log.Error(ctx, "failed to parse json", log.Err(err))
-		// TODO: error
+		util.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -36,8 +35,7 @@ func (h *Handler) verifyOwner(w http.ResponseWriter, r *http.Request) {
 		Code:  req.Code,
 	})
 	if err != nil {
-		log.Error(ctx, "failed to verify registration", log.Err(err))
-		// TODO: error
+		util.SendError(ctx, w, err, authErrors)
 		return
 	}
 

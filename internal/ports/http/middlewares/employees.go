@@ -4,18 +4,20 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
 
-type authService interface {
+type authUseCase interface {
 	VerifyAccessToken(ctx context.Context, tokenStr string) (*auth.Token, error)
 }
 
 type Auth struct {
-	authService authService
+	authService authUseCase
 }
 
-func NewAuth(authService authService) *Auth {
+func NewAuth(authService authUseCase) *Auth {
 	return &Auth{
 		authService: authService,
 	}
@@ -24,64 +26,20 @@ func NewAuth(authService authService) *Auth {
 func (a *Auth) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		token, err := httputil.GetAuthHeader(r)
+
+		token, err := util.GetAuthHeader(r)
 		if err != nil {
-			errors.HandleError(ctx, w, err)
+			util.SendBadRequest(ctx, w, err)
 			return
 		}
 
-		act, err := a.authService.VerifyAccessToken(ctx, token)
+		tokenInfo, err := a.authService.VerifyAccessToken(ctx, token)
 		if err != nil {
-			errors.HandleError(ctx, w, err)
+			util.SendBadRequest(ctx, w, err)
 			return
 		}
 
-		ctx = actor.SetActor(ctx, act)
+		ctx = access.WithToken(ctx, tokenInfo)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-//
-//func (a *Auth) RequireRole(roles ...user.Role) func(http.Handler) http.Handler {
-//	return func(next http.Handler) http.Handler {
-//		return a.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//			ctx := r.Context()
-//			act, err := actor.GetActor(ctx)
-//			if err != nil {
-//				errors.HandleError(ctx, w, err)
-//				return
-//			}
-//
-//			if !act.Role().OneOf(roles...) {
-//				errors.HandleError(ctx, w, domainErr.NewForbiddenError("insufficient permissions"))
-//				return
-//			}
-//
-//			next.ServeHTTP(w, r)
-//		}))
-//	}
-//}
-//
-//func (a *Auth) AuthorizeManagement() func(http.Handler) http.Handler {
-//	return a.RequireRole(
-//		user.RoleManager,
-//		user.RoleNetManager,
-//		user.RoleSelfOwner,
-//	)
-//}
-//
-//func (a *Auth) AuthorizeNetManagement() func(http.Handler) http.Handler {
-//	return a.RequireRole(
-//		user.RoleNetManager,
-//		user.RoleSelfOwner,
-//	)
-//}
-//
-//func (a *Auth) AuthorizeWorkers() func(http.Handler) http.Handler {
-//	return a.RequireRole(
-//		user.RoleStaff,
-//		user.RoleManager,
-//		user.RoleNetManager,
-//		user.RoleSelfOwner,
-//	)
-//}

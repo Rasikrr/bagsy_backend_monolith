@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	coreHTTP "github.com/Rasikrr/core/http"
-	"github.com/Rasikrr/core/log"
 )
 
 // Register handles POST /api/v1/auth/register.
@@ -17,17 +17,16 @@ import (
 // @Produce      json
 // @Param        body  body      registerRequest   true  "Данные регистрации"
 // @Success      200   {object}  registerResponse
-// @Failure      400   {object}  coreHTTP.ErrorResponse
-// @Failure      409   {object}  coreHTTP.ErrorResponse  "Пользователь с таким номером уже существует"
-// @Failure      500   {object}  coreHTTP.ErrorResponse
+// @Failure      400   {object}  util.errorResponse
+// @Failure      409   {object}  util.errorResponse  "Пользователь с таким номером уже существует"
+// @Failure      500   {object}  util.errorResponse
 // @Router       /api/v1/auth/register [post]
 func (h *Handler) registerOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req registerRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		log.Error(ctx, "get data error", log.Err(err))
-		// TODO: error
+		util.SendBadRequest(ctx, w, err)
 		return
 	}
 	out, err := h.registerOwnerUseCase.Register(ctx, uc.RegisterInput{
@@ -38,9 +37,7 @@ func (h *Handler) registerOwner(w http.ResponseWriter, r *http.Request) {
 		PlanCode:  req.PlanCode,
 	})
 	if err != nil {
-		log.Error(ctx, "failed to register", log.Err(err))
-
-		// TODO: error
+		util.SendError(ctx, w, err, authErrors)
 		return
 	}
 
@@ -50,5 +47,4 @@ func (h *Handler) registerOwner(w http.ResponseWriter, r *http.Request) {
 		ExpiresIn:  out.ExpiresIn,
 		RetryAfter: out.RetryAfter,
 	}, http.StatusOK)
-
 }

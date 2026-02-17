@@ -1,14 +1,17 @@
 package util
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 )
 
-func GetAuthHeader(r *http.Request) (string, error) {
-	bearerToken := strings.Split(r.Header.Get("Authorization"), " ")
-	if len(bearerToken) != 2 {
+var ErrMissingAuthHeader = errors.New("missing or malformed authorization header")
 
+func GetAuthHeader(r *http.Request) (string, error) {
+	parts := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return "", ErrMissingAuthHeader
 	}
-	return bearerToken[1], nil
+	return parts[1], nil
 }

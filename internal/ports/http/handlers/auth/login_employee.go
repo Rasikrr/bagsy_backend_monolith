@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	coreHTTP "github.com/Rasikrr/core/http"
 )
 
@@ -15,21 +16,21 @@ import (
 // @Produce      json
 // @Param        body  body      loginRequest     true  "Телефон и пароль"
 // @Success      200   {object}  loginResponse
-// @Failure      400   {object}  coreHTTP.ErrorResponse
-// @Failure      401   {object}  coreHTTP.ErrorResponse  "Неверный телефон или пароль"
-// @Failure      500   {object}  coreHTTP.ErrorResponse
+// @Failure      400   {object}  util.errorResponse
+// @Failure      401   {object}  util.errorResponse  "Неверный телефон или пароль"
+// @Failure      500   {object}  util.errorResponse
 // @Router       /api/v1/auth/login [post]
 func (h *Handler) loginEmployee(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req loginRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		// TODO: error
+		util.SendBadRequest(ctx, w, err)
 		return
 	}
 	out, err := h.authUseCase.LoginEmployee(ctx, req.Phone, req.Password)
 	if err != nil {
-		// TODO: error
+		util.SendError(ctx, w, err, authErrors)
 		return
 	}
 	coreHTTP.SendData(ctx, w, &loginResponse{

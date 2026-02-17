@@ -3,20 +3,23 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	coreHTTP "github.com/Rasikrr/core/http"
 )
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
 	var req logoutRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		// TODO: error
+		util.SendBadRequest(ctx, w, err)
 		return
 	}
-	err := h.authUseCase.Logout(ctx, req.RefreshToken)
-	if err != nil {
-		// TODO: error
+
+	if err := h.authUseCase.Logout(ctx, req.RefreshToken); err != nil {
+		util.SendError(ctx, w, err, authErrors)
 		return
 	}
-	coreHTTP.SendData()
+
+	coreHTTP.SendData(ctx, w, nil, http.StatusNoContent)
 }
