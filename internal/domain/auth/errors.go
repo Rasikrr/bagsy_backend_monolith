@@ -15,3 +15,9 @@ var (
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 	ErrRefreshTokenExpired  = errors.New("refresh token has expired")
 )
+
+var (
+	ErrResetTokenNotFound = errors.New("password reset token not found")
+	ErrResetTokenExpired  = errors.New("password reset token has expired")
+	ErrEmployeeInactive   = errors.New("employee account is inactive")
+)

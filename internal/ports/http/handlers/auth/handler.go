@@ -19,19 +19,27 @@ type authUseCase interface {
 	Logout(ctx context.Context, token string) error
 }
 
-// Handler serves owner registration HTTP endpoints.
+type resetPasswordUseCase interface {
+	RequestReset(ctx context.Context, req uc.RequestResetInput) error
+	ConfirmReset(ctx context.Context, req uc.ConfirmResetInput) error
+}
+
+// Handler serves auth HTTP endpoints.
 type Handler struct {
 	registerOwnerUseCase registerOwnerUseCase
 	authUseCase          authUseCase
+	resetPasswordUseCase resetPasswordUseCase
 }
 
 func New(
 	registerOwnerUseCase registerOwnerUseCase,
 	authUseCase authUseCase,
+	resetPasswordUseCase resetPasswordUseCase,
 ) *Handler {
 	return &Handler{
 		registerOwnerUseCase: registerOwnerUseCase,
 		authUseCase:          authUseCase,
+		resetPasswordUseCase: resetPasswordUseCase,
 	}
 }
 
@@ -44,5 +52,8 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Post("/login", h.loginEmployee)
 		r.Post("/refresh", h.refreshTokens)
 		r.Post("/logout", h.logout)
+
+		r.Post("/password/reset", h.requestPasswordReset)
+		r.Post("/password/reset/confirm", h.confirmPasswordReset)
 	})
 }

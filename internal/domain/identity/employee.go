@@ -193,6 +193,15 @@ func (e *Employee) SetPassword(hash string) {
 	e.touch()
 }
 
+func (e *Employee) ChangePassword(newHash string) error {
+	if e.IsDeleted() {
+		return ErrEmployeeDeleted
+	}
+	e.PasswordHash = newHash
+	e.touch()
+	return nil
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Query Methods
 // ─────────────────────────────────────────────────────────────────

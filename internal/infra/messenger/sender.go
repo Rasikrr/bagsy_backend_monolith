@@ -24,6 +24,15 @@ func NewOTPSender(primary, fallback MessageSender) *OTPSender {
 
 func (s *OTPSender) SendOTP(ctx context.Context, phone shared.Phone, code string) error {
 	msg := formatOTPMessage(code)
+	return s.send(ctx, phone, msg)
+}
+
+func (s *OTPSender) SendPasswordResetLink(ctx context.Context, phone shared.Phone, link string) error {
+	msg := formatPasswordResetMessage(link)
+	return s.send(ctx, phone, msg)
+}
+
+func (s *OTPSender) send(ctx context.Context, phone shared.Phone, msg string) error {
 	if err := s.primary.SendMessage(ctx, phone.String(), msg); err != nil {
 		return s.fallback.SendMessage(ctx, phone.String(), msg)
 	}

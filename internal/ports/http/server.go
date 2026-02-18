@@ -32,11 +32,12 @@ func NewServer(
 	swaggerHost, swaggerScheme string,
 	registerOwnerUseCase *auth.RegisterOwnerUseCase,
 	authUseCase *auth.UseCase,
+	resetPasswordUseCase *auth.ResetPasswordUseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
 
-	authHandler := authC.New(registerOwnerUseCase, authUseCase)
+	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 
 	server.WithControllers(
 		authHandler,

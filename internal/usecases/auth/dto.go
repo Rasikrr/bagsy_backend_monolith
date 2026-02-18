@@ -38,3 +38,14 @@ type ResendOutput struct {
 	ExpiresIn  int // seconds
 	RetryAfter int // seconds
 }
+
+// ── Password Reset ────────────────────────────────────────────────
+
+type RequestResetInput struct {
+	Phone string
+}
+
+type ConfirmResetInput struct {
+	Token       string
+	NewPassword string
+}

@@ -22,6 +22,7 @@ type refreshTokenRepository interface {
 	SaveToken(ctx context.Context, tokenHash string, userID uuid.UUID, ttl time.Duration) error
 	GetToken(ctx context.Context, tokenHash string) (userID uuid.UUID, err error)
 	DeleteToken(ctx context.Context, tokenHash string) error
+	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 //type tokensRepository interface {
@@ -99,4 +100,8 @@ func (s *TokenService) DeleteRefreshToken(ctx context.Context, token string) err
 	tokenHash := hex.EncodeToString(h[:])
 
 	return s.refreshTokenRepo.DeleteToken(ctx, tokenHash)
+}
+
+func (s *TokenService) DeleteAllRefreshTokens(ctx context.Context, userID uuid.UUID) error {
+	return s.refreshTokenRepo.DeleteAllByUserID(ctx, userID)
 }

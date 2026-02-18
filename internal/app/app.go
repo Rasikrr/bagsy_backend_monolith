@@ -15,6 +15,7 @@ import (
 	workHistoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/work_history"
 
 	pendingReg "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/pending_registraion"
+	resetTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/reset_token"
 	refreshTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/tokens"
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
@@ -43,6 +44,7 @@ type App struct {
 	workHistoryRepo  *workHistoryRepo.Repository
 	pendingRegStore  *pendingReg.PendingRegistrationStore
 	refreshTokenRepo *refreshTokenRepo.RefreshTokenRepository
+	resetTokenStore  *resetTokenRepo.Store
 
 	// Infra
 	tokenManager *jwtinfra.TokenManager
@@ -52,6 +54,7 @@ type App struct {
 	// Use Cases
 	registerOwnerUC *authUC.RegisterOwnerUseCase
 	authUseCase     *authUC.UseCase
+	resetPasswordUC *authUC.ResetPasswordUseCase
 }
 
 func InitApp(ctx context.Context) *App {
@@ -114,6 +117,7 @@ func (a *App) initRepositories(_ context.Context) error {
 
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
 	a.refreshTokenRepo = refreshTokenRepo.NewRefreshTokenRepository(a.Redis())
+	a.resetTokenStore = resetTokenRepo.NewStore(a.Redis())
 
 	return nil
 }
@@ -144,6 +148,7 @@ func (a *App) initInfra(_ context.Context) error {
 }
 
 func (a *App) initUseCases(_ context.Context) error {
+	vars := a.Config().Variables
 	txm := a.PostgresTXManager()
 
 	a.registerOwnerUC = authUC.NewRegisterOwnerUseCase(
@@ -160,6 +165,18 @@ func (a *App) initUseCases(_ context.Context) error {
 
 	a.authUseCase = authUC.NewUseCase(a.employeeRepo, a.employeeRepo, a.tokenService)
 
+	resetTTL := vars.GetDuration(appenv.PasswordResetTTL)
+	frontendURL := vars.GetString(appenv.PasswordResetFrontendURL)
+
+	a.resetPasswordUC = authUC.NewResetPasswordUseCase(
+		a.employeeRepo,
+		a.resetTokenStore,
+		a.tokenService,
+		a.otpSender,
+		resetTTL,
+		frontendURL,
+	)
+
 	return nil
 }
 
@@ -172,6 +189,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		vars.GetString(appenv.SwaggerScheme),
 		a.registerOwnerUC,
 		a.authUseCase,
+		a.resetPasswordUC,
 	)
 	return nil
 }

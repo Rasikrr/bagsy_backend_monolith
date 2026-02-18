@@ -74,3 +74,18 @@ type refreshRequest struct {
 type logoutRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
+
+// ── Password Reset ──────────────────────────────────────────────
+
+type requestResetRequest struct {
+	Phone string `json:"phone"`
+}
+
+type confirmResetRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+type messageResponse struct {
+	Message string `json:"message"`
+}

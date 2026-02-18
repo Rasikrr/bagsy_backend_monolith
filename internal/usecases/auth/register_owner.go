@@ -56,6 +56,7 @@ type tokenService interface {
 	GenerateTokens(ctx context.Context, userID uuid.UUID, phone shared.Phone) (access, refresh string, err error)
 	RefreshTokens(ctx context.Context, oldRefreshToken string) (userID uuid.UUID, err error)
 	DeleteRefreshToken(ctx context.Context, refresh string) error
+	DeleteAllRefreshTokens(ctx context.Context, userID uuid.UUID) error
 }
 
 type txManager interface {
