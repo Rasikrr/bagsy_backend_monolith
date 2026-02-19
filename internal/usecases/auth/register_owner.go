@@ -229,11 +229,7 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 		}
 		orgID = org.ID
 
-		employeePermissions := identity.NewPermissions(false, true)
-
-		if plan.Code.IsSolo() {
-			employeePermissions = identity.NewPermissions(true, true)
-		}
+		employeePermissions := identity.NewPermissions(true, true)
 
 		// 2. Create employee (owner).
 		emp, err := identity.NewOwnerEmployee(identity.CreateOwnerParams{

@@ -15,6 +15,13 @@ func NewSlug(value string) (Slug, error) {
 	}, nil
 }
 
+func ParseSlug(slug string) (Slug, error) {
+	if slug == "" {
+		return Slug{}, ErrEmptySlug
+	}
+	return Slug{value: slug}, nil
+}
+
 func (s Slug) String() string {
 	return s.value
 }

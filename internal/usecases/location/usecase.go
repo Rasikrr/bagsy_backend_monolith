@@ -160,7 +160,7 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 
 		// 7. Determine if frontend should prompt org profile setup
 		// count was before creation, so count==1 means this is the second location
-		if count == 1 {
+		if count >= 1 {
 			org, err := u.orgRepo.GetByID(txCtx, orgCtx.Organization.ID)
 			if err != nil {
 				return fmt.Errorf("get organization: %w", err)
@@ -169,7 +169,7 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 		}
 		// 8. If this is first location of the owner, transfer him to this new location
 		if count == 0 {
-			employee, err := u.employeeRepository.GetByID(ctx, orgCtx.Employee.ID)
+			employee, err := u.employeeRepository.GetByID(txCtx, orgCtx.Employee.ID)
 			if err != nil {
 				return fmt.Errorf("get employee: %w", err)
 			}
@@ -184,6 +184,9 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &CreateLocationOutput{
 		ID:               loc.ID,
