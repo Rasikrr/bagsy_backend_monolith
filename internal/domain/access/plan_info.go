@@ -2,11 +2,10 @@ package access
 
 import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 )
 
 type PlanInfo struct {
-	Code         shared.Slug
+	Code         billing.PlanCode
 	Capabilities Capabilities
 }
 

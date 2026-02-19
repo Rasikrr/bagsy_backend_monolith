@@ -9,6 +9,7 @@ var (
 	ErrEmployeeInactive      = errors.New("employee is inactive")
 	ErrEmployeeNameRequired  = errors.New("employee name is required")
 	ErrEmployeePhoneRequired = errors.New("employee phone is required")
+	ErrPermissionDenied      = errors.New("permission denied")
 	ErrInvalidRole           = errors.New("invalid employee role")
 	ErrInvalidGender         = errors.New("invalid gender")
 )

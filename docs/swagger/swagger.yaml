@@ -4,6 +4,13 @@ definitions:
       error:
         type: string
     type: object
+  internal_ports_http_handlers_auth.confirmResetRequest:
+    properties:
+      new_password:
+        type: string
+      token:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.loginRequest:
     properties:
       password:
@@ -21,6 +28,11 @@ definitions:
   internal_ports_http_handlers_auth.logoutRequest:
     properties:
       refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_auth.messageResponse:
+    properties:
+      message:
         type: string
     type: object
   internal_ports_http_handlers_auth.refreshRequest:
@@ -52,6 +64,11 @@ definitions:
       retry_after:
         type: integer
     type: object
+  internal_ports_http_handlers_auth.requestResetRequest:
+    properties:
+      phone:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.resendRequest:
     properties:
       phone:
@@ -79,6 +96,45 @@ definitions:
         type: string
       phone:
         type: string
+    type: object
+  internal_ports_http_handlers_location.createRequest:
+    properties:
+      address:
+        $ref: '#/definitions/internal_ports_http_handlers_location.createRequestAddress'
+      category_id:
+        type: string
+      description:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      phone:
+        type: string
+      schedule_type:
+        type: string
+      slot_duration_minutes:
+        type: integer
+    type: object
+  internal_ports_http_handlers_location.createRequestAddress:
+    properties:
+      building:
+        type: string
+      city:
+        type: string
+      details:
+        type: string
+      street:
+        type: string
+    type: object
+  internal_ports_http_handlers_location.createResponse:
+    properties:
+      id:
+        type: string
+      prompt_org_profile:
+        type: boolean
     type: object
 host: localhost:8080
 info:
@@ -155,6 +211,80 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
       summary: Выход из системы
+      tags:
+      - auth
+  /api/v1/auth/password/reset:
+    post:
+      consumes:
+      - application/json
+      description: Отправляет ссылку для сброса пароля на номер телефона сотрудника
+        через WhatsApp (с fallback на SMS).
+      parameters:
+      - description: Номер телефона
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.requestResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.messageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Аккаунт неактивен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Сотрудник не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Запрос на сброс пароля (шаг 1/2)
+      tags:
+      - auth
+  /api/v1/auth/password/reset/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Проверяет one-time токен и устанавливает новый пароль. Все активные
+        сессии инвалидируются.
+      parameters:
+      - description: Токен и новый пароль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_auth.confirmResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.messageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Токен не найден или истёк
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Подтверждение сброса пароля (шаг 2/2)
       tags:
       - auth
   /api/v1/auth/refresh:
@@ -301,6 +431,43 @@ paths:
       summary: Подтверждение регистрации
       tags:
       - auth
+  /api/v1/locations:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую точку обслуживания для организации. Проверяет лимиты
+        тарифного плана.
+      parameters:
+      - description: Данные локации
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_location.createRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_location.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Лимит превышен или подписка приостановлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создание локации
+      tags:
+      - location
 securityDefinitions:
   ApiKeyAuth:
     in: header

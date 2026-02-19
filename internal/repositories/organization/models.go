@@ -45,7 +45,7 @@ func fromDomain(o *organization.Organization) *model {
 		ID:          o.ID,
 		Name:        o.Name,
 		Description: o.Description,
-		Slug:        o.Slug.Value(),
+		Slug:        o.Slug.String(),
 		Active:      o.Active,
 		CreatedAt:   o.CreatedAt,
 		UpdatedAt:   o.UpdatedAt,

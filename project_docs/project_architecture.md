@@ -32,7 +32,7 @@
 * **Структура:** Разбита по бизнес-контекстам (`auth`, `identity`, `billing`, `booking`).
 * **Содержимое:**
 * **Aggregates & Entities:** (`employee.go`, `appointment.go`) — богатые модели с методами изменения состояния.
-* **Value Objects:** (`money`, `phone`) — неизменяемые объекты.
+* **String Objects:** (`money`, `phone`) — неизменяемые объекты.
 * **Domain Errors:** (`errors.go`) — ошибки бизнес-логики.
 * **Domain Services:** (`availability.go`) — логика, затрагивающая несколько сущностей.
 

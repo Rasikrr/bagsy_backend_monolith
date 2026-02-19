@@ -15,12 +15,12 @@ func NewSlug(value string) (Slug, error) {
 	}, nil
 }
 
-func (s Slug) Value() string {
+func (s Slug) String() string {
 	return s.value
 }
 
 func (s Slug) IsEmpty() bool {
-	return s.Value() == ""
+	return s.String() == ""
 }
 
 func (s Slug) IsEqual(s2 Slug) bool {

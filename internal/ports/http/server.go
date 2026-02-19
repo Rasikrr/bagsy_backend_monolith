@@ -3,8 +3,12 @@ package http
 import (
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	locationC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/environment"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -33,14 +37,21 @@ func NewServer(
 	registerOwnerUseCase *auth.RegisterOwnerUseCase,
 	authUseCase *auth.UseCase,
 	resetPasswordUseCase *auth.ResetPasswordUseCase,
+	accessRepo *access.Repository,
+	createLocationUC *locationUC.UseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
 
+	authMiddleware := middlewares.NewAuth(authUseCase)
+	orgContextMiddleware := middlewares.NewOrgContext(accessRepo)
+
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
+	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
 
 	server.WithControllers(
 		authHandler,
+		locationHandler,
 	)
 }
 

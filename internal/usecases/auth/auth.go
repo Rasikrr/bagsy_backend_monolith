@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hasher"
@@ -52,6 +53,10 @@ func (u *UseCase) LoginEmployee(ctx context.Context, phone, password string) (*T
 		AccessToken:  access,
 		RefreshToken: refresh,
 	}, nil
+}
+
+func (u *UseCase) VerifyAccessToken(ctx context.Context, tokenStr string) (*auth.Token, error) {
+	return u.tokenService.VerifyAccessToken(ctx, tokenStr)
 }
 
 func (u *UseCase) RefreshTokens(ctx context.Context, refreshToken string) (*TokensOutput, error) {

@@ -8,7 +8,10 @@ import (
 	jwtinfra "github.com/Rasikrr/bagsy_backend_monolith/internal/infra/jwt"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/messenger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
+	accessRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	employeeRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/employee"
+	locationRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location"
+	categoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location_category"
 	orgRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/organization"
 	planRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/plan"
 	subscriptionRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/subscription"
@@ -19,6 +22,8 @@ import (
 	refreshTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/tokens"
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/s3"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/sms"
@@ -42,6 +47,9 @@ type App struct {
 	planRepo         *planRepo.Repository
 	subscriptionRepo *subscriptionRepo.Repository
 	workHistoryRepo  *workHistoryRepo.Repository
+	accessRepo       *accessRepo.Repository
+	categoryRepo     *categoryRepo.Repository
+	locationRepo     *locationRepo.Repository
 	pendingRegStore  *pendingReg.PendingRegistrationStore
 	refreshTokenRepo *refreshTokenRepo.RefreshTokenRepository
 	resetTokenStore  *resetTokenRepo.Store
@@ -52,9 +60,13 @@ type App struct {
 	otpSender    *messenger.OTPSender
 
 	// Use Cases
-	registerOwnerUC *authUC.RegisterOwnerUseCase
-	authUseCase     *authUC.UseCase
-	resetPasswordUC *authUC.ResetPasswordUseCase
+	registerOwnerUC  *authUC.RegisterOwnerUseCase
+	authUseCase      *authUC.UseCase
+	resetPasswordUC  *authUC.ResetPasswordUseCase
+	createLocationUC *locationUC.UseCase
+
+	// Policies
+	policy *policy.Policy
 }
 
 func InitApp(ctx context.Context) *App {
@@ -114,6 +126,9 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.planRepo = planRepo.NewRepository(db)
 	a.subscriptionRepo = subscriptionRepo.NewRepository(db)
 	a.workHistoryRepo = workHistoryRepo.NewRepository(db)
+	a.accessRepo = accessRepo.NewRepository(db)
+	a.locationRepo = locationRepo.NewRepository(db)
+	a.categoryRepo = categoryRepo.NewRepository(db)
 
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
 	a.refreshTokenRepo = refreshTokenRepo.NewRefreshTokenRepository(a.Redis())
@@ -149,7 +164,7 @@ func (a *App) initInfra(_ context.Context) error {
 
 func (a *App) initUseCases(_ context.Context) error {
 	vars := a.Config().Variables
-	txm := a.PostgresTXManager()
+	txManager := a.PostgresTXManager()
 
 	a.registerOwnerUC = authUC.NewRegisterOwnerUseCase(
 		a.employeeRepo,
@@ -159,7 +174,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.workHistoryRepo,
 		a.tokenService,
 		a.pendingRegStore,
-		txm,
+		txManager,
 		a.otpSender,
 	)
 
@@ -177,6 +192,17 @@ func (a *App) initUseCases(_ context.Context) error {
 		frontendURL,
 	)
 
+	a.policy = policy.New()
+
+	a.createLocationUC = locationUC.NewCreateLocationUseCase(
+		a.locationRepo,
+		a.categoryRepo,
+		a.organizationRepo,
+		a.employeeRepo,
+		a.policy,
+		txManager,
+	)
+
 	return nil
 }
 
@@ -190,6 +216,8 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.registerOwnerUC,
 		a.authUseCase,
 		a.resetPasswordUC,
+		a.accessRepo,
+		a.createLocationUC,
 	)
 	return nil
 }

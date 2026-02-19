@@ -1,6 +1,12 @@
 package organization
 
 const (
+	getByID = `
+		SELECT id, name, description, slug, active, created_at, updated_at, deleted_at
+		FROM organizations
+		WHERE id = $1;
+	`
+
 	saveOrganization = `
 		INSERT INTO organizations (
 			id, name, description, slug, active,

@@ -8,6 +8,6 @@ var (
 )
 
 var (
-	ErrCategorySelfParent   = errors.New("category self parent")
-	ErrCategoryNameRequired = errors.New("category name is required")
+	ErrCategorySelfParent   = errors.New("location_category self parent")
+	ErrCategoryNameRequired = errors.New("location_category name is required")
 )

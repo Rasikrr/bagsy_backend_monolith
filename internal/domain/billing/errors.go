@@ -16,6 +16,7 @@ var (
 	ErrSubscriptionActive        = errors.New("subscription is already active")
 	ErrSubscriptionExpired       = errors.New("subscription has expired")
 	ErrSubscriptionSuspended     = errors.New("subscription is suspended")
+	ErrLimitExceeded             = errors.New("plan limit exceeded")
 	ErrInvalidStatusTransition   = errors.New("invalid subscription status transition")
 	ErrInvalidSubscriptionStatus = errors.New("invalid subscription status")
 	ErrMaxRetriesExceeded        = errors.New("maximum payment retry attempts exceeded")
