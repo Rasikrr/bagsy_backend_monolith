@@ -1,0 +1,337 @@
+package invite
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
+	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hasher"
+	"github.com/cockroachdb/errors"
+	"github.com/google/uuid"
+)
+
+const (
+	inviteCooldown = 60 * time.Second
+)
+
+type employeeRepository interface {
+	CountByOrganization(ctx context.Context, orgID uuid.UUID) (int, error)
+	GetByPhone(ctx context.Context, phone shared.Phone) (*identity.Employee, error)
+	ExistsByPhone(ctx context.Context, phone shared.Phone) (bool, error)
+	Save(ctx context.Context, emp *identity.Employee) error
+}
+
+type workHistoryRepository interface {
+	Save(ctx context.Context, wh *identity.WorkHistory) error
+}
+
+type inviteTokenStore interface {
+	Save(ctx context.Context, token string, phone shared.Phone, ttl time.Duration) error
+	Get(ctx context.Context, token string) (shared.Phone, error)
+	Delete(ctx context.Context, token string) error
+}
+
+type pendingInviteStore interface {
+	Save(ctx context.Context, inv *PendingInvite) error
+	Get(ctx context.Context, phone shared.Phone) (*PendingInvite, error)
+	Delete(ctx context.Context, phone shared.Phone) error
+}
+
+type inviteLinkSender interface {
+	SendInviteLink(ctx context.Context, phone shared.Phone, link string) error
+}
+
+type tokenService interface {
+	GenerateTokens(ctx context.Context, userID uuid.UUID, phone shared.Phone) (access, refresh string, err error)
+}
+
+type invitePolicy interface {
+	CanInviteEmployee(orgCtx *access.OrgContext, targetRole identity.Role, currentCount int) error
+}
+
+type txManager interface {
+	Do(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
+type UseCase struct {
+	employeeRepo    employeeRepository
+	workHistoryRepo workHistoryRepository
+	inviteTokenRepo inviteTokenStore
+	pendingInvRepo  pendingInviteStore
+	tokenService    tokenService
+	linkSender      inviteLinkSender
+	policy          invitePolicy
+	txManager       txManager
+	inviteTTL       time.Duration
+	frontendURL     string
+}
+
+func NewUseCase(
+	employeeRepo employeeRepository,
+	workHistoryRepo workHistoryRepository,
+	inviteTokenRepo inviteTokenStore,
+	pendingInvRepo pendingInviteStore,
+	tokenService tokenService,
+	linkSender inviteLinkSender,
+	policy invitePolicy,
+	txManager txManager,
+	inviteTTL time.Duration,
+	frontendURL string,
+) *UseCase {
+	return &UseCase{
+		employeeRepo:    employeeRepo,
+		workHistoryRepo: workHistoryRepo,
+		inviteTokenRepo: inviteTokenRepo,
+		pendingInvRepo:  pendingInvRepo,
+		tokenService:    tokenService,
+		linkSender:      linkSender,
+		policy:          policy,
+		txManager:       txManager,
+		inviteTTL:       inviteTTL,
+		frontendURL:     frontendURL,
+	}
+}
+
+func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, input SendInviteInput) (*SendInviteOutput, error) {
+	phone, err := shared.NewPhone(input.Phone)
+	if err != nil {
+		return nil, err
+	}
+
+	role, err := identity.ParseRole(input.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	employeesCount, err := u.employeeRepo.CountByOrganization(ctx, orgCtx.Organization.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count employees by organization: %w", err)
+	}
+
+	if err := u.policy.CanInviteEmployee(orgCtx, role, employeesCount); err != nil {
+		return nil, err
+	}
+
+	exists, err := u.employeeRepo.ExistsByPhone(ctx, phone)
+	if err != nil {
+		return nil, errors.Wrap(err, "check phone uniqueness")
+	}
+	if exists {
+		return nil, authDomain.ErrPhoneAlreadyExists
+	}
+
+	if existing, _ := u.pendingInvRepo.Get(ctx, phone); existing != nil {
+		if time.Since(existing.LastSentAt) < inviteCooldown {
+			return nil, authDomain.ErrInviteAlreadyExists
+		}
+	}
+
+	inviteToken, err := authDomain.NewInviteToken(phone, u.inviteTTL)
+	if err != nil {
+		return nil, errors.Wrap(err, "generate invite token")
+	}
+
+	permissions := permissionsForRole(role)
+	now := time.Now()
+
+	pending := &PendingInvite{
+		Phone:          phone,
+		FirstName:      input.FirstName,
+		LastName:       input.LastName,
+		OrganizationID: orgCtx.Organization.ID,
+		LocationID:     input.LocationID,
+		Role:           role,
+		Permissions:    permissions,
+		InvitedBy:      orgCtx.Employee.ID,
+		LastSentAt:     now,
+		ExpiresAt:      now.Add(u.inviteTTL),
+	}
+
+	if err := u.pendingInvRepo.Save(ctx, pending); err != nil {
+		return nil, errors.Wrap(err, "save pending invite")
+	}
+
+	if err := u.inviteTokenRepo.Save(ctx, inviteToken.Token, phone, u.inviteTTL); err != nil {
+		return nil, errors.Wrap(err, "save invite token")
+	}
+
+	link := fmt.Sprintf("%s/%s", u.frontendURL, inviteToken.Token)
+	if err := u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
+		return nil, errors.Wrap(err, "send invite link")
+	}
+
+	return &SendInviteOutput{
+		Phone:     phone.String(),
+		ExpiresIn: int(u.inviteTTL.Seconds()),
+	}, nil
+}
+
+func (u *UseCase) ConfirmInvite(ctx context.Context, input ConfirmInviteInput) (*TokensOutput, error) {
+	phone, err := u.inviteTokenRepo.Get(ctx, input.Token)
+	if err != nil {
+		return nil, errors.Wrap(err, "get invite token")
+	}
+
+	pending, err := u.pendingInvRepo.Get(ctx, phone)
+	if err != nil {
+		return nil, errors.Wrap(err, "get pending invite")
+	}
+	if pending == nil {
+		return nil, authDomain.ErrInviteTokenExpired
+	}
+
+	passwordHash, err := hasher.Password(input.Password)
+	if err != nil {
+		return nil, errors.Wrap(err, "hash password")
+	}
+
+	var employeeID uuid.UUID
+
+	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
+		exists, err := u.employeeRepo.ExistsByPhone(txCtx, phone)
+		if err != nil {
+			return errors.Wrap(err, "check phone uniqueness")
+		}
+		if exists {
+			return authDomain.ErrPhoneAlreadyExists
+		}
+
+		emp, err := identity.NewEmployee(identity.CreateEmployeeParams{
+			Phone:          phone,
+			FirstName:      pending.FirstName,
+			LastName:       pending.LastName,
+			OrganizationID: pending.OrganizationID,
+			LocationID:     pending.LocationID,
+			Role:           pending.Role,
+			Permissions:    pending.Permissions,
+		})
+		if err != nil {
+			return errors.Wrap(err, "create employee")
+		}
+		emp.SetPassword(passwordHash)
+
+		if err := u.employeeRepo.Save(txCtx, emp); err != nil {
+			return errors.Wrap(err, "save employee")
+		}
+		employeeID = emp.ID
+
+		comment := "Приглашён в организацию"
+		wh := identity.NewWorkHistory(
+			employeeID,
+			pending.OrganizationID,
+			pending.LocationID,
+			pending.Role,
+			identity.ChangeTypeHired,
+			&comment,
+		)
+		if err := u.workHistoryRepo.Save(txCtx, wh); err != nil {
+			return errors.Wrap(err, "save work history")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_ = u.pendingInvRepo.Delete(ctx, phone)
+	_ = u.inviteTokenRepo.Delete(ctx, input.Token)
+
+	access, refresh, err := u.tokenService.GenerateTokens(ctx, employeeID, phone)
+	if err != nil {
+		return nil, errors.Wrap(err, "generate tokens")
+	}
+
+	return &TokensOutput{
+		AccessToken:  access,
+		RefreshToken: refresh,
+	}, nil
+}
+
+func (u *UseCase) ResendInvite(ctx context.Context, orgCtx *access.OrgContext, input ResendInviteInput) (*ResendInviteOutput, error) {
+	phone, err := shared.NewPhone(input.Phone)
+	if err != nil {
+		return nil, err
+	}
+
+	pending, err := u.pendingInvRepo.Get(ctx, phone)
+	if err != nil {
+		return nil, errors.Wrap(err, "get pending invite")
+	}
+	if pending == nil {
+		return nil, authDomain.ErrInviteTokenNotFound
+	}
+
+	if pending.OrganizationID != orgCtx.Organization.ID {
+		return nil, identity.ErrPermissionDenied
+	}
+
+	if time.Since(pending.LastSentAt) < inviteCooldown {
+		return nil, authDomain.ErrInviteAlreadyExists
+	}
+
+	inviteToken, err := authDomain.NewInviteToken(phone, u.inviteTTL)
+	if err != nil {
+		return nil, errors.Wrap(err, "generate invite token")
+	}
+
+	now := time.Now()
+	pending.LastSentAt = now
+	pending.ExpiresAt = now.Add(u.inviteTTL)
+
+	if err := u.pendingInvRepo.Save(ctx, pending); err != nil {
+		return nil, errors.Wrap(err, "save pending invite")
+	}
+
+	if err := u.inviteTokenRepo.Save(ctx, inviteToken.Token, phone, u.inviteTTL); err != nil {
+		return nil, errors.Wrap(err, "save invite token")
+	}
+
+	link := fmt.Sprintf("%s/%s", u.frontendURL, inviteToken.Token)
+	if err := u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
+		return nil, errors.Wrap(err, "send invite link")
+	}
+
+	return &ResendInviteOutput{
+		Phone:      phone.String(),
+		ExpiresIn:  int(u.inviteTTL.Seconds()),
+		RetryAfter: int(inviteCooldown.Seconds()),
+	}, nil
+}
+
+func (u *UseCase) VerifyInviteToken(ctx context.Context, token string) (*VerifyInviteTokenOutput, error) {
+	phone, err := u.inviteTokenRepo.Get(ctx, token)
+	if err != nil {
+		return nil, errors.Wrap(err, "get invite token")
+	}
+
+	pending, err := u.pendingInvRepo.Get(ctx, phone)
+	if err != nil {
+		return nil, errors.Wrap(err, "get pending invite")
+	}
+	if pending == nil {
+		return nil, authDomain.ErrInviteTokenExpired
+	}
+
+	return &VerifyInviteTokenOutput{
+		Phone:     phone.String(),
+		FirstName: pending.FirstName,
+		LastName:  pending.LastName,
+		Role:      pending.Role.String(),
+	}, nil
+}
+
+// TODO: maybe remove to domain
+func permissionsForRole(role identity.Role) identity.Permissions {
+	switch role {
+	case identity.RoleManager:
+		return identity.NewPermissions(false, true)
+	case identity.RoleStaff:
+		return identity.NewPermissions(true, false)
+	}
+	return identity.DefaultPermissions()
+}

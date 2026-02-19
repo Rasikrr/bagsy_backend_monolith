@@ -32,6 +32,11 @@ func (s *OTPSender) SendPasswordResetLink(ctx context.Context, phone shared.Phon
 	return s.send(ctx, phone, msg)
 }
 
+func (s *OTPSender) SendInviteLink(ctx context.Context, phone shared.Phone, link string) error {
+	msg := formatInviteMessage(link)
+	return s.send(ctx, phone, msg)
+}
+
 func (s *OTPSender) send(ctx context.Context, phone shared.Phone, msg string) error {
 	if err := s.primary.SendMessage(ctx, phone.String(), msg); err != nil {
 		return s.fallback.SendMessage(ctx, phone.String(), msg)

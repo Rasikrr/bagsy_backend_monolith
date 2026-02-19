@@ -3,11 +3,13 @@ package http
 import (
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	employeeC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/employee"
 	locationC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/environment"
@@ -37,6 +39,7 @@ func NewServer(
 	registerOwnerUseCase *auth.RegisterOwnerUseCase,
 	authUseCase *auth.UseCase,
 	resetPasswordUseCase *auth.ResetPasswordUseCase,
+	inviteUseCase *invite.UseCase,
 	accessRepo *access.Repository,
 	createLocationUC *locationUC.UseCase,
 ) {
@@ -48,10 +51,12 @@ func NewServer(
 
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
+	employeeHandler := employeeC.New(inviteUseCase, authMiddleware, orgContextMiddleware)
 
 	server.WithControllers(
 		authHandler,
 		locationHandler,
+		employeeHandler,
 	)
 }
 

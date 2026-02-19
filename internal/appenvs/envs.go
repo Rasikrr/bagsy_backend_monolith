@@ -24,6 +24,8 @@ const (
 	RegistrationTTL          = "registration_ttl"
 	PasswordResetTTL         = "password_reset_ttl"
 	PasswordResetFrontendURL = "password_reset_frontend_url"
+	InviteTTL                = "invite_ttl"
+	FrontendURL              = "frontend_url"
 
 	BagsyConfirmTTL = "bagsy_confirm_ttl"
 

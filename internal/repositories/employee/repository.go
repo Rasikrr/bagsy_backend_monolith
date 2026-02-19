@@ -75,3 +75,11 @@ func (r *Repository) Save(ctx context.Context, emp *identity.Employee) error {
 	}
 	return nil
 }
+
+func (r *Repository) CountByOrganization(ctx context.Context, orgID uuid.UUID) (int, error) {
+	var count int
+	if err := pgxscan.Get(ctx, r.db, &count, countByOrganization, orgID.String()); err != nil {
+		return 0, fmt.Errorf("count employee by organization: %w", err)
+	}
+	return count, nil
+}

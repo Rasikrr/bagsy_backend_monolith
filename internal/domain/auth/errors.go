@@ -21,3 +21,9 @@ var (
 	ErrResetTokenExpired  = errors.New("password reset token has expired")
 	ErrEmployeeInactive   = errors.New("employee account is inactive")
 )
+
+var (
+	ErrInviteTokenNotFound = errors.New("invite token not found")
+	ErrInviteTokenExpired  = errors.New("invite token has expired")
+	ErrInviteAlreadyExists = errors.New("invite already exists for this phone")
+)

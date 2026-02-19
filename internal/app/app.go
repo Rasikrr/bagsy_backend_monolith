@@ -20,8 +20,11 @@ import (
 	pendingReg "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/pending_registraion"
 	resetTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/reset_token"
 	refreshTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/tokens"
+	invitePendingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/pending"
+	inviteTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/token"
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
 
@@ -42,17 +45,19 @@ type App struct {
 	s3Client       *s3.Client
 
 	// Repositories
-	employeeRepo     *employeeRepo.Repository
-	organizationRepo *orgRepo.Repository
-	planRepo         *planRepo.Repository
-	subscriptionRepo *subscriptionRepo.Repository
-	workHistoryRepo  *workHistoryRepo.Repository
-	accessRepo       *accessRepo.Repository
-	categoryRepo     *categoryRepo.Repository
-	locationRepo     *locationRepo.Repository
-	pendingRegStore  *pendingReg.PendingRegistrationStore
-	refreshTokenRepo *refreshTokenRepo.RefreshTokenRepository
-	resetTokenStore  *resetTokenRepo.Store
+	employeeRepo       *employeeRepo.Repository
+	organizationRepo   *orgRepo.Repository
+	planRepo           *planRepo.Repository
+	subscriptionRepo   *subscriptionRepo.Repository
+	workHistoryRepo    *workHistoryRepo.Repository
+	accessRepo         *accessRepo.Repository
+	categoryRepo       *categoryRepo.Repository
+	locationRepo       *locationRepo.Repository
+	pendingRegStore    *pendingReg.PendingRegistrationStore
+	refreshTokenRepo   *refreshTokenRepo.RefreshTokenRepository
+	resetTokenStore    *resetTokenRepo.Store
+	inviteTokenStore   *inviteTokenRepo.Store
+	pendingInviteStore *invitePendingRepo.Store
 
 	// Infra
 	tokenManager *jwtinfra.TokenManager
@@ -63,6 +68,7 @@ type App struct {
 	registerOwnerUC  *authUC.RegisterOwnerUseCase
 	authUseCase      *authUC.UseCase
 	resetPasswordUC  *authUC.ResetPasswordUseCase
+	inviteEmployeeUC *inviteUC.UseCase
 	createLocationUC *locationUC.UseCase
 
 	// Policies
@@ -133,6 +139,8 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
 	a.refreshTokenRepo = refreshTokenRepo.NewRefreshTokenRepository(a.Redis())
 	a.resetTokenStore = resetTokenRepo.NewStore(a.Redis())
+	a.inviteTokenStore = inviteTokenRepo.NewStore(a.Redis())
+	a.pendingInviteStore = invitePendingRepo.NewStore(a.Redis())
 
 	return nil
 }
@@ -194,6 +202,22 @@ func (a *App) initUseCases(_ context.Context) error {
 
 	a.policy = policy.New()
 
+	inviteTTL := vars.GetDuration(appenv.InviteTTL)
+	inviteFrontendURL := vars.GetString(appenv.FrontendURL)
+
+	a.inviteEmployeeUC = inviteUC.NewUseCase(
+		a.employeeRepo,
+		a.workHistoryRepo,
+		a.inviteTokenStore,
+		a.pendingInviteStore,
+		a.tokenService,
+		a.otpSender,
+		a.policy,
+		txManager,
+		inviteTTL,
+		inviteFrontendURL,
+	)
+
 	a.createLocationUC = locationUC.NewCreateLocationUseCase(
 		a.locationRepo,
 		a.categoryRepo,
@@ -216,6 +240,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.registerOwnerUC,
 		a.authUseCase,
 		a.resetPasswordUC,
+		a.inviteEmployeeUC,
 		a.accessRepo,
 		a.createLocationUC,
 	)

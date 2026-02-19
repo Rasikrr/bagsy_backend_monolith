@@ -47,4 +47,6 @@ const (
 			deleted_at = EXCLUDED.deleted_at,
 			avatar_id = EXCLUDED.avatar_id;
 	`
+
+	countByOrganization = `SELECT COUNT(*) FROM employees WHERE organization_id = $1 AND deleted_at IS NULL;`
 )
