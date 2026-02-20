@@ -27,6 +27,11 @@ func (s *OTPSender) SendOTP(ctx context.Context, phone shared.Phone, code string
 	return s.send(ctx, phone, msg)
 }
 
+func (s *OTPSender) SendBookingConfirmationCode(ctx context.Context, phone shared.Phone, code string) error {
+	msg := formatBookingOTPMessage(code)
+	return s.send(ctx, phone, msg)
+}
+
 func (s *OTPSender) SendPasswordResetLink(ctx context.Context, phone shared.Phone, link string) error {
 	msg := formatPasswordResetMessage(link)
 	return s.send(ctx, phone, msg)

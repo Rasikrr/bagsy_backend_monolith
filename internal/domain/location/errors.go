@@ -3,6 +3,7 @@ package location
 import "errors"
 
 var (
+	ErrLocationNotFound     = errors.New("location not found")
 	ErrLocationDeleted      = errors.New("location deleted")
 	ErrNameRequired         = errors.New("name is required")
 	ErrCityRequired         = errors.New("city required")

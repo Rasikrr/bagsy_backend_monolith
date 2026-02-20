@@ -10,17 +10,13 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/google/uuid"
-	"github.com/samber/lo"
-	"golang.org/x/sync/errgroup"
 )
 
 type appointmentRepository interface {
 	Save(ctx context.Context, a *booking.Appointment) error
 	GetByID(ctx context.Context, id uuid.UUID) (*booking.Appointment, error)
-	GetOccupiedSlots(ctx context.Context, locationID uuid.UUID, employeeIDs []uuid.UUID, start, end time.Time) ([]*booking.Appointment, error)
 }
 
 type customerRepository interface {
@@ -47,11 +43,6 @@ type locationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error)
 }
 
-type scheduleRepository interface {
-	GetLocationSlots(ctx context.Context, locationID uuid.UUID, start, end time.Time) ([]*schedule.LocationScheduleSlot, error)
-	GetEmployeesSlots(ctx context.Context, employeeIDs []uuid.UUID, start, end time.Time) (map[uuid.UUID][]*schedule.EmployeeScheduleSlot, error)
-}
-
 type otpRepository interface {
 	Save(ctx context.Context, appointmentID uuid.UUID, otp *auth.OTPCode) error
 	GetByAppointmentID(ctx context.Context, appointmentID uuid.UUID) (*auth.OTPCode, error)
@@ -73,7 +64,6 @@ type UseCase struct {
 	serviceRepo     serviceRepository
 	empServiceRepo  employeeServiceRepository
 	locationRepo    locationRepository
-	scheduleRepo    scheduleRepository
 	otpRepo         otpRepository
 	otpSender       otpSender
 	txManager       txManager
@@ -86,7 +76,6 @@ func NewUseCase(
 	serviceRepo serviceRepository,
 	empServiceRepo employeeServiceRepository,
 	locationRepo locationRepository,
-	scheduleRepo scheduleRepository,
 	otpRepo otpRepository,
 	notificationService otpSender,
 	txManager txManager,
@@ -98,7 +87,6 @@ func NewUseCase(
 		serviceRepo:     serviceRepo,
 		empServiceRepo:  empServiceRepo,
 		locationRepo:    locationRepo,
-		scheduleRepo:    scheduleRepo,
 		otpRepo:         otpRepo,
 		otpSender:       notificationService,
 		txManager:       txManager,
@@ -225,145 +213,4 @@ func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code str
 		}
 		return u.otpRepo.Delete(txCtx, appointmentID)
 	})
-}
-
-// TODO: refactor
-func (u *UseCase) Cancel(ctx context.Context, appointmentID uuid.UUID, reason string) error {
-	appt, err := u.appointmentRepo.GetByID(ctx, appointmentID)
-	if err != nil {
-		return err
-	}
-
-	// TODO: Get ActorID from context
-	actorID := uuid.Nil
-
-	if err := appt.Cancel(actorID, reason); err != nil {
-		return err
-	}
-
-	return u.appointmentRepo.Save(ctx, appt)
-}
-
-func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlotsInput) (*GetAvailableSlotsOutput, error) {
-	// 1. Предварительная загрузка базовых сущностей
-	svc, err := u.serviceRepo.GetByID(ctx, input.ServiceID)
-	if err != nil {
-		return nil, fmt.Errorf("get service: %w", err)
-	}
-
-	loc, err := u.locationRepo.GetByID(ctx, input.LocationID)
-	if err != nil {
-		return nil, fmt.Errorf("get location: %w", err)
-	}
-
-	// 2. Получаем список мастеров для услуги
-	var empServices []*catalog.EmployeeService
-	if input.EmployeeID != nil {
-		es, err := u.empServiceRepo.GetByEmployeeAndService(ctx, *input.EmployeeID, input.ServiceID)
-		if err != nil {
-			return nil, fmt.Errorf("get employee service: %w", err)
-		}
-		empServices = append(empServices, es)
-	} else {
-		empServices, err = u.empServiceRepo.GetByLocationAndService(ctx, input.LocationID, input.ServiceID)
-		if err != nil {
-			return nil, fmt.Errorf("get employees for service: %w", err)
-		}
-	}
-
-	if len(empServices) == 0 {
-		return nil, fmt.Errorf("no employees available for this service")
-	}
-
-	employeeIDs := lo.Map(empServices, func(es *catalog.EmployeeService, _ int) uuid.UUID {
-		return es.EmployeeID
-	})
-
-	// 3. Параллельная загрузка данных
-	var (
-		employees     []*identity.Employee
-		locSlots      []*schedule.LocationScheduleSlot
-		empSlotsMap   map[uuid.UUID][]*schedule.EmployeeScheduleSlot
-		occupiedSlots []*booking.Appointment
-		now           = time.Now()
-	)
-
-	g, gCtx := errgroup.WithContext(ctx)
-
-	// Загружаем профили мастеров
-	g.Go(func() error {
-		var err error
-		employees, err = u.employeeRepo.GetByIDs(gCtx, employeeIDs)
-		return err
-	})
-
-	// Загружаем расписание локации (всегда нужно)
-	g.Go(func() error {
-		var err error
-		locSlots, err = u.scheduleRepo.GetLocationSlots(gCtx, input.LocationID, input.StartDate, input.EndDate)
-		return err
-	})
-
-	// Загружаем расписание мастеров (только если тип Mixed)
-	if loc.ScheduleType == location.ScheduleTypeMixed {
-		g.Go(func() error {
-			var err error
-			empSlotsMap, err = u.scheduleRepo.GetEmployeesSlots(gCtx, employeeIDs, input.StartDate, input.EndDate)
-			return err
-		})
-	}
-
-	// Загружаем занятые записи
-	g.Go(func() error {
-		var err error
-		occupiedSlots, err = u.appointmentRepo.GetOccupiedSlots(gCtx, input.LocationID, employeeIDs, input.StartDate, input.EndDate)
-		return err
-	})
-
-	if err := g.Wait(); err != nil {
-		return nil, fmt.Errorf("fetch data for slots: %w", err)
-	}
-
-	// 4. Подготовка маппингов
-	employeesMap := lo.KeyBy(employees, func(e *identity.Employee) uuid.UUID { return e.ID })
-	occupiedByEmployee := lo.GroupBy(occupiedSlots, func(a *booking.Appointment) uuid.UUID { return a.EmployeeID })
-
-	// 5. Генерация слотов для каждого мастера
-	var masterSlots []MasterAvailableSlots
-	for _, es := range empServices {
-		emp, ok := employeesMap[es.EmployeeID]
-		if !ok {
-			continue
-		}
-
-		// Выбираем логику в зависимости от ScheduleType
-		generated := generateSlots(
-			loc.ScheduleType,
-			locSlots,
-			empSlotsMap[es.EmployeeID], // Будет nil при Fixed, что корректно для алгоритма
-			occupiedByEmployee[es.EmployeeID],
-			svc.DurationMinutes,
-			loc.SlotDurationMinutes,
-			input.StartDate,
-			input.EndDate,
-			now,
-		)
-
-		if len(generated) > 0 {
-			masterSlots = append(masterSlots, MasterAvailableSlots{
-				EmployeeID:   emp.ID,
-				EmployeeName: emp.FullName(),
-				Price:        es.Price.Amount(),
-				Currency:     es.Price.Currency(),
-				Slots:        generated,
-			})
-		}
-	}
-
-	return &GetAvailableSlotsOutput{
-		ServiceID:       svc.ID,
-		LocationID:      loc.ID,
-		DurationMinutes: svc.DurationMinutes.AsInt32(),
-		MasterSlots:     masterSlots,
-	}, nil
 }

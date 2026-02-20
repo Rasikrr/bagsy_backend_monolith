@@ -33,4 +33,13 @@ const (
 		SELECT COUNT(*) FROM locations
 		WHERE organization_id = $1 AND deleted_at IS NULL;
 	`
+
+	getByID = `
+		SELECT id, organization_id, category_id, name, description, phone, slug,
+			   city, address_street, address_building, address_details,
+			   longitude, latitude, active, schedule_type, slot_duration_minutes,
+			   created_at, updated_at, deleted_at
+		FROM locations
+		WHERE id = $1 AND deleted_at IS NULL;
+	`
 )

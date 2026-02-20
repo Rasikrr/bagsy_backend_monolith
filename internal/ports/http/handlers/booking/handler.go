@@ -10,41 +10,32 @@ import (
 )
 
 type bookingUseCase interface {
-	GetAvailableSlots(ctx context.Context, input uc.GetAvailableSlotsInput) (*uc.GetAvailableSlotsOutput, error)
 	Create(ctx context.Context, input uc.CreateBookingInput) (*uc.CreateBookingOutput, error)
 	Confirm(ctx context.Context, appointmentID uuid.UUID, code string) error
-	Cancel(ctx context.Context, appointmentID uuid.UUID, reason string) error
 }
 
 type Handler struct {
-	bookingUC    bookingUseCase
-	clientsMid   *middlewares.Clients
-	employeesMid *middlewares.Employees
+	bookingUC      bookingUseCase
+	authMiddleware *middlewares.Auth
+	orgContextMid  *middlewares.OrgContext
 }
 
 func New(
 	bookingUC bookingUseCase,
-	clientsMid *middlewares.Clients,
-	employeesMid *middlewares.Employees,
+	authMiddleware *middlewares.Auth,
+	orgContextMid *middlewares.OrgContext,
 ) *Handler {
 	return &Handler{
-		bookingUC:    bookingUC,
-		clientsMid:   clientsMid,
-		employeesMid: employeesMid,
+		bookingUC:      bookingUC,
+		authMiddleware: authMiddleware,
+		orgContextMid:  orgContextMid,
 	}
 }
 
 func (h *Handler) Init(router *chi.Mux) {
 	router.Route("/api/v1/bookings", func(r chi.Router) {
 		// Публичные эндпоинты (или доступные клиентам)
-		r.Get("/slots", h.getSlots)
 		r.Post("/", h.create)
 		r.Post("/{id}/confirm", h.confirm)
-
-		// Эндпоинты для сотрудников организации
-		r.Group(func(admin chi.Router) {
-			admin.Use(h.employeesMid.Handle)
-			admin.Post("/{id}/cancel", h.cancel)
-		})
 	})
 }

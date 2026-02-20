@@ -32,6 +32,23 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*identity.Emplo
 	return m.toDomain()
 }
 
+func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*identity.Employee, error) {
+	var models []model
+	if err := pgxscan.Select(ctx, r.db, &models, getByIDs, ids); err != nil {
+		return nil, fmt.Errorf("select employees by ids: %w", err)
+	}
+
+	result := make([]*identity.Employee, 0, len(models))
+	for _, m := range models {
+		emp, err := m.toDomain()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, emp)
+	}
+	return result, nil
+}
+
 func (r *Repository) ExistsByPhone(ctx context.Context, phone shared.Phone) (bool, error) {
 	var exists bool
 	if err := pgxscan.Get(ctx, r.db, &exists, existsByPhone, phone.String()); err != nil {

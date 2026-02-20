@@ -41,3 +41,14 @@ func (r *Repository) CountByOrganization(ctx context.Context, organizationID uui
 	}
 	return count, nil
 }
+
+func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error) {
+	var m model
+	if err := pgxscan.Get(ctx, r.db, &m, getByID, id); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, location.ErrLocationNotFound
+		}
+		return nil, fmt.Errorf("get location by id: %w", err)
+	}
+	return m.toDomain()
+}

@@ -4,12 +4,17 @@ import "fmt"
 
 const (
 	otpTemplate           = "Ваш код подтверждения Bagsy: %s"
+	bookingOTPTemplate    = "Код подтверждения записи в Bagsy: %s"
 	passwordResetTemplate = "Для сброса пароля в Bagsy перейдите по ссылке: %s"
 	inviteTemplate        = "Вас пригласили в команду Bagsy! Для регистрации перейдите по ссылке: %s"
 )
 
 func formatOTPMessage(code string) string {
 	return fmt.Sprintf(otpTemplate, code)
+}
+
+func formatBookingOTPMessage(code string) string {
+	return fmt.Sprintf(bookingOTPTemplate, code)
 }
 
 func formatPasswordResetMessage(link string) string {
