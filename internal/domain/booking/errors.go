@@ -3,6 +3,7 @@ package booking
 import "errors"
 
 var (
+	ErrSlotAlreadyOccupied                = errors.New("slot is already occupied")
 	ErrAppointmentIsFinal                 = errors.New("appointment is has final status")
 	ErrAppointmentInvalidStatusTransition = errors.New("invalid status transition")
 	ErrAppointmentInvalidStatus           = errors.New("invalid status")

@@ -6,8 +6,10 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/core/database/postgres"
+	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Repository struct {
@@ -30,6 +32,10 @@ func (r *Repository) Save(ctx context.Context, a *booking.Appointment) error {
 		m.CancelledBy, m.CancellationReason, m.CreatedAt, m.UpdatedAt,
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23P01" {
+			return booking.ErrSlotAlreadyOccupied
+		}
 		return fmt.Errorf("save appointment: %w", err)
 	}
 

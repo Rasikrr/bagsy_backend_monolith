@@ -2,14 +2,17 @@ package booking
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/google/uuid"
 )
@@ -17,6 +20,7 @@ import (
 type appointmentRepository interface {
 	Save(ctx context.Context, a *booking.Appointment) error
 	GetByID(ctx context.Context, id uuid.UUID) (*booking.Appointment, error)
+	GetOccupiedSlots(ctx context.Context, locationID uuid.UUID, employeeIDs []uuid.UUID, start, end time.Time) ([]*booking.Appointment, error)
 }
 
 type customerRepository interface {
@@ -43,6 +47,11 @@ type locationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error)
 }
 
+type scheduleRepository interface {
+	GetLocationSlots(ctx context.Context, locationID uuid.UUID, start, end time.Time) ([]*schedule.LocationScheduleSlot, error)
+	GetEmployeesSlots(ctx context.Context, employeeIDs []uuid.UUID, start, end time.Time) (map[uuid.UUID][]*schedule.EmployeeScheduleSlot, error)
+}
+
 type otpRepository interface {
 	Save(ctx context.Context, appointmentID uuid.UUID, otp *auth.OTPCode) error
 	GetByAppointmentID(ctx context.Context, appointmentID uuid.UUID) (*auth.OTPCode, error)
@@ -51,6 +60,10 @@ type otpRepository interface {
 
 type otpSender interface {
 	SendBookingConfirmationCode(ctx context.Context, phone shared.Phone, code string) error
+}
+
+type policyProvider interface {
+	CanCancelAppointment(orgCtx *access.OrgContext, appt *booking.Appointment) error
 }
 
 type txManager interface {
@@ -64,8 +77,10 @@ type UseCase struct {
 	serviceRepo     serviceRepository
 	empServiceRepo  employeeServiceRepository
 	locationRepo    locationRepository
+	scheduleRepo    scheduleRepository
 	otpRepo         otpRepository
 	otpSender       otpSender
+	policy          policyProvider
 	txManager       txManager
 }
 
@@ -76,8 +91,10 @@ func NewUseCase(
 	serviceRepo serviceRepository,
 	empServiceRepo employeeServiceRepository,
 	locationRepo locationRepository,
+	scheduleRepo scheduleRepository,
 	otpRepo otpRepository,
 	notificationService otpSender,
+	policy policyProvider,
 	txManager txManager,
 ) *UseCase {
 	return &UseCase{
@@ -87,8 +104,10 @@ func NewUseCase(
 		serviceRepo:     serviceRepo,
 		empServiceRepo:  empServiceRepo,
 		locationRepo:    locationRepo,
+		scheduleRepo:    scheduleRepo,
 		otpRepo:         otpRepo,
 		otpSender:       notificationService,
+		policy:          policy,
 		txManager:       txManager,
 	}
 }
@@ -114,6 +133,9 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		var custErr error
 		customer, custErr = u.customerRepo.GetByPhone(txCtx, phone)
 		if custErr != nil {
+			if !errors.Is(custErr, identity.ErrCustomerNotFound) {
+				return custErr
+			}
 			customer, custErr = identity.NewCustomer(phone, input.FirstName, input.LastName)
 			if custErr != nil {
 				return custErr
@@ -213,4 +235,21 @@ func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code str
 		}
 		return u.otpRepo.Delete(txCtx, appointmentID)
 	})
+}
+
+func (u *UseCase) Cancel(ctx context.Context, orgCtx *access.OrgContext, appointmentID uuid.UUID, reason string) error {
+	appt, err := u.appointmentRepo.GetByID(ctx, appointmentID)
+	if err != nil {
+		return err
+	}
+
+	if err := u.policy.CanCancelAppointment(orgCtx, appt); err != nil {
+		return err
+	}
+
+	if err := appt.Cancel(orgCtx.Employee.ID, reason); err != nil {
+		return err
+	}
+
+	return u.appointmentRepo.Save(ctx, appt)
 }
