@@ -49,7 +49,7 @@ Handler (change_password.go)
        │        value: InviteTokenInfo{Phone, Purpose: TokenPurposePasswordChange}
        │        TTL:   registrationTTL (настраиваемый, обычно 24ч)
        │
-       └─ notificationService.SendPasswordChangeLink(ctx, phone, token)
+       └─ otpSender.SendPasswordChangeLink(ctx, phone, token)
             └─ Формирует ссылку: "{registrationConfirmURL}/{token}"
             └─ Сообщение: "Для смены пароля в Bagsy следуйте по данной ссылке: {link}"
             └─ Отправка: WhatsApp → fallback SMS (если WhatsApp fail)
