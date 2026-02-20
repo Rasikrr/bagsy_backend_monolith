@@ -17,13 +17,16 @@ var (
 )
 
 var (
-	ErrResetTokenNotFound = errors.New("password reset token not found")
-	ErrResetTokenExpired  = errors.New("password reset token has expired")
-	ErrEmployeeInactive   = errors.New("employee account is inactive")
+	ErrEmployeeInactive = errors.New("employee account is inactive")
 )
 
 var (
 	ErrInviteTokenNotFound = errors.New("invite token not found")
 	ErrInviteTokenExpired  = errors.New("invite token has expired")
 	ErrInviteAlreadyExists = errors.New("invite already exists for this phone")
+)
+
+var (
+	ErrUnknownTokenPurpose = errors.New("unknown token purpose")
+	ErrActionTokenNotFound = errors.New("action token not found")
 )

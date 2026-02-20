@@ -13,7 +13,6 @@ type inviteUseCase interface {
 	SendInvite(ctx context.Context, orgCtx *access.OrgContext, input uc.SendInviteInput) (*uc.SendInviteOutput, error)
 	ConfirmInvite(ctx context.Context, input uc.ConfirmInviteInput) (*uc.TokensOutput, error)
 	ResendInvite(ctx context.Context, orgCtx *access.OrgContext, input uc.ResendInviteInput) (*uc.ResendInviteOutput, error)
-	VerifyInviteToken(ctx context.Context, token string) (*uc.VerifyInviteTokenOutput, error)
 }
 
 type Handler struct {
@@ -46,6 +45,5 @@ func (h *Handler) Init(router *chi.Mux) {
 
 		// Unauthenticated routes
 		r.Post("/invite/confirm", h.confirmInvite)
-		r.Get("/invite/verify/{token}", h.verifyInviteToken)
 	})
 }

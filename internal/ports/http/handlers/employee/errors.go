@@ -11,8 +11,8 @@ import (
 )
 
 var employeeErrors = util.ErrorMap{
-	// invite token
-	authDomain.ErrInviteTokenNotFound: {Code: http.StatusNotFound, Message: "invite_token_not_found"},
+	// action token / invite
+	authDomain.ErrActionTokenNotFound: {Code: http.StatusNotFound, Message: "token_not_found"},
 	authDomain.ErrInviteTokenExpired:  {Code: http.StatusGone, Message: "invite_token_expired"},
 	authDomain.ErrInviteAlreadyExists: {Code: http.StatusTooManyRequests, Message: "invite_already_exists"},
 	authDomain.ErrPhoneAlreadyExists:  {Code: http.StatusConflict, Message: "phone_already_exists"},

@@ -19,17 +19,20 @@ type UseCase struct {
 	employeeRepository employeeRepository
 	employeeGetter     employeeGetter
 	tokenService       tokenService
+	actionTokenRepo    actionTokenStore
 }
 
 func NewUseCase(
 	employeeRepository employeeRepository,
 	employeeGetter employeeGetter,
 	tokenService tokenService,
+	actionTokenRepo actionTokenStore,
 ) *UseCase {
 	return &UseCase{
 		employeeRepository: employeeRepository,
 		employeeGetter:     employeeGetter,
 		tokenService:       tokenService,
+		actionTokenRepo:    actionTokenRepo,
 	}
 }
 
@@ -82,6 +85,14 @@ func (u *UseCase) RefreshTokens(ctx context.Context, refreshToken string) (*Toke
 		AccessToken:  access,
 		RefreshToken: refresh,
 	}, nil
+}
+
+func (u *UseCase) VerifyActionToken(ctx context.Context, token string) (*auth.ActionToken, error) {
+	actionToken, err := u.actionTokenRepo.Get(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("get action token: %w", err)
+	}
+	return actionToken, nil
 }
 
 func (u *UseCase) Logout(ctx context.Context, refreshToken string) error {

@@ -9,6 +9,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/messenger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
 	accessRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
+	actionTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/action_token"
 	employeeRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/employee"
 	locationRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location"
 	categoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location_category"
@@ -18,10 +19,8 @@ import (
 	workHistoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/work_history"
 
 	pendingReg "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/pending_registraion"
-	resetTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/reset_token"
 	refreshTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/tokens"
 	invitePendingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/pending"
-	inviteTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/token"
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
@@ -55,8 +54,7 @@ type App struct {
 	locationRepo       *locationRepo.Repository
 	pendingRegStore    *pendingReg.PendingRegistrationStore
 	refreshTokenRepo   *refreshTokenRepo.RefreshTokenRepository
-	resetTokenStore    *resetTokenRepo.Store
-	inviteTokenStore   *inviteTokenRepo.Store
+	actionTokenStore   *actionTokenRepo.Store
 	pendingInviteStore *invitePendingRepo.Store
 
 	// Infra
@@ -138,8 +136,7 @@ func (a *App) initRepositories(_ context.Context) error {
 
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
 	a.refreshTokenRepo = refreshTokenRepo.NewRefreshTokenRepository(a.Redis())
-	a.resetTokenStore = resetTokenRepo.NewStore(a.Redis())
-	a.inviteTokenStore = inviteTokenRepo.NewStore(a.Redis())
+	a.actionTokenStore = actionTokenRepo.NewStore(a.Redis())
 	a.pendingInviteStore = invitePendingRepo.NewStore(a.Redis())
 
 	return nil
@@ -186,14 +183,19 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.otpSender,
 	)
 
-	a.authUseCase = authUC.NewUseCase(a.employeeRepo, a.employeeRepo, a.tokenService)
+	a.authUseCase = authUC.NewUseCase(
+		a.employeeRepo,
+		a.employeeRepo,
+		a.tokenService,
+		a.actionTokenStore,
+	)
 
 	resetTTL := vars.GetDuration(appenv.PasswordResetTTL)
 	frontendURL := vars.GetString(appenv.PasswordResetFrontendURL)
 
 	a.resetPasswordUC = authUC.NewResetPasswordUseCase(
 		a.employeeRepo,
-		a.resetTokenStore,
+		a.actionTokenStore,
 		a.tokenService,
 		a.otpSender,
 		resetTTL,
@@ -208,7 +210,7 @@ func (a *App) initUseCases(_ context.Context) error {
 	a.inviteEmployeeUC = inviteUC.NewUseCase(
 		a.employeeRepo,
 		a.workHistoryRepo,
-		a.inviteTokenStore,
+		a.actionTokenStore,
 		a.pendingInviteStore,
 		a.tokenService,
 		a.otpSender,

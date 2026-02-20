@@ -29,9 +29,9 @@ type workHistoryRepository interface {
 	Save(ctx context.Context, wh *identity.WorkHistory) error
 }
 
-type inviteTokenStore interface {
-	Save(ctx context.Context, token string, phone shared.Phone, ttl time.Duration) error
-	Get(ctx context.Context, token string) (shared.Phone, error)
+type actionTokenStore interface {
+	Save(ctx context.Context, token *authDomain.ActionToken) error
+	Get(ctx context.Context, token string) (*authDomain.ActionToken, error)
 	Delete(ctx context.Context, token string) error
 }
 
@@ -60,7 +60,7 @@ type txManager interface {
 type UseCase struct {
 	employeeRepo    employeeRepository
 	workHistoryRepo workHistoryRepository
-	inviteTokenRepo inviteTokenStore
+	actionTokenRepo actionTokenStore
 	pendingInvRepo  pendingInviteStore
 	tokenService    tokenService
 	linkSender      inviteLinkSender
@@ -73,7 +73,7 @@ type UseCase struct {
 func NewUseCase(
 	employeeRepo employeeRepository,
 	workHistoryRepo workHistoryRepository,
-	inviteTokenRepo inviteTokenStore,
+	actionTokenRepo actionTokenStore,
 	pendingInvRepo pendingInviteStore,
 	tokenService tokenService,
 	linkSender inviteLinkSender,
@@ -85,7 +85,7 @@ func NewUseCase(
 	return &UseCase{
 		employeeRepo:    employeeRepo,
 		workHistoryRepo: workHistoryRepo,
-		inviteTokenRepo: inviteTokenRepo,
+		actionTokenRepo: actionTokenRepo,
 		pendingInvRepo:  pendingInvRepo,
 		tokenService:    tokenService,
 		linkSender:      linkSender,
@@ -130,7 +130,13 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 		}
 	}
 
-	inviteToken, err := authDomain.NewInviteToken(phone, u.inviteTTL)
+	locationID := &orgCtx.Employee.LocationID
+	inviteToken, err := authDomain.NewStaffInviteToken(
+		phone,
+		locationID,
+		orgCtx.Organization.ID,
+		u.inviteTTL,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "generate invite token")
 	}
@@ -155,7 +161,7 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 		return nil, errors.Wrap(err, "save pending invite")
 	}
 
-	if err := u.inviteTokenRepo.Save(ctx, inviteToken.Token, phone, u.inviteTTL); err != nil {
+	if err := u.actionTokenRepo.Save(ctx, inviteToken); err != nil {
 		return nil, errors.Wrap(err, "save invite token")
 	}
 
@@ -171,10 +177,12 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 }
 
 func (u *UseCase) ConfirmInvite(ctx context.Context, input ConfirmInviteInput) (*TokensOutput, error) {
-	phone, err := u.inviteTokenRepo.Get(ctx, input.Token)
+	actionToken, err := u.actionTokenRepo.Get(ctx, input.Token)
 	if err != nil {
 		return nil, errors.Wrap(err, "get invite token")
 	}
+
+	phone := actionToken.Phone
 
 	pending, err := u.pendingInvRepo.Get(ctx, phone)
 	if err != nil {
@@ -239,7 +247,7 @@ func (u *UseCase) ConfirmInvite(ctx context.Context, input ConfirmInviteInput) (
 	}
 
 	_ = u.pendingInvRepo.Delete(ctx, phone)
-	_ = u.inviteTokenRepo.Delete(ctx, input.Token)
+	_ = u.actionTokenRepo.Delete(ctx, input.Token)
 
 	access, refresh, err := u.tokenService.GenerateTokens(ctx, employeeID, phone)
 	if err != nil {
@@ -274,7 +282,12 @@ func (u *UseCase) ResendInvite(ctx context.Context, orgCtx *access.OrgContext, i
 		return nil, authDomain.ErrInviteAlreadyExists
 	}
 
-	inviteToken, err := authDomain.NewInviteToken(phone, u.inviteTTL)
+	inviteToken, err := authDomain.NewStaffInviteToken(
+		phone,
+		pending.LocationID,
+		pending.OrganizationID,
+		u.inviteTTL,
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "generate invite token")
 	}
@@ -287,7 +300,7 @@ func (u *UseCase) ResendInvite(ctx context.Context, orgCtx *access.OrgContext, i
 		return nil, errors.Wrap(err, "save pending invite")
 	}
 
-	if err := u.inviteTokenRepo.Save(ctx, inviteToken.Token, phone, u.inviteTTL); err != nil {
+	if err := u.actionTokenRepo.Save(ctx, inviteToken); err != nil {
 		return nil, errors.Wrap(err, "save invite token")
 	}
 
@@ -300,28 +313,6 @@ func (u *UseCase) ResendInvite(ctx context.Context, orgCtx *access.OrgContext, i
 		Phone:      phone.String(),
 		ExpiresIn:  int(u.inviteTTL.Seconds()),
 		RetryAfter: int(inviteCooldown.Seconds()),
-	}, nil
-}
-
-func (u *UseCase) VerifyInviteToken(ctx context.Context, token string) (*VerifyInviteTokenOutput, error) {
-	phone, err := u.inviteTokenRepo.Get(ctx, token)
-	if err != nil {
-		return nil, errors.Wrap(err, "get invite token")
-	}
-
-	pending, err := u.pendingInvRepo.Get(ctx, phone)
-	if err != nil {
-		return nil, errors.Wrap(err, "get pending invite")
-	}
-	if pending == nil {
-		return nil, authDomain.ErrInviteTokenExpired
-	}
-
-	return &VerifyInviteTokenOutput{
-		Phone:     phone.String(),
-		FirstName: pending.FirstName,
-		LastName:  pending.LastName,
-		Role:      pending.Role.String(),
 	}, nil
 }
 

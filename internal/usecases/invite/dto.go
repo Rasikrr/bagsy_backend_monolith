@@ -40,12 +40,3 @@ type ResendInviteOutput struct {
 	ExpiresIn  int // seconds
 	RetryAfter int // seconds
 }
-
-// ── Verify Token ───────────────────────────────────────────────
-
-type VerifyInviteTokenOutput struct {
-	Phone     string
-	FirstName string
-	LastName  *string
-	Role      string
-}

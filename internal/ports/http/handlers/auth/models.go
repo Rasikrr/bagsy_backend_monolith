@@ -89,3 +89,12 @@ type confirmResetRequest struct {
 type messageResponse struct {
 	Message string `json:"message"`
 }
+
+// ── Verify Action Token ──────────────────────────────────────────
+
+type verifyActionTokenResponse struct {
+	Phone          string  `json:"phone"`
+	LocationID     *string `json:"location_id,omitempty"`
+	OrganizationID *string `json:"organization_id,omitempty"`
+	Purpose        string  `json:"purpose"`
+}

@@ -44,12 +44,3 @@ type resendInviteResponse struct {
 	ExpiresIn  int    `json:"expires_in"`
 	RetryAfter int    `json:"retry_after"`
 }
-
-// ── Verify Token ───────────────────────────────────────────────
-
-type verifyInviteTokenResponse struct {
-	Phone     string  `json:"phone"`
-	FirstName string  `json:"first_name"`
-	LastName  *string `json:"last_name,omitempty"`
-	Role      string  `json:"role"`
-}

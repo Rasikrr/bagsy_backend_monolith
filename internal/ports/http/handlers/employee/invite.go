@@ -7,7 +7,6 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	coreHTTP "github.com/Rasikrr/core/http"
-	"github.com/go-chi/chi/v5"
 )
 
 // sendInvite handles POST /api/v1/employees/invite.
@@ -145,41 +144,5 @@ func (h *Handler) resendInvite(w http.ResponseWriter, r *http.Request) {
 		Phone:      out.Phone,
 		ExpiresIn:  out.ExpiresIn,
 		RetryAfter: out.RetryAfter,
-	}, http.StatusOK)
-}
-
-// verifyInviteToken handles GET /api/v1/employees/invite/verify/{token}.
-//
-// @Summary      Проверить токен приглашения
-// @Description  Возвращает метаданные приглашения (имя, телефон, роль) для отображения на фронтенде перед подтверждением. Не требует авторизации.
-// @Tags         employees
-// @Produce      json
-// @Param        token  path      string  true  "Токен приглашения"
-// @Success      200    {object}  verifyInviteTokenResponse
-// @Failure      400    {object}  util.errorResponse  "Пустой токен"
-// @Failure      404    {object}  util.errorResponse  "Токен не найден"
-// @Failure      410    {object}  util.errorResponse  "Токен истёк"
-// @Failure      500    {object}  util.errorResponse
-// @Router       /api/v1/employees/invite/verify/{token} [get]
-func (h *Handler) verifyInviteToken(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	token := chi.URLParam(r, "token")
-	if token == "" {
-		util.SendBadRequest(ctx, w, nil)
-		return
-	}
-
-	out, err := h.inviteUseCase.VerifyInviteToken(ctx, token)
-	if err != nil {
-		util.SendError(ctx, w, err, employeeErrors)
-		return
-	}
-
-	coreHTTP.SendData(ctx, w, verifyInviteTokenResponse{
-		Phone:     out.Phone,
-		FirstName: out.FirstName,
-		LastName:  out.LastName,
-		Role:      out.Role,
 	}, http.StatusOK)
 }

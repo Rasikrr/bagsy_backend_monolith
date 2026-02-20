@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	"github.com/go-chi/chi/v5"
 )
@@ -16,6 +17,7 @@ type registerOwnerUseCase interface {
 type authUseCase interface {
 	LoginEmployee(ctx context.Context, phone, password string) (*uc.TokensOutput, error)
 	RefreshTokens(ctx context.Context, refreshToken string) (*uc.TokensOutput, error)
+	VerifyActionToken(ctx context.Context, token string) (*authDomain.ActionToken, error)
 	Logout(ctx context.Context, token string) error
 }
 
@@ -55,5 +57,7 @@ func (h *Handler) Init(router *chi.Mux) {
 
 		r.Post("/password/reset", h.requestPasswordReset)
 		r.Post("/password/reset/confirm", h.confirmPasswordReset)
+
+		r.Get("/verify/{token}", h.verifyActionToken)
 	})
 }

@@ -20,8 +20,7 @@ var authErrors = util.ErrorMap{
 	authDomain.ErrRegistrationExpired:  {Code: http.StatusGone, Message: "registration_expired"},
 	authDomain.ErrRefreshTokenNotFound: {Code: http.StatusUnauthorized, Message: "token_not_found"},
 	authDomain.ErrRefreshTokenExpired:  {Code: http.StatusUnauthorized, Message: "token_expired"},
-	authDomain.ErrResetTokenNotFound:   {Code: http.StatusUnauthorized, Message: "reset_token_not_found"},
-	authDomain.ErrResetTokenExpired:    {Code: http.StatusGone, Message: "reset_token_expired"},
+	authDomain.ErrActionTokenNotFound:  {Code: http.StatusNotFound, Message: "token_not_found"},
 	authDomain.ErrEmployeeInactive:     {Code: http.StatusForbidden, Message: "employee_inactive"},
 
 	// identity domain — в контексте auth "not found" означает неверные креды
