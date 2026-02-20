@@ -90,9 +90,72 @@ definitions:
       refresh_token:
         type: string
     type: object
+  internal_ports_http_handlers_auth.verifyActionTokenResponse:
+    properties:
+      location_id:
+        type: string
+      organization_id:
+        type: string
+      phone:
+        type: string
+      purpose:
+        type: string
+    type: object
   internal_ports_http_handlers_auth.verifyRequest:
     properties:
       code:
+        type: string
+      phone:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.confirmInviteRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.confirmInviteResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.resendInviteRequest:
+    properties:
+      phone:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.resendInviteResponse:
+    properties:
+      expires_in:
+        type: integer
+      message:
+        type: string
+      phone:
+        type: string
+      retry_after:
+        type: integer
+    type: object
+  internal_ports_http_handlers_employee.sendInviteRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      location_id:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.sendInviteResponse:
+    properties:
+      expires_in:
+        type: integer
+      message:
         type: string
       phone:
         type: string
@@ -431,6 +494,181 @@ paths:
       summary: Подтверждение регистрации
       tags:
       - auth
+  /api/v1/auth/verify/{token}:
+    get:
+      description: Возвращает метаданные токена (телефон, назначение, опциональные
+        org/location ID) для отображения на фронтенде. Используется для приглашений
+        и сброса пароля. Не требует авторизации.
+      parameters:
+      - description: Action-токен
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_auth.verifyActionTokenResponse'
+        "400":
+          description: Пустой токен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Токен не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Проверить action-токен
+      tags:
+      - auth
+  /api/v1/employees/invite:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт приглашение и отправляет ссылку для регистрации на номер
+        телефона сотрудника через WhatsApp (с fallback на SMS). Требует авторизации.
+        Owner может приглашать Manager и Staff, Manager — только Staff.
+      parameters:
+      - description: Данные приглашения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.sendInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.sendInviteResponse'
+        "400":
+          description: Невалидные данные (телефон, роль, имя)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Нет прав или подписка приостановлена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "409":
+          description: Сотрудник с таким телефоном уже существует
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "429":
+          description: Приглашение уже отправлено (cooldown 60с)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Пригласить сотрудника (шаг 1/2)
+      tags:
+      - employees
+  /api/v1/employees/invite/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Сотрудник переходит по ссылке из приглашения, задаёт пароль. Создаётся
+        аккаунт сотрудника, возвращаются JWT-токены. Не требует авторизации.
+      parameters:
+      - description: Токен приглашения и пароль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.confirmInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.confirmInviteResponse'
+        "400":
+          description: Невалидные данные
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Токен не найден
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "409":
+          description: Телефон уже зарегистрирован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "410":
+          description: Токен истёк
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Подтвердить приглашение (шаг 2/2)
+      tags:
+      - employees
+  /api/v1/employees/invite/resend:
+    post:
+      consumes:
+      - application/json
+      description: Генерирует новый токен и повторно отправляет ссылку для регистрации.
+        Требует авторизации. Действует cooldown 60 секунд между отправками.
+      parameters:
+      - description: Номер телефона приглашённого
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.resendInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.resendInviteResponse'
+        "400":
+          description: Невалидный телефон
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Нет прав (другая организация)
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Приглашение не найдено
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "429":
+          description: Cooldown ещё не прошёл
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Переотправить приглашение
+      tags:
+      - employees
   /api/v1/locations:
     post:
       consumes:

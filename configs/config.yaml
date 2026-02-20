@@ -176,13 +176,6 @@ env:
     required: true
     value: "3600s"
 
-  register_confirmation_url:
-    type: "string"
-    env_name: "REGISTER_CONFIRMATION_URL"
-    value: "https://app.bagsy.kz/ru/invite"
-    required: true
-
-
   swagger_host:
     type: "string"
     env_name: "SWAGGER_HOST"
@@ -271,4 +264,22 @@ env:
     type: "duration"
     env_name: "SERVICE_CATEGORIES_TTL"
     value: "3600s"
+    required: true
+
+  password_reset_ttl:
+    type: "duration"
+    env_name: "PASSWORD_RESET_TTL"
+    value: "300s"
+    required: true
+
+  invite_ttl:
+    type: "duration"
+    env_name: "INVITE_TTL"
+    value: "3600s"
+    required: true
+
+  frontend_url:
+    type: "string"
+    env_name: "FRONTEND_URL"
+    value: "https://app.bagsy.kz/ru/invite"
     required: true

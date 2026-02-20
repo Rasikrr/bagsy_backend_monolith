@@ -191,7 +191,7 @@ func (a *App) initUseCases(_ context.Context) error {
 	)
 
 	resetTTL := vars.GetDuration(appenv.PasswordResetTTL)
-	frontendURL := vars.GetString(appenv.PasswordResetFrontendURL)
+	frontendURL := vars.GetString(appenv.FrontendURL)
 
 	a.resetPasswordUC = authUC.NewResetPasswordUseCase(
 		a.employeeRepo,
