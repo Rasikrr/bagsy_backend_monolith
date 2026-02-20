@@ -4,18 +4,21 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/samber/lo"
 )
 
 func generateSlots(
+	scheduleType location.ScheduleType,
 	locSlots []*schedule.LocationScheduleSlot,
 	empSlots []*schedule.EmployeeScheduleSlot,
 	occupied []*booking.Appointment,
 	serviceDuration shared.Duration,
 	slotStep shared.Duration,
 	start, end time.Time,
+	now time.Time,
 ) []TimeSlot {
 	var result []TimeSlot
 
@@ -44,22 +47,33 @@ func generateSlots(
 		dayEmpSlots := empByDate[dateStr]
 		dayOcc := occByDate[dateStr]
 
-		if len(dayLocSlots) == 0 || len(dayEmpSlots) == 0 {
+		if len(dayLocSlots) == 0 {
 			continue
 		}
 
 		// 2. Find effective work intervals for the day
-		// Simplification: assume one work slot per day for now, or find intersection of all work slots
-		workIntervals := findIntersection(
-			filterWorkSlotsLoc(dayLocSlots),
-			filterWorkSlotsEmp(dayEmpSlots),
-		)
+		var workIntervals []interval
+		if scheduleType == location.ScheduleTypeFixed {
+			workIntervals = filterWorkSlotsLoc(dayLocSlots)
+		} else {
+			if len(dayEmpSlots) == 0 {
+				continue
+			}
+			workIntervals = findIntersection(
+				filterWorkSlotsLoc(dayLocSlots),
+				filterWorkSlotsEmp(dayEmpSlots),
+			)
+		}
+
+		if len(workIntervals) == 0 {
+			continue
+		}
 
 		// 3. Subtract Rest intervals
-		restIntervals := append(
-			filterRestSlotsLoc(dayLocSlots),
-			filterRestSlotsEmp(dayEmpSlots)...,
-		)
+		restIntervals := filterRestSlotsLoc(dayLocSlots)
+		if scheduleType == location.ScheduleTypeMixed {
+			restIntervals = append(restIntervals, filterRestSlotsEmp(dayEmpSlots)...)
+		}
 
 		availableIntervals := subtractIntervals(workIntervals, restIntervals)
 
@@ -72,7 +86,13 @@ func generateSlots(
 
 		// 5. Generate TimeSlots from intervals
 		for _, inv := range finalIntervals {
-			result = append(result, splitIntoSlots(inv, duration, step)...)
+			slots := splitIntoSlots(inv, duration, step)
+			// Filter past slots
+			for _, s := range slots {
+				if s.StartAt.After(now) {
+					result = append(result, s)
+				}
+			}
 		}
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
+	"golang.org/x/sync/errgroup"
 )
 
 type appointmentRepository interface {
@@ -48,7 +49,7 @@ type locationRepository interface {
 
 type scheduleRepository interface {
 	GetLocationSlots(ctx context.Context, locationID uuid.UUID, start, end time.Time) ([]*schedule.LocationScheduleSlot, error)
-	GetEmployeeSlots(ctx context.Context, employeeID uuid.UUID, start, end time.Time) ([]*schedule.EmployeeScheduleSlot, error)
+	GetEmployeesSlots(ctx context.Context, employeeIDs []uuid.UUID, start, end time.Time) (map[uuid.UUID][]*schedule.EmployeeScheduleSlot, error)
 }
 
 type otpRepository interface {
@@ -244,7 +245,7 @@ func (u *UseCase) Cancel(ctx context.Context, appointmentID uuid.UUID, reason st
 }
 
 func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlotsInput) (*GetAvailableSlotsOutput, error) {
-	// (логика GetAvailableSlots остается такой же, как в предыдущей реализации)
+	// 1. Предварительная загрузка базовых сущностей
 	svc, err := u.serviceRepo.GetByID(ctx, input.ServiceID)
 	if err != nil {
 		return nil, fmt.Errorf("get service: %w", err)
@@ -255,6 +256,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 		return nil, fmt.Errorf("get location: %w", err)
 	}
 
+	// 2. Получаем список мастеров для услуги
 	var empServices []*catalog.EmployeeService
 	if input.EmployeeID != nil {
 		es, err := u.empServiceRepo.GetByEmployeeAndService(ctx, *input.EmployeeID, input.ServiceID)
@@ -277,27 +279,56 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 		return es.EmployeeID
 	})
 
-	employees, err := u.employeeRepo.GetByIDs(ctx, employeeIDs)
-	if err != nil {
-		return nil, fmt.Errorf("get employees: %w", err)
-	}
-	employeesMap := lo.KeyBy(employees, func(e *identity.Employee) uuid.UUID {
-		return e.ID
+	// 3. Параллельная загрузка данных
+	var (
+		employees     []*identity.Employee
+		locSlots      []*schedule.LocationScheduleSlot
+		empSlotsMap   map[uuid.UUID][]*schedule.EmployeeScheduleSlot
+		occupiedSlots []*booking.Appointment
+		now           = time.Now()
+	)
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// Загружаем профили мастеров
+	g.Go(func() error {
+		var err error
+		employees, err = u.employeeRepo.GetByIDs(gCtx, employeeIDs)
+		return err
 	})
 
-	locSlots, err := u.scheduleRepo.GetLocationSlots(ctx, input.LocationID, input.StartDate, input.EndDate)
-	if err != nil {
-		return nil, fmt.Errorf("get location schedule: %w", err)
-	}
-
-	occupied, err := u.appointmentRepo.GetOccupiedSlots(ctx, input.LocationID, employeeIDs, input.StartDate, input.EndDate)
-	if err != nil {
-		return nil, fmt.Errorf("get occupied slots: %w", err)
-	}
-	occupiedByEmployee := lo.GroupBy(occupied, func(a *booking.Appointment) uuid.UUID {
-		return a.EmployeeID
+	// Загружаем расписание локации (всегда нужно)
+	g.Go(func() error {
+		var err error
+		locSlots, err = u.scheduleRepo.GetLocationSlots(gCtx, input.LocationID, input.StartDate, input.EndDate)
+		return err
 	})
 
+	// Загружаем расписание мастеров (только если тип Mixed)
+	if loc.ScheduleType == location.ScheduleTypeMixed {
+		g.Go(func() error {
+			var err error
+			empSlotsMap, err = u.scheduleRepo.GetEmployeesSlots(gCtx, employeeIDs, input.StartDate, input.EndDate)
+			return err
+		})
+	}
+
+	// Загружаем занятые записи
+	g.Go(func() error {
+		var err error
+		occupiedSlots, err = u.appointmentRepo.GetOccupiedSlots(gCtx, input.LocationID, employeeIDs, input.StartDate, input.EndDate)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("fetch data for slots: %w", err)
+	}
+
+	// 4. Подготовка маппингов
+	employeesMap := lo.KeyBy(employees, func(e *identity.Employee) uuid.UUID { return e.ID })
+	occupiedByEmployee := lo.GroupBy(occupiedSlots, func(a *booking.Appointment) uuid.UUID { return a.EmployeeID })
+
+	// 5. Генерация слотов для каждого мастера
 	var masterSlots []MasterAvailableSlots
 	for _, es := range empServices {
 		emp, ok := employeesMap[es.EmployeeID]
@@ -305,19 +336,17 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 			continue
 		}
 
-		empSlots, err := u.scheduleRepo.GetEmployeeSlots(ctx, es.EmployeeID, input.StartDate, input.EndDate)
-		if err != nil {
-			continue
-		}
-
+		// Выбираем логику в зависимости от ScheduleType
 		generated := generateSlots(
+			loc.ScheduleType,
 			locSlots,
-			empSlots,
+			empSlotsMap[es.EmployeeID], // Будет nil при Fixed, что корректно для алгоритма
 			occupiedByEmployee[es.EmployeeID],
 			svc.DurationMinutes,
 			loc.SlotDurationMinutes,
 			input.StartDate,
 			input.EndDate,
+			now,
 		)
 
 		if len(generated) > 0 {
