@@ -14,6 +14,7 @@ type bookingUseCase interface {
 	Create(ctx context.Context, input uc.CreateBookingInput) (*uc.CreateBookingOutput, error)
 	Confirm(ctx context.Context, appointmentID uuid.UUID, code string) error
 	Cancel(ctx context.Context, orgCtx *access.OrgContext, appointmentID uuid.UUID, reason string) error
+	ResendOTP(ctx context.Context, appointmentID uuid.UUID) error
 }
 
 type Handler struct {
@@ -39,6 +40,7 @@ func (h *Handler) Init(router *chi.Mux) {
 		// Публичные эндпоинты (или доступные клиентам)
 		r.Post("/", h.create)
 		r.Post("/{id}/confirm", h.confirm)
+		r.Post("/{id}/resend-otp", h.resendOTP)
 
 		// Эндпоинты для сотрудников организации
 		r.Group(func(admin chi.Router) {

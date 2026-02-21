@@ -93,7 +93,7 @@ func NewUseCase(
 	locationRepo locationRepository,
 	scheduleRepo scheduleRepository,
 	otpRepo otpRepository,
-	notificationService otpSender,
+	otpSender otpSender,
 	policy policyProvider,
 	txManager txManager,
 ) *UseCase {
@@ -106,7 +106,7 @@ func NewUseCase(
 		locationRepo:    locationRepo,
 		scheduleRepo:    scheduleRepo,
 		otpRepo:         otpRepo,
-		otpSender:       notificationService,
+		otpSender:       otpSender,
 		policy:          policy,
 		txManager:       txManager,
 	}
@@ -235,6 +235,38 @@ func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code str
 		}
 		return u.otpRepo.Delete(txCtx, appointmentID)
 	})
+}
+
+func (u *UseCase) ResendOTP(ctx context.Context, appointmentID uuid.UUID) error {
+	// 1. Get Appointment
+	appt, err := u.appointmentRepo.GetByID(ctx, appointmentID)
+	if err != nil {
+		return err
+	}
+
+	// 2. Check status
+	if !appt.IsPending() {
+		return booking.ErrAppointmentIsFinal
+	}
+
+	// 3. Get Customer for Phone
+	customer, err := u.customerRepo.GetByID(ctx, appt.CustomerID)
+	if err != nil {
+		return err
+	}
+
+	// 4. Generate NEW OTP
+	otp, err := auth.NewOTPCode(customer.Phone, time.Minute*15)
+	if err != nil {
+		return err
+	}
+
+	// 5. Save and Send
+	if err := u.otpRepo.Save(ctx, appointmentID, otp); err != nil {
+		return err
+	}
+
+	return u.otpSender.SendBookingConfirmationCode(ctx, customer.Phone, otp.Code)
 }
 
 func (u *UseCase) Cancel(ctx context.Context, orgCtx *access.OrgContext, appointmentID uuid.UUID, reason string) error {
