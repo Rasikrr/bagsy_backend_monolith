@@ -1,0 +1,66 @@
+package booking
+
+import (
+	"net/http"
+
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
+	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	coreHTTP "github.com/Rasikrr/core/http"
+	"github.com/samber/lo"
+)
+
+// getSlots handles POST /api/v1/bookings/slots.
+//
+// @Summary      Получение доступных слотов для записи
+// @Description  Возвращает доступные временные слоты для записи на услугу, сгруппированные по сотрудникам.
+// @Tags         booking
+// @Accept       json
+// @Produce      json
+// @Param        body  body      getSlotsRequest  true  "Параметры поиска слотов"
+// @Success      200   {object}  getSlotsResponse
+// @Failure      400   {object}  util.errorResponse
+// @Failure      404   {object}  util.errorResponse  "Локация или услуга не найдена"
+// @Failure      500   {object}  util.errorResponse
+// @Router       /api/v1/bookings/slots [post]
+func (h *Handler) getSlots(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var req getSlotsRequest
+	if err := coreHTTP.GetData(r, &req); err != nil {
+		util.SendBadRequest(ctx, w, err)
+		return
+	}
+
+	out, err := h.bookingUC.GetAvailableSlots(ctx, uc.GetAvailableSlotsInput{
+		LocationID: req.LocationID,
+		ServiceID:  req.ServiceID,
+		EmployeeID: req.EmployeeID,
+		StartDate:  req.StartDate,
+		EndDate:    req.EndDate,
+	})
+	if err != nil {
+		util.SendError(ctx, w, err, bookingErrors)
+		return
+	}
+
+	resp := getSlotsResponse{
+		ServiceID:       out.ServiceID,
+		LocationID:      out.LocationID,
+		DurationMinutes: int(out.DurationMinutes),
+		MasterSlots: lo.Map(out.MasterSlots, func(ms uc.MasterAvailableSlots, _ int) masterTimeSlot {
+			return masterTimeSlot{
+				EmployeeID:   ms.EmployeeID,
+				EmployeeName: ms.EmployeeName,
+				Price:        ms.Price,
+				Slots: lo.Map(ms.Slots, func(s uc.TimeSlot, _ int) timeSlot {
+					return timeSlot{
+						StartAt: s.StartAt,
+						EndAt:   s.EndAt,
+					}
+				}),
+			}
+		}),
+	}
+
+	coreHTTP.SendData(ctx, w, resp, http.StatusOK)
+}

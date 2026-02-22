@@ -3,6 +3,7 @@ package booking
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/core/database/postgres"
@@ -70,4 +71,22 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*booking.Appoin
 	}
 
 	return m.toDomain(history)
+}
+
+func (r *Repository) GetOccupiedSlots(ctx context.Context, locationID uuid.UUID, employeeIDs []uuid.UUID, start, end time.Time) ([]*booking.Appointment, error) {
+	var models []appointmentModel
+	if err := pgxscan.Select(ctx, r.db, &models, getOccupiedSlots, locationID, employeeIDs, start, end); err != nil {
+		return nil, fmt.Errorf("get occupied slots: %w", err)
+	}
+
+	appointments := make([]*booking.Appointment, 0, len(models))
+	for _, m := range models {
+		a, err := m.toDomain(nil)
+		if err != nil {
+			return nil, fmt.Errorf("map occupied appointment: %w", err)
+		}
+		appointments = append(appointments, a)
+	}
+
+	return appointments, nil
 }

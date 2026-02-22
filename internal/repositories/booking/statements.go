@@ -29,4 +29,13 @@ const (
 	getStatusHistoryByAppointmentID = `
 		SELECT * FROM appointment_histories WHERE appointment_id = $1 ORDER BY created_at ASC
 	`
+
+	getOccupiedSlots = `
+		SELECT * FROM appointments
+		WHERE location_id = $1
+		  AND employee_id = ANY($2)
+		  AND start_at < $4
+		  AND end_at > $3
+		  AND status NOT IN ('cancelled', 'completed')
+	`
 )

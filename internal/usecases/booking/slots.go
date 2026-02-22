@@ -144,6 +144,8 @@ func filterRestSlotsEmp(slots []*schedule.EmployeeScheduleSlot) []interval {
 	return res
 }
 
+// location: 10:00 - 18:00 (break 13:00 - 14:00) = 10:00 - 13:00, 14:00 - 18:00
+// master: 14:00 - 17:00 (break 15:00 - 16:00) = 14:00 - 15:00, 16:00 - 17:00
 func findIntersection(a, b []interval) []interval {
 	var res []interval
 	for _, i1 := range a {

@@ -10,11 +10,16 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
 	accessRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	actionTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/action_token"
+	otpRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/otp"
+	bookingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/booking"
+	catalogRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/catalog"
+	customerRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/customer"
 	employeeRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/employee"
 	locationRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location"
 	categoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location_category"
 	orgRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/organization"
 	planRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/plan"
+	scheduleRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/schedule"
 	subscriptionRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/subscription"
 	workHistoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/work_history"
 
@@ -23,6 +28,7 @@ import (
 	invitePendingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/pending"
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
@@ -52,6 +58,11 @@ type App struct {
 	accessRepo         *accessRepo.Repository
 	categoryRepo       *categoryRepo.Repository
 	locationRepo       *locationRepo.Repository
+	bookingRepo        *bookingRepo.Repository
+	customerRepo       *customerRepo.Repository
+	catalogRepo        *catalogRepo.Repository
+	scheduleRepo       *scheduleRepo.Repository
+	otpRepo            *otpRepo.Repository
 	pendingRegStore    *pendingReg.PendingRegistrationStore
 	refreshTokenRepo   *refreshTokenRepo.RefreshTokenRepository
 	actionTokenStore   *actionTokenRepo.Store
@@ -60,7 +71,7 @@ type App struct {
 	// Infra
 	tokenManager *jwtinfra.TokenManager
 	tokenService *jwtinfra.TokenService
-	otpSender    *messenger.OTPSender
+	messenger    *messenger.Messenger
 
 	// Use Cases
 	registerOwnerUC  *authUC.RegisterOwnerUseCase
@@ -68,6 +79,7 @@ type App struct {
 	resetPasswordUC  *authUC.ResetPasswordUseCase
 	inviteEmployeeUC *inviteUC.UseCase
 	createLocationUC *locationUC.UseCase
+	bookingUseCase   *bookingUC.UseCase
 
 	// Policies
 	policy *policy.Policy
@@ -133,7 +145,12 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.accessRepo = accessRepo.NewRepository(db)
 	a.locationRepo = locationRepo.NewRepository(db)
 	a.categoryRepo = categoryRepo.NewRepository(db)
+	a.bookingRepo = bookingRepo.NewRepository(db)
+	a.customerRepo = customerRepo.NewRepository(db)
+	a.catalogRepo = catalogRepo.NewRepository(db)
+	a.scheduleRepo = scheduleRepo.NewRepository(db)
 
+	a.otpRepo = otpRepo.NewRepository(a.Redis())
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
 	a.refreshTokenRepo = refreshTokenRepo.NewRefreshTokenRepository(a.Redis())
 	a.actionTokenStore = actionTokenRepo.NewStore(a.Redis())
@@ -161,8 +178,8 @@ func (a *App) initInfra(_ context.Context) error {
 		a.refreshTokenRepo,
 	)
 
-	// OTP Sender (WhatsApp → SMS fallback)
-	a.otpSender = messenger.NewOTPSender(a.whatsappClient, a.smsClient)
+	// Messenger (WhatsApp → SMS fallback)
+	a.messenger = messenger.NewMessenger(a.whatsappClient, a.smsClient)
 
 	return nil
 }
@@ -180,7 +197,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.tokenService,
 		a.pendingRegStore,
 		txManager,
-		a.otpSender,
+		a.messenger,
 	)
 
 	a.authUseCase = authUC.NewUseCase(
@@ -197,7 +214,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.employeeRepo,
 		a.actionTokenStore,
 		a.tokenService,
-		a.otpSender,
+		a.messenger,
 		resetTTL,
 		frontendURL,
 	)
@@ -213,7 +230,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.actionTokenStore,
 		a.pendingInviteStore,
 		a.tokenService,
-		a.otpSender,
+		a.messenger,
 		a.policy,
 		txManager,
 		inviteTTL,
@@ -225,6 +242,20 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.categoryRepo,
 		a.organizationRepo,
 		a.employeeRepo,
+		a.policy,
+		txManager,
+	)
+
+	a.bookingUseCase = bookingUC.NewUseCase(
+		a.bookingRepo,
+		a.customerRepo,
+		a.employeeRepo,
+		a.catalogRepo,
+		a.catalogRepo,
+		a.locationRepo,
+		a.scheduleRepo,
+		a.otpRepo,
+		a.messenger,
 		a.policy,
 		txManager,
 	)
@@ -245,6 +276,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.inviteEmployeeUC,
 		a.accessRepo,
 		a.createLocationUC,
+		a.bookingUseCase,
 	)
 	return nil
 }

@@ -25,7 +25,6 @@ type MasterAvailableSlots struct {
 	EmployeeID   uuid.UUID
 	EmployeeName string
 	Price        float64
-	Currency     string
 	Slots        []TimeSlot
 }
 

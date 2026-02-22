@@ -3,12 +3,14 @@ package http
 import (
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	bookingC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/booking"
 	employeeC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/employee"
 	locationC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	"github.com/Rasikrr/core/enum"
@@ -42,6 +44,7 @@ func NewServer(
 	inviteUseCase *invite.UseCase,
 	accessRepo *access.Repository,
 	createLocationUC *locationUC.UseCase,
+	bookingUseCase *bookingUC.UseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
@@ -52,11 +55,13 @@ func NewServer(
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
 	employeeHandler := employeeC.New(inviteUseCase, authMiddleware, orgContextMiddleware)
+	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
 
 	server.WithControllers(
 		authHandler,
 		locationHandler,
 		employeeHandler,
+		bookingHandler,
 	)
 }
 

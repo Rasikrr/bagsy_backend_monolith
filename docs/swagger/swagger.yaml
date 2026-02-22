@@ -108,6 +108,88 @@ definitions:
       phone:
         type: string
     type: object
+  internal_ports_http_handlers_booking.cancelRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  internal_ports_http_handlers_booking.confirmRequest:
+    properties:
+      code:
+        type: string
+    type: object
+  internal_ports_http_handlers_booking.createRequest:
+    properties:
+      comment:
+        type: string
+      employee_id:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      location_id:
+        type: string
+      phone:
+        description: Customer Info
+        type: string
+      service_id:
+        type: string
+      start_at:
+        type: string
+    type: object
+  internal_ports_http_handlers_booking.createResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  internal_ports_http_handlers_booking.getSlotsRequest:
+    properties:
+      employee_id:
+        description: optional
+        type: string
+      end_date:
+        type: string
+      location_id:
+        type: string
+      service_id:
+        type: string
+      start_date:
+        type: string
+    type: object
+  internal_ports_http_handlers_booking.getSlotsResponse:
+    properties:
+      duration_minutes:
+        type: integer
+      location_id:
+        type: string
+      master_slots:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_booking.masterTimeSlot'
+        type: array
+      service_id:
+        type: string
+    type: object
+  internal_ports_http_handlers_booking.masterTimeSlot:
+    properties:
+      employee_id:
+        type: string
+      employee_name:
+        type: string
+      price:
+        type: number
+      slots:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_booking.timeSlot'
+        type: array
+    type: object
+  internal_ports_http_handlers_booking.timeSlot:
+    properties:
+      end_at:
+        type: string
+      start_at:
+        type: string
+    type: object
   internal_ports_http_handlers_employee.confirmInviteRequest:
     properties:
       password:
@@ -527,6 +609,186 @@ paths:
       summary: Проверить action-токен
       tags:
       - auth
+  /api/v1/bookings:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую запись на услугу для клиента. Запись создаётся в
+        статусе pending и требует подтверждения кодом.
+      parameters:
+      - description: Данные для записи
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_booking.createRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_booking.createResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "409":
+          description: Слот уже занят
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Создание записи на услугу
+      tags:
+      - booking
+  /api/v1/bookings/{id}/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Отменяет существующую запись. Доступно только сотрудникам организации.
+      parameters:
+      - description: ID записи
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Причина отмены
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_booking.cancelRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Запись отменена
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Доступ запрещен
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Запись не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Отмена записи
+      tags:
+      - booking
+  /api/v1/bookings/{id}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Подтверждает запись с помощью OTP-кода, присланного в SMS/WhatsApp.
+      parameters:
+      - description: ID записи
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Код подтверждения
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_booking.confirmRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Запись подтверждена
+        "400":
+          description: Неверный код или формат
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Запись не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Подтверждение записи
+      tags:
+      - booking
+  /api/v1/bookings/{id}/resend-otp:
+    post:
+      description: Генерирует и отправляет новый код подтверждения для существующей
+        записи.
+      parameters:
+      - description: ID записи
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Код отправлен
+        "400":
+          description: Запись уже подтверждена или отменена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Запись не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Повторная отправка кода
+      tags:
+      - booking
+  /api/v1/bookings/slots:
+    post:
+      consumes:
+      - application/json
+      description: Возвращает доступные временные слоты для записи на услугу, сгруппированные
+        по сотрудникам.
+      parameters:
+      - description: Параметры поиска слотов
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_booking.getSlotsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_booking.getSlotsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Локация или услуга не найдена
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Получение доступных слотов для записи
+      tags:
+      - booking
   /api/v1/employees/invite:
     post:
       consumes:

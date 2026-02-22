@@ -29,7 +29,6 @@ type masterTimeSlot struct {
 	EmployeeID   uuid.UUID  `json:"employee_id"`
 	EmployeeName string     `json:"employee_name"`
 	Price        float64    `json:"price"`
-	Currency     string     `json:"currency"`
 	Slots        []timeSlot `json:"slots"`
 }
 

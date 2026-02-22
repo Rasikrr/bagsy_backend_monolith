@@ -15,6 +15,7 @@ type bookingUseCase interface {
 	Confirm(ctx context.Context, appointmentID uuid.UUID, code string) error
 	Cancel(ctx context.Context, orgCtx *access.OrgContext, appointmentID uuid.UUID, reason string) error
 	ResendOTP(ctx context.Context, appointmentID uuid.UUID) error
+	GetAvailableSlots(ctx context.Context, input uc.GetAvailableSlotsInput) (*uc.GetAvailableSlotsOutput, error)
 }
 
 type Handler struct {
@@ -39,6 +40,7 @@ func (h *Handler) Init(router *chi.Mux) {
 	router.Route("/api/v1/bookings", func(r chi.Router) {
 		// Публичные эндпоинты (или доступные клиентам)
 		r.Post("/", h.create)
+		r.Post("/slots", h.getSlots)
 		r.Post("/{id}/confirm", h.confirm)
 		r.Post("/{id}/resend-otp", h.resendOTP)
 
