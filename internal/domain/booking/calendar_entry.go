@@ -3,8 +3,9 @@ package booking
 import (
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
 )
 
 // CalendarEntry — read-only projection for calendar listing.
@@ -14,8 +15,8 @@ type CalendarEntry struct {
 	Status          Status
 	StartAt         time.Time
 	EndAt           time.Time
-	Price           decimal.Decimal
-	DurationMinutes int
+	Price           shared.Money
+	DurationMinutes shared.Duration
 	CustomerComment *string
 
 	EmployeeID   uuid.UUID
@@ -23,11 +24,11 @@ type CalendarEntry struct {
 
 	CustomerID    uuid.UUID
 	CustomerName  string
-	CustomerPhone string
+	CustomerPhone shared.Phone
 
 	ServiceID    uuid.UUID
 	ServiceName  string
-	ServiceColor string
+	ServiceColor catalog.Color
 
 	LocationID   uuid.UUID
 	LocationName string

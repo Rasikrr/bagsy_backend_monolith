@@ -541,6 +541,92 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/bookings/calendar": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает записи за указанный период с информацией о сотруднике, клиенте, услуге и локации.\nStaff — только свои записи. Manager — записи своей локации. Owner — все записи организации.\nМаксимальный диапазон — 35 дней.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking"
+                ],
+                "summary": "Получение календаря записей",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Дата начала (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Дата окончания (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UUID локации (только для Owner)",
+                        "name": "location_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "UUID сотрудника (для Manager и Owner)",
+                        "name": "employee_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Включить отменённые записи (default: false)",
+                        "name": "include_cancelled",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_booking.getCalendarResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры или диапазон \u003e 35 дней",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Подписка приостановлена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/bookings/slots": {
             "post": {
                 "description": "Возвращает доступные временные слоты для записи на услугу, сгруппированные по сотрудникам.",
@@ -1204,6 +1290,62 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_booking.calendarEntryResponse": {
+            "type": "object",
+            "properties": {
+                "appointment_id": {
+                    "type": "string"
+                },
+                "customer_comment": {
+                    "type": "string"
+                },
+                "customer_id": {
+                    "type": "string"
+                },
+                "customer_name": {
+                    "type": "string"
+                },
+                "customer_phone": {
+                    "type": "string"
+                },
+                "duration_minutes": {
+                    "type": "integer"
+                },
+                "employee_id": {
+                    "type": "string"
+                },
+                "employee_name": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "location_id": {
+                    "type": "string"
+                },
+                "location_name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "service_color": {
+                    "type": "string"
+                },
+                "service_id": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "start_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_ports_http_handlers_booking.cancelRequest": {
             "type": "object",
             "properties": {
@@ -1255,6 +1397,17 @@ const docTemplate = `{
             "properties": {
                 "id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_booking.getCalendarResponse": {
+            "type": "object",
+            "properties": {
+                "calendar": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_booking.calendarEntryResponse"
+                    }
                 }
             }
         },

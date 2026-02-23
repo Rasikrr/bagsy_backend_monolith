@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/cockroachdb/errors"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -101,22 +103,47 @@ func (r *Repository) GetCalendarEntries(ctx context.Context, orgID uuid.UUID, st
 
 	entries := make([]booking.CalendarEntry, 0, len(rows))
 	for _, row := range rows {
+		price, err := shared.NewMoney(row.Price)
+		if err != nil {
+			return nil, fmt.Errorf("map calendar entry price: %w", err)
+		}
+
+		duration, err := shared.NewDuration(row.DurationMinutes)
+		if err != nil {
+			return nil, fmt.Errorf("map calendar entry duration: %w", err)
+		}
+
+		phone, err := shared.NewPhone(row.CustomerPhone)
+		if err != nil {
+			return nil, fmt.Errorf("map calendar entry phone: %w", err)
+		}
+
+		status, err := booking.ParseStatus(row.Status)
+		if err != nil {
+			return nil, fmt.Errorf("map calendar entry status: %w", err)
+		}
+
+		color, err := catalog.ParseColor(row.ServiceColor)
+		if err != nil {
+			return nil, fmt.Errorf("map calendar entry color: %w", err)
+		}
+
 		entries = append(entries, booking.CalendarEntry{
 			AppointmentID:   row.AppointmentID,
-			Status:          booking.Status(row.Status),
+			Status:          status,
 			StartAt:         row.StartAt,
 			EndAt:           row.EndAt,
-			Price:           row.Price,
-			DurationMinutes: row.DurationMinutes,
+			Price:           price,
+			DurationMinutes: duration,
 			CustomerComment: row.CustomerComment,
 			EmployeeID:      row.EmployeeID,
 			EmployeeName:    row.EmployeeName,
 			CustomerID:      row.CustomerID,
 			CustomerName:    row.CustomerName,
-			CustomerPhone:   row.CustomerPhone,
+			CustomerPhone:   phone,
 			ServiceID:       row.ServiceID,
 			ServiceName:     row.ServiceName,
-			ServiceColor:    row.ServiceColor,
+			ServiceColor:    color,
 			LocationID:      row.LocationID,
 			LocationName:    row.LocationName,
 		})

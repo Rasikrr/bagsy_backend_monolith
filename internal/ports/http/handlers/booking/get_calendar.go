@@ -11,6 +11,27 @@ import (
 	"github.com/google/uuid"
 )
 
+// getCalendar handles GET /api/v1/bookings/calendar.
+//
+// @Summary      Получение календаря записей
+// @Description  Возвращает записи за указанный период с информацией о сотруднике, клиенте, услуге и локации.
+// @Description  Staff — только свои записи. Manager — записи своей локации. Owner — все записи организации.
+// @Description  Максимальный диапазон — 35 дней.
+// @Tags         booking
+// @Accept       json
+// @Produce      json
+// @Param        from               query     string  true   "Дата начала (YYYY-MM-DD)"
+// @Param        to                 query     string  true   "Дата окончания (YYYY-MM-DD)"
+// @Param        location_id        query     string  false  "UUID локации (только для Owner)"
+// @Param        employee_id        query     string  false  "UUID сотрудника (для Manager и Owner)"
+// @Param        include_cancelled  query     bool    false  "Включить отменённые записи (default: false)"
+// @Success      200  {object}  getCalendarResponse
+// @Failure      400  {object}  util.errorResponse  "Неверные параметры или диапазон > 35 дней"
+// @Failure      401  {object}  util.errorResponse  "Требуется авторизация"
+// @Failure      403  {object}  util.errorResponse  "Подписка приостановлена"
+// @Failure      500  {object}  util.errorResponse
+// @Security     ApiKeyAuth
+// @Router       /api/v1/bookings/calendar [get]
 func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -73,17 +94,17 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 			Status:          string(e.Status),
 			StartAt:         e.StartAt,
 			EndAt:           e.EndAt,
-			Price:           e.Price.InexactFloat64(),
-			DurationMinutes: e.DurationMinutes,
+			Price:           e.Price.Amount().InexactFloat64(),
+			DurationMinutes: e.DurationMinutes.Minutes(),
 			CustomerComment: e.CustomerComment,
 			EmployeeID:      e.EmployeeID,
 			EmployeeName:    e.EmployeeName,
 			CustomerID:      e.CustomerID,
 			CustomerName:    e.CustomerName,
-			CustomerPhone:   e.CustomerPhone,
+			CustomerPhone:   e.CustomerPhone.String(),
 			ServiceID:       e.ServiceID,
 			ServiceName:     e.ServiceName,
-			ServiceColor:    e.ServiceColor,
+			ServiceColor:    string(e.ServiceColor),
 			LocationID:      e.LocationID,
 			LocationName:    e.LocationName,
 		})
