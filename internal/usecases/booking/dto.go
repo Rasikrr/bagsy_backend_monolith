@@ -48,3 +48,13 @@ type CreateBookingInput struct {
 type CreateBookingOutput struct {
 	ID uuid.UUID
 }
+
+// Calendar
+
+type GetCalendarInput struct {
+	LocationID       *uuid.UUID
+	EmployeeID       *uuid.UUID
+	StartDate        time.Time
+	EndDate          time.Time
+	IncludeCancelled bool
+}

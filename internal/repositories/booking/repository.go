@@ -91,6 +91,40 @@ func (r *Repository) GetOccupiedSlots(ctx context.Context, locationID uuid.UUID,
 	return appointments, nil
 }
 
+func (r *Repository) GetCalendarEntries(ctx context.Context, orgID uuid.UUID, start, end time.Time, locationID, employeeID *uuid.UUID, includeCancelled bool) ([]booking.CalendarEntry, error) {
+	var rows []calendarEntryRow
+	if err := pgxscan.Select(ctx, r.db, &rows, getCalendarEntries,
+		orgID, start, end, locationID, employeeID, includeCancelled,
+	); err != nil {
+		return nil, fmt.Errorf("get calendar entries: %w", err)
+	}
+
+	entries := make([]booking.CalendarEntry, 0, len(rows))
+	for _, row := range rows {
+		entries = append(entries, booking.CalendarEntry{
+			AppointmentID:   row.AppointmentID,
+			Status:          booking.Status(row.Status),
+			StartAt:         row.StartAt,
+			EndAt:           row.EndAt,
+			Price:           row.Price,
+			DurationMinutes: row.DurationMinutes,
+			CustomerComment: row.CustomerComment,
+			EmployeeID:      row.EmployeeID,
+			EmployeeName:    row.EmployeeName,
+			CustomerID:      row.CustomerID,
+			CustomerName:    row.CustomerName,
+			CustomerPhone:   row.CustomerPhone,
+			ServiceID:       row.ServiceID,
+			ServiceName:     row.ServiceName,
+			ServiceColor:    row.ServiceColor,
+			LocationID:      row.LocationID,
+			LocationName:    row.LocationName,
+		})
+	}
+
+	return entries, nil
+}
+
 func uuidStrings(ids []uuid.UUID) []string {
 	s := make([]string, len(ids))
 	for i, id := range ids {

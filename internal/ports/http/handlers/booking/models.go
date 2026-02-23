@@ -73,3 +73,35 @@ type confirmRequest struct {
 type cancelRequest struct {
 	Reason string `json:"reason"`
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Calendar
+// ─────────────────────────────────────────────────────────────────
+
+type calendarEntryResponse struct {
+	AppointmentID   uuid.UUID `json:"appointment_id"`
+	Status          string    `json:"status"`
+	StartAt         time.Time `json:"start_at"`
+	EndAt           time.Time `json:"end_at"`
+	Price           float64   `json:"price"`
+	DurationMinutes int       `json:"duration_minutes"`
+	CustomerComment *string   `json:"customer_comment,omitempty"`
+
+	EmployeeID   uuid.UUID `json:"employee_id"`
+	EmployeeName string    `json:"employee_name"`
+
+	CustomerID    uuid.UUID `json:"customer_id"`
+	CustomerName  string    `json:"customer_name"`
+	CustomerPhone string    `json:"customer_phone"`
+
+	ServiceID    uuid.UUID `json:"service_id"`
+	ServiceName  string    `json:"service_name"`
+	ServiceColor string    `json:"service_color"`
+
+	LocationID   uuid.UUID `json:"location_id"`
+	LocationName string    `json:"location_name"`
+}
+
+type getCalendarResponse struct {
+	Calendar []calendarEntryResponse `json:"calendar"`
+}

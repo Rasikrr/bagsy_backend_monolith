@@ -60,4 +60,12 @@ var bookingErrors = util.ErrorMap{
 		Code:    http.StatusForbidden,
 		Message: "organization_suspended",
 	},
+	booking.ErrCalendarRangeTooLarge: {
+		Code:    http.StatusBadRequest,
+		Message: "calendar_range_too_large",
+	},
+	booking.ErrInvalidTimeRange: {
+		Code:    http.StatusBadRequest,
+		Message: "invalid_time_range",
+	},
 }

@@ -38,4 +38,37 @@ const (
 		  AND end_at > $3
 		  AND status NOT IN ('cancelled', 'completed')
 	`
+
+	getCalendarEntries = `
+		SELECT
+			a.id              AS appointment_id,
+			a.status,
+			a.start_at,
+			a.end_at,
+			a.price,
+			a.duration_minutes,
+			a.customer_comment,
+			a.employee_id,
+			e.first_name || COALESCE(' ' || e.last_name, '') AS employee_name,
+			a.customer_id,
+			c.first_name || COALESCE(' ' || c.last_name, '') AS customer_name,
+			c.phone           AS customer_phone,
+			a.service_id,
+			s.name            AS service_name,
+			s.color           AS service_color,
+			a.location_id,
+			l.name            AS location_name
+		FROM appointments a
+		JOIN employees e ON e.id = a.employee_id
+		JOIN customers c ON c.id = a.customer_id
+		JOIN services  s ON s.id = a.service_id
+		JOIN locations l ON l.id = a.location_id
+		WHERE a.organization_id = $1
+		  AND a.start_at < $3
+		  AND a.end_at   > $2
+		  AND ($4::uuid IS NULL OR a.location_id = $4)
+		  AND ($5::uuid IS NULL OR a.employee_id = $5)
+		  AND ($6::boolean IS TRUE OR a.status != 'cancelled')
+		ORDER BY a.start_at ASC
+	`
 )

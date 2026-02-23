@@ -110,6 +110,30 @@ func fromHistoryDomain(appointmentID uuid.UUID, h booking.StatusHistoryEntry) *s
 	}
 }
 
+type calendarEntryRow struct {
+	AppointmentID   uuid.UUID       `db:"appointment_id"`
+	Status          string          `db:"status"`
+	StartAt         time.Time       `db:"start_at"`
+	EndAt           time.Time       `db:"end_at"`
+	Price           decimal.Decimal `db:"price"`
+	DurationMinutes int             `db:"duration_minutes"`
+	CustomerComment *string         `db:"customer_comment"`
+
+	EmployeeID   uuid.UUID `db:"employee_id"`
+	EmployeeName string    `db:"employee_name"`
+
+	CustomerID    uuid.UUID `db:"customer_id"`
+	CustomerName  string    `db:"customer_name"`
+	CustomerPhone string    `db:"customer_phone"`
+
+	ServiceID    uuid.UUID `db:"service_id"`
+	ServiceName  string    `db:"service_name"`
+	ServiceColor string    `db:"service_color"`
+
+	LocationID   uuid.UUID `db:"location_id"`
+	LocationName string    `db:"location_name"`
+}
+
 func (m *statusHistoryModel) toDomain() booking.StatusHistoryEntry {
 	var fromStatus *booking.Status
 	if m.FromStatus != nil {

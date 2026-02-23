@@ -23,6 +23,7 @@ type appointmentRepository interface {
 	Save(ctx context.Context, a *booking.Appointment) error
 	GetByID(ctx context.Context, id uuid.UUID) (*booking.Appointment, error)
 	GetOccupiedSlots(ctx context.Context, locationID uuid.UUID, employeeIDs []uuid.UUID, start, end time.Time) ([]*booking.Appointment, error)
+	GetCalendarEntries(ctx context.Context, orgID uuid.UUID, start, end time.Time, locationID, employeeID *uuid.UUID, includeCancelled bool) ([]booking.CalendarEntry, error)
 }
 
 type customerRepository interface {

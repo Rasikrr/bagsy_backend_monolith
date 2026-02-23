@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	"github.com/go-chi/chi/v5"
@@ -16,6 +17,7 @@ type bookingUseCase interface {
 	Cancel(ctx context.Context, orgCtx *access.OrgContext, appointmentID uuid.UUID, reason string) error
 	ResendOTP(ctx context.Context, appointmentID uuid.UUID) error
 	GetAvailableSlots(ctx context.Context, input uc.GetAvailableSlotsInput) (*uc.GetAvailableSlotsOutput, error)
+	GetCalendar(ctx context.Context, orgCtx *access.OrgContext, input uc.GetCalendarInput) ([]booking.CalendarEntry, error)
 }
 
 type Handler struct {
@@ -52,6 +54,7 @@ func (h *Handler) Init(router *chi.Mux) {
 			)
 
 			admin.Post("/{id}/cancel", h.cancel)
+			admin.Get("/calendar", h.getCalendar)
 		})
 	})
 }

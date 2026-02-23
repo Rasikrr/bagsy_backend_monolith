@@ -99,7 +99,7 @@ func (f *Foo) touch() { now := time.Now(); f.UpdatedAt = &now }
 1. Handlers in `internal/ports/http/handlers/{context}/`.
 2. Middlewares in `internal/ports/http/middlewares/`.
 3. Parse request → validate → call use case → write response.
-4. Never return domain entities directly — map to DTOs.
+4. Never return domain entities directly — map to DTOs. Exception: use case may return domain types (entities, read-only projections) to handler when it's a simple read without transformation. Handler still maps to its own response DTO before sending to client.
 5. Map domain errors to HTTP status codes in handlers.
 
 ### Error Handling
