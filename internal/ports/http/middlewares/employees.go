@@ -27,15 +27,15 @@ func (a *Auth) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		token, err := util.GetAuthHeader(r)
+		token, err := httputil.GetAuthHeader(r)
 		if err != nil {
-			util.SendBadRequest(ctx, w, err)
+			httputil.SendBadRequest(ctx, w, err)
 			return
 		}
 
 		tokenInfo, err := a.authService.VerifyAccessToken(ctx, token)
 		if err != nil {
-			util.SendBadRequest(ctx, w, err)
+			httputil.SendBadRequest(ctx, w, err)
 			return
 		}
 

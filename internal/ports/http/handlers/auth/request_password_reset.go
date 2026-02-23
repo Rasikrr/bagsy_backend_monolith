@@ -18,17 +18,17 @@ import (
 // @Produce      json
 // @Param        body  body      requestResetRequest  true  "Номер телефона"
 // @Success      200   {object}  messageResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      403   {object}  util.errorResponse  "Аккаунт неактивен"
-// @Failure      404   {object}  util.errorResponse  "Сотрудник не найден"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      403   {object}  httputil.errorResponse  "Аккаунт неактивен"
+// @Failure      404   {object}  httputil.errorResponse  "Сотрудник не найден"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/auth/password/reset [post]
 func (h *Handler) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req requestResetRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (h *Handler) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 		Phone: req.Phone,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 

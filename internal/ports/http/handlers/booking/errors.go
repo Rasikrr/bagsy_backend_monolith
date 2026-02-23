@@ -11,7 +11,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
 
-var bookingErrors = util.ErrorMap{
+var bookingErrors = httputil.ErrorMap{
 	booking.ErrSlotAlreadyOccupied: {
 		Code:    http.StatusConflict,
 		Message: "slot_already_occupied",

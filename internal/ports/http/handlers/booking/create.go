@@ -17,16 +17,16 @@ import (
 // @Produce      json
 // @Param        body  body      createRequest  true  "Данные для записи"
 // @Success      201   {object}  createResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      409   {object}  util.errorResponse  "Слот уже занят"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      409   {object}  httputil.errorResponse  "Слот уже занят"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/bookings [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req createRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -41,7 +41,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 		Comment:    req.Comment,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, bookingErrors)
+		httputil.SendError(ctx, w, err, bookingErrors)
 		return
 	}
 

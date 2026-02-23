@@ -10,7 +10,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
 
-var locationErrors = util.ErrorMap{
+var locationErrors = httputil.ErrorMap{
 	billing.ErrLimitExceeded:         {Code: http.StatusForbidden, Message: "limit_exceeded"},
 	billing.ErrSubscriptionSuspended: {Code: http.StatusForbidden, Message: "subscription_suspended"},
 	identity.ErrPermissionDenied:     {Code: http.StatusForbidden, Message: "permission_denied"},

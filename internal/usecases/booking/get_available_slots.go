@@ -53,7 +53,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 		return &GetAvailableSlotsOutput{
 			ServiceID:       svc.ID,
 			LocationID:      loc.ID,
-			DurationMinutes: int32(svc.DurationMinutes.Minutes()),
+			DurationMinutes: svc.DurationMinutes.Minutes(),
 		}, nil
 	}
 	log.Debug(ctx, "get available slots: employees found", log.Int("count", len(empServices)))
@@ -144,7 +144,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 	return &GetAvailableSlotsOutput{
 		ServiceID:       svc.ID,
 		LocationID:      loc.ID,
-		DurationMinutes: int32(svc.DurationMinutes.Minutes()),
+		DurationMinutes: svc.DurationMinutes.Minutes(),
 		MasterSlots:     masterSlots,
 	}, nil
 }

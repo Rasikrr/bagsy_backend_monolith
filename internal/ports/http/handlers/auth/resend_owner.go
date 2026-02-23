@@ -17,17 +17,17 @@ import (
 // @Produce      json
 // @Param        body  body      resendRequest    true  "Номер телефона"
 // @Success      200   {object}  resendResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      404   {object}  util.errorResponse  "Pending-запрос не найден"
-// @Failure      429   {object}  util.errorResponse  "Слишком рано для повторной отправки"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      404   {object}  httputil.errorResponse  "Pending-запрос не найден"
+// @Failure      429   {object}  httputil.errorResponse  "Слишком рано для повторной отправки"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/auth/register/resend [post]
 func (h *Handler) resendOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req resendRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -35,7 +35,7 @@ func (h *Handler) resendOwner(w http.ResponseWriter, r *http.Request) {
 		Phone: req.Phone,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 

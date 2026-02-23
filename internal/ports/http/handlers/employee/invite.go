@@ -19,12 +19,12 @@ import (
 // @Security     ApiKeyAuth
 // @Param        body  body      sendInviteRequest  true  "Данные приглашения"
 // @Success      201   {object}  sendInviteResponse
-// @Failure      400   {object}  util.errorResponse  "Невалидные данные (телефон, роль, имя)"
-// @Failure      401   {object}  util.errorResponse  "Не авторизован"
-// @Failure      403   {object}  util.errorResponse  "Нет прав или подписка приостановлена"
-// @Failure      409   {object}  util.errorResponse  "Сотрудник с таким телефоном уже существует"
-// @Failure      429   {object}  util.errorResponse  "Приглашение уже отправлено (cooldown 60с)"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse  "Невалидные данные (телефон, роль, имя)"
+// @Failure      401   {object}  httputil.errorResponse  "Не авторизован"
+// @Failure      403   {object}  httputil.errorResponse  "Нет прав или подписка приостановлена"
+// @Failure      409   {object}  httputil.errorResponse  "Сотрудник с таким телефоном уже существует"
+// @Failure      429   {object}  httputil.errorResponse  "Приглашение уже отправлено (cooldown 60с)"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/employees/invite [post]
 func (h *Handler) sendInvite(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -37,7 +37,7 @@ func (h *Handler) sendInvite(w http.ResponseWriter, r *http.Request) {
 
 	var req sendInviteRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -49,7 +49,7 @@ func (h *Handler) sendInvite(w http.ResponseWriter, r *http.Request) {
 		Role:       req.Role,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, employeeErrors)
+		httputil.SendError(ctx, w, err, employeeErrors)
 		return
 	}
 
@@ -69,18 +69,18 @@ func (h *Handler) sendInvite(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        body  body      confirmInviteRequest  true  "Токен приглашения и пароль"
 // @Success      200   {object}  confirmInviteResponse
-// @Failure      400   {object}  util.errorResponse  "Невалидные данные"
-// @Failure      404   {object}  util.errorResponse  "Токен не найден"
-// @Failure      409   {object}  util.errorResponse  "Телефон уже зарегистрирован"
-// @Failure      410   {object}  util.errorResponse  "Токен истёк"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse  "Невалидные данные"
+// @Failure      404   {object}  httputil.errorResponse  "Токен не найден"
+// @Failure      409   {object}  httputil.errorResponse  "Телефон уже зарегистрирован"
+// @Failure      410   {object}  httputil.errorResponse  "Токен истёк"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/employees/invite/confirm [post]
 func (h *Handler) confirmInvite(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req confirmInviteRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *Handler) confirmInvite(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, employeeErrors)
+		httputil.SendError(ctx, w, err, employeeErrors)
 		return
 	}
 
@@ -109,12 +109,12 @@ func (h *Handler) confirmInvite(w http.ResponseWriter, r *http.Request) {
 // @Security     ApiKeyAuth
 // @Param        body  body      resendInviteRequest  true  "Номер телефона приглашённого"
 // @Success      200   {object}  resendInviteResponse
-// @Failure      400   {object}  util.errorResponse  "Невалидный телефон"
-// @Failure      401   {object}  util.errorResponse  "Не авторизован"
-// @Failure      403   {object}  util.errorResponse  "Нет прав (другая организация)"
-// @Failure      404   {object}  util.errorResponse  "Приглашение не найдено"
-// @Failure      429   {object}  util.errorResponse  "Cooldown ещё не прошёл"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse  "Невалидный телефон"
+// @Failure      401   {object}  httputil.errorResponse  "Не авторизован"
+// @Failure      403   {object}  httputil.errorResponse  "Нет прав (другая организация)"
+// @Failure      404   {object}  httputil.errorResponse  "Приглашение не найдено"
+// @Failure      429   {object}  httputil.errorResponse  "Cooldown ещё не прошёл"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/employees/invite/resend [post]
 func (h *Handler) resendInvite(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -127,7 +127,7 @@ func (h *Handler) resendInvite(w http.ResponseWriter, r *http.Request) {
 
 	var req resendInviteRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *Handler) resendInvite(w http.ResponseWriter, r *http.Request) {
 		Phone: req.Phone,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, employeeErrors)
+		httputil.SendError(ctx, w, err, employeeErrors)
 		return
 	}
 

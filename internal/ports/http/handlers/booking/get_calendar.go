@@ -26,10 +26,10 @@ import (
 // @Param        employee_id        query     string  false  "UUID сотрудника (для Manager и Owner)"
 // @Param        include_cancelled  query     bool    false  "Включить отменённые записи (default: false)"
 // @Success      200  {object}  getCalendarResponse
-// @Failure      400  {object}  util.errorResponse  "Неверные параметры или диапазон > 35 дней"
-// @Failure      401  {object}  util.errorResponse  "Требуется авторизация"
-// @Failure      403  {object}  util.errorResponse  "Подписка приостановлена"
-// @Failure      500  {object}  util.errorResponse
+// @Failure      400  {object}  httputil.errorResponse  "Неверные параметры или диапазон > 35 дней"
+// @Failure      401  {object}  httputil.errorResponse  "Требуется авторизация"
+// @Failure      403  {object}  httputil.errorResponse  "Подписка приостановлена"
+// @Failure      500  {object}  httputil.errorResponse
 // @Security     ApiKeyAuth
 // @Router       /api/v1/bookings/calendar [get]
 func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
@@ -45,13 +45,13 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 
 	from, err := time.Parse("2006-01-02", q.Get("from"))
 	if err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
 	to, err := time.Parse("2006-01-02", q.Get("to"))
 	if err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 		var parsed uuid.UUID
 		parsed, err = uuid.Parse(locID)
 		if err != nil {
-			util.SendBadRequest(ctx, w, err)
+			httputil.SendBadRequest(ctx, w, err)
 			return
 		}
 		input.LocationID = &parsed
@@ -75,7 +75,7 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 		var parsed uuid.UUID
 		parsed, err = uuid.Parse(empID)
 		if err != nil {
-			util.SendBadRequest(ctx, w, err)
+			httputil.SendBadRequest(ctx, w, err)
 			return
 		}
 		input.EmployeeID = &parsed
@@ -83,7 +83,7 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := h.bookingUC.GetCalendar(ctx, orgCtx, input)
 	if err != nil {
-		util.SendError(ctx, w, err, bookingErrors)
+		httputil.SendError(ctx, w, err, bookingErrors)
 		return
 	}
 

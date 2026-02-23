@@ -20,10 +20,10 @@ import (
 // @Param        id    path      string         true  "ID записи"
 // @Param        body  body      cancelRequest  true  "Причина отмены"
 // @Success      204   "Запись отменена"
-// @Failure      400   {object}  util.errorResponse
-// @Failure      403   {object}  util.errorResponse  "Доступ запрещен"
-// @Failure      404   {object}  util.errorResponse  "Запись не найдена"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      403   {object}  httputil.errorResponse  "Доступ запрещен"
+// @Failure      404   {object}  httputil.errorResponse  "Запись не найдена"
+// @Failure      500   {object}  httputil.errorResponse
 // @Security     ApiKeyAuth
 // @Router       /api/v1/bookings/{id}/cancel [post]
 func (h *Handler) cancel(w http.ResponseWriter, r *http.Request) {
@@ -37,18 +37,18 @@ func (h *Handler) cancel(w http.ResponseWriter, r *http.Request) {
 
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
 	var req cancelRequest
 	if err = coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
 	if err = h.bookingUC.Cancel(ctx, orgCtx, id, req.Reason); err != nil {
-		util.SendError(ctx, w, err, bookingErrors)
+		httputil.SendError(ctx, w, err, bookingErrors)
 		return
 	}
 

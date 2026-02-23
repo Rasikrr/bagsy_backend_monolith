@@ -16,20 +16,20 @@ import (
 // @Produce      json
 // @Param        body  body      logoutRequest    true  "Refresh-токен для инвалидации"
 // @Success      204   "Токен успешно инвалидирован"
-// @Failure      400   {object}  util.errorResponse
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/auth/logout [post]
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req logoutRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
 	if err := h.authUseCase.Logout(ctx, req.RefreshToken); err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 

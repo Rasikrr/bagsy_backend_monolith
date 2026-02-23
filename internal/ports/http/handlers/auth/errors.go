@@ -10,7 +10,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
 
-var authErrors = util.ErrorMap{
+var authErrors = httputil.ErrorMap{
 	// auth domain
 	authDomain.ErrOTPExpired:           {Code: http.StatusGone, Message: "otp_expired"},
 	authDomain.ErrOTPInvalid:           {Code: http.StatusUnprocessableEntity, Message: "otp_invalid"},

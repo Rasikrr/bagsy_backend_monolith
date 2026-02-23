@@ -16,22 +16,22 @@ import (
 // @Produce      json
 // @Param        token  path      string  true  "Action-токен"
 // @Success      200    {object}  verifyActionTokenResponse
-// @Failure      400    {object}  util.errorResponse  "Пустой токен"
-// @Failure      404    {object}  util.errorResponse  "Токен не найден"
-// @Failure      500    {object}  util.errorResponse
+// @Failure      400    {object}  httputil.errorResponse  "Пустой токен"
+// @Failure      404    {object}  httputil.errorResponse  "Токен не найден"
+// @Failure      500    {object}  httputil.errorResponse
 // @Router       /api/v1/auth/verify/{token} [get]
 func (h *Handler) verifyActionToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	token := chi.URLParam(r, "token")
 	if token == "" {
-		util.SendBadRequest(ctx, w, nil)
+		httputil.SendBadRequest(ctx, w, nil)
 		return
 	}
 
 	actionToken, err := h.authUseCase.VerifyActionToken(ctx, token)
 	if err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 

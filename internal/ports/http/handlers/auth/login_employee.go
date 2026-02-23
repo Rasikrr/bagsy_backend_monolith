@@ -16,21 +16,21 @@ import (
 // @Produce      json
 // @Param        body  body      loginRequest     true  "Телефон и пароль"
 // @Success      200   {object}  loginResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      401   {object}  util.errorResponse  "Неверный телефон или пароль"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      401   {object}  httputil.errorResponse  "Неверный телефон или пароль"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/auth/login [post]
 func (h *Handler) loginEmployee(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req loginRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 	out, err := h.authUseCase.LoginEmployee(ctx, req.Phone, req.Password)
 	if err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 	coreHTTP.SendData(ctx, w, &loginResponse{

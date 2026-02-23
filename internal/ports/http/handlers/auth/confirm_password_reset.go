@@ -18,16 +18,16 @@ import (
 // @Produce      json
 // @Param        body  body      confirmResetRequest  true  "Токен и новый пароль"
 // @Success      200   {object}  messageResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      401   {object}  util.errorResponse  "Токен не найден или истёк"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      401   {object}  httputil.errorResponse  "Токен не найден или истёк"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/auth/password/reset/confirm [post]
 func (h *Handler) confirmPasswordReset(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req confirmResetRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (h *Handler) confirmPasswordReset(w http.ResponseWriter, r *http.Request) {
 		NewPassword: req.NewPassword,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 

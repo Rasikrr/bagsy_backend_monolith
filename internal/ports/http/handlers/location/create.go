@@ -18,9 +18,9 @@ import (
 // @Produce      json
 // @Param        body  body      createRequest  true  "Данные локации"
 // @Success      201   {object}  createResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      403   {object}  util.errorResponse  "Лимит превышен или подписка приостановлена"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      403   {object}  httputil.errorResponse  "Лимит превышен или подписка приостановлена"
+// @Failure      500   {object}  httputil.errorResponse
 // @Security     ApiKeyAuth
 // @Router       /api/v1/locations [post]
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +34,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 
 	var req createRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 
 	out, err := h.locationUseCase.Create(ctx, orgCtx, input)
 	if err != nil {
-		util.SendError(ctx, w, err, locationErrors)
+		httputil.SendError(ctx, w, err, locationErrors)
 		return
 	}
 

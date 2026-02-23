@@ -10,7 +10,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
 
-var employeeErrors = util.ErrorMap{
+var employeeErrors = httputil.ErrorMap{
 	// action token / invite
 	authDomain.ErrActionTokenNotFound: {Code: http.StatusNotFound, Message: "token_not_found"},
 	authDomain.ErrInviteTokenExpired:  {Code: http.StatusGone, Message: "invite_token_expired"},

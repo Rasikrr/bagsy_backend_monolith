@@ -43,46 +43,13 @@ func generateSlots(
 	for d := truncateToDate(start); !d.After(truncateToDate(end)); d = d.AddDate(0, 0, 1) {
 		dateStr := d.Format("2006-01-02")
 
-		dayLocSlots := locByDate[dateStr]
-		dayEmpSlots := empByDate[dateStr]
-		dayOcc := occByDate[dateStr]
-
-		if len(dayLocSlots) == 0 {
-			continue
-		}
-
-		// 2. Find effective work intervals for the day
-		var workIntervals []interval
-		if scheduleType == location.ScheduleTypeFixed {
-			workIntervals = filterWorkSlotsLoc(d, dayLocSlots)
-		} else {
-			if len(dayEmpSlots) == 0 {
-				continue
-			}
-			workIntervals = findIntersection(
-				filterWorkSlotsLoc(d, dayLocSlots),
-				filterWorkSlotsEmp(d, dayEmpSlots),
-			)
-		}
-
-		if len(workIntervals) == 0 {
-			continue
-		}
-
-		// 3. Subtract Rest intervals
-		restIntervals := filterRestSlotsLoc(d, dayLocSlots)
-		if scheduleType == location.ScheduleTypeMixed {
-			restIntervals = append(restIntervals, filterRestSlotsEmp(d, dayEmpSlots)...)
-		}
-
-		availableIntervals := subtractIntervals(workIntervals, restIntervals)
-
-		// 4. Subtract Occupied Appointments
-		occIntervals := lo.Map(dayOcc, func(a *booking.Appointment, _ int) interval {
-			return interval{start: a.StartAt, end: a.EndAt}
-		})
-
-		finalIntervals := subtractIntervals(availableIntervals, occIntervals)
+		finalIntervals := calculateDailyIntervals(
+			scheduleType,
+			d,
+			locByDate[dateStr],
+			empByDate[dateStr],
+			occByDate[dateStr],
+		)
 
 		// 5. Generate TimeSlots from intervals
 		for _, inv := range finalIntervals {
@@ -97,6 +64,51 @@ func generateSlots(
 	}
 
 	return result
+}
+
+func calculateDailyIntervals(
+	scheduleType location.ScheduleType,
+	date time.Time,
+	dayLocSlots []*schedule.LocationScheduleSlot,
+	dayEmpSlots []*schedule.EmployeeScheduleSlot,
+	dayOcc []*booking.Appointment,
+) []interval {
+	if len(dayLocSlots) == 0 {
+		return nil
+	}
+
+	// 1. Find effective work intervals for the day
+	var workIntervals []interval
+	if scheduleType == location.ScheduleTypeFixed {
+		workIntervals = filterWorkSlotsLoc(date, dayLocSlots)
+	} else {
+		if len(dayEmpSlots) == 0 {
+			return nil
+		}
+		workIntervals = findIntersection(
+			filterWorkSlotsLoc(date, dayLocSlots),
+			filterWorkSlotsEmp(date, dayEmpSlots),
+		)
+	}
+
+	if len(workIntervals) == 0 {
+		return nil
+	}
+
+	// 2. Subtract Rest intervals
+	restIntervals := filterRestSlotsLoc(date, dayLocSlots)
+	if scheduleType == location.ScheduleTypeMixed {
+		restIntervals = append(restIntervals, filterRestSlotsEmp(date, dayEmpSlots)...)
+	}
+
+	availableIntervals := subtractIntervals(workIntervals, restIntervals)
+
+	// 3. Subtract Occupied Appointments
+	occIntervals := lo.Map(dayOcc, func(a *booking.Appointment, _ int) interval {
+		return interval{start: a.StartAt, end: a.EndAt}
+	})
+
+	return subtractIntervals(availableIntervals, occIntervals)
 }
 
 type interval struct {

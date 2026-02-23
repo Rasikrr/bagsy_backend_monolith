@@ -17,16 +17,16 @@ import (
 // @Produce      json
 // @Param        body  body      registerRequest   true  "Данные регистрации"
 // @Success      200   {object}  registerResponse
-// @Failure      400   {object}  util.errorResponse
-// @Failure      409   {object}  util.errorResponse  "Пользователь с таким номером уже существует"
-// @Failure      500   {object}  util.errorResponse
+// @Failure      400   {object}  httputil.errorResponse
+// @Failure      409   {object}  httputil.errorResponse  "Пользователь с таким номером уже существует"
+// @Failure      500   {object}  httputil.errorResponse
 // @Router       /api/v1/auth/register [post]
 func (h *Handler) registerOwner(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req registerRequest
 	if err := coreHTTP.GetData(r, &req); err != nil {
-		util.SendBadRequest(ctx, w, err)
+		httputil.SendBadRequest(ctx, w, err)
 		return
 	}
 	out, err := h.registerOwnerUseCase.Register(ctx, uc.RegisterInput{
@@ -37,7 +37,7 @@ func (h *Handler) registerOwner(w http.ResponseWriter, r *http.Request) {
 		PlanCode:  req.PlanCode,
 	})
 	if err != nil {
-		util.SendError(ctx, w, err, authErrors)
+		httputil.SendError(ctx, w, err, authErrors)
 		return
 	}
 
