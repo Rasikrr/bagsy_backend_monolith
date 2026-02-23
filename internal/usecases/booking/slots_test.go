@@ -508,3 +508,302 @@ func TestSplitIntoSlots(t *testing.T) {
 		assert.Empty(t, slots)
 	})
 }
+
+// ─────────────────────────────────────────────────────────────────
+// combineDateTime / truncateToDate tests
+// ─────────────────────────────────────────────────────────────────
+
+func TestCombineDateTime(t *testing.T) {
+	date := time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
+	// simulate TIME column from PG — date part is zero-value
+	timeOnly := time.Date(0, 1, 1, 14, 30, 0, 0, time.UTC)
+
+	got := combineDateTime(date, timeOnly)
+	assert.Equal(t, time.Date(2026, 3, 10, 14, 30, 0, 0, time.UTC), got)
+}
+
+func TestTruncateToDate(t *testing.T) {
+	ts := time.Date(2026, 3, 10, 15, 45, 30, 123, time.UTC)
+	got := truncateToDate(ts)
+	assert.Equal(t, time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), got)
+}
+
+// ─────────────────────────────────────────────────────────────────
+// validateSlotAvailability tests
+// ─────────────────────────────────────────────────────────────────
+
+// Standard test fixtures:
+//   Location work: 09:00-13:00, 14:00-21:00 (rest 13:00-14:00)
+//   Employee work: 10:00-15:00, 15:30-19:00 (rest 15:00-15:30)
+//   Mixed schedule → effective intervals: 10:00-13:00, 14:00-15:00, 15:30-19:00
+
+func standardLocSlots() []*schedule.LocationScheduleSlot {
+	return []*schedule.LocationScheduleSlot{
+		locWorkSlot(testDate, 9, 0, 13, 0),
+		locRestSlot(testDate, 13, 0, 14, 0),
+		locWorkSlot(testDate, 14, 0, 21, 0),
+	}
+}
+
+func standardEmpSlots() []*schedule.EmployeeScheduleSlot {
+	return []*schedule.EmployeeScheduleSlot{
+		empWorkSlot(testDate, 10, 0, 15, 0),
+		empRestSlot(testDate, 15, 0, 15, 30),
+		empWorkSlot(testDate, 15, 30, 19, 0),
+	}
+}
+
+func TestValidateSlotAvailability_ValidSlot(t *testing.T) {
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 10, 0),
+	)
+	assert.NoError(t, err)
+}
+
+func TestValidateSlotAvailability_ValidSlotEndOfInterval(t *testing.T) {
+	// 30min service at 12:30 → ends 13:00 (exactly at interval end)
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 12, 30),
+	)
+	assert.NoError(t, err)
+}
+
+func TestValidateSlotAvailability_DuringLocationRest(t *testing.T) {
+	// 13:30 falls in location rest 13:00-14:00
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 13, 30),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_DuringEmployeeRest(t *testing.T) {
+	// 15:00 falls in employee rest 15:00-15:30
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 15, 0),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_OverlapsWithRest(t *testing.T) {
+	// 60min service at 14:30 → 14:30-15:30 overlaps employee rest 15:00-15:30
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(60),
+		mustDuration(30),
+		makeTime(testDate, 14, 30),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_BeforeWorkHours(t *testing.T) {
+	// 08:00 is before any work interval
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 8, 0),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_AfterWorkHours(t *testing.T) {
+	// 19:30 is after employee's last interval ends at 19:00
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 19, 30),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_NoScheduleSlots(t *testing.T) {
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		nil,
+		nil,
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 10, 0),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_OccupiedSlot(t *testing.T) {
+	// Slot 10:00-10:30 is occupied
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 10, 30)},
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 10, 0),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_AdjacentToOccupied(t *testing.T) {
+	// 10:00-10:30 is occupied, booking at 10:30 should be fine
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 10, 30)},
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 10, 30),
+	)
+	assert.NoError(t, err)
+}
+
+func TestValidateSlotAvailability_SlotStepMisaligned(t *testing.T) {
+	// step=30min, 10:15 is not aligned to grid (10:00, 10:30, 11:00...)
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 10, 15),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_SlotStepAlignedAfterRest(t *testing.T) {
+	// After employee rest 15:00-15:30, interval starts at 15:30
+	// step=30min: valid starts are 15:30, 16:00, 16:30...
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 16, 0),
+	)
+	assert.NoError(t, err)
+}
+
+func TestValidateSlotAvailability_SlotStepMisalignedAfterRest(t *testing.T) {
+	// After employee rest, interval starts at 15:30
+	// step=30min: 15:45 is not aligned (15:45 - 15:30 = 15min, 15%30 ≠ 0)
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 15, 45),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_FixedScheduleIgnoresEmployee(t *testing.T) {
+	// Fixed schedule — employee slots are irrelevant
+	// Location work: 09:00-13:00, rest: 13:00-14:00, work: 14:00-21:00
+	err := validateSlotAvailability(
+		location.ScheduleTypeFixed,
+		standardLocSlots(),
+		nil,
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 9, 0),
+	)
+	assert.NoError(t, err)
+}
+
+func TestValidateSlotAvailability_FixedScheduleDuringLocRest(t *testing.T) {
+	err := validateSlotAvailability(
+		location.ScheduleTypeFixed,
+		standardLocSlots(),
+		nil,
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 13, 0),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_ServiceSpansTwoIntervals(t *testing.T) {
+	// 60min service at 12:30 → 12:30-13:30, crosses into rest 13:00-14:00
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(60),
+		mustDuration(30),
+		makeTime(testDate, 12, 30),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_SlotStepAlignedAfterOccupied(t *testing.T) {
+	// Occupied: 10:00-10:45. Remaining interval starts at 10:45
+	// step=30min: 10:45 is not on 30-min grid from 10:45... wait, it IS the start
+	// 10:45 - 10:45 = 0, 0%30 = 0 → valid
+	// But 11:00 - 10:45 = 15min, 15%30 ≠ 0 → misaligned from this sub-interval
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 10, 45)},
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 11, 0),
+	)
+	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+}
+
+func TestValidateSlotAvailability_ExactIntervalBoundary(t *testing.T) {
+	// 30min service at 18:30 → 18:30-19:00 (exactly fills end of last interval)
+	err := validateSlotAvailability(
+		location.ScheduleTypeMixed,
+		standardLocSlots(),
+		standardEmpSlots(),
+		nil,
+		mustDuration(30),
+		mustDuration(30),
+		makeTime(testDate, 18, 30),
+	)
+	assert.NoError(t, err)
+}
