@@ -37,7 +37,7 @@ func (r *Repository) Save(ctx context.Context, appointmentID uuid.UUID, o *auth.
 
 	ttl := time.Until(o.ExpiresAt)
 	if ttl <= 0 {
-		return fmt.Errorf("otp already expired")
+		return auth.ErrOTPExpired
 	}
 
 	if err = r.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
@@ -52,7 +52,7 @@ func (r *Repository) GetByAppointmentID(ctx context.Context, appointmentID uuid.
 	data, err := r.client.GetBytes(ctx, key)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, fmt.Errorf("otp not found")
+			return nil, auth.ErrOTPExpired
 		}
 		return nil, fmt.Errorf("get otp from cache: %w", err)
 	}

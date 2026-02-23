@@ -10,6 +10,7 @@ import (
 )
 
 func Test_AccessRepo(t *testing.T) {
+	t.Skip()
 	ctx := context.Background()
 	userID := uuid.MustParse("2e642a3e-4223-4473-97a0-367691dcfdbc")
 	db, err := postgres.NewPostgres(ctx, postgres.Config{

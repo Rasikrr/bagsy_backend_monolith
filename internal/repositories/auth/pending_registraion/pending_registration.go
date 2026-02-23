@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	"github.com/Rasikrr/core/cache/redis"
@@ -37,7 +38,7 @@ func (s *PendingRegistrationStore) Save(ctx context.Context, reg *auth.PendingRe
 
 	ttl := time.Until(reg.ExpiresAt)
 	if ttl <= 0 {
-		return fmt.Errorf("pending registration already expired")
+		return authDomain.ErrRegistrationExpired
 	}
 
 	if err = s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
@@ -51,7 +52,7 @@ func (s *PendingRegistrationStore) Get(ctx context.Context, phone shared.Phone) 
 
 	data, err := s.client.GetBytes(ctx, key)
 	if errors.Is(err, redis.Nil) {
-		return nil, nil
+		return nil, authDomain.ErrRegistrationExpired
 	}
 	if err != nil {
 		return nil, fmt.Errorf("get pending registration: %w", err)

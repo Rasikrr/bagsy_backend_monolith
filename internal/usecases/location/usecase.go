@@ -79,81 +79,23 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 	}
 
 	// 3. Validate location_category exists
-	categoryExists, err := u.categoryRepo.ExistsByID(ctx, input.CategoryID)
-	if err != nil {
-		return nil, fmt.Errorf("check location_category: %w", err)
-	}
-	if !categoryExists {
-		return nil, location.ErrCategoryNotFound
-	}
-
-	// 4. Resolve schedule type (Solo → Fixed, Point+ → from input)
-	scheduleType, err := u.resolveScheduleType(orgCtx.Plan.Code, input.ScheduleType)
-	if err != nil {
+	if err = u.validateCategory(ctx, input.CategoryID); err != nil {
 		return nil, err
 	}
 
-	// 4. Build domain value objects
-	var phone *shared.Phone
-	if input.Phone != nil && *input.Phone != "" {
-		var p shared.Phone
-		p, err = shared.NewPhone(*input.Phone)
-		if err != nil {
-			return nil, err
-		}
-		phone = &p
-	}
-
-	var addr *location.Address
-	if input.Address != nil {
-		var a location.Address
-		a, err = location.NewAddress(
-			input.Address.City,
-			input.Address.Street,
-			input.Address.Building,
-			input.Address.Details,
-		)
-		if err != nil {
-			return nil, err
-		}
-		addr = &a
-	}
-
-	var coords *location.Coordinates
-	if input.Latitude != nil && input.Longitude != nil {
-		var c location.Coordinates
-		c, err = location.NewCoordinates(*input.Latitude, *input.Longitude)
-		if err != nil {
-			return nil, err
-		}
-		coords = &c
-	}
-
-	slotDuration, err := shared.NewDuration(input.SlotDurationMinutes)
+	// 4. Resolve parameters
+	params, err := u.resolveCreateParams(orgCtx, input)
 	if err != nil {
 		return nil, err
 	}
 
 	// 5. Create aggregate
-	loc, err := location.NewLocation(location.CreateLocationParams{
-		OrganizationID:      orgCtx.Organization.ID,
-		CategoryID:          input.CategoryID,
-		Name:                input.Name,
-		Description:         input.Description,
-		Phone:               phone,
-		Address:             addr,
-		Coordinates:         coords,
-		ScheduleType:        scheduleType,
-		SlotDurationMinutes: slotDuration,
-	})
+	loc, err := location.NewLocation(*params)
 	if err != nil {
 		return nil, err
 	}
 
-	var (
-		promptOrgProfile bool
-	)
-
+	var promptOrgProfile bool
 	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
 		// 6. Persist
 		if e := u.locationRepo.Save(txCtx, loc); e != nil {
@@ -161,7 +103,6 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 		}
 
 		// 7. Determine if frontend should prompt org profile setup
-		// count was before creation, so count==1 means this is the second location
 		if count >= 1 {
 			org, e := u.orgRepo.GetByID(txCtx, orgCtx.Organization.ID)
 			if e != nil {
@@ -169,19 +110,11 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 			}
 			promptOrgProfile = !org.IsProfileComplete()
 		}
-		// 8. If this is first location of the owner, transfer him to this new location
+
+		// 8. Handle first location owner transfer
 		if count == 0 {
-			employee, e := u.employeeRepository.GetByID(txCtx, orgCtx.Employee.ID)
-			if e != nil {
-				return fmt.Errorf("get employee: %w", e)
-			}
-			e = employee.Transfer(loc.ID)
-			if e != nil {
-				return fmt.Errorf("transfer employee: %w", e)
-			}
-			e = u.employeeRepository.Save(txCtx, employee)
-			if e != nil {
-				return fmt.Errorf("transfer employee: %w", e)
+			if e := u.transferOwnerToFirstLocation(txCtx, orgCtx.Employee.ID, loc.ID); e != nil {
+				return e
 			}
 		}
 		return nil
@@ -194,6 +127,86 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 		ID:               loc.ID,
 		PromptOrgProfile: promptOrgProfile,
 	}, nil
+}
+
+func (u *UseCase) validateCategory(ctx context.Context, categoryID uuid.UUID) error {
+	exists, err := u.categoryRepo.ExistsByID(ctx, categoryID)
+	if err != nil {
+		return fmt.Errorf("check location_category: %w", err)
+	}
+	if !exists {
+		return location.ErrCategoryNotFound
+	}
+	return nil
+}
+
+func (u *UseCase) resolveCreateParams(orgCtx *access.OrgContext, input CreateLocationInput) (*location.CreateLocationParams, error) {
+	scheduleType, err := u.resolveScheduleType(orgCtx.Plan.Code, input.ScheduleType)
+	if err != nil {
+		return nil, err
+	}
+
+	slotDuration, err := shared.NewDuration(input.SlotDurationMinutes)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &location.CreateLocationParams{
+		OrganizationID:      orgCtx.Organization.ID,
+		CategoryID:          input.CategoryID,
+		Name:                input.Name,
+		Description:         input.Description,
+		ScheduleType:        scheduleType,
+		SlotDurationMinutes: slotDuration,
+	}
+
+	if input.Phone != nil && *input.Phone != "" {
+		var p shared.Phone
+		p, err = shared.NewPhone(*input.Phone)
+		if err != nil {
+			return nil, err
+		}
+		params.Phone = &p
+	}
+
+	if input.Address != nil {
+		var a location.Address
+		a, err = location.NewAddress(
+			input.Address.City,
+			input.Address.Street,
+			input.Address.Building,
+			input.Address.Details,
+		)
+		if err != nil {
+			return nil, err
+		}
+		params.Address = &a
+	}
+
+	if input.Latitude != nil && input.Longitude != nil {
+		var c location.Coordinates
+		c, err = location.NewCoordinates(*input.Latitude, *input.Longitude)
+		if err != nil {
+			return nil, err
+		}
+		params.Coordinates = &c
+	}
+
+	return params, nil
+}
+
+func (u *UseCase) transferOwnerToFirstLocation(ctx context.Context, employeeID, locationID uuid.UUID) error {
+	employee, err := u.employeeRepository.GetByID(ctx, employeeID)
+	if err != nil {
+		return fmt.Errorf("get employee: %w", err)
+	}
+	if err = employee.Transfer(locationID); err != nil {
+		return fmt.Errorf("transfer employee: %w", err)
+	}
+	if err = u.employeeRepository.Save(ctx, employee); err != nil {
+		return fmt.Errorf("save employee: %w", err)
+	}
+	return nil
 }
 
 // resolveScheduleType определяет schedule_type для создаваемой локации.

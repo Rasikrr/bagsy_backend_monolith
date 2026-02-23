@@ -34,7 +34,7 @@ func (s *Store) Save(ctx context.Context, token *authDomain.ActionToken) error {
 
 	ttl := time.Until(token.ExpiresAt)
 	if ttl <= 0 {
-		return fmt.Errorf("action token already expired")
+		return authDomain.ErrOTPExpired
 	}
 
 	if err = s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {

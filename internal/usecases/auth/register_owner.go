@@ -178,25 +178,9 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 		return nil, err
 	}
 
-	reg, err := u.pendingRequestsStore.Get(ctx, phone)
+	reg, err := u.getAndValidatePending(ctx, phone, req.Code)
 	if err != nil {
-		return nil, errors.Wrap(err, "get pending registration")
-	}
-	if reg == nil {
-		return nil, authDomain.ErrRegistrationExpired
-	}
-
-	if reg.Attempts >= reg.MaxAttempts {
-		return nil, authDomain.ErrTooManyAttempts
-	}
-
-	if reg.OTPCode != req.Code {
-		reg.Attempts++
-		_ = u.pendingRequestsStore.Save(ctx, reg)
-		if reg.Attempts >= reg.MaxAttempts {
-			return nil, authDomain.ErrTooManyAttempts
-		}
-		return nil, authDomain.ErrOTPInvalid
+		return nil, err
 	}
 
 	plan, err := u.plansRepo.FindActiveByCode(ctx, reg.PlanCode)
@@ -219,35 +203,15 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 			return authDomain.ErrPhoneAlreadyExists
 		}
 
-		// 1. Create stub organization.
-		org, e := organization.NewStubOrganization()
+		orgID, e = u.createOrganization(txCtx)
 		if e != nil {
-			return errors.Wrap(e, "create organization")
+			return e
 		}
-		if e = u.organizationRepo.Save(txCtx, org); e != nil {
-			return errors.Wrap(e, "save organization")
-		}
-		orgID = org.ID
 
-		employeePermissions := identity.NewPermissions(true, true)
-
-		// 2. Create employee (owner).
-		emp, e := identity.NewOwnerEmployee(identity.CreateOwnerParams{
-			Phone:          phone,
-			FirstName:      reg.FirstName,
-			LastName:       reg.LastName,
-			OrganizationID: orgID,
-			Permissions:    employeePermissions,
-		})
+		employeeID, e = u.createOwner(txCtx, phone, reg, orgID)
 		if e != nil {
-			return errors.Wrap(e, "create employee")
+			return e
 		}
-		emp.SetPassword(reg.PasswordHash)
-
-		if e = u.employeesRepo.Save(txCtx, emp); e != nil {
-			return errors.Wrap(e, "save employee")
-		}
-		employeeID = emp.ID
 
 		// 3. Create trial subscription.
 		sub := billing.NewTrialSubscription(orgID, plan.ID, billing.DefaultTrialDays)
@@ -288,6 +252,63 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 		AccessToken:  access,
 		RefreshToken: refresh,
 	}, nil
+}
+
+func (u *RegisterOwnerUseCase) getAndValidatePending(ctx context.Context, phone shared.Phone, code string) (*PendingRegistration, error) {
+	reg, err := u.pendingRequestsStore.Get(ctx, phone)
+	if err != nil {
+		return nil, errors.Wrap(err, "get pending registration")
+	}
+	if reg == nil {
+		return nil, authDomain.ErrRegistrationExpired
+	}
+
+	if reg.Attempts >= reg.MaxAttempts {
+		return nil, authDomain.ErrTooManyAttempts
+	}
+
+	if reg.OTPCode != code {
+		reg.Attempts++
+		_ = u.pendingRequestsStore.Save(ctx, reg)
+		if reg.Attempts >= reg.MaxAttempts {
+			return nil, authDomain.ErrTooManyAttempts
+		}
+		return nil, authDomain.ErrOTPInvalid
+	}
+
+	return reg, nil
+}
+
+func (u *RegisterOwnerUseCase) createOrganization(ctx context.Context) (uuid.UUID, error) {
+	org, err := organization.NewStubOrganization()
+	if err != nil {
+		return uuid.Nil, errors.Wrap(err, "create organization")
+	}
+	if err = u.organizationRepo.Save(ctx, org); err != nil {
+		return uuid.Nil, errors.Wrap(err, "save organization")
+	}
+	return org.ID, nil
+}
+
+func (u *RegisterOwnerUseCase) createOwner(ctx context.Context, phone shared.Phone, reg *PendingRegistration, orgID uuid.UUID) (uuid.UUID, error) {
+	employeePermissions := identity.NewPermissions(true, true)
+
+	emp, err := identity.NewOwnerEmployee(identity.CreateOwnerParams{
+		Phone:          phone,
+		FirstName:      reg.FirstName,
+		LastName:       reg.LastName,
+		OrganizationID: orgID,
+		Permissions:    employeePermissions,
+	})
+	if err != nil {
+		return uuid.Nil, errors.Wrap(err, "create employee")
+	}
+	emp.SetPassword(reg.PasswordHash)
+
+	if err = u.employeesRepo.Save(ctx, emp); err != nil {
+		return uuid.Nil, errors.Wrap(err, "save employee")
+	}
+	return emp.ID, nil
 }
 
 func (u *RegisterOwnerUseCase) Resend(ctx context.Context, req ResendInput) (*ResendOutput, error) {

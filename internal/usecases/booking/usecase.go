@@ -315,7 +315,7 @@ func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code str
 	// 2. Get and Verify OTP linked to AppointmentID
 	otp, err := u.otpRepo.GetByAppointmentID(ctx, appointmentID)
 	if err != nil {
-		return errors.New("invalid or expired code")
+		return fmt.Errorf("get otp: %w", err)
 	}
 
 	if err = otp.Verify(code); err != nil {
