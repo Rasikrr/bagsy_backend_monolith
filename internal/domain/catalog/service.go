@@ -21,6 +21,7 @@ type Service struct {
 	DurationMinutes shared.Duration
 	SortOrder       int
 	Active          bool
+	Color           Color
 	CreatedAt       time.Time
 	UpdatedAt       *time.Time
 	DeletedAt       *time.Time
@@ -31,6 +32,7 @@ type CreateServiceParams struct {
 	CategoryID      uuid.UUID
 	Name            string
 	Description     *string
+	Color           Color
 	DurationMinutes shared.Duration
 }
 
@@ -46,6 +48,7 @@ func NewService(params CreateServiceParams) (*Service, error) {
 		Name:            strings.TrimSpace(params.Name),
 		Description:     params.Description,
 		DurationMinutes: params.DurationMinutes,
+		Color:           params.Color,
 		Active:          true,
 		CreatedAt:       time.Now(),
 	}, nil
@@ -84,6 +87,15 @@ func (s *Service) ChangeCategory(categoryID uuid.UUID) error {
 	s.CategoryID = categoryID
 	s.touch()
 
+	return nil
+}
+
+func (s *Service) ChangeColor(color Color) error {
+	if s.IsDeleted() {
+		return ErrServiceDeleted
+	}
+	s.Color = color
+	s.touch()
 	return nil
 }
 

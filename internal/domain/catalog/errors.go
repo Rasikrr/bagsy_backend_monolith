@@ -7,6 +7,7 @@ var (
 	ErrEmployeeServiceNotFound = errors.New("employee service not found")
 	ErrServiceDeleted          = errors.New("service deleted")
 	ErrServiceNameRequired     = errors.New("service name required")
+	ErrServiceInvalidColor     = errors.New("service invalid color")
 )
 
 var (

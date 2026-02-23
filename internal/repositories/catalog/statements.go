@@ -3,7 +3,7 @@ package catalog
 const (
 	getServiceByID = `
 		SELECT id, location_id, category_id, name, description, duration_minutes,
-		       sort_order, active, created_at, updated_at, deleted_at
+		       color, sort_order, active, created_at, updated_at, deleted_at
 		FROM services
 		WHERE id = $1 AND deleted_at IS NULL;
 	`

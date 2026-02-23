@@ -318,6 +318,7 @@ CREATE TABLE services (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     duration_minutes INT NOT NULL,
+    color VARCHAR(50) NOT NULL DEFAULT 'gray',
     sort_order INT DEFAULT 0,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),

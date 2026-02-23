@@ -16,6 +16,7 @@ type serviceModel struct {
 	Name            string     `db:"name"`
 	Description     *string    `db:"description"`
 	DurationMinutes int        `db:"duration_minutes"`
+	Color           string     `db:"color"`
 	SortOrder       int        `db:"sort_order"`
 	Active          bool       `db:"active"`
 	CreatedAt       time.Time  `db:"created_at"`
@@ -29,6 +30,11 @@ func (m *serviceModel) toDomain() (*catalog.Service, error) {
 		return nil, err
 	}
 
+	color, err := catalog.ParseColor(m.Color)
+	if err != nil {
+		return nil, err
+	}
+
 	return &catalog.Service{
 		ID:              m.ID,
 		LocationID:      m.LocationID,
@@ -36,6 +42,7 @@ func (m *serviceModel) toDomain() (*catalog.Service, error) {
 		Name:            m.Name,
 		Description:     m.Description,
 		DurationMinutes: duration,
+		Color:           color,
 		SortOrder:       m.SortOrder,
 		Active:          m.Active,
 		CreatedAt:       m.CreatedAt,
