@@ -14,6 +14,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
+	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 )
 
@@ -113,8 +114,17 @@ func NewUseCase(
 }
 
 func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*CreateBookingOutput, error) {
+	log.Info(ctx, "create booking: started",
+		log.String("phone", input.Phone),
+		log.String("location_id", input.LocationID.String()),
+		log.String("service_id", input.ServiceID.String()),
+		log.String("employee_id", input.EmployeeID.String()),
+		log.Time("start_at", input.StartAt),
+	)
+
 	phone, err := shared.NewPhone(input.Phone)
 	if err != nil {
+		log.Warn(ctx, "create booking: invalid phone", log.Err(err))
 		return nil, err
 	}
 
@@ -136,6 +146,9 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 			if !errors.Is(custErr, identity.ErrCustomerNotFound) {
 				return custErr
 			}
+			log.Debug(ctx, "create booking: customer not found, creating new",
+				log.String("phone", phone.String()),
+			)
 			customer, custErr = identity.NewCustomer(phone, input.FirstName, input.LastName)
 			if custErr != nil {
 				return custErr
@@ -143,6 +156,9 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 			if err := u.customerRepo.Save(txCtx, customer); err != nil {
 				return fmt.Errorf("save customer: %w", err)
 			}
+			log.Debug(ctx, "create booking: customer created", log.String("customer_id", customer.ID.String()))
+		} else {
+			log.Debug(ctx, "create booking: existing customer found", log.String("customer_id", customer.ID.String()))
 		}
 
 		// 2. Validate Service and get Duration
@@ -150,11 +166,29 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		if err != nil {
 			return fmt.Errorf("get service: %w", err)
 		}
+		log.Debug(ctx, "create booking: service loaded",
+			log.String("service", svc.Name),
+			log.Int("duration_min", svc.DurationMinutes.Minutes()),
+		)
 
 		// 3. Get EmployeeService for Price
 		empSvc, err := u.empServiceRepo.GetByEmployeeAndService(txCtx, input.EmployeeID, input.ServiceID)
 		if err != nil {
 			return fmt.Errorf("get employee service: %w", err)
+		}
+		log.Debug(ctx, "create booking: employee service loaded",
+			log.String("price", empSvc.Price.Amount().String()),
+		)
+
+		employee, err := u.employeeRepo.GetByID(txCtx, empSvc.EmployeeID)
+		if err != nil {
+			return fmt.Errorf("get employee by id: %w", err)
+		}
+		if employee.Phone == phone {
+			log.Warn(ctx, "create booking: self-booking attempt",
+				log.String("employee_id", employee.ID.String()),
+			)
+			return booking.ErrCannotBookSelf
 		}
 
 		// 4. Validate Location
@@ -162,6 +196,7 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		if err != nil {
 			return fmt.Errorf("get location: %w", err)
 		}
+		log.Debug(ctx, "create booking: location loaded", log.String("location", loc.Name))
 
 		// 5. Create Appointment Aggregate
 		appt, err = booking.NewAppointment(booking.CreateAppointmentParams{
@@ -178,28 +213,42 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		if err != nil {
 			return fmt.Errorf("new appointment: %w", err)
 		}
+		log.Debug(ctx, "create booking: appointment created",
+			log.String("appointment_id", appt.ID.String()),
+			log.Time("start_at", appt.StartAt),
+			log.Time("end_at", appt.EndAt),
+		)
 
 		// 6. Save Appointment
 		if err := u.appointmentRepo.Save(txCtx, appt); err != nil {
 			return fmt.Errorf("save appointment: %w", err)
 		}
+		log.Debug(ctx, "create booking: appointment saved")
 
 		// 7. Save OTP linked to AppointmentID
 		if err := u.otpRepo.Save(txCtx, appt.ID, otp); err != nil {
 			return fmt.Errorf("save otp: %w", err)
 		}
+		log.Debug(ctx, "create booking: otp saved")
 
 		return nil
 	})
 
 	if err != nil {
+		log.Error(ctx, "create booking: tx failed", log.Err(err))
 		return nil, err
 	}
 
 	// 8. Send Notification
 	if err := u.otpSender.SendBookingConfirmationCode(ctx, phone, otp.Code); err != nil {
+		log.Error(ctx, "create booking: failed to send otp", log.Err(err))
 		return nil, fmt.Errorf("send notification: %w", err)
 	}
+
+	log.Info(ctx, "create booking: completed",
+		log.String("appointment_id", appt.ID.String()),
+		log.String("customer_id", customer.ID.String()),
+	)
 
 	return &CreateBookingOutput{ID: appt.ID}, nil
 }

@@ -75,7 +75,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*booking.Appoin
 
 func (r *Repository) GetOccupiedSlots(ctx context.Context, locationID uuid.UUID, employeeIDs []uuid.UUID, start, end time.Time) ([]*booking.Appointment, error) {
 	var models []appointmentModel
-	if err := pgxscan.Select(ctx, r.db, &models, getOccupiedSlots, locationID, employeeIDs, start, end); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getOccupiedSlots, locationID, uuidStrings(employeeIDs), start, end); err != nil {
 		return nil, fmt.Errorf("get occupied slots: %w", err)
 	}
 
@@ -89,4 +89,12 @@ func (r *Repository) GetOccupiedSlots(ctx context.Context, locationID uuid.UUID,
 	}
 
 	return appointments, nil
+}
+
+func uuidStrings(ids []uuid.UUID) []string {
+	s := make([]string, len(ids))
+	for i, id := range ids {
+		s[i] = id.String()
+	}
+	return s
 }

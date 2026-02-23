@@ -15,8 +15,5 @@ INSERT INTO location_categories (slug, name, sort_order) VALUES
 
 -- +goose Down
 -- +goose StatementBegin
-DELETE FROM location_categories WHERE slug IN (
-    'beauty-salon', 'barbershop', 'nail-studio', 'spa-wellness', 'dental-clinic',
-    'medical-center', 'fitness-club', 'car-service', 'pet-grooming', 'educational-center'
-);
+TRUNCATE location_categories CASCADE;
 -- +goose StatementEnd

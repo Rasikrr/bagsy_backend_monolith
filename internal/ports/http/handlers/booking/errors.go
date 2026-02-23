@@ -43,4 +43,8 @@ var bookingErrors = util.ErrorMap{
 		Code:    http.StatusNotFound,
 		Message: "employee_not_found",
 	},
+	booking.ErrCannotBookSelf: {
+		Code:    http.StatusForbidden,
+		Message: "cannot_book_self",
+	},
 }

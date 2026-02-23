@@ -54,14 +54,14 @@ func generateSlots(
 		// 2. Find effective work intervals for the day
 		var workIntervals []interval
 		if scheduleType == location.ScheduleTypeFixed {
-			workIntervals = filterWorkSlotsLoc(dayLocSlots)
+			workIntervals = filterWorkSlotsLoc(d, dayLocSlots)
 		} else {
 			if len(dayEmpSlots) == 0 {
 				continue
 			}
 			workIntervals = findIntersection(
-				filterWorkSlotsLoc(dayLocSlots),
-				filterWorkSlotsEmp(dayEmpSlots),
+				filterWorkSlotsLoc(d, dayLocSlots),
+				filterWorkSlotsEmp(d, dayEmpSlots),
 			)
 		}
 
@@ -70,9 +70,9 @@ func generateSlots(
 		}
 
 		// 3. Subtract Rest intervals
-		restIntervals := filterRestSlotsLoc(dayLocSlots)
+		restIntervals := filterRestSlotsLoc(d, dayLocSlots)
 		if scheduleType == location.ScheduleTypeMixed {
-			restIntervals = append(restIntervals, filterRestSlotsEmp(dayEmpSlots)...)
+			restIntervals = append(restIntervals, filterRestSlotsEmp(d, dayEmpSlots)...)
 		}
 
 		availableIntervals := subtractIntervals(workIntervals, restIntervals)
@@ -104,44 +104,49 @@ type interval struct {
 	end   time.Time
 }
 
-func filterWorkSlotsLoc(slots []*schedule.LocationScheduleSlot) []interval {
+func filterWorkSlotsLoc(date time.Time, slots []*schedule.LocationScheduleSlot) []interval {
 	var res []interval
 	for _, s := range slots {
 		if s.IsWorkSlot() {
-			res = append(res, interval{start: s.StartTime, end: s.EndTime})
+			res = append(res, interval{start: combineDateTime(date, s.StartTime), end: combineDateTime(date, s.EndTime)})
 		}
 	}
 	return res
 }
 
-func filterWorkSlotsEmp(slots []*schedule.EmployeeScheduleSlot) []interval {
+func filterWorkSlotsEmp(date time.Time, slots []*schedule.EmployeeScheduleSlot) []interval {
 	var res []interval
 	for _, s := range slots {
 		if s.IsWorkSlot() {
-			res = append(res, interval{start: s.StartTime, end: s.EndTime})
+			res = append(res, interval{start: combineDateTime(date, s.StartTime), end: combineDateTime(date, s.EndTime)})
 		}
 	}
 	return res
 }
 
-func filterRestSlotsLoc(slots []*schedule.LocationScheduleSlot) []interval {
+func filterRestSlotsLoc(date time.Time, slots []*schedule.LocationScheduleSlot) []interval {
 	var res []interval
 	for _, s := range slots {
 		if s.IsRestSlot() {
-			res = append(res, interval{start: s.StartTime, end: s.EndTime})
+			res = append(res, interval{start: combineDateTime(date, s.StartTime), end: combineDateTime(date, s.EndTime)})
 		}
 	}
 	return res
 }
 
-func filterRestSlotsEmp(slots []*schedule.EmployeeScheduleSlot) []interval {
+func filterRestSlotsEmp(date time.Time, slots []*schedule.EmployeeScheduleSlot) []interval {
 	var res []interval
 	for _, s := range slots {
 		if s.IsRestSlot() {
-			res = append(res, interval{start: s.StartTime, end: s.EndTime})
+			res = append(res, interval{start: combineDateTime(date, s.StartTime), end: combineDateTime(date, s.EndTime)})
 		}
 	}
 	return res
+}
+
+// combineDateTime берёт дату из date и время из t.
+func combineDateTime(date, t time.Time) time.Time {
+	return time.Date(date.Year(), date.Month(), date.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.UTC)
 }
 
 // location: 10:00 - 18:00 (break 13:00 - 14:00) = 10:00 - 13:00, 14:00 - 18:00

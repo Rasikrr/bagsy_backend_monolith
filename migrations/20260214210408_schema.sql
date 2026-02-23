@@ -121,7 +121,7 @@ CREATE TABLE location_categories (
 CREATE TABLE locations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES location_categories(id) ON DELETE SET NULL,
+    category_id UUID NOT NULL REFERENCES location_categories(id) ON DELETE CASCADE,
 
     name VARCHAR(255) NOT NULL,
     description TEXT,

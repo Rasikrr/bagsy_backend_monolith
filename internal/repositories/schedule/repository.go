@@ -9,6 +9,7 @@ import (
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Repository struct {
@@ -39,7 +40,7 @@ func (r *Repository) GetLocationSlots(ctx context.Context, locationID uuid.UUID,
 
 func (r *Repository) GetEmployeesSlots(ctx context.Context, employeeIDs []uuid.UUID, start, end time.Time) (map[uuid.UUID][]*schedule.EmployeeScheduleSlot, error) {
 	var models []employeeSlotModel
-	if err := pgxscan.Select(ctx, r.db, &models, getEmployeesSlots, employeeIDs, start, end); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getEmployeesSlots, pq.Array(employeeIDs), start, end); err != nil {
 		return nil, fmt.Errorf("get employee schedule slots: %w", err)
 	}
 

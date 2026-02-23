@@ -9,6 +9,7 @@ import (
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Repository struct {
@@ -34,7 +35,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*identity.Emplo
 
 func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*identity.Employee, error) {
 	var models []model
-	if err := pgxscan.Select(ctx, r.db, &models, getByIDs, ids); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getByIDs, pq.Array(ids)); err != nil {
 		return nil, fmt.Errorf("select employees by ids: %w", err)
 	}
 
@@ -99,4 +100,12 @@ func (r *Repository) CountByOrganization(ctx context.Context, orgID uuid.UUID) (
 		return 0, fmt.Errorf("count employee by organization: %w", err)
 	}
 	return count, nil
+}
+
+func uuidStrings(ids []uuid.UUID) []string {
+	s := make([]string, len(ids))
+	for i, id := range ids {
+		s[i] = id.String()
+	}
+	return s
 }
