@@ -13,6 +13,7 @@ type model struct {
 	Phone     string     `db:"phone"`
 	FirstName string     `db:"first_name"`
 	LastName  *string    `db:"last_name"`
+	FullName  string     `db:"full_name"`
 	BirthDate *time.Time `db:"birth_date"`
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`

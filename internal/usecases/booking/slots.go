@@ -220,3 +220,56 @@ func splitIntoSlots(inv interval, duration, step time.Duration) []TimeSlot {
 func truncateToDate(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
+
+// validateSlotAvailability проверяет, что интервал [startAt, startAt+duration]
+// попадает в доступное рабочее время с учётом расписания и занятых записей.
+func validateSlotAvailability(
+	scheduleType location.ScheduleType,
+	locSlots []*schedule.LocationScheduleSlot,
+	empSlots []*schedule.EmployeeScheduleSlot,
+	occupied []*booking.Appointment,
+	serviceDuration shared.Duration,
+	startAt time.Time,
+) error {
+	day := truncateToDate(startAt)
+	endAt := startAt.Add(serviceDuration.AsDuration())
+
+	// 1. Build work intervals
+	var workIntervals []interval
+	if scheduleType == location.ScheduleTypeFixed {
+		workIntervals = filterWorkSlotsLoc(day, locSlots)
+	} else {
+		workIntervals = findIntersection(
+			filterWorkSlotsLoc(day, locSlots),
+			filterWorkSlotsEmp(day, empSlots),
+		)
+	}
+
+	if len(workIntervals) == 0 {
+		return booking.ErrSlotNotAvailable
+	}
+
+	// 2. Subtract rest intervals
+	restIntervals := filterRestSlotsLoc(day, locSlots)
+	if scheduleType == location.ScheduleTypeMixed {
+		restIntervals = append(restIntervals, filterRestSlotsEmp(day, empSlots)...)
+	}
+
+	available := subtractIntervals(workIntervals, restIntervals)
+
+	// 3. Subtract occupied appointments
+	occIntervals := lo.Map(occupied, func(a *booking.Appointment, _ int) interval {
+		return interval{start: a.StartAt, end: a.EndAt}
+	})
+
+	available = subtractIntervals(available, occIntervals)
+
+	// 4. Check that [startAt, endAt] fits entirely within one available interval
+	for _, inv := range available {
+		if !startAt.Before(inv.start) && !endAt.After(inv.end) {
+			return nil
+		}
+	}
+
+	return booking.ErrSlotNotAvailable
+}

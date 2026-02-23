@@ -33,6 +33,7 @@ type statusHistoryModel struct {
 	AppointmentID uuid.UUID  `db:"appointment_id"`
 	FromStatus    *string    `db:"from_status"`
 	ToStatus      string     `db:"to_status"`
+	Payload       []byte     `db:"payload"`
 	ChangedBy     *uuid.UUID `db:"changed_by"`
 	Reason        *string    `db:"reason"`
 	CreatedAt     time.Time  `db:"created_at"`

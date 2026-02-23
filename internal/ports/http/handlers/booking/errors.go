@@ -47,4 +47,8 @@ var bookingErrors = util.ErrorMap{
 		Code:    http.StatusForbidden,
 		Message: "cannot_book_self",
 	},
+	booking.ErrSlotNotAvailable: {
+		Code:    http.StatusConflict,
+		Message: "slot_not_available",
+	},
 }

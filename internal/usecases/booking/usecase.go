@@ -198,6 +198,39 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		}
 		log.Debug(ctx, "create booking: location loaded", log.String("location", loc.Name))
 
+		// 4a. Validate slot availability
+		day := truncateToDate(input.StartAt)
+		locSlots, err := u.scheduleRepo.GetLocationSlots(txCtx, input.LocationID, day, day)
+		if err != nil {
+			return fmt.Errorf("get location slots: %w", err)
+		}
+
+		empSlotsByID, err := u.scheduleRepo.GetEmployeesSlots(txCtx, []uuid.UUID{input.EmployeeID}, day, day)
+		if err != nil {
+			return fmt.Errorf("get employee slots: %w", err)
+		}
+
+		occupiedAppts, err := u.appointmentRepo.GetOccupiedSlots(txCtx, input.LocationID, []uuid.UUID{input.EmployeeID}, day, day.AddDate(0, 0, 1))
+		if err != nil {
+			return fmt.Errorf("get occupied slots: %w", err)
+		}
+
+		if err := validateSlotAvailability(
+			loc.ScheduleType,
+			locSlots,
+			empSlotsByID[input.EmployeeID],
+			occupiedAppts,
+			svc.DurationMinutes,
+			input.StartAt,
+		); err != nil {
+			log.Warn(ctx, "create booking: slot not available",
+				log.Time("start_at", input.StartAt),
+				log.String("schedule_type", loc.ScheduleType.String()),
+			)
+			return err
+		}
+		log.Debug(ctx, "create booking: slot availability validated")
+
 		// 5. Create Appointment Aggregate
 		appt, err = booking.NewAppointment(booking.CreateAppointmentParams{
 			OrganizationID:  loc.OrganizationID,
