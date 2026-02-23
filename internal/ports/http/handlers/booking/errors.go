@@ -3,6 +3,7 @@ package booking
 import (
 	"net/http"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
@@ -50,5 +51,13 @@ var bookingErrors = util.ErrorMap{
 	booking.ErrSlotNotAvailable: {
 		Code:    http.StatusConflict,
 		Message: "slot_not_available",
+	},
+	billing.ErrSubscriptionSuspended: {
+		Code:    http.StatusForbidden,
+		Message: "organization_suspended",
+	},
+	billing.ErrSubscriptionNotFound: {
+		Code:    http.StatusForbidden,
+		Message: "organization_suspended",
 	},
 }

@@ -1,6 +1,17 @@
 package subscription
 
 const (
+	getByOrganizationID = `
+		SELECT id, organization_id, plan_id, status, billing_cycle,
+			recurring_amount,
+			current_period_start, current_period_end, next_billing_at,
+			next_retry_at, retry_count,
+			suspended_at, canceled_at, data_delete_at,
+			created_at, updated_at
+		FROM subscriptions
+		WHERE organization_id = $1;
+	`
+
 	saveSubscription = `
 		INSERT INTO subscriptions (
 			id, organization_id, plan_id, status, billing_cycle,

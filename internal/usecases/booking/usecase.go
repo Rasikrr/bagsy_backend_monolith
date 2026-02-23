@@ -8,6 +8,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
@@ -48,6 +49,10 @@ type locationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error)
 }
 
+type subscriptionRepository interface {
+	GetByOrganizationID(ctx context.Context, orgID uuid.UUID) (*billing.Subscription, error)
+}
+
 type scheduleRepository interface {
 	GetLocationSlots(ctx context.Context, locationID uuid.UUID, start, end time.Time) ([]*schedule.LocationScheduleSlot, error)
 	GetEmployeesSlots(ctx context.Context, employeeIDs []uuid.UUID, start, end time.Time) (map[uuid.UUID][]*schedule.EmployeeScheduleSlot, error)
@@ -72,17 +77,18 @@ type txManager interface {
 }
 
 type UseCase struct {
-	appointmentRepo appointmentRepository
-	customerRepo    customerRepository
-	employeeRepo    employeeRepository
-	serviceRepo     serviceRepository
-	empServiceRepo  employeeServiceRepository
-	locationRepo    locationRepository
-	scheduleRepo    scheduleRepository
-	otpRepo         otpRepository
-	otpSender       otpSender
-	policy          policyProvider
-	txManager       txManager
+	appointmentRepo  appointmentRepository
+	customerRepo     customerRepository
+	employeeRepo     employeeRepository
+	serviceRepo      serviceRepository
+	empServiceRepo   employeeServiceRepository
+	locationRepo     locationRepository
+	subscriptionRepo subscriptionRepository
+	scheduleRepo     scheduleRepository
+	otpRepo          otpRepository
+	otpSender        otpSender
+	policy           policyProvider
+	txManager        txManager
 }
 
 func NewUseCase(
@@ -92,6 +98,7 @@ func NewUseCase(
 	serviceRepo serviceRepository,
 	empServiceRepo employeeServiceRepository,
 	locationRepo locationRepository,
+	subscriptionRepo subscriptionRepository,
 	scheduleRepo scheduleRepository,
 	otpRepo otpRepository,
 	otpSender otpSender,
@@ -99,17 +106,18 @@ func NewUseCase(
 	txManager txManager,
 ) *UseCase {
 	return &UseCase{
-		appointmentRepo: appointmentRepo,
-		customerRepo:    customerRepo,
-		employeeRepo:    employeeRepo,
-		serviceRepo:     serviceRepo,
-		empServiceRepo:  empServiceRepo,
-		locationRepo:    locationRepo,
-		scheduleRepo:    scheduleRepo,
-		otpRepo:         otpRepo,
-		otpSender:       otpSender,
-		policy:          policy,
-		txManager:       txManager,
+		appointmentRepo:  appointmentRepo,
+		customerRepo:     customerRepo,
+		employeeRepo:     employeeRepo,
+		serviceRepo:      serviceRepo,
+		empServiceRepo:   empServiceRepo,
+		locationRepo:     locationRepo,
+		subscriptionRepo: subscriptionRepo,
+		scheduleRepo:     scheduleRepo,
+		otpRepo:          otpRepo,
+		otpSender:        otpSender,
+		policy:           policy,
+		txManager:        txManager,
 	}
 }
 
@@ -198,7 +206,16 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		}
 		log.Debug(ctx, "create booking: location loaded", log.String("location", loc.Name))
 
-		// 4a. Validate slot availability
+		// 4a. Validate subscription
+		sub, err := u.subscriptionRepo.GetByOrganizationID(txCtx, loc.OrganizationID)
+		if err != nil {
+			return fmt.Errorf("get subscription: %w", err)
+		}
+		if !sub.Status.CanOperate() {
+			return billing.ErrSubscriptionSuspended
+		}
+
+		// 4b. Validate slot availability
 		day := truncateToDate(input.StartAt)
 		locSlots, err := u.scheduleRepo.GetLocationSlots(txCtx, input.LocationID, day, day)
 		if err != nil {

@@ -6,6 +6,8 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/core/database/postgres"
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/google/uuid"
 )
 
 type Repository struct {
@@ -16,6 +18,17 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{
 		db: db,
 	}
+}
+
+func (r *Repository) GetByOrganizationID(ctx context.Context, orgID uuid.UUID) (*billing.Subscription, error) {
+	var m model
+	if err := pgxscan.Get(ctx, r.db, &m, getByOrganizationID, orgID); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, billing.ErrSubscriptionNotFound
+		}
+		return nil, fmt.Errorf("get subscription by organization id: %w", err)
+	}
+	return m.toDomain()
 }
 
 func (r *Repository) Save(ctx context.Context, sub *billing.Subscription) error {

@@ -253,6 +253,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.catalogRepo,
 		a.catalogRepo,
 		a.locationRepo,
+		a.subscriptionRepo,
 		a.scheduleRepo,
 		a.otpRepo,
 		a.messenger,
