@@ -37,7 +37,7 @@ func (s *Store) Save(ctx context.Context, token *authDomain.ActionToken) error {
 		return fmt.Errorf("action token already expired")
 	}
 
-	if err := s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
+	if err = s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
 		return fmt.Errorf("save action token: %w", err)
 	}
 	return nil
@@ -55,7 +55,7 @@ func (s *Store) Get(ctx context.Context, token string) (*authDomain.ActionToken,
 	}
 
 	var m model
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err = json.Unmarshal(data, &m); err != nil {
 		return nil, fmt.Errorf("unmarshal action token: %w", err)
 	}
 

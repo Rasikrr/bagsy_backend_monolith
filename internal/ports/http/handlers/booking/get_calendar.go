@@ -62,7 +62,8 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if locID := q.Get("location_id"); locID != "" {
-		parsed, err := uuid.Parse(locID)
+		var parsed uuid.UUID
+		parsed, err = uuid.Parse(locID)
 		if err != nil {
 			util.SendBadRequest(ctx, w, err)
 			return
@@ -71,7 +72,8 @@ func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if empID := q.Get("employee_id"); empID != "" {
-		parsed, err := uuid.Parse(empID)
+		var parsed uuid.UUID
+		parsed, err = uuid.Parse(empID)
 		if err != nil {
 			util.SendBadRequest(ctx, w, err)
 			return

@@ -12,6 +12,7 @@ import (
 	"github.com/samber/lo"
 )
 
+// nolint: funlen
 func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlotsInput) (*GetAvailableSlotsOutput, error) {
 	log.Info(ctx, "get available slots: started",
 		log.String("location_id", input.LocationID.String()),

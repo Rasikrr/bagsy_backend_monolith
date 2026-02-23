@@ -127,14 +127,14 @@ func (l *Location) SetAddress(address *Address, coordinates *Coordinates) error 
 	return nil
 }
 
-func (l *Location) ChangeSlug(new shared.Slug) error {
+func (l *Location) ChangeSlug(newSlug shared.Slug) error {
 	if l.IsDeleted() {
 		return ErrLocationDeleted
 	}
-	if l.Slug.IsEqual(new) {
+	if l.Slug.IsEqual(newSlug) {
 		return nil
 	}
-	l.Slug = new
+	l.Slug = newSlug
 	l.touch()
 	return nil
 }

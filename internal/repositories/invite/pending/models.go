@@ -63,7 +63,8 @@ func (m *pendingInviteModel) toUseCase() (*invite.PendingInvite, error) {
 
 	var locationID *uuid.UUID
 	if m.LocationID != nil {
-		id, err := uuid.Parse(*m.LocationID)
+		var id uuid.UUID
+		id, err = uuid.Parse(*m.LocationID)
 		if err != nil {
 			return nil, err
 		}

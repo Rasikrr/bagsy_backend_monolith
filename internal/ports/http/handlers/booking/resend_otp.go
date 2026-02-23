@@ -30,7 +30,7 @@ func (h *Handler) resendOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.bookingUC.ResendOTP(ctx, id); err != nil {
+	if err = h.bookingUC.ResendOTP(ctx, id); err != nil {
 		util.SendError(ctx, w, err, bookingErrors)
 		return
 	}

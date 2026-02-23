@@ -119,7 +119,7 @@ func (u *RegisterOwnerUseCase) Register(ctx context.Context, req RegisterInput) 
 		return nil, err
 	}
 
-	if _, err := u.plansRepo.FindActiveByCode(ctx, planCode); err != nil {
+	if _, err = u.plansRepo.FindActiveByCode(ctx, planCode); err != nil {
 		return nil, err
 	}
 
@@ -157,11 +157,11 @@ func (u *RegisterOwnerUseCase) Register(ctx context.Context, req RegisterInput) 
 		ExpiresAt:    now.Add(otpTTL),
 	}
 
-	if err := u.pendingRequestsStore.Save(ctx, pending); err != nil {
+	if err = u.pendingRequestsStore.Save(ctx, pending); err != nil {
 		return nil, errors.Wrap(err, "save pending registration")
 	}
 
-	if err := u.otpSender.SendOTP(ctx, phone, otp.Code); err != nil {
+	if err = u.otpSender.SendOTP(ctx, phone, otp.Code); err != nil {
 		return nil, errors.Wrap(err, "send OTP")
 	}
 
@@ -211,48 +211,48 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 
 	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
 		// Race condition protection: re-check phone uniqueness inside tx.
-		exists, err := u.employeesRepo.ExistsByPhone(txCtx, phone)
-		if err != nil {
-			return errors.Wrap(err, "check phone uniqueness")
+		exists, e := u.employeesRepo.ExistsByPhone(txCtx, phone)
+		if e != nil {
+			return errors.Wrap(e, "check phone uniqueness")
 		}
 		if exists {
 			return authDomain.ErrPhoneAlreadyExists
 		}
 
 		// 1. Create stub organization.
-		org, err := organization.NewStubOrganization()
-		if err != nil {
-			return errors.Wrap(err, "create organization")
+		org, e := organization.NewStubOrganization()
+		if e != nil {
+			return errors.Wrap(e, "create organization")
 		}
-		if err := u.organizationRepo.Save(txCtx, org); err != nil {
-			return errors.Wrap(err, "save organization")
+		if e = u.organizationRepo.Save(txCtx, org); e != nil {
+			return errors.Wrap(e, "save organization")
 		}
 		orgID = org.ID
 
 		employeePermissions := identity.NewPermissions(true, true)
 
 		// 2. Create employee (owner).
-		emp, err := identity.NewOwnerEmployee(identity.CreateOwnerParams{
+		emp, e := identity.NewOwnerEmployee(identity.CreateOwnerParams{
 			Phone:          phone,
 			FirstName:      reg.FirstName,
 			LastName:       reg.LastName,
 			OrganizationID: orgID,
 			Permissions:    employeePermissions,
 		})
-		if err != nil {
-			return errors.Wrap(err, "create employee")
+		if e != nil {
+			return errors.Wrap(e, "create employee")
 		}
 		emp.SetPassword(reg.PasswordHash)
 
-		if err := u.employeesRepo.Save(txCtx, emp); err != nil {
-			return errors.Wrap(err, "save employee")
+		if e = u.employeesRepo.Save(txCtx, emp); e != nil {
+			return errors.Wrap(e, "save employee")
 		}
 		employeeID = emp.ID
 
 		// 3. Create trial subscription.
 		sub := billing.NewTrialSubscription(orgID, plan.ID, billing.DefaultTrialDays)
-		if err := u.subscriptionsRepo.Save(txCtx, sub); err != nil {
-			return errors.Wrap(err, "save subscription")
+		if e = u.subscriptionsRepo.Save(txCtx, sub); e != nil {
+			return errors.Wrap(e, "save subscription")
 		}
 
 		// 4. Create work history entry.
@@ -265,8 +265,8 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 			identity.ChangeTypeHired,
 			&comment,
 		)
-		if err := u.workHistoryRepo.Save(txCtx, wh); err != nil {
-			return errors.Wrap(err, "save work history")
+		if e = u.workHistoryRepo.Save(txCtx, wh); e != nil {
+			return errors.Wrap(e, "save work history")
 		}
 
 		return nil
@@ -319,11 +319,11 @@ func (u *RegisterOwnerUseCase) Resend(ctx context.Context, req ResendInput) (*Re
 	reg.LastSentAt = now
 	reg.ExpiresAt = now.Add(otpTTL)
 
-	if err := u.pendingRequestsStore.Save(ctx, reg); err != nil {
+	if err = u.pendingRequestsStore.Save(ctx, reg); err != nil {
 		return nil, errors.Wrap(err, "save pending registration")
 	}
 
-	if err := u.otpSender.SendOTP(ctx, phone, otp.Code); err != nil {
+	if err = u.otpSender.SendOTP(ctx, phone, otp.Code); err != nil {
 		return nil, errors.Wrap(err, "send OTP")
 	}
 

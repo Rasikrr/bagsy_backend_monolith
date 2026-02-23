@@ -1,4 +1,4 @@
-package pending_registraion
+package pendingregistraion
 
 import (
 	"time"

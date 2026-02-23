@@ -45,7 +45,7 @@ func (r *Repository) Save(ctx context.Context, a *booking.Appointment) error {
 	// Save status history entries
 	for _, h := range a.StatusHistory {
 		hm := fromHistoryDomain(a.ID, h)
-		_, err := r.db.Exec(ctx, saveStatusHistory,
+		_, err = r.db.Exec(ctx, saveStatusHistory,
 			hm.ID, hm.AppointmentID, hm.FromStatus, hm.ToStatus, hm.ChangedBy, hm.Reason, hm.CreatedAt,
 		)
 		if err != nil {

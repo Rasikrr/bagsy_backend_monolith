@@ -42,12 +42,12 @@ func (h *Handler) cancel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req cancelRequest
-	if err := coreHTTP.GetData(r, &req); err != nil {
+	if err = coreHTTP.GetData(r, &req); err != nil {
 		util.SendBadRequest(ctx, w, err)
 		return
 	}
 
-	if err := h.bookingUC.Cancel(ctx, orgCtx, id, req.Reason); err != nil {
+	if err = h.bookingUC.Cancel(ctx, orgCtx, id, req.Reason); err != nil {
 		util.SendError(ctx, w, err, bookingErrors)
 		return
 	}

@@ -1,4 +1,4 @@
-package pending_registraion
+package pendingregistraion
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func (s *PendingRegistrationStore) Save(ctx context.Context, reg *auth.PendingRe
 		return fmt.Errorf("pending registration already expired")
 	}
 
-	if err := s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
+	if err = s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
 		return fmt.Errorf("save pending registration: %w", err)
 	}
 	return nil
@@ -58,7 +58,7 @@ func (s *PendingRegistrationStore) Get(ctx context.Context, phone shared.Phone) 
 	}
 
 	var m pendingRegistrationModel
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err = json.Unmarshal(data, &m); err != nil {
 		return nil, fmt.Errorf("unmarshal pending registration: %w", err)
 	}
 

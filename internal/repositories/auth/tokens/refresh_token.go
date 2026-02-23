@@ -62,7 +62,7 @@ func (r *RefreshTokenRepository) DeleteToken(ctx context.Context, tokenHash stri
 	}
 
 	key := r.makeKey(tokenHash)
-	if err := r.client.Delete(ctx, key); err != nil {
+	if err = r.client.Delete(ctx, key); err != nil {
 		return fmt.Errorf("delete refresh token: %w", err)
 	}
 
@@ -87,7 +87,7 @@ func (r *RefreshTokenRepository) DeleteAllByUserID(ctx context.Context, userID u
 		_ = r.client.Delete(ctx, key)
 	}
 
-	if err := r.client.Delete(ctx, sessionKey); err != nil {
+	if err = r.client.Delete(ctx, sessionKey); err != nil {
 		return fmt.Errorf("delete user sessions set: %w", err)
 	}
 

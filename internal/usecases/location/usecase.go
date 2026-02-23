@@ -74,7 +74,7 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 	}
 
 	// 2. Policy: limits + role
-	if err := u.policy.CanCreateLocation(orgCtx, count); err != nil {
+	if err = u.policy.CanCreateLocation(orgCtx, count); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +96,8 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 	// 4. Build domain value objects
 	var phone *shared.Phone
 	if input.Phone != nil && *input.Phone != "" {
-		p, err := shared.NewPhone(*input.Phone)
+		var p shared.Phone
+		p, err = shared.NewPhone(*input.Phone)
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +106,8 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 
 	var addr *location.Address
 	if input.Address != nil {
-		a, err := location.NewAddress(
+		var a location.Address
+		a, err = location.NewAddress(
 			input.Address.City,
 			input.Address.Street,
 			input.Address.Building,
@@ -119,7 +121,8 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 
 	var coords *location.Coordinates
 	if input.Latitude != nil && input.Longitude != nil {
-		c, err := location.NewCoordinates(*input.Latitude, *input.Longitude)
+		var c location.Coordinates
+		c, err = location.NewCoordinates(*input.Latitude, *input.Longitude)
 		if err != nil {
 			return nil, err
 		}
@@ -153,32 +156,32 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 
 	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
 		// 6. Persist
-		if err := u.locationRepo.Save(txCtx, loc); err != nil {
-			return fmt.Errorf("save location: %w", err)
+		if e := u.locationRepo.Save(txCtx, loc); e != nil {
+			return fmt.Errorf("save location: %w", e)
 		}
 
 		// 7. Determine if frontend should prompt org profile setup
 		// count was before creation, so count==1 means this is the second location
 		if count >= 1 {
-			org, err := u.orgRepo.GetByID(txCtx, orgCtx.Organization.ID)
-			if err != nil {
-				return fmt.Errorf("get organization: %w", err)
+			org, e := u.orgRepo.GetByID(txCtx, orgCtx.Organization.ID)
+			if e != nil {
+				return fmt.Errorf("get organization: %w", e)
 			}
 			promptOrgProfile = !org.IsProfileComplete()
 		}
 		// 8. If this is first location of the owner, transfer him to this new location
 		if count == 0 {
-			employee, err := u.employeeRepository.GetByID(txCtx, orgCtx.Employee.ID)
-			if err != nil {
-				return fmt.Errorf("get employee: %w", err)
+			employee, e := u.employeeRepository.GetByID(txCtx, orgCtx.Employee.ID)
+			if e != nil {
+				return fmt.Errorf("get employee: %w", e)
 			}
-			err = employee.Transfer(loc.ID)
-			if err != nil {
-				return fmt.Errorf("transfer employee: %w", err)
+			e = employee.Transfer(loc.ID)
+			if e != nil {
+				return fmt.Errorf("transfer employee: %w", e)
 			}
-			err = u.employeeRepository.Save(txCtx, employee)
-			if err != nil {
-				return fmt.Errorf("save employee: %w", err)
+			e = u.employeeRepository.Save(txCtx, employee)
+			if e != nil {
+				return fmt.Errorf("transfer employee: %w", e)
 			}
 		}
 		return nil

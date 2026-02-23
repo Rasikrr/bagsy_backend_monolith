@@ -40,7 +40,7 @@ func (s *Store) Save(ctx context.Context, inv *invite.PendingInvite) error {
 		return fmt.Errorf("pending invite already expired")
 	}
 
-	if err := s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
+	if err = s.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
 		return fmt.Errorf("save pending invite: %w", err)
 	}
 	return nil
@@ -58,7 +58,7 @@ func (s *Store) Get(ctx context.Context, phone shared.Phone) (*invite.PendingInv
 	}
 
 	var m pendingInviteModel
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err = json.Unmarshal(data, &m); err != nil {
 		return nil, fmt.Errorf("unmarshal pending invite: %w", err)
 	}
 

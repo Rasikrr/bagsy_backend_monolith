@@ -112,7 +112,7 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 		return nil, fmt.Errorf("failed to count employees by organization: %w", err)
 	}
 
-	if err := u.policy.CanInviteEmployee(orgCtx, role, employeesCount); err != nil {
+	if err = u.policy.CanInviteEmployee(orgCtx, role, employeesCount); err != nil {
 		return nil, err
 	}
 
@@ -157,16 +157,16 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 		ExpiresAt:      now.Add(u.inviteTTL),
 	}
 
-	if err := u.pendingInvRepo.Save(ctx, pending); err != nil {
+	if err = u.pendingInvRepo.Save(ctx, pending); err != nil {
 		return nil, errors.Wrap(err, "save pending invite")
 	}
 
-	if err := u.actionTokenRepo.Save(ctx, inviteToken); err != nil {
+	if err = u.actionTokenRepo.Save(ctx, inviteToken); err != nil {
 		return nil, errors.Wrap(err, "save invite token")
 	}
 
 	link := fmt.Sprintf("%s/%s", u.frontendURL, inviteToken.Token)
-	if err := u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
+	if err = u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
 		return nil, errors.Wrap(err, "send invite link")
 	}
 
@@ -200,15 +200,15 @@ func (u *UseCase) ConfirmInvite(ctx context.Context, input ConfirmInviteInput) (
 	var employeeID uuid.UUID
 
 	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
-		exists, err := u.employeeRepo.ExistsByPhone(txCtx, phone)
-		if err != nil {
-			return errors.Wrap(err, "check phone uniqueness")
+		exists, e := u.employeeRepo.ExistsByPhone(txCtx, phone)
+		if e != nil {
+			return errors.Wrap(e, "check phone uniqueness")
 		}
 		if exists {
 			return authDomain.ErrPhoneAlreadyExists
 		}
 
-		emp, err := identity.NewEmployee(identity.CreateEmployeeParams{
+		emp, e := identity.NewEmployee(identity.CreateEmployeeParams{
 			Phone:          phone,
 			FirstName:      pending.FirstName,
 			LastName:       pending.LastName,
@@ -217,13 +217,13 @@ func (u *UseCase) ConfirmInvite(ctx context.Context, input ConfirmInviteInput) (
 			Role:           pending.Role,
 			Permissions:    pending.Permissions,
 		})
-		if err != nil {
-			return errors.Wrap(err, "create employee")
+		if e != nil {
+			return errors.Wrap(e, "create employee")
 		}
 		emp.SetPassword(passwordHash)
 
-		if err := u.employeeRepo.Save(txCtx, emp); err != nil {
-			return errors.Wrap(err, "save employee")
+		if e = u.employeeRepo.Save(txCtx, emp); e != nil {
+			return errors.Wrap(e, "save employee")
 		}
 		employeeID = emp.ID
 
@@ -236,8 +236,8 @@ func (u *UseCase) ConfirmInvite(ctx context.Context, input ConfirmInviteInput) (
 			identity.ChangeTypeHired,
 			&comment,
 		)
-		if err := u.workHistoryRepo.Save(txCtx, wh); err != nil {
-			return errors.Wrap(err, "save work history")
+		if e = u.workHistoryRepo.Save(txCtx, wh); e != nil {
+			return errors.Wrap(e, "save work history")
 		}
 
 		return nil
@@ -296,16 +296,16 @@ func (u *UseCase) ResendInvite(ctx context.Context, orgCtx *access.OrgContext, i
 	pending.LastSentAt = now
 	pending.ExpiresAt = now.Add(u.inviteTTL)
 
-	if err := u.pendingInvRepo.Save(ctx, pending); err != nil {
+	if err = u.pendingInvRepo.Save(ctx, pending); err != nil {
 		return nil, errors.Wrap(err, "save pending invite")
 	}
 
-	if err := u.actionTokenRepo.Save(ctx, inviteToken); err != nil {
+	if err = u.actionTokenRepo.Save(ctx, inviteToken); err != nil {
 		return nil, errors.Wrap(err, "save invite token")
 	}
 
 	link := fmt.Sprintf("%s/%s", u.frontendURL, inviteToken.Token)
-	if err := u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
+	if err = u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
 		return nil, errors.Wrap(err, "send invite link")
 	}
 

@@ -33,12 +33,12 @@ func (h *Handler) confirm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req confirmRequest
-	if err := coreHTTP.GetData(r, &req); err != nil {
+	if err = coreHTTP.GetData(r, &req); err != nil {
 		util.SendBadRequest(ctx, w, err)
 		return
 	}
 
-	if err := h.bookingUC.Confirm(ctx, id, req.Code); err != nil {
+	if err = h.bookingUC.Confirm(ctx, id, req.Code); err != nil {
 		util.SendError(ctx, w, err, bookingErrors)
 		return
 	}

@@ -68,13 +68,13 @@ func (u *ResetPasswordUseCase) RequestReset(ctx context.Context, req RequestRese
 		return errors.Wrap(err, "generate reset token")
 	}
 
-	if err := u.actionTokenRepo.Save(ctx, resetToken); err != nil {
+	if err = u.actionTokenRepo.Save(ctx, resetToken); err != nil {
 		return errors.Wrap(err, "save reset token")
 	}
 
 	link := fmt.Sprintf("%s/%s", u.frontendURL, resetToken.Token)
 
-	if err := u.linkSender.SendPasswordResetLink(ctx, phone, link); err != nil {
+	if err = u.linkSender.SendPasswordResetLink(ctx, phone, link); err != nil {
 		return errors.Wrap(err, "send password reset link")
 	}
 
@@ -99,15 +99,15 @@ func (u *ResetPasswordUseCase) ConfirmReset(ctx context.Context, req ConfirmRese
 		return errors.Wrap(err, "hash new password")
 	}
 
-	if err := employee.ChangePassword(passwordHash); err != nil {
+	if err = employee.ChangePassword(passwordHash); err != nil {
 		return err
 	}
 
-	if err := u.employeeRepo.Save(ctx, employee); err != nil {
+	if err = u.employeeRepo.Save(ctx, employee); err != nil {
 		return errors.Wrap(err, "save employee after password change")
 	}
 
-	if err := u.tokenService.DeleteAllRefreshTokens(ctx, employee.ID); err != nil {
+	if err = u.tokenService.DeleteAllRefreshTokens(ctx, employee.ID); err != nil {
 		return errors.Wrap(err, "invalidate all sessions")
 	}
 

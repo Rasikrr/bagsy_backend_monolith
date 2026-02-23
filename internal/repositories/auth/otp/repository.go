@@ -40,7 +40,7 @@ func (r *Repository) Save(ctx context.Context, appointmentID uuid.UUID, o *auth.
 		return fmt.Errorf("otp already expired")
 	}
 
-	if err := r.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
+	if err = r.client.SetWithExpiration(ctx, key, data, ttl); err != nil {
 		return fmt.Errorf("save otp to cache: %w", err)
 	}
 	return nil
@@ -58,7 +58,7 @@ func (r *Repository) GetByAppointmentID(ctx context.Context, appointmentID uuid.
 	}
 
 	var m model
-	if err := json.Unmarshal(data, &m); err != nil {
+	if err = json.Unmarshal(data, &m); err != nil {
 		return nil, fmt.Errorf("unmarshal otp: %w", err)
 	}
 

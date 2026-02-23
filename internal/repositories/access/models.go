@@ -63,7 +63,8 @@ func (m *orgContextModel) toDomain() (*access.OrgContext, error) {
 	subInfo := access.SubscriptionInfo{}
 
 	if m.SubscriptionStatus != nil {
-		subStatus, err := billing.ParseSubscriptionStatus(*m.SubscriptionStatus)
+		var subStatus billing.SubscriptionStatus
+		subStatus, err = billing.ParseSubscriptionStatus(*m.SubscriptionStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +82,7 @@ func (m *orgContextModel) toDomain() (*access.OrgContext, error) {
 	capabilitiesMap := make(map[billing.Resource]billing.Limit)
 	if len(m.PlanCapabilities) > 0 && string(m.PlanCapabilities) != "null" {
 		var rawCaps map[string]*int
-		if err := json.Unmarshal(m.PlanCapabilities, &rawCaps); err != nil {
+		if err = json.Unmarshal(m.PlanCapabilities, &rawCaps); err != nil {
 			return nil, fmt.Errorf("unmarshal plan capabilities: %w", err)
 		}
 

@@ -56,7 +56,7 @@ func (s *TokenService) GenerateTokens(ctx context.Context, userID uuid.UUID, pho
 	if err != nil {
 		return "", "", fmt.Errorf("generate refresh token: %w", err)
 	}
-	if err := s.refreshTokenRepo.SaveToken(ctx, refreshHash, userID, s.refreshTokenTTL); err != nil {
+	if err = s.refreshTokenRepo.SaveToken(ctx, refreshHash, userID, s.refreshTokenTTL); err != nil {
 		return "", "", fmt.Errorf("save refresh token: %w", err)
 	}
 
@@ -82,7 +82,7 @@ func (s *TokenService) RefreshTokens(ctx context.Context, oldRefreshToken string
 	}
 
 	// 2. Delete old refresh token (rotation).
-	if err := s.refreshTokenRepo.DeleteToken(ctx, oldHash); err != nil {
+	if err = s.refreshTokenRepo.DeleteToken(ctx, oldHash); err != nil {
 		return uuid.Nil, fmt.Errorf("delete old refresh token: %w", err)
 	}
 
