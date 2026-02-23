@@ -221,6 +221,7 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 			empSlotsByID[input.EmployeeID],
 			occupiedAppts,
 			svc.DurationMinutes,
+			loc.SlotDurationMinutes,
 			input.StartAt,
 		); err != nil {
 			log.Warn(ctx, "create booking: slot not available",

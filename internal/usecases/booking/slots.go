@@ -229,6 +229,7 @@ func validateSlotAvailability(
 	empSlots []*schedule.EmployeeScheduleSlot,
 	occupied []*booking.Appointment,
 	serviceDuration shared.Duration,
+	slotStep shared.Duration,
 	startAt time.Time,
 ) error {
 	day := truncateToDate(startAt)
@@ -265,8 +266,13 @@ func validateSlotAvailability(
 	available = subtractIntervals(available, occIntervals)
 
 	// 4. Check that [startAt, endAt] fits entirely within one available interval
+	// and startAt is aligned to the slot step grid
+	step := slotStep.AsDuration()
 	for _, inv := range available {
 		if !startAt.Before(inv.start) && !endAt.After(inv.end) {
+			if step > 0 && startAt.Sub(inv.start)%step != 0 {
+				return booking.ErrSlotNotAvailable
+			}
 			return nil
 		}
 	}
