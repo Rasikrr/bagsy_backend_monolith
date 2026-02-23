@@ -148,110 +148,30 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 	)
 
 	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
-		// 1. Get or Create Customer
-		var custErr error
-		customer, custErr = u.customerRepo.GetByPhone(txCtx, phone)
-		if custErr != nil {
-			if !errors.Is(custErr, identity.ErrCustomerNotFound) {
-				return custErr
-			}
-			log.Debug(ctx, "create booking: customer not found, creating new",
-				log.String("phone", phone.String()),
-			)
-			customer, custErr = identity.NewCustomer(phone, input.FirstName, input.LastName)
-			if custErr != nil {
-				return custErr
-			}
-			if custErr = u.customerRepo.Save(txCtx, customer); custErr != nil {
-				return fmt.Errorf("save customer: %w", custErr)
-			}
-			log.Debug(ctx, "create booking: customer created", log.String("customer_id", customer.ID.String()))
-		} else {
-			log.Debug(ctx, "create booking: existing customer found", log.String("customer_id", customer.ID.String()))
+		customer, err = u.getOrCreateCustomer(txCtx, phone, input.FirstName, input.LastName)
+		if err != nil {
+			return err
 		}
 
-		// 2. Validate Service and get Duration
-		svc, e := u.serviceRepo.GetByID(txCtx, input.ServiceID)
-		if e != nil {
-			return fmt.Errorf("get service: %w", e)
-		}
-		log.Debug(ctx, "create booking: service loaded",
-			log.String("service", svc.Name),
-			log.Int("duration_min", svc.DurationMinutes.Minutes()),
+		var (
+			svc    *catalog.Service
+			empSvc *catalog.EmployeeService
+			loc    *location.Location
 		)
-
-		// 3. Get EmployeeService for Price
-		empSvc, e := u.empServiceRepo.GetByEmployeeAndService(txCtx, input.EmployeeID, input.ServiceID)
-		if e != nil {
-			return fmt.Errorf("get employee service: %w", e)
-		}
-		log.Debug(ctx, "create booking: employee service loaded",
-			log.String("price", empSvc.Price.Amount().String()),
-		)
-
-		employee, e := u.employeeRepo.GetByID(txCtx, empSvc.EmployeeID)
-		if e != nil {
-			return fmt.Errorf("get employee by id: %w", e)
-		}
-		if employee.Phone == phone {
-			log.Warn(ctx, "create booking: self-booking attempt",
-				log.String("employee_id", employee.ID.String()),
-			)
-			return booking.ErrCannotBookSelf
+		svc, empSvc, loc, err = u.validateAndLoadDeps(txCtx, input, phone)
+		if err != nil {
+			return err
 		}
 
-		// 4. Validate Location
-		loc, e := u.locationRepo.GetByID(txCtx, input.LocationID)
-		if e != nil {
-			return fmt.Errorf("get location: %w", e)
-		}
-		log.Debug(ctx, "create booking: location loaded", log.String("location", loc.Name))
-
-		// 4a. Validate subscription
-		sub, e := u.subscriptionRepo.GetByOrganizationID(txCtx, loc.OrganizationID)
-		if e != nil {
-			return fmt.Errorf("get subscription: %w", e)
-		}
-		if !sub.Status.CanOperate() {
-			return billing.ErrSubscriptionSuspended
-		}
-
-		// 4b. Validate slot availability
-		day := truncateToDate(input.StartAt)
-		locSlots, e := u.scheduleRepo.GetLocationSlots(txCtx, input.LocationID, day, day)
-		if e != nil {
-			return fmt.Errorf("get location slots: %w", e)
-		}
-
-		empSlotsByID, e := u.scheduleRepo.GetEmployeesSlots(txCtx, []uuid.UUID{input.EmployeeID}, day, day)
-		if e != nil {
-			return fmt.Errorf("get employee slots: %w", e)
-		}
-
-		occupiedAppts, e := u.appointmentRepo.GetOccupiedSlots(txCtx, input.LocationID, []uuid.UUID{input.EmployeeID}, day, day.AddDate(0, 0, 1))
-		if e != nil {
-			return fmt.Errorf("get occupied slots: %w", e)
-		}
-
-		if e = validateSlotAvailability(
-			loc.ScheduleType,
-			locSlots,
-			empSlotsByID[input.EmployeeID],
-			occupiedAppts,
-			svc.DurationMinutes,
-			loc.SlotDurationMinutes,
-			input.StartAt,
-		); e != nil {
+		if err = u.validateAvailability(txCtx, loc, svc, input.EmployeeID, input.StartAt); err != nil {
 			log.Warn(ctx, "create booking: slot not available",
 				log.Time("start_at", input.StartAt),
 				log.String("schedule_type", loc.ScheduleType.String()),
 			)
-			return e
+			return err
 		}
-		log.Debug(ctx, "create booking: slot availability validated")
 
-		// 5. Create Appointment Aggregate
-		appt, e = booking.NewAppointment(booking.CreateAppointmentParams{
+		appt, err = booking.NewAppointment(booking.CreateAppointmentParams{
 			OrganizationID:  loc.OrganizationID,
 			LocationID:      loc.ID,
 			ServiceID:       svc.ID,
@@ -262,26 +182,17 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 			Price:           empSvc.Price,
 			CustomerComment: input.Comment,
 		})
-		if e != nil {
-			return fmt.Errorf("new appointment: %w", e)
+		if err != nil {
+			return fmt.Errorf("new appointment: %w", err)
 		}
-		log.Debug(ctx, "create booking: appointment created",
-			log.String("appointment_id", appt.ID.String()),
-			log.Time("start_at", appt.StartAt),
-			log.Time("end_at", appt.EndAt),
-		)
 
-		// 6. Save Appointment
-		if e = u.appointmentRepo.Save(txCtx, appt); e != nil {
-			return fmt.Errorf("save appointment: %w", e)
+		if err = u.appointmentRepo.Save(txCtx, appt); err != nil {
+			return fmt.Errorf("save appointment: %w", err)
 		}
-		log.Debug(ctx, "create booking: appointment saved")
 
-		// 7. Save OTP linked to AppointmentID
-		if e = u.otpRepo.Save(txCtx, appt.ID, otp); e != nil {
-			return fmt.Errorf("save otp: %w", e)
+		if err = u.otpRepo.Save(txCtx, appt.ID, otp); err != nil {
+			return fmt.Errorf("save otp: %w", err)
 		}
-		log.Debug(ctx, "create booking: otp saved")
 
 		return nil
 	})
@@ -291,7 +202,6 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		return nil, err
 	}
 
-	// 8. Send Notification
 	if err = u.otpSender.SendBookingConfirmationCode(ctx, phone, otp.Code); err != nil {
 		log.Error(ctx, "create booking: failed to send otp", log.Err(err))
 		return nil, fmt.Errorf("send notification: %w", err)
@@ -305,6 +215,96 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 	return &CreateBookingOutput{ID: appt.ID}, nil
 }
 
+func (u *UseCase) getOrCreateCustomer(ctx context.Context, phone shared.Phone, firstName string, lastName *string) (*identity.Customer, error) {
+	customer, custErr := u.customerRepo.GetByPhone(ctx, phone)
+	if custErr != nil {
+		if !errors.Is(custErr, identity.ErrCustomerNotFound) {
+			return nil, custErr
+		}
+		log.Debug(ctx, "create booking: customer not found, creating new",
+			log.String("phone", phone.String()),
+		)
+		customer, custErr = identity.NewCustomer(phone, firstName, lastName)
+		if custErr != nil {
+			return nil, custErr
+		}
+		if custErr = u.customerRepo.Save(ctx, customer); custErr != nil {
+			return nil, fmt.Errorf("save customer: %w", custErr)
+		}
+		log.Debug(ctx, "create booking: customer created", log.String("customer_id", customer.ID.String()))
+		return customer, nil
+	}
+	log.Debug(ctx, "create booking: existing customer found", log.String("customer_id", customer.ID.String()))
+
+	return customer, nil
+}
+
+func (u *UseCase) validateAndLoadDeps(ctx context.Context, input CreateBookingInput, phone shared.Phone) (*catalog.Service, *catalog.EmployeeService, *location.Location, error) {
+	svc, err := u.serviceRepo.GetByID(ctx, input.ServiceID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get service: %w", err)
+	}
+
+	empSvc, err := u.empServiceRepo.GetByEmployeeAndService(ctx, input.EmployeeID, input.ServiceID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get employee service: %w", err)
+	}
+
+	employee, err := u.employeeRepo.GetByID(ctx, empSvc.EmployeeID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get employee by id: %w", err)
+	}
+
+	if employee.Phone == phone {
+		return nil, nil, nil, booking.ErrCannotBookSelf
+	}
+
+	loc, err := u.locationRepo.GetByID(ctx, input.LocationID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get location: %w", err)
+	}
+
+	sub, err := u.subscriptionRepo.GetByOrganizationID(ctx, loc.OrganizationID)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("get subscription: %w", err)
+	}
+
+	if !sub.Status.CanOperate() {
+		return nil, nil, nil, billing.ErrSubscriptionSuspended
+	}
+
+	return svc, empSvc, loc, nil
+}
+
+func (u *UseCase) validateAvailability(ctx context.Context, loc *location.Location, svc *catalog.Service, employeeID uuid.UUID, startAt time.Time) error {
+	day := truncateToDate(startAt)
+
+	locSlots, err := u.scheduleRepo.GetLocationSlots(ctx, loc.ID, day, day)
+	if err != nil {
+		return fmt.Errorf("get location slots: %w", err)
+	}
+
+	empSlotsByID, err := u.scheduleRepo.GetEmployeesSlots(ctx, []uuid.UUID{employeeID}, day, day)
+	if err != nil {
+		return fmt.Errorf("get employee slots: %w", err)
+	}
+
+	occupiedAppts, err := u.appointmentRepo.GetOccupiedSlots(ctx, loc.ID, []uuid.UUID{employeeID}, day, day.AddDate(0, 0, 1))
+	if err != nil {
+		return fmt.Errorf("get occupied slots: %w", err)
+	}
+
+	return validateSlotAvailability(
+		loc.ScheduleType,
+		locSlots,
+		empSlotsByID[employeeID],
+		occupiedAppts,
+		svc.DurationMinutes,
+		loc.SlotDurationMinutes,
+		startAt,
+	)
+}
+
 func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code string) error {
 	// 1. Get Appointment
 	appt, err := u.appointmentRepo.GetByID(ctx, appointmentID)
@@ -315,7 +315,7 @@ func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code str
 	// 2. Get and Verify OTP linked to AppointmentID
 	otp, err := u.otpRepo.GetByAppointmentID(ctx, appointmentID)
 	if err != nil {
-		return fmt.Errorf("invalid or expired code")
+		return errors.New("invalid or expired code")
 	}
 
 	if err = otp.Verify(code); err != nil {
