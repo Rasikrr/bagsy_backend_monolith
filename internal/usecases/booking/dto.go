@@ -17,7 +17,7 @@ type GetAvailableSlotsInput struct {
 type GetAvailableSlotsOutput struct {
 	ServiceID       uuid.UUID
 	LocationID      uuid.UUID
-	DurationMinutes int32
+	DurationMinutes int
 	MasterSlots     []MasterAvailableSlots
 }
 
