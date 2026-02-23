@@ -68,7 +68,6 @@ func (m *orgContextModel) toDomain() (*access.OrgContext, error) {
 			return nil, err
 		}
 		subInfo.Status = subStatus
-
 	}
 
 	var planCode billing.PlanCode

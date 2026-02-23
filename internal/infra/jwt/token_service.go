@@ -25,12 +25,6 @@ type refreshTokenRepository interface {
 	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
-//type tokensRepository interface {
-//	SaveInviteToken(ctx context.Context, token string, payload *InviteTokenInfo, ttl time.Duration) error
-//	GetInviteToken(ctx context.Context, token string) (*InviteTokenInfo, error)
-//	DeleteInviteToken(ctx context.Context, token string) error
-//}
-
 type TokenService struct {
 	tokenGenerator   tokenManager
 	refreshTokenRepo refreshTokenRepository

@@ -152,7 +152,6 @@ func (u *UseCase) Create(ctx context.Context, orgCtx *access.OrgContext, input C
 	)
 
 	err = u.txManager.Do(ctx, func(txCtx context.Context) error {
-
 		// 6. Persist
 		if err := u.locationRepo.Save(txCtx, loc); err != nil {
 			return fmt.Errorf("save location: %w", err)

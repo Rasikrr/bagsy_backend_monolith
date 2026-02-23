@@ -35,6 +35,7 @@ import (
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
+
 func NewServer(
 	server *coreHTTP.Server,
 	swaggerHost, swaggerScheme string,

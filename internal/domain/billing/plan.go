@@ -96,7 +96,6 @@ func (p *Plan) RemoveCapability(resource Resource) {
 			return
 		}
 	}
-	return
 }
 
 func (p *Plan) Deactivate() {
