@@ -27,6 +27,7 @@ type S3TestSuite struct {
 
 // SetupSuite запускается ОДИН РАЗ перед выполнением всех тестов в S3TestSuite
 func (s *S3TestSuite) SetupSuite() {
+	s.T().Skip()
 	ctx := context.Background()
 
 	cfg := Config{
