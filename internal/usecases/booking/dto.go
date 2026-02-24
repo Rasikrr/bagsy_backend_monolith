@@ -3,6 +3,7 @@ package booking
 import (
 	"time"
 
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/google/uuid"
 )
 
@@ -25,12 +26,7 @@ type MasterAvailableSlots struct {
 	EmployeeID   uuid.UUID
 	EmployeeName string
 	Price        float64
-	Slots        []TimeSlot
-}
-
-type TimeSlot struct {
-	StartAt time.Time
-	EndAt   time.Time
+	Slots        []booking.TimeSlot
 }
 
 type CreateBookingInput struct {

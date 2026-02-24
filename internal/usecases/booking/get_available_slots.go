@@ -106,7 +106,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 			continue
 		}
 
-		slots := generateSlots(
+		slots := booking.GenerateSlots(
 			loc.ScheduleType,
 			locSlots,
 			empSlotsByID[emp.ID],

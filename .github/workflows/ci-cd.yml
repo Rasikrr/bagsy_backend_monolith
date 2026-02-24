@@ -1,0 +1,109 @@
+name: CI/CD Pipeline
+
+permissions:
+  contents: write
+  pull-requests: read
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  lint:
+    name: Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+          cache: true
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64 # Рекомендуется указывать конкретную версию
+          args: --timeout=5m
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.1"
+          cache: true
+
+      - name: Run tests
+        run: make test
+
+  migrate:
+    name: Database Migrations
+    # Запускаем только при пуше в main или stage
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage')
+    needs: [ lint, test ]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'stage' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Нужно для определения изменившихся файлов
+
+      - name: Check for migration changes
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: migrations/*.sql
+
+      - name: Apply migrations
+        # Запускаем если изменились файлы ИЛИ если есть флаг в коммите
+        if: steps.changed-files.outputs.any_changed == 'true' || contains(github.event.head_commit.message, '[force-migrate]')
+        env:
+          POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
+        run: make migrate-up
+
+  release:
+    name: Create Release Tag
+    # Только при пуше в main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [ migrate ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [[ -z "$latest_tag" ]]; then latest_tag="v0.0.0"; fi
+          
+          # Очистка тега от префикса v
+          tag_num=${latest_tag#v}
+          IFS='.' read -r major minor patch <<< "$tag_num"
+          new_tag="v$major.$minor.$((patch + 1))"
+          
+          echo "tag=$new_tag" >> $GITHUB_OUTPUT
+          echo "New tag: $new_tag"
+
+      - name: Create and push tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag "${{ steps.get_tag.outputs.tag }}"
+          git push origin "${{ steps.get_tag.outputs.tag }}"

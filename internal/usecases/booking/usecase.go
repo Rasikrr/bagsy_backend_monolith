@@ -277,7 +277,7 @@ func (u *UseCase) validateAndLoadDeps(ctx context.Context, input CreateBookingIn
 }
 
 func (u *UseCase) validateAvailability(ctx context.Context, loc *location.Location, svc *catalog.Service, employeeID uuid.UUID, startAt time.Time) error {
-	day := truncateToDate(startAt)
+	day := booking.TruncateToDate(startAt)
 
 	locSlots, err := u.scheduleRepo.GetLocationSlots(ctx, loc.ID, day, day)
 	if err != nil {
@@ -294,7 +294,7 @@ func (u *UseCase) validateAvailability(ctx context.Context, loc *location.Locati
 		return fmt.Errorf("get occupied slots: %w", err)
 	}
 
-	return validateSlotAvailability(
+	return booking.ValidateSlotAvailability(
 		loc.ScheduleType,
 		locSlots,
 		empSlotsByID[employeeID],

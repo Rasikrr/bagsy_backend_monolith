@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
@@ -68,8 +67,8 @@ func empRestSlot(day time.Time, startH, startM, endH, endM int) *schedule.Employ
 	}
 }
 
-func occupiedAppt(day time.Time, startH, startM, endH, endM int) *booking.Appointment {
-	return &booking.Appointment{
+func occupiedAppt(day time.Time, startH, startM, endH, endM int) *Appointment {
+	return &Appointment{
 		ID:      uuid.New(),
 		StartAt: makeTime(day, startH, startM),
 		EndAt:   makeTime(day, endH, endM),
@@ -88,12 +87,11 @@ func slotTimes(slots []TimeSlot) [][2]string {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// generateSlots tests
+// GenerateSlots tests
 // ─────────────────────────────────────────────────────────────────
 
 func TestGenerateSlots_FixedSchedule_BasicWorkDay(t *testing.T) {
-	// Location work: 09:00-12:00, service=60min, step=30min, now=midnight
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 12, 0)},
 		nil,
@@ -116,7 +114,7 @@ func TestGenerateSlots_FixedSchedule_BasicWorkDay(t *testing.T) {
 }
 
 func TestGenerateSlots_FixedSchedule_NoLocationSlots(t *testing.T) {
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		nil,
 		nil,
@@ -131,9 +129,7 @@ func TestGenerateSlots_FixedSchedule_NoLocationSlots(t *testing.T) {
 }
 
 func TestGenerateSlots_MixedSchedule_Intersection(t *testing.T) {
-	// Location: 09:00-18:00, Employee: 10:00-14:00
-	// Effective: 10:00-14:00, service=60min, step=30min
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeMixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 18, 0)},
 		[]*schedule.EmployeeScheduleSlot{empWorkSlot(testDate, 10, 0, 14, 0)},
@@ -145,7 +141,6 @@ func TestGenerateSlots_MixedSchedule_Intersection(t *testing.T) {
 	)
 
 	got := slotTimes(slots)
-	// First slot 10:00-11:00, last slot 13:00-14:00
 	require.NotEmpty(t, got)
 	assert.Equal(t, "10:00", got[0][0])
 	assert.Equal(t, "13:00", got[len(got)-1][0])
@@ -154,7 +149,7 @@ func TestGenerateSlots_MixedSchedule_Intersection(t *testing.T) {
 }
 
 func TestGenerateSlots_MixedSchedule_NoEmployeeSlots(t *testing.T) {
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeMixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 18, 0)},
 		nil,
@@ -169,8 +164,7 @@ func TestGenerateSlots_MixedSchedule_NoEmployeeSlots(t *testing.T) {
 }
 
 func TestGenerateSlots_RestSlotsSubtracted(t *testing.T) {
-	// Work: 09:00-14:00, Rest: 11:00-12:00, service=60min, step=60min
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{
 			locWorkSlot(testDate, 9, 0, 14, 0),
@@ -185,7 +179,6 @@ func TestGenerateSlots_RestSlotsSubtracted(t *testing.T) {
 	)
 
 	got := slotTimes(slots)
-	// 09:00-10:00, 10:00-11:00, 12:00-13:00, 13:00-14:00
 	expected := [][2]string{
 		{"09:00", "10:00"},
 		{"10:00", "11:00"},
@@ -196,9 +189,7 @@ func TestGenerateSlots_RestSlotsSubtracted(t *testing.T) {
 }
 
 func TestGenerateSlots_MixedSchedule_EmployeeRestSubtracted(t *testing.T) {
-	// Loc work: 09:00-18:00, Emp work: 09:00-18:00, Emp rest: 12:00-13:00
-	// service=60min, step=60min → слот 12:00 не должен появиться
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeMixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 14, 0)},
 		[]*schedule.EmployeeScheduleSlot{
@@ -224,12 +215,11 @@ func TestGenerateSlots_MixedSchedule_EmployeeRestSubtracted(t *testing.T) {
 }
 
 func TestGenerateSlots_OccupiedAppointmentsSubtracted(t *testing.T) {
-	// Work: 09:00-12:00, occupied: 10:00-11:00, service=60min, step=60min
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 12, 0)},
 		nil,
-		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 11, 0)},
+		[]*Appointment{occupiedAppt(testDate, 10, 0, 11, 0)},
 		mustDuration(60),
 		mustDuration(60),
 		testDate, testDate,
@@ -245,9 +235,7 @@ func TestGenerateSlots_OccupiedAppointmentsSubtracted(t *testing.T) {
 }
 
 func TestGenerateSlots_PastSlotsFiltered(t *testing.T) {
-	// Work: 09:00-14:00, now=11:30, service=60min, step=30min
-	// Slots starting at or before 11:30 should be filtered
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 14, 0)},
 		nil,
@@ -259,17 +247,12 @@ func TestGenerateSlots_PastSlotsFiltered(t *testing.T) {
 	)
 
 	got := slotTimes(slots)
-	// First available slot should be 12:00 (starts after 11:30)
 	require.NotEmpty(t, got)
 	assert.Equal(t, "12:00", got[0][0])
 }
 
 func TestGenerateSlots_WithEmpAndLocRests(t *testing.T) {
-	// Loc. Work: 09:00-18:00, Loc. Rest: 13:00 - 14:00
-	// Emp. Work: 10:00 - 17:00, Emp. Rest: -
-	// now=11:30, service=60min, step=30min
-	// Slots starting at or before 11:30 should be filtered
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeMixed,
 		[]*schedule.LocationScheduleSlot{
 			locWorkSlot(testDate, 9, 0, 18, 0),
@@ -286,7 +269,6 @@ func TestGenerateSlots_WithEmpAndLocRests(t *testing.T) {
 	)
 
 	got := slotTimes(slots)
-	// First available slot should be 12:00 (starts after 11:30)
 	require.NotEmpty(t, got)
 	expected := [][2]string{
 		{"10:00", "11:00"},
@@ -308,12 +290,11 @@ func TestGenerateSlots_MultipleDays(t *testing.T) {
 	day2 := testDate.AddDate(0, 0, 1)
 	day3 := testDate.AddDate(0, 0, 2)
 
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{
 			locWorkSlot(day1, 9, 0, 11, 0),
 			locWorkSlot(day2, 9, 0, 11, 0),
-			// day3 has no schedule → no slots
 		},
 		nil,
 		nil,
@@ -323,17 +304,13 @@ func TestGenerateSlots_MultipleDays(t *testing.T) {
 		makeTime(day1, 0, 0),
 	)
 
-	// day1: 09:00-10:00, 10:00-11:00
-	// day2: 09:00-10:00, 10:00-11:00
-	// day3: nothing
 	assert.Len(t, slots, 4)
 	assert.Equal(t, day1.Day(), slots[0].StartAt.Day())
 	assert.Equal(t, day2.Day(), slots[2].StartAt.Day())
 }
 
 func TestGenerateSlots_DurationLargerThanStep(t *testing.T) {
-	// service=90min, step=30min, work: 09:00-12:00
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 12, 0)},
 		nil,
@@ -345,7 +322,6 @@ func TestGenerateSlots_DurationLargerThanStep(t *testing.T) {
 	)
 
 	got := slotTimes(slots)
-	// 09:00-10:30, 09:30-11:00, 10:00-11:30, 10:30-12:00
 	expected := [][2]string{
 		{"09:00", "10:30"},
 		{"09:30", "11:00"},
@@ -356,8 +332,7 @@ func TestGenerateSlots_DurationLargerThanStep(t *testing.T) {
 }
 
 func TestGenerateSlots_DurationDoesNotFitInterval(t *testing.T) {
-	// Work: 09:00-09:30, service=60min → no slots
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 9, 30)},
 		nil,
@@ -372,8 +347,7 @@ func TestGenerateSlots_DurationDoesNotFitInterval(t *testing.T) {
 }
 
 func TestGenerateSlots_ZeroStepFallbackTo30Min(t *testing.T) {
-	// slotStep=0 → fallback to 30 min
-	slots := generateSlots(
+	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
 		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 11, 0)},
 		nil,
@@ -399,74 +373,73 @@ func TestGenerateSlots_ZeroStepFallbackTo30Min(t *testing.T) {
 
 func TestFindIntersection(t *testing.T) {
 	t.Run("overlapping intervals", func(t *testing.T) {
-		a := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 18, 0)}}
-		b := []interval{{start: makeTime(testDate, 10, 0), end: makeTime(testDate, 14, 0)}}
+		a := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 18, 0)}}
+		b := []TimeSlot{{StartAt: makeTime(testDate, 10, 0), EndAt: makeTime(testDate, 14, 0)}}
 
 		res := findIntersection(a, b)
 		require.Len(t, res, 1)
-		assert.Equal(t, makeTime(testDate, 10, 0), res[0].start)
-		assert.Equal(t, makeTime(testDate, 14, 0), res[0].end)
+		assert.Equal(t, makeTime(testDate, 10, 0), res[0].StartAt)
+		assert.Equal(t, makeTime(testDate, 14, 0), res[0].EndAt)
 	})
 
 	t.Run("no overlap", func(t *testing.T) {
-		a := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 10, 0)}}
-		b := []interval{{start: makeTime(testDate, 11, 0), end: makeTime(testDate, 12, 0)}}
+		a := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 10, 0)}}
+		b := []TimeSlot{{StartAt: makeTime(testDate, 11, 0), EndAt: makeTime(testDate, 12, 0)}}
 
 		res := findIntersection(a, b)
 		assert.Empty(t, res)
 	})
 
 	t.Run("adjacent intervals do not intersect", func(t *testing.T) {
-		a := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 10, 0)}}
-		b := []interval{{start: makeTime(testDate, 10, 0), end: makeTime(testDate, 11, 0)}}
+		a := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 10, 0)}}
+		b := []TimeSlot{{StartAt: makeTime(testDate, 10, 0), EndAt: makeTime(testDate, 11, 0)}}
 
 		res := findIntersection(a, b)
 		assert.Empty(t, res)
 	})
 
 	t.Run("multiple intervals", func(t *testing.T) {
-		// loc: 09:00-13:00, 14:00-18:00 | emp: 10:00-16:00
-		a := []interval{
-			{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 13, 0)},
-			{start: makeTime(testDate, 14, 0), end: makeTime(testDate, 18, 0)},
+		a := []TimeSlot{
+			{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 13, 0)},
+			{StartAt: makeTime(testDate, 14, 0), EndAt: makeTime(testDate, 18, 0)},
 		}
-		b := []interval{{start: makeTime(testDate, 10, 0), end: makeTime(testDate, 16, 0)}}
+		b := []TimeSlot{{StartAt: makeTime(testDate, 10, 0), EndAt: makeTime(testDate, 16, 0)}}
 
 		res := findIntersection(a, b)
 		require.Len(t, res, 2)
-		assert.Equal(t, makeTime(testDate, 10, 0), res[0].start)
-		assert.Equal(t, makeTime(testDate, 13, 0), res[0].end)
-		assert.Equal(t, makeTime(testDate, 14, 0), res[1].start)
-		assert.Equal(t, makeTime(testDate, 16, 0), res[1].end)
+		assert.Equal(t, makeTime(testDate, 10, 0), res[0].StartAt)
+		assert.Equal(t, makeTime(testDate, 13, 0), res[0].EndAt)
+		assert.Equal(t, makeTime(testDate, 14, 0), res[1].StartAt)
+		assert.Equal(t, makeTime(testDate, 16, 0), res[1].EndAt)
 	})
 }
 
 func TestSubtractIntervals(t *testing.T) {
 	t.Run("subtract middle", func(t *testing.T) {
-		base := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 18, 0)}}
-		sub := []interval{{start: makeTime(testDate, 12, 0), end: makeTime(testDate, 13, 0)}}
+		base := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 18, 0)}}
+		sub := []TimeSlot{{StartAt: makeTime(testDate, 12, 0), EndAt: makeTime(testDate, 13, 0)}}
 
 		res := subtractIntervals(base, sub)
 		require.Len(t, res, 2)
-		assert.Equal(t, makeTime(testDate, 9, 0), res[0].start)
-		assert.Equal(t, makeTime(testDate, 12, 0), res[0].end)
-		assert.Equal(t, makeTime(testDate, 13, 0), res[1].start)
-		assert.Equal(t, makeTime(testDate, 18, 0), res[1].end)
+		assert.Equal(t, makeTime(testDate, 9, 0), res[0].StartAt)
+		assert.Equal(t, makeTime(testDate, 12, 0), res[0].EndAt)
+		assert.Equal(t, makeTime(testDate, 13, 0), res[1].StartAt)
+		assert.Equal(t, makeTime(testDate, 18, 0), res[1].EndAt)
 	})
 
 	t.Run("subtract beginning", func(t *testing.T) {
-		base := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 12, 0)}}
-		sub := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 10, 0)}}
+		base := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 12, 0)}}
+		sub := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 10, 0)}}
 
 		res := subtractIntervals(base, sub)
 		require.Len(t, res, 1)
-		assert.Equal(t, makeTime(testDate, 10, 0), res[0].start)
-		assert.Equal(t, makeTime(testDate, 12, 0), res[0].end)
+		assert.Equal(t, makeTime(testDate, 10, 0), res[0].StartAt)
+		assert.Equal(t, makeTime(testDate, 12, 0), res[0].EndAt)
 	})
 
 	t.Run("no overlap returns base", func(t *testing.T) {
-		base := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 10, 0)}}
-		sub := []interval{{start: makeTime(testDate, 11, 0), end: makeTime(testDate, 12, 0)}}
+		base := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 10, 0)}}
+		sub := []TimeSlot{{StartAt: makeTime(testDate, 11, 0), EndAt: makeTime(testDate, 12, 0)}}
 
 		res := subtractIntervals(base, sub)
 		require.Len(t, res, 1)
@@ -474,8 +447,8 @@ func TestSubtractIntervals(t *testing.T) {
 	})
 
 	t.Run("adjacent intervals not subtracted", func(t *testing.T) {
-		base := []interval{{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 10, 0)}}
-		sub := []interval{{start: makeTime(testDate, 10, 0), end: makeTime(testDate, 11, 0)}}
+		base := []TimeSlot{{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 10, 0)}}
+		sub := []TimeSlot{{StartAt: makeTime(testDate, 10, 0), EndAt: makeTime(testDate, 11, 0)}}
 
 		res := subtractIntervals(base, sub)
 		require.Len(t, res, 1)
@@ -485,7 +458,7 @@ func TestSubtractIntervals(t *testing.T) {
 
 func TestSplitIntoSlots(t *testing.T) {
 	t.Run("exact fit", func(t *testing.T) {
-		inv := interval{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 11, 0)}
+		inv := TimeSlot{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 11, 0)}
 		slots := splitIntoSlots(inv, 60*time.Minute, 60*time.Minute)
 
 		require.Len(t, slots, 2)
@@ -494,15 +467,14 @@ func TestSplitIntoSlots(t *testing.T) {
 	})
 
 	t.Run("remainder discarded", func(t *testing.T) {
-		inv := interval{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 10, 45)}
+		inv := TimeSlot{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 10, 45)}
 		slots := splitIntoSlots(inv, 60*time.Minute, 60*time.Minute)
 
-		// 09:00-10:00 fits, 10:00-11:00 doesn't fit (10:45)
 		require.Len(t, slots, 1)
 	})
 
 	t.Run("empty when duration > interval", func(t *testing.T) {
-		inv := interval{start: makeTime(testDate, 9, 0), end: makeTime(testDate, 9, 30)}
+		inv := TimeSlot{StartAt: makeTime(testDate, 9, 0), EndAt: makeTime(testDate, 9, 30)}
 		slots := splitIntoSlots(inv, 60*time.Minute, 30*time.Minute)
 
 		assert.Empty(t, slots)
@@ -510,12 +482,11 @@ func TestSplitIntoSlots(t *testing.T) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// combineDateTime / truncateToDate tests
+// combineDateTime / TruncateToDate tests
 // ─────────────────────────────────────────────────────────────────
 
 func TestCombineDateTime(t *testing.T) {
 	date := time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
-	// simulate TIME column from PG — date part is zero-value
 	timeOnly := time.Date(0, 1, 1, 14, 30, 0, 0, time.UTC)
 
 	got := combineDateTime(date, timeOnly)
@@ -524,18 +495,13 @@ func TestCombineDateTime(t *testing.T) {
 
 func TestTruncateToDate(t *testing.T) {
 	ts := time.Date(2026, 3, 10, 15, 45, 30, 123, time.UTC)
-	got := truncateToDate(ts)
+	got := TruncateToDate(ts)
 	assert.Equal(t, time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), got)
 }
 
 // ─────────────────────────────────────────────────────────────────
-// validateSlotAvailability tests
+// ValidateSlotAvailability tests
 // ─────────────────────────────────────────────────────────────────
-
-// Standard test fixtures:
-//   Location work: 09:00-13:00, 14:00-21:00 (rest 13:00-14:00)
-//   Employee work: 10:00-15:00, 15:30-19:00 (rest 15:00-15:30)
-//   Mixed schedule → effective intervals: 10:00-13:00, 14:00-15:00, 15:30-19:00
 
 func standardLocSlots() []*schedule.LocationScheduleSlot {
 	return []*schedule.LocationScheduleSlot{
@@ -554,7 +520,7 @@ func standardEmpSlots() []*schedule.EmployeeScheduleSlot {
 }
 
 func TestValidateSlotAvailability_ValidSlot(t *testing.T) {
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -567,8 +533,7 @@ func TestValidateSlotAvailability_ValidSlot(t *testing.T) {
 }
 
 func TestValidateSlotAvailability_ValidSlotEndOfInterval(t *testing.T) {
-	// 30min service at 12:30 → ends 13:00 (exactly at interval end)
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -581,8 +546,7 @@ func TestValidateSlotAvailability_ValidSlotEndOfInterval(t *testing.T) {
 }
 
 func TestValidateSlotAvailability_DuringLocationRest(t *testing.T) {
-	// 13:30 falls in location rest 13:00-14:00
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -591,12 +555,11 @@ func TestValidateSlotAvailability_DuringLocationRest(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 13, 30),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_DuringEmployeeRest(t *testing.T) {
-	// 15:00 falls in employee rest 15:00-15:30
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -605,12 +568,11 @@ func TestValidateSlotAvailability_DuringEmployeeRest(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 15, 0),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_OverlapsWithRest(t *testing.T) {
-	// 60min service at 14:30 → 14:30-15:30 overlaps employee rest 15:00-15:30
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -619,12 +581,11 @@ func TestValidateSlotAvailability_OverlapsWithRest(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 14, 30),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_BeforeWorkHours(t *testing.T) {
-	// 08:00 is before any work interval
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -633,12 +594,11 @@ func TestValidateSlotAvailability_BeforeWorkHours(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 8, 0),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_AfterWorkHours(t *testing.T) {
-	// 19:30 is after employee's last interval ends at 19:00
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -647,11 +607,11 @@ func TestValidateSlotAvailability_AfterWorkHours(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 19, 30),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_NoScheduleSlots(t *testing.T) {
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		nil,
 		nil,
@@ -660,30 +620,28 @@ func TestValidateSlotAvailability_NoScheduleSlots(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 10, 0),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_OccupiedSlot(t *testing.T) {
-	// Slot 10:00-10:30 is occupied
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
-		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 10, 30)},
+		[]*Appointment{occupiedAppt(testDate, 10, 0, 10, 30)},
 		mustDuration(30),
 		mustDuration(30),
 		makeTime(testDate, 10, 0),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_AdjacentToOccupied(t *testing.T) {
-	// 10:00-10:30 is occupied, booking at 10:30 should be fine
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
-		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 10, 30)},
+		[]*Appointment{occupiedAppt(testDate, 10, 0, 10, 30)},
 		mustDuration(30),
 		mustDuration(30),
 		makeTime(testDate, 10, 30),
@@ -692,8 +650,7 @@ func TestValidateSlotAvailability_AdjacentToOccupied(t *testing.T) {
 }
 
 func TestValidateSlotAvailability_SlotStepMisaligned(t *testing.T) {
-	// step=30min, 10:15 is not aligned to grid (10:00, 10:30, 11:00...)
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -702,13 +659,11 @@ func TestValidateSlotAvailability_SlotStepMisaligned(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 10, 15),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_SlotStepAlignedAfterRest(t *testing.T) {
-	// After employee rest 15:00-15:30, interval starts at 15:30
-	// step=30min: valid starts are 15:30, 16:00, 16:30...
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -721,9 +676,7 @@ func TestValidateSlotAvailability_SlotStepAlignedAfterRest(t *testing.T) {
 }
 
 func TestValidateSlotAvailability_SlotStepMisalignedAfterRest(t *testing.T) {
-	// After employee rest, interval starts at 15:30
-	// step=30min: 15:45 is not aligned (15:45 - 15:30 = 15min, 15%30 ≠ 0)
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -732,13 +685,11 @@ func TestValidateSlotAvailability_SlotStepMisalignedAfterRest(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 15, 45),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_FixedScheduleIgnoresEmployee(t *testing.T) {
-	// Fixed schedule — employee slots are irrelevant
-	// Location work: 09:00-13:00, rest: 13:00-14:00, work: 14:00-21:00
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeFixed,
 		standardLocSlots(),
 		nil,
@@ -751,7 +702,7 @@ func TestValidateSlotAvailability_FixedScheduleIgnoresEmployee(t *testing.T) {
 }
 
 func TestValidateSlotAvailability_FixedScheduleDuringLocRest(t *testing.T) {
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeFixed,
 		standardLocSlots(),
 		nil,
@@ -760,12 +711,11 @@ func TestValidateSlotAvailability_FixedScheduleDuringLocRest(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 13, 0),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_ServiceSpansTwoIntervals(t *testing.T) {
-	// 60min service at 12:30 → 12:30-13:30, crosses into rest 13:00-14:00
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
@@ -774,29 +724,24 @@ func TestValidateSlotAvailability_ServiceSpansTwoIntervals(t *testing.T) {
 		mustDuration(30),
 		makeTime(testDate, 12, 30),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_SlotStepAlignedAfterOccupied(t *testing.T) {
-	// Occupied: 10:00-10:45. Remaining interval starts at 10:45
-	// step=30min: 10:45 is not on 30-min grid from 10:45... wait, it IS the start
-	// 10:45 - 10:45 = 0, 0%30 = 0 → valid
-	// But 11:00 - 10:45 = 15min, 15%30 ≠ 0 → misaligned from this sub-interval
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),
-		[]*booking.Appointment{occupiedAppt(testDate, 10, 0, 10, 45)},
+		[]*Appointment{occupiedAppt(testDate, 10, 0, 10, 45)},
 		mustDuration(30),
 		mustDuration(30),
 		makeTime(testDate, 11, 0),
 	)
-	assert.ErrorIs(t, err, booking.ErrSlotNotAvailable)
+	assert.ErrorIs(t, err, ErrSlotNotAvailable)
 }
 
 func TestValidateSlotAvailability_ExactIntervalBoundary(t *testing.T) {
-	// 30min service at 18:30 → 18:30-19:00 (exactly fills end of last interval)
-	err := validateSlotAvailability(
+	err := ValidateSlotAvailability(
 		location.ScheduleTypeMixed,
 		standardLocSlots(),
 		standardEmpSlots(),

@@ -3,6 +3,7 @@ package booking
 import (
 	"net/http"
 
+	bookingDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -52,7 +53,7 @@ func (h *Handler) getSlots(w http.ResponseWriter, r *http.Request) {
 				EmployeeID:   ms.EmployeeID,
 				EmployeeName: ms.EmployeeName,
 				Price:        ms.Price,
-				Slots: lo.Map(ms.Slots, func(s uc.TimeSlot, _ int) timeSlot {
+				Slots: lo.Map(ms.Slots, func(s bookingDomain.TimeSlot, _ int) timeSlot {
 					return timeSlot{
 						StartAt: s.StartAt,
 						EndAt:   s.EndAt,
