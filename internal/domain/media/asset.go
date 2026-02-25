@@ -19,7 +19,7 @@ type Asset struct {
 	Bucket    string
 	ObjectKey string
 	Filename  string
-	MimeType  string
+	MimeType  MimeType
 	SizeBytes int64
 	Status    Status
 	CreatedAt time.Time
@@ -32,16 +32,16 @@ type Asset struct {
 
 type CreateAssetParams struct {
 	Bucket    string
-	ObjectKey string
 	Filename  string
-	MimeType  string
+	MimeType  MimeType
 	SizeBytes int64
 }
 
 // NewAsset создает новую запись о медиафайле.
+// keyBuilder определяет S3 path на основе target type.
 // По умолчанию статус всегда Pending, так как физическая загрузка файла
 // происходит асинхронно с фронтенда напрямую в S3.
-func NewAsset(params CreateAssetParams) (*Asset, error) {
+func NewAsset(params CreateAssetParams, purpose Purpose) (*Asset, error) {
 	if params.SizeBytes <= 0 {
 		return nil, ErrInvalidFileSize
 	}
@@ -51,19 +51,17 @@ func NewAsset(params CreateAssetParams) (*Asset, error) {
 		return nil, ErrEmptyFilename
 	}
 
-	cleanMime := strings.TrimSpace(params.MimeType)
-	if cleanMime == "" {
-		return nil, ErrEmptyMimeType
-	}
+	id := uuid.New()
+	objectKey := buildObjectKey(purpose, id, cleanFilename)
 
 	return &Asset{
-		ID:        uuid.New(),
+		ID:        id,
 		Bucket:    params.Bucket,
-		ObjectKey: params.ObjectKey,
+		ObjectKey: objectKey,
 		Filename:  cleanFilename,
-		MimeType:  cleanMime,
+		MimeType:  params.MimeType,
 		SizeBytes: params.SizeBytes,
-		Status:    StatusPending, // Начальное состояние
+		Status:    StatusPending,
 		CreatedAt: time.Now(),
 	}, nil
 }

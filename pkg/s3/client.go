@@ -103,6 +103,11 @@ func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	}, nil
 }
 
+// BucketName возвращает имя бакета
+func (c *Client) BucketName() string {
+	return c.bucketName
+}
+
 // Upload загружает файл в S3
 func (c *Client) Upload(ctx context.Context, key string, data []byte, contentType string) (string, error) {
 	if key == "" {
@@ -416,33 +421,38 @@ func (c *Client) GeneratePresignedPostURL(ctx context.Context, options UploadPol
 		Key:    aws.String(options.Key),
 	}
 
-	if options.ContentType != "" {
-		input.ContentType = aws.String(options.ContentType)
-	}
-
-	// Настройка условий политики
+	// Условия политики
 	var conditions []interface{}
 	if options.ContentLengthMax > 0 {
-		// Условие на размер файла: ["content-length-range", min, max]
 		conditions = append(conditions, []any{
 			"content-length-range",
 			options.ContentLengthMin,
 			options.ContentLengthMax,
 		})
 	}
+	if options.ContentType != "" {
+		conditions = append(conditions, map[string]string{
+			"Content-Type": options.ContentType,
+		})
+	}
 
 	presignedReq, err := c.presignClient.PresignPostObject(ctx, input, func(opts *s3.PresignPostOptions) {
 		opts.Expires = options.Expires
-		if len(conditions) > 0 {
-			opts.Conditions = conditions
-		}
+		opts.Conditions = conditions
 	})
 	if err != nil {
 		return nil, fmt.Errorf("s3: failed to generate presigned POST URL: %w", err)
 	}
 
+	fields := presignedReq.Values
+	if options.ContentType != "" {
+		if _, ok := fields["Content-Type"]; !ok {
+			fields["Content-Type"] = options.ContentType
+		}
+	}
+
 	return &UploadPolicyResponse{
 		URL:    presignedReq.URL,
-		Fields: presignedReq.Values,
+		Fields: fields,
 	}, nil
 }

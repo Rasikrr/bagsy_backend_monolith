@@ -1116,6 +1116,57 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/media/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт запись о медиафайле и возвращает presigned POST URL для загрузки в S3.\nДопустимые значения purpose: avatars, organizations, locations, services, service-categories.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Генерация presigned URL для загрузки файла",
+                "parameters": [
+                    {
+                        "description": "Параметры файла",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.uploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.uploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid_purpose / file_size_limit / empty_filename / unsupported_mime_type",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1621,6 +1672,47 @@ const docTemplate = `{
                 },
                 "prompt_org_profile": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.uploadRequest": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string",
+                    "enum": [
+                        "avatars",
+                        "organizations",
+                        "locations",
+                        "services",
+                        "service-categories"
+                    ]
+                },
+                "size_bytes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.uploadResponse": {
+            "type": "object",
+            "properties": {
+                "asset_id": {
+                    "type": "string"
+                },
+                "upload_fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "upload_url": {
+                    "type": "string"
                 }
             }
         }
