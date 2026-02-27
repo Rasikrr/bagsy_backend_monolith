@@ -34,6 +34,7 @@ type CreateAssetParams struct {
 	Bucket    string
 	Filename  string
 	MimeType  MimeType
+	Purpose   Purpose
 	SizeBytes int64
 }
 
@@ -41,7 +42,7 @@ type CreateAssetParams struct {
 // keyBuilder определяет S3 path на основе target type.
 // По умолчанию статус всегда Pending, так как физическая загрузка файла
 // происходит асинхронно с фронтенда напрямую в S3.
-func NewAsset(params CreateAssetParams, purpose Purpose) (*Asset, error) {
+func NewAsset(params CreateAssetParams) (*Asset, error) {
 	if params.SizeBytes <= 0 {
 		return nil, ErrInvalidFileSize
 	}
@@ -52,7 +53,7 @@ func NewAsset(params CreateAssetParams, purpose Purpose) (*Asset, error) {
 	}
 
 	id := uuid.New()
-	objectKey := buildObjectKey(purpose, id, cleanFilename)
+	objectKey := buildObjectKey(params.Purpose, id, cleanFilename)
 
 	return &Asset{
 		ID:        id,
@@ -71,12 +72,16 @@ func NewAsset(params CreateAssetParams, purpose Purpose) (*Asset, error) {
 // ─────────────────────────────────────────────────────────────────
 
 // MarkAsUploaded подтверждает, что фронтенд успешно загрузил байты в S3.
-func (a *Asset) MarkAsUploaded() {
+func (a *Asset) MarkAsUploaded() error {
 	if a.Status == StatusUploaded {
-		return
+		return nil
+	}
+	if a.Status != StatusPending {
+		return ErrAssetNotPending
 	}
 	a.Status = StatusUploaded
 	a.touch()
+	return nil
 }
 
 // MarkAsFailed помечает загрузку как неуспешную (например, истек таймаут Presigned URL).

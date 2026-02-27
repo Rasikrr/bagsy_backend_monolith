@@ -6,10 +6,12 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type mediaUseCase interface {
 	GenerateUploadURL(ctx context.Context, input uc.GenerateUploadURLInput) (*uc.GenerateUploadURLOutput, error)
+	ConfirmUpload(ctx context.Context, assetID uuid.UUID) error
 }
 
 type Handler struct {
@@ -32,5 +34,6 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Use(h.authMid.Handle)
 
 		r.Post("/upload", h.upload)
+		r.Post("/{id}/confirm", h.confirm)
 	})
 }

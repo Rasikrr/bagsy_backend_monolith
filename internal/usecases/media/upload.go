@@ -29,9 +29,10 @@ func (u *UseCase) GenerateUploadURL(
 	asset, err := mediaDomain.NewAsset(mediaDomain.CreateAssetParams{
 		Bucket:    u.storage.BucketName(),
 		Filename:  input.Filename,
+		Purpose:   purpose,
 		MimeType:  mimeType,
 		SizeBytes: input.SizeBytes,
-	}, purpose)
+	})
 	if err != nil {
 		return nil, err
 	}

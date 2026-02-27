@@ -1167,6 +1167,55 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/media/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Проверяет наличие файла в S3 и меняет статус ассета на uploaded.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Подтверждение загрузки файла",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "asset_not_found / file_not_uploaded",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "asset_not_pending",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
