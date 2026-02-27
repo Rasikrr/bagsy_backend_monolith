@@ -17,6 +17,7 @@ import (
 	employeeRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/employee"
 	locationRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location"
 	categoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location_category"
+	mediaRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media"
 	orgRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/organization"
 	planRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/plan"
 	scheduleRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/schedule"
@@ -29,8 +30,10 @@ import (
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
+	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/s3"
@@ -62,6 +65,7 @@ type App struct {
 	customerRepo       *customerRepo.Repository
 	catalogRepo        *catalogRepo.Repository
 	scheduleRepo       *scheduleRepo.Repository
+	mediaRepo          *mediaRepo.Repository
 	otpRepo            *otpRepo.Repository
 	pendingRegStore    *pendingReg.PendingRegistrationStore
 	refreshTokenRepo   *refreshTokenRepo.RefreshTokenRepository
@@ -78,8 +82,10 @@ type App struct {
 	authUseCase      *authUC.UseCase
 	resetPasswordUC  *authUC.ResetPasswordUseCase
 	inviteEmployeeUC *inviteUC.UseCase
+	employeeUseCase  *employeeUC.UseCase
 	createLocationUC *locationUC.UseCase
 	bookingUseCase   *bookingUC.UseCase
+	mediaUseCase     *mediaUC.UseCase
 
 	// Policies
 	policy *policy.Policy
@@ -149,6 +155,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.customerRepo = customerRepo.NewRepository(db)
 	a.catalogRepo = catalogRepo.NewRepository(db)
 	a.scheduleRepo = scheduleRepo.NewRepository(db)
+	a.mediaRepo = mediaRepo.NewRepository(db)
 
 	a.otpRepo = otpRepo.NewRepository(a.Redis())
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
@@ -237,6 +244,13 @@ func (a *App) initUseCases(_ context.Context) error {
 		inviteFrontendURL,
 	)
 
+	a.employeeUseCase = employeeUC.NewUseCase(
+		a.employeeRepo,
+		a.mediaRepo,
+		a.s3Client,
+		15*time.Minute,
+	)
+
 	a.createLocationUC = locationUC.NewCreateLocationUseCase(
 		a.locationRepo,
 		a.categoryRepo,
@@ -244,6 +258,16 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.employeeRepo,
 		a.policy,
 		txManager,
+	)
+
+	mediaUploadTTL := vars.GetDuration(appenv.MediaUploadTTL)
+	mediaMaxSize := int64(vars.GetInt(appenv.MediaMaxSizeBytes))
+
+	a.mediaUseCase = mediaUC.NewUseCase(
+		a.mediaRepo,
+		a.s3Client,
+		mediaUploadTTL,
+		mediaMaxSize,
 	)
 
 	a.bookingUseCase = bookingUC.NewUseCase(
@@ -275,9 +299,11 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.authUseCase,
 		a.resetPasswordUC,
 		a.inviteEmployeeUC,
+		a.employeeUseCase,
 		a.accessRepo,
 		a.createLocationUC,
 		a.bookingUseCase,
+		a.mediaUseCase,
 	)
 	return nil
 }

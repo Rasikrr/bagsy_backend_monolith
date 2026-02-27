@@ -248,6 +248,38 @@ definitions:
       refresh_token:
         type: string
     type: object
+  internal_ports_http_handlers_employee.getMeResponse:
+    properties:
+      active:
+        type: boolean
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      location_id:
+        type: string
+      organization_id:
+        type: string
+      permissions:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.permissionsResponse'
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.permissionsResponse:
+    properties:
+      can_manage_location_schedule:
+        type: boolean
+      can_provide_services:
+        type: boolean
+    type: object
   internal_ports_http_handlers_employee.resendInviteRequest:
     properties:
       phone:
@@ -324,6 +356,34 @@ definitions:
         type: string
       prompt_org_profile:
         type: boolean
+    type: object
+  internal_ports_http_handlers_media.uploadRequest:
+    properties:
+      filename:
+        type: string
+      mime_type:
+        type: string
+      purpose:
+        enum:
+        - avatars
+        - organizations
+        - locations
+        - services
+        - service-categories
+        type: string
+      size_bytes:
+        type: integer
+    type: object
+  internal_ports_http_handlers_media.uploadResponse:
+    properties:
+      asset_id:
+        type: string
+      upload_fields:
+        additionalProperties:
+          type: string
+        type: object
+      upload_url:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -1034,6 +1094,33 @@ paths:
       summary: Переотправить приглашение
       tags:
       - employees
+  /api/v1/employees/me:
+    get:
+      description: Возвращает информацию о текущем авторизованном сотруднике.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.getMeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение профиля текущего сотрудника
+      tags:
+      - employees
   /api/v1/locations:
     post:
       consumes:
@@ -1071,6 +1158,71 @@ paths:
       summary: Создание локации
       tags:
       - location
+  /api/v1/media/{id}/confirm:
+    post:
+      description: Проверяет наличие файла в S3 и меняет статус ассета на uploaded.
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: asset_not_found / file_not_uploaded
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "409":
+          description: asset_not_pending
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Подтверждение загрузки файла
+      tags:
+      - media
+  /api/v1/media/upload:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Создаёт запись о медиафайле и возвращает presigned POST URL для загрузки в S3.
+        Допустимые значения purpose: avatars, organizations, locations, services, service-categories.
+      parameters:
+      - description: Параметры файла
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_media.uploadRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_media.uploadResponse'
+        "400":
+          description: invalid_purpose / file_size_limit / empty_filename / unsupported_mime_type
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Генерация presigned URL для загрузки файла
+      tags:
+      - media
 securityDefinitions:
   ApiKeyAuth:
     in: header

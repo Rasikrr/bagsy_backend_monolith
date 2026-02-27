@@ -283,3 +283,15 @@ env:
     env_name: "FRONTEND_URL"
     value: "https://app.bagsy.kz/ru/invite"
     required: true
+
+  media_max_size_bytes:
+    type: "int"
+    env_name: "MEDIA_MAX_SIZE_BYTES"
+    value: 52428800
+    required: true
+
+  media_upload_ttl:
+    type: "duration"
+    env_name: "MEDIA_UPLOAD_TTL"
+    value: "600s"
+    required: true

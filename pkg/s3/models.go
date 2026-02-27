@@ -21,6 +21,6 @@ type UploadPolicyOptions struct {
 
 // UploadPolicyResponse содержит URL и поля формы для загрузки файла фронтендом
 type UploadPolicyResponse struct {
-	URL    string            `json:"url"`
-	Fields map[string]string `json:"fields"`
+	URL    string
+	Fields map[string]string
 }

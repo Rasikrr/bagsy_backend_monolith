@@ -6,13 +6,16 @@ import (
 	bookingC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/booking"
 	employeeC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/employee"
 	locationC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/location"
+	mediaC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
+	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/environment"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -43,9 +46,11 @@ func NewServer(
 	authUseCase *auth.UseCase,
 	resetPasswordUseCase *auth.ResetPasswordUseCase,
 	inviteUseCase *invite.UseCase,
+	employeeUseCase *employeeUC.UseCase,
 	accessRepo *access.Repository,
 	createLocationUC *locationUC.UseCase,
 	bookingUseCase *bookingUC.UseCase,
+	mediaUseCase *mediaUC.UseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
@@ -55,14 +60,16 @@ func NewServer(
 
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
-	employeeHandler := employeeC.New(inviteUseCase, authMiddleware, orgContextMiddleware)
+	employeeHandler := employeeC.New(inviteUseCase, employeeUseCase, authMiddleware, orgContextMiddleware)
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
+	mediaHandler := mediaC.New(mediaUseCase, authMiddleware)
 
 	server.WithControllers(
 		authHandler,
 		locationHandler,
 		employeeHandler,
 		bookingHandler,
+		mediaHandler,
 	)
 }
 

@@ -1060,6 +1060,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/employees/me": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает информацию о текущем авторизованном сотруднике.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "employees"
+                ],
+                "summary": "Получение профиля текущего сотрудника",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_employee.getMeResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "employee_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/locations": {
             "post": {
                 "security": [
@@ -1104,6 +1147,106 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Лимит превышен или подписка приостановлена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/media/upload": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создаёт запись о медиафайле и возвращает presigned POST URL для загрузки в S3.\nДопустимые значения purpose: avatars, organizations, locations, services, service-categories.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Генерация presigned URL для загрузки файла",
+                "parameters": [
+                    {
+                        "description": "Параметры файла",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.uploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_media.uploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid_purpose / file_size_limit / empty_filename / unsupported_mime_type",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/media/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Проверяет наличие файла в S3 и меняет статус ассета на uploaded.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "media"
+                ],
+                "summary": "Подтверждение загрузки файла",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "asset_not_found / file_not_uploaded",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "asset_not_pending",
                         "schema": {
                             "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
@@ -1505,6 +1648,55 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_employee.getMeResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "location_id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.permissionsResponse"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.permissionsResponse": {
+            "type": "object",
+            "properties": {
+                "can_manage_location_schedule": {
+                    "type": "boolean"
+                },
+                "can_provide_services": {
+                    "type": "boolean"
+                }
+            }
+        },
         "internal_ports_http_handlers_employee.resendInviteRequest": {
             "type": "object",
             "properties": {
@@ -1621,6 +1813,47 @@ const docTemplate = `{
                 },
                 "prompt_org_profile": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.uploadRequest": {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string",
+                    "enum": [
+                        "avatars",
+                        "organizations",
+                        "locations",
+                        "services",
+                        "service-categories"
+                    ]
+                },
+                "size_bytes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_media.uploadResponse": {
+            "type": "object",
+            "properties": {
+                "asset_id": {
+                    "type": "string"
+                },
+                "upload_fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "upload_url": {
+                    "type": "string"
                 }
             }
         }
