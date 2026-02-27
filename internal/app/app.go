@@ -30,6 +30,7 @@ import (
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
@@ -81,6 +82,7 @@ type App struct {
 	authUseCase      *authUC.UseCase
 	resetPasswordUC  *authUC.ResetPasswordUseCase
 	inviteEmployeeUC *inviteUC.UseCase
+	employeeUseCase  *employeeUC.UseCase
 	createLocationUC *locationUC.UseCase
 	bookingUseCase   *bookingUC.UseCase
 	mediaUseCase     *mediaUC.UseCase
@@ -242,6 +244,13 @@ func (a *App) initUseCases(_ context.Context) error {
 		inviteFrontendURL,
 	)
 
+	a.employeeUseCase = employeeUC.NewUseCase(
+		a.employeeRepo,
+		a.mediaRepo,
+		a.s3Client,
+		15*time.Minute,
+	)
+
 	a.createLocationUC = locationUC.NewCreateLocationUseCase(
 		a.locationRepo,
 		a.categoryRepo,
@@ -290,6 +299,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.authUseCase,
 		a.resetPasswordUC,
 		a.inviteEmployeeUC,
+		a.employeeUseCase,
 		a.accessRepo,
 		a.createLocationUC,
 		a.bookingUseCase,

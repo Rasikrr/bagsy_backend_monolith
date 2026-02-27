@@ -395,7 +395,284 @@ func (v *resendInviteRequest) UnmarshalJSON(data []byte) error {
 func (v *resendInviteRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee3(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(in *jlexer.Lexer, out *confirmInviteResponse) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(in *jlexer.Lexer, out *permissionsResponse) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		switch key {
+		case "can_provide_services":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.CanProvideServices = bool(in.Bool())
+			}
+		case "can_manage_location_schedule":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.CanManageLocationSchedule = bool(in.Bool())
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(out *jwriter.Writer, in permissionsResponse) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"can_provide_services\":"
+		out.RawString(prefix[1:])
+		out.Bool(bool(in.CanProvideServices))
+	}
+	{
+		const prefix string = ",\"can_manage_location_schedule\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.CanManageLocationSchedule))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v permissionsResponse) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v permissionsResponse) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *permissionsResponse) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *permissionsResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(in *jlexer.Lexer, out *getMeResponse) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		switch key {
+		case "id":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.ID = string(in.String())
+			}
+		case "phone":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Phone = string(in.String())
+			}
+		case "first_name":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.FirstName = string(in.String())
+			}
+		case "last_name":
+			if in.IsNull() {
+				in.Skip()
+				out.LastName = nil
+			} else {
+				if out.LastName == nil {
+					out.LastName = new(string)
+				}
+				if in.IsNull() {
+					in.Skip()
+				} else {
+					*out.LastName = string(in.String())
+				}
+			}
+		case "avatar_url":
+			if in.IsNull() {
+				in.Skip()
+				out.AvatarURL = nil
+			} else {
+				if out.AvatarURL == nil {
+					out.AvatarURL = new(string)
+				}
+				if in.IsNull() {
+					in.Skip()
+				} else {
+					*out.AvatarURL = string(in.String())
+				}
+			}
+		case "organization_id":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.OrganizationID = string(in.String())
+			}
+		case "location_id":
+			if in.IsNull() {
+				in.Skip()
+				out.LocationID = nil
+			} else {
+				if out.LocationID == nil {
+					out.LocationID = new(string)
+				}
+				if in.IsNull() {
+					in.Skip()
+				} else {
+					*out.LocationID = string(in.String())
+				}
+			}
+		case "role":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Role = string(in.String())
+			}
+		case "permissions":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				(out.Permissions).UnmarshalEasyJSON(in)
+			}
+		case "active":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.Active = bool(in.Bool())
+			}
+		case "created_at":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				if data := in.Raw(); in.Ok() {
+					in.AddError((out.CreatedAt).UnmarshalJSON(data))
+				}
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(out *jwriter.Writer, in getMeResponse) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.ID))
+	}
+	{
+		const prefix string = ",\"phone\":"
+		out.RawString(prefix)
+		out.String(string(in.Phone))
+	}
+	{
+		const prefix string = ",\"first_name\":"
+		out.RawString(prefix)
+		out.String(string(in.FirstName))
+	}
+	if in.LastName != nil {
+		const prefix string = ",\"last_name\":"
+		out.RawString(prefix)
+		out.String(string(*in.LastName))
+	}
+	if in.AvatarURL != nil {
+		const prefix string = ",\"avatar_url\":"
+		out.RawString(prefix)
+		out.String(string(*in.AvatarURL))
+	}
+	{
+		const prefix string = ",\"organization_id\":"
+		out.RawString(prefix)
+		out.String(string(in.OrganizationID))
+	}
+	if in.LocationID != nil {
+		const prefix string = ",\"location_id\":"
+		out.RawString(prefix)
+		out.String(string(*in.LocationID))
+	}
+	{
+		const prefix string = ",\"role\":"
+		out.RawString(prefix)
+		out.String(string(in.Role))
+	}
+	{
+		const prefix string = ",\"permissions\":"
+		out.RawString(prefix)
+		(in.Permissions).MarshalEasyJSON(out)
+	}
+	{
+		const prefix string = ",\"active\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.Active))
+	}
+	{
+		const prefix string = ",\"created_at\":"
+		out.RawString(prefix)
+		out.Raw((in.CreatedAt).MarshalJSON())
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v getMeResponse) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v getMeResponse) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *getMeResponse) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *getMeResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(l, v)
+}
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee6(in *jlexer.Lexer, out *confirmInviteResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -431,7 +708,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(out *jwriter.Writer, in confirmInviteResponse) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee6(out *jwriter.Writer, in confirmInviteResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -451,27 +728,27 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v confirmInviteResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee6(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v confirmInviteResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee6(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *confirmInviteResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee6(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *confirmInviteResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee4(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee6(l, v)
 }
-func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(in *jlexer.Lexer, out *confirmInviteRequest) {
+func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee7(in *jlexer.Lexer, out *confirmInviteRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -507,7 +784,7 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(out *jwriter.Writer, in confirmInviteRequest) {
+func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee7(out *jwriter.Writer, in confirmInviteRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -527,23 +804,23 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 // MarshalJSON supports json.Marshaler interface
 func (v confirmInviteRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(&w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee7(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v confirmInviteRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(w, v)
+	easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee7(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *confirmInviteRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(&r, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee7(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *confirmInviteRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee5(l, v)
+	easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttpHandlersEmployee7(l, v)
 }

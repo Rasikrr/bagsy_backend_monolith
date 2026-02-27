@@ -18,6 +18,7 @@ var employeeErrors = httputil.ErrorMap{
 	authDomain.ErrPhoneAlreadyExists:  {Code: http.StatusConflict, Message: "phone_already_exists"},
 
 	// identity
+	identity.ErrEmployeeNotFound:      {Code: http.StatusNotFound, Message: "employee_not_found"},
 	identity.ErrPermissionDenied:      {Code: http.StatusForbidden, Message: "permission_denied"},
 	identity.ErrInvalidRole:           {Code: http.StatusBadRequest, Message: "invalid_role"},
 	identity.ErrEmployeeNameRequired:  {Code: http.StatusBadRequest, Message: "name_required"},

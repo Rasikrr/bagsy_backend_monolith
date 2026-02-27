@@ -248,6 +248,38 @@ definitions:
       refresh_token:
         type: string
     type: object
+  internal_ports_http_handlers_employee.getMeResponse:
+    properties:
+      active:
+        type: boolean
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      location_id:
+        type: string
+      organization_id:
+        type: string
+      permissions:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.permissionsResponse'
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.permissionsResponse:
+    properties:
+      can_manage_location_schedule:
+        type: boolean
+      can_provide_services:
+        type: boolean
+    type: object
   internal_ports_http_handlers_employee.resendInviteRequest:
     properties:
       phone:
@@ -1060,6 +1092,33 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Переотправить приглашение
+      tags:
+      - employees
+  /api/v1/employees/me:
+    get:
+      description: Возвращает информацию о текущем авторизованном сотруднике.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.getMeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение профиля текущего сотрудника
       tags:
       - employees
   /api/v1/locations:

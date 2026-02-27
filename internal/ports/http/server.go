@@ -12,6 +12,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
@@ -45,6 +46,7 @@ func NewServer(
 	authUseCase *auth.UseCase,
 	resetPasswordUseCase *auth.ResetPasswordUseCase,
 	inviteUseCase *invite.UseCase,
+	employeeUseCase *employeeUC.UseCase,
 	accessRepo *access.Repository,
 	createLocationUC *locationUC.UseCase,
 	bookingUseCase *bookingUC.UseCase,
@@ -58,7 +60,7 @@ func NewServer(
 
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
-	employeeHandler := employeeC.New(inviteUseCase, authMiddleware, orgContextMiddleware)
+	employeeHandler := employeeC.New(inviteUseCase, employeeUseCase, authMiddleware, orgContextMiddleware)
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
 	mediaHandler := mediaC.New(mediaUseCase, authMiddleware)
 

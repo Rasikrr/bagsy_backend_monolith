@@ -1060,6 +1060,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/employees/me": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает информацию о текущем авторизованном сотруднике.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "employees"
+                ],
+                "summary": "Получение профиля текущего сотрудника",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_employee.getMeResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "employee_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/locations": {
             "post": {
                 "security": [
@@ -1602,6 +1645,55 @@ const docTemplate = `{
                 },
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.getMeResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "location_id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.permissionsResponse"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.permissionsResponse": {
+            "type": "object",
+            "properties": {
+                "can_manage_location_schedule": {
+                    "type": "boolean"
+                },
+                "can_provide_services": {
+                    "type": "boolean"
                 }
             }
         },
