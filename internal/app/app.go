@@ -35,6 +35,7 @@ import (
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/workers"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/s3"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/sms"
@@ -309,6 +310,7 @@ func (a *App) initHTTP(_ context.Context) error {
 }
 
 func (a *App) initJobs(_ context.Context) error {
+	vars := a.Config().Variables
 	loc, err := time.LoadLocation("Asia/Almaty")
 	if err != nil {
 		return err
@@ -319,7 +321,11 @@ func (a *App) initJobs(_ context.Context) error {
 		cron.WithLocation(loc),
 	)
 
-	a.WithCronJobs()
+	mediaUploadTTL := vars.GetDuration(appenv.MediaUploadTTL)
+
+	a.WithCronJobs(
+		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, "0 */1 * * * *"),
+	)
 
 	return nil
 }

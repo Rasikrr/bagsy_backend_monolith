@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/core/database/postgres"
@@ -48,4 +49,12 @@ func (r *Repository) Save(ctx context.Context, asset *media.Asset) error {
 		return fmt.Errorf("save media asset: %w", err)
 	}
 	return nil
+}
+
+func (r *Repository) MarkExpiredPendingAsFailed(ctx context.Context, threshold time.Time) (int64, error) {
+	res, err := r.db.Exec(ctx, markExpiredPendingAsFailed, threshold)
+	if err != nil {
+		return 0, fmt.Errorf("mark expired pending media as failed: %w", err)
+	}
+	return res.RowsAffected(), nil
 }
