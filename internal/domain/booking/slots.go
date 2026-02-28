@@ -1,6 +1,7 @@
 package booking
 
 import (
+	"sort"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
@@ -42,23 +43,31 @@ func GenerateSlots(
 		return a.StartAt.Format("2006-01-02")
 	})
 
+	var allIntervals []TimeSlot
+
+	// 1. Collect all available intervals across all days
 	for d := TruncateToDate(start); !d.After(TruncateToDate(end)); d = d.AddDate(0, 0, 1) {
 		dateStr := d.Format("2006-01-02")
 
-		finalIntervals := calculateDailyIntervals(
+		dayIntervals := calculateDailyIntervals(
 			scheduleType,
 			d,
 			locByDate[dateStr],
 			empByDate[dateStr],
 			occByDate[dateStr],
 		)
+		allIntervals = append(allIntervals, dayIntervals...)
+	}
 
-		for _, inv := range finalIntervals {
-			slots := splitIntoSlots(inv, duration, step)
-			for _, s := range slots {
-				if s.StartAt.After(now) {
-					result = append(result, s)
-				}
+	// 2. Merge contiguous intervals (handles midnight crossing)
+	mergedIntervals := mergeIntervals(allIntervals)
+
+	// 3. Generate slots from merged intervals
+	for _, inv := range mergedIntervals {
+		slots := splitIntoSlots(inv, duration, step)
+		for _, s := range slots {
+			if !s.StartAt.Before(now) {
+				result = append(result, s)
 			}
 		}
 	}
@@ -119,35 +128,39 @@ func ValidateSlotAvailability(
 	slotStep shared.Duration,
 	startAt time.Time,
 ) error {
-	day := TruncateToDate(startAt)
-	endAt := startAt.Add(serviceDuration.AsDuration())
+	duration := serviceDuration.AsDuration()
+	endAt := startAt.Add(duration)
 
-	var workIntervals []TimeSlot
-	if scheduleType == location.ScheduleTypeFixed {
-		workIntervals = filterWorkSlotsLoc(day, locSlots)
-	} else {
-		workIntervals = findIntersection(
-			filterWorkSlotsLoc(day, locSlots),
-			filterWorkSlotsEmp(day, empSlots),
-		)
-	}
+	// Since a slot could cross midnight, we need to gather intervals
+	// from both the day it starts and possibly subsequent days.
+	dayStart := TruncateToDate(startAt)
+	dayEnd := TruncateToDate(endAt)
 
-	if len(workIntervals) == 0 {
-		return ErrSlotNotAvailable
-	}
+	var allIntervals []TimeSlot
 
-	restIntervals := filterRestSlotsLoc(day, locSlots)
-	if scheduleType == location.ScheduleTypeMixed {
-		restIntervals = append(restIntervals, filterRestSlotsEmp(day, empSlots)...)
-	}
-
-	available := subtractIntervals(workIntervals, restIntervals)
-
-	occIntervals := lo.Map(occupied, func(a *Appointment, _ int) TimeSlot {
-		return TimeSlot{StartAt: a.StartAt, EndAt: a.EndAt}
+	locByDate := lo.GroupBy(locSlots, func(s *schedule.LocationScheduleSlot) string {
+		return s.Date.Format("2006-01-02")
+	})
+	empByDate := lo.GroupBy(empSlots, func(s *schedule.EmployeeScheduleSlot) string {
+		return s.Date.Format("2006-01-02")
+	})
+	occByDate := lo.GroupBy(occupied, func(a *Appointment) string {
+		return a.StartAt.Format("2006-01-02")
 	})
 
-	available = subtractIntervals(available, occIntervals)
+	for d := dayStart; !d.After(dayEnd); d = d.AddDate(0, 0, 1) {
+		dateStr := d.Format("2006-01-02")
+		dayIntervals := calculateDailyIntervals(
+			scheduleType,
+			d,
+			locByDate[dateStr],
+			empByDate[dateStr],
+			occByDate[dateStr],
+		)
+		allIntervals = append(allIntervals, dayIntervals...)
+	}
+
+	available := mergeIntervals(allIntervals)
 
 	step := slotStep.AsDuration()
 	for _, inv := range available {
@@ -162,6 +175,32 @@ func ValidateSlotAvailability(
 	return ErrSlotNotAvailable
 }
 
+func mergeIntervals(intervals []TimeSlot) []TimeSlot {
+	if len(intervals) < 2 {
+		return intervals
+	}
+
+	sort.Slice(intervals, func(i, j int) bool {
+		return intervals[i].StartAt.Before(intervals[j].StartAt)
+	})
+
+	res := []TimeSlot{intervals[0]}
+	for i := 1; i < len(intervals); i++ {
+		last := &res[len(res)-1]
+		curr := intervals[i]
+
+		// If current interval starts before or at the end of last interval, merge them.
+		if !curr.StartAt.After(last.EndAt) {
+			if curr.EndAt.After(last.EndAt) {
+				last.EndAt = curr.EndAt
+			}
+		} else {
+			res = append(res, curr)
+		}
+	}
+	return res
+}
+
 // TruncateToDate strips time component, keeping only date.
 func TruncateToDate(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
@@ -171,7 +210,10 @@ func filterWorkSlotsLoc(date time.Time, slots []*schedule.LocationScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsWorkSlot() {
-			res = append(res, TimeSlot{StartAt: combineDateTime(date, s.StartTime), EndAt: combineDateTime(date, s.EndTime)})
+			res = append(res, TimeSlot{
+				StartAt: date.Add(s.StartTime.Sub(s.Date)),
+				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
+			})
 		}
 	}
 	return res
@@ -181,7 +223,10 @@ func filterWorkSlotsEmp(date time.Time, slots []*schedule.EmployeeScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsWorkSlot() {
-			res = append(res, TimeSlot{StartAt: combineDateTime(date, s.StartTime), EndAt: combineDateTime(date, s.EndTime)})
+			res = append(res, TimeSlot{
+				StartAt: date.Add(s.StartTime.Sub(s.Date)),
+				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
+			})
 		}
 	}
 	return res
@@ -191,7 +236,10 @@ func filterRestSlotsLoc(date time.Time, slots []*schedule.LocationScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsRestSlot() {
-			res = append(res, TimeSlot{StartAt: combineDateTime(date, s.StartTime), EndAt: combineDateTime(date, s.EndTime)})
+			res = append(res, TimeSlot{
+				StartAt: date.Add(s.StartTime.Sub(s.Date)),
+				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
+			})
 		}
 	}
 	return res
@@ -201,14 +249,18 @@ func filterRestSlotsEmp(date time.Time, slots []*schedule.EmployeeScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsRestSlot() {
-			res = append(res, TimeSlot{StartAt: combineDateTime(date, s.StartTime), EndAt: combineDateTime(date, s.EndTime)})
+			res = append(res, TimeSlot{
+				StartAt: date.Add(s.StartTime.Sub(s.Date)),
+				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
+			})
 		}
 	}
 	return res
 }
 
 func combineDateTime(date, t time.Time) time.Time {
-	return time.Date(date.Year(), date.Month(), date.Day(), t.Hour(), t.Minute(), t.Second(), 0, time.UTC)
+	tDate := TruncateToDate(t)
+	return TruncateToDate(date).Add(t.Sub(tDate))
 }
 
 func findIntersection(a, b []TimeSlot) []TimeSlot {

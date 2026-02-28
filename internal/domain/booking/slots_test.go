@@ -248,7 +248,7 @@ func TestGenerateSlots_PastSlotsFiltered(t *testing.T) {
 
 	got := slotTimes(slots)
 	require.NotEmpty(t, got)
-	assert.Equal(t, "12:00", got[0][0])
+	assert.Equal(t, "11:30", got[0][0])
 }
 
 func TestGenerateSlots_WithEmpAndLocRests(t *testing.T) {
@@ -365,6 +365,118 @@ func TestGenerateSlots_ZeroStepFallbackTo30Min(t *testing.T) {
 		{"10:00", "11:00"},
 	}
 	assert.Equal(t, expected, got)
+}
+
+func TestGenerateSlots_24Hours(t *testing.T) {
+	// Testing 24/7 schedule (00:00 - 24:00)
+	slots := GenerateSlots(
+		location.ScheduleTypeFixed,
+		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 0, 0, 24, 0)},
+		nil,
+		nil,
+		mustDuration(60),
+		mustDuration(60),
+		testDate, testDate,
+		makeTime(testDate, 0, 0),
+	)
+
+	got := slotTimes(slots)
+	// Should produce 24 slots (from 00:00 start to 23:00 start)
+	assert.Len(t, got, 24)
+	assert.Equal(t, "00:00", got[0][0])
+	assert.Equal(t, "23:00", got[23][0])
+	assert.Equal(t, "00:00", got[23][1]) // Ends at midnight
+}
+
+func TestGenerateSlots_NightShift_AcrossMidnight(t *testing.T) {
+	day1 := testDate
+	day2 := testDate.AddDate(0, 0, 1)
+
+	// Night shift: 22:00 - 02:00. In DB it's two records.
+	slots := GenerateSlots(
+		location.ScheduleTypeFixed,
+		[]*schedule.LocationScheduleSlot{
+			locWorkSlot(day1, 22, 0, 24, 0), // Day 1: 22:00-00:00
+			locWorkSlot(day2, 0, 0, 2, 0),   // Day 2: 00:00-02:00
+		},
+		nil,
+		nil,
+		mustDuration(60),
+		mustDuration(60),
+		day1, day2,
+		makeTime(day1, 0, 0),
+	)
+
+	got := slotTimes(slots)
+	// Currently it produces slots within each day boundary:
+	// Day 1: 22:00, 23:00
+	// Day 2: 00:00, 01:00
+	expected := [][2]string{
+		{"22:00", "23:00"},
+		{"23:00", "00:00"},
+		{"00:00", "01:00"},
+		{"01:00", "02:00"},
+	}
+	assert.Equal(t, expected, got)
+	for _, slot := range slots {
+		t.Logf("%+v", slot)
+	}
+}
+
+func TestGenerateSlots_NightShift_CrossingBoundary_Success(t *testing.T) {
+	day1 := testDate
+	day2 := testDate.AddDate(0, 0, 1)
+
+	// Service duration 60m.
+	// Day 1 ends at 24:00, Day 2 starts at 00:00.
+	// 23:30 - 00:30 should now be generated because intervals are merged.
+	slots := GenerateSlots(
+		location.ScheduleTypeFixed,
+		[]*schedule.LocationScheduleSlot{
+			locWorkSlot(day1, 22, 0, 24, 0),
+			locWorkSlot(day2, 0, 0, 2, 0),
+		},
+		nil,
+		nil,
+		mustDuration(60),
+		mustDuration(30),
+		day1, day2,
+		makeTime(day1, 0, 0),
+	)
+
+	got := slotTimes(slots)
+
+	// Expect 23:30 -> 00:30 slot
+	found := false
+	for _, s := range got {
+		if s[0] == "23:30" && s[1] == "00:30" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "Slot 23:30 -> 00:30 should be generated for night shift")
+}
+
+func TestValidateSlotAvailability_CrossMidnight(t *testing.T) {
+	day1 := testDate
+	day2 := testDate.AddDate(0, 0, 1)
+
+	locSlots := []*schedule.LocationScheduleSlot{
+		locWorkSlot(day1, 22, 0, 24, 0),
+		locWorkSlot(day2, 0, 0, 2, 0),
+	}
+
+	// 23:30 - 00:30 (60 min)
+	err := ValidateSlotAvailability(
+		location.ScheduleTypeFixed,
+		locSlots,
+		nil,
+		nil,
+		mustDuration(60),
+		mustDuration(30),
+		makeTime(day1, 23, 30),
+	)
+	assert.NoError(t, err, "Should allow booking across midnight if schedules are contiguous")
 }
 
 // ─────────────────────────────────────────────────────────────────
