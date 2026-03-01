@@ -91,6 +91,7 @@ CREATE TABLE subscriptions (
 
     suspended_at TIMESTAMPTZ,
     canceled_at TIMESTAMPTZ,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT false,
     data_delete_at TIMESTAMPTZ,
 
     created_at TIMESTAMPTZ DEFAULT NOW(),

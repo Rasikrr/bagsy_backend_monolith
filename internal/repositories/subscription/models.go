@@ -25,6 +25,8 @@ type model struct {
 	NextRetryAt *time.Time `db:"next_retry_at"`
 	RetryCount  int        `db:"retry_count"`
 
+	CancelAtPeriodEnd bool `db:"cancel_at_period_end"`
+
 	SuspendedAt  *time.Time `db:"suspended_at"`
 	CanceledAt   *time.Time `db:"canceled_at"`
 	DataDeleteAt *time.Time `db:"data_delete_at"`
@@ -49,6 +51,8 @@ func fromDomain(s *billing.Subscription) *model {
 
 		NextRetryAt: s.NextRetryAt,
 		RetryCount:  s.RetryCount,
+
+		CancelAtPeriodEnd: s.CancelAtPeriodEnd,
 
 		SuspendedAt:  s.SuspendedAt,
 		CanceledAt:   s.CanceledAt,
@@ -85,6 +89,8 @@ func (m *model) toDomain() (*billing.Subscription, error) {
 
 		NextRetryAt: m.NextRetryAt,
 		RetryCount:  m.RetryCount,
+
+		CancelAtPeriodEnd: m.CancelAtPeriodEnd,
 
 		SuspendedAt:  m.SuspendedAt,
 		CanceledAt:   m.CanceledAt,

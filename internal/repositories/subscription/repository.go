@@ -3,6 +3,7 @@ package subscription
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/core/database/postgres"
@@ -31,6 +32,34 @@ func (r *Repository) GetByOrganizationID(ctx context.Context, orgID uuid.UUID) (
 	return m.toDomain()
 }
 
+func (r *Repository) GetRequiringAction(ctx context.Context, now time.Time) ([]*billing.Subscription, error) {
+	var models []model
+	if err := pgxscan.Select(ctx, r.db, &models, getRequiringAction, now); err != nil {
+		return nil, fmt.Errorf("get subscriptions requiring action: %w", err)
+	}
+	return toSubscriptions(models)
+}
+
+func (r *Repository) GetPendingDeletion(ctx context.Context, now time.Time) ([]*billing.Subscription, error) {
+	var models []model
+	if err := pgxscan.Select(ctx, r.db, &models, getPendingDeletion, now); err != nil {
+		return nil, fmt.Errorf("get subscriptions pending deletion: %w", err)
+	}
+	return toSubscriptions(models)
+}
+
+func toSubscriptions(models []model) ([]*billing.Subscription, error) {
+	result := make([]*billing.Subscription, 0, len(models))
+	for _, m := range models {
+		sub, err := m.toDomain()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, sub)
+	}
+	return result, nil
+}
+
 func (r *Repository) Save(ctx context.Context, sub *billing.Subscription) error {
 	m := fromDomain(sub)
 	_, err := r.db.Exec(ctx, saveSubscription,
@@ -45,6 +74,7 @@ func (r *Repository) Save(ctx context.Context, sub *billing.Subscription) error 
 		m.NextBillingAt,
 		m.NextRetryAt,
 		m.RetryCount,
+		m.CancelAtPeriodEnd,
 		m.SuspendedAt,
 		m.CanceledAt,
 		m.DataDeleteAt,

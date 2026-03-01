@@ -34,6 +34,9 @@ type Subscription struct {
 	NextRetryAt *time.Time
 	RetryCount  int
 
+	// Voluntary cancellation
+	CancelAtPeriodEnd bool
+
 	// Suspension / Cancellation
 	SuspendedAt  *time.Time
 	CanceledAt   *time.Time
@@ -88,6 +91,42 @@ func (s *Subscription) Activate(cycle Cycle, amount shared.Money) error {
 	s.NextRetryAt = nil
 	s.RetryCount = 0
 	s.SuspendedAt = nil
+	s.CancelAtPeriodEnd = false
+
+	s.touch()
+	return nil
+}
+
+// RequestCancellation — пользователь добровольно отменяет подписку.
+// Подписка остаётся active до конца оплаченного периода, затем воркер переведёт в canceled.
+// Допустимо из: active.
+func (s *Subscription) RequestCancellation() error {
+	if s.Status != SubscriptionStatusActive {
+		return ErrNotActiveForCancellation
+	}
+	if s.CancelAtPeriodEnd {
+		return ErrCancellationAlreadyRequested
+	}
+
+	s.CancelAtPeriodEnd = true
+	s.NextBillingAt = nil
+
+	s.touch()
+	return nil
+}
+
+// UndoCancellation — пользователь передумал отменять подписку до конца периода.
+// Допустимо из: active с CancelAtPeriodEnd = true.
+func (s *Subscription) UndoCancellation() error {
+	if s.Status != SubscriptionStatusActive {
+		return ErrNotActiveForCancellation
+	}
+	if !s.CancelAtPeriodEnd {
+		return ErrNoCancellationToUndo
+	}
+
+	s.CancelAtPeriodEnd = false
+	s.NextBillingAt = s.CurrentPeriodEnd
 
 	s.touch()
 	return nil
@@ -168,6 +207,10 @@ func (s *Subscription) Cancel() error {
 
 func (s *Subscription) IsTrialing() bool {
 	return s.Status == SubscriptionStatusTrial
+}
+
+func (s *Subscription) IsPendingCancellation() bool {
+	return s.Status == SubscriptionStatusActive && s.CancelAtPeriodEnd
 }
 
 func (s *Subscription) NeedsRetry() bool {
