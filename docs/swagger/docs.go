@@ -846,6 +846,129 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/employees": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает список сотрудников организации с пагинацией и фильтрацией.\nOwner — все сотрудники организации. Manager — только сотрудники своей локации. Staff — доступ запрещён (403).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "employees"
+                ],
+                "summary": "Получение списка сотрудников",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID локации для фильтрации",
+                        "name": "location_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "owner",
+                                "manager",
+                                "staff"
+                            ],
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Фильтр по ролям (multi-value)",
+                        "name": "role",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Поиск по номеру телефона (ILIKE)",
+                        "name": "phone_search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Фильтр по активности",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Количество записей (default: 20, max: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Смещение для пагинации (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "created_at",
+                            "first_name",
+                            "phone",
+                            "role"
+                        ],
+                        "type": "string",
+                        "default": "created_at",
+                        "description": "Поле сортировки",
+                        "name": "order_by",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Направление сортировки",
+                        "name": "sort_order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_employee.getListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверные параметры запроса",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Требуется авторизация",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав или подписка приостановлена",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/employees/invite": {
             "post": {
                 "security": [
@@ -1645,6 +1768,55 @@ const docTemplate = `{
                 },
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.employeeListItemResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "avatar_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "location_id": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.permissionsResponse"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.getListResponse": {
+            "type": "object",
+            "properties": {
+                "employees": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_employee.employeeListItemResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },

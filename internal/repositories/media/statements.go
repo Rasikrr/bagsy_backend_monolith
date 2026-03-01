@@ -8,6 +8,13 @@ const (
 		WHERE id = $1
 	`
 
+	getByIDs = `
+		SELECT id, bucket, object_key, filename, mime_type,
+			   size_bytes, status, created_at, updated_at
+		FROM media_assets
+		WHERE id = ANY($1)
+	`
+
 	saveAsset = `
 	                INSERT INTO media_assets (
 	                        id, bucket, object_key, filename, mime_type,

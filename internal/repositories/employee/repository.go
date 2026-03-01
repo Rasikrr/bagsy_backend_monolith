@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/core/database/postgres"
@@ -102,10 +103,81 @@ func (r *Repository) CountByOrganization(ctx context.Context, orgID uuid.UUID) (
 	return count, nil
 }
 
-func uuidStrings(ids []uuid.UUID) []string {
-	s := make([]string, len(ids))
-	for i, id := range ids {
-		s[i] = id.String()
+func (r *Repository) GetByFilter(ctx context.Context, filter *identity.EmployeeFilter) (*identity.EmployeePage, error) {
+	base := buildFilterBase(filter)
+
+	countSQL, countArgs, err := base.Columns("COUNT(*)").ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("build count query: %w", err)
 	}
-	return s
+
+	var total int
+	if err = pgxscan.Get(ctx, r.db, &total, countSQL, countArgs...); err != nil {
+		return nil, fmt.Errorf("count employees by filter: %w", err)
+	}
+
+	dataSQL, dataArgs, err := base.
+		Columns(employeeColumns).
+		OrderBy(filter.OrderBy.String() + " " + filter.SortOrder.String()).
+		Limit(filter.Limit).
+		Offset(filter.Offset).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("build select query: %w", err)
+	}
+
+	var models []model
+	if err = pgxscan.Select(ctx, r.db, &models, dataSQL, dataArgs...); err != nil {
+		return nil, fmt.Errorf("select employees by filter: %w", err)
+	}
+
+	items := make([]*identity.Employee, 0, len(models))
+	for _, m := range models {
+		var emp *identity.Employee
+		emp, err = m.toDomain()
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, emp)
+	}
+
+	return &identity.EmployeePage{
+		Items: items,
+		Total: total,
+	}, nil
+}
+
+const employeeColumns = `id, phone, password_hash, first_name, last_name, avatar_id,
+	organization_id, location_id, role,
+	can_provide_services, can_manage_location_schedule,
+	active, created_at, updated_at, deleted_at`
+
+func buildFilterBase(filter *identity.EmployeeFilter) sq.SelectBuilder {
+	builder := sq.Select().
+		PlaceholderFormat(sq.Dollar).
+		From("employees").
+		Where(sq.Eq{"organization_id": filter.OrganizationID}).
+		Where("deleted_at IS NULL")
+
+	if filter.LocationID != nil {
+		builder = builder.Where(sq.Eq{"location_id": *filter.LocationID})
+	}
+
+	if len(filter.Roles) > 0 {
+		roles := make([]string, len(filter.Roles))
+		for i, r := range filter.Roles {
+			roles[i] = r.String()
+		}
+		builder = builder.Where(sq.Eq{"role": roles})
+	}
+
+	if filter.PhoneSearch != nil {
+		builder = builder.Where("phone ILIKE '%' || ? || '%'", *filter.PhoneSearch)
+	}
+
+	if filter.Active != nil {
+		builder = builder.Where(sq.Eq{"active": *filter.Active})
+	}
+
+	return builder
 }

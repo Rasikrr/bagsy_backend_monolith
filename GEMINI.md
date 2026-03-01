@@ -221,7 +221,20 @@ Handler:    неизвестная ошибка → log.Error + 500 "internal_er
 
 ```bash
 make <target>    # See scripts/*.mk for available targets
+make lint        # Run golangci-lint — MUST pass before considering a task complete
+make swagger     # Regenerate Swagger docs (run after adding/changing swagger annotations)
+make generate    # Run all code generation (easyjson, enumer, etc.)
 ```
+
+## Definition of Done
+
+A task is considered complete only when:
+
+1. `go build ./...` compiles without errors
+2. `make lint` passes with **0 issues**
+3. `make swagger` — run if swagger annotations were added or changed
+4. `make generate` — run if models with `//go:generate` were changed
+5. Existing tests still pass (if applicable)
 
 ## Important Files
 

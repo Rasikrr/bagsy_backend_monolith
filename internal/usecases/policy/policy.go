@@ -73,6 +73,27 @@ func (p *Policy) CanInviteEmployee(orgCtx *access.OrgContext, targetRole identit
 	return nil
 }
 
+func (p *Policy) CanListEmployees(orgCtx *access.OrgContext, filter *identity.EmployeeFilter) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		// Owner может видеть всех сотрудников организации
+		return nil
+
+	case orgCtx.Employee.Role.IsManager():
+		// Manager видит только сотрудников своей локации
+		locID := orgCtx.Employee.LocationID
+		filter.LocationID = &locID
+		return nil
+
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

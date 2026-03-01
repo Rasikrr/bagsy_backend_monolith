@@ -32,6 +32,23 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*media.Asset, e
 	return m.toDomain()
 }
 
+func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*media.Asset, error) {
+	var models []model
+	if err := pgxscan.Select(ctx, r.db, &models, getByIDs, ids); err != nil {
+		return nil, fmt.Errorf("get media assets by ids: %w", err)
+	}
+
+	result := make([]*media.Asset, 0, len(models))
+	for _, m := range models {
+		asset, err := m.toDomain()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, asset)
+	}
+	return result, nil
+}
+
 func (r *Repository) Save(ctx context.Context, asset *media.Asset) error {
 	m := fromDomain(asset)
 	_, err := r.db.Exec(ctx, saveAsset,

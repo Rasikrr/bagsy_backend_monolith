@@ -69,3 +69,23 @@ type permissionsResponse struct {
 	CanProvideServices        bool `json:"can_provide_services"`
 	CanManageLocationSchedule bool `json:"can_manage_location_schedule"`
 }
+
+// ── Get List ──────────────────────────────────────────────────────
+
+type employeeListItemResponse struct {
+	ID          string              `json:"id"`
+	Phone       string              `json:"phone"`
+	FirstName   string              `json:"first_name"`
+	LastName    *string             `json:"last_name,omitempty"`
+	AvatarURL   *string             `json:"avatar_url,omitempty"`
+	LocationID  *string             `json:"location_id,omitempty"`
+	Role        string              `json:"role"`
+	Permissions permissionsResponse `json:"permissions"`
+	Active      bool                `json:"active"`
+	CreatedAt   time.Time           `json:"created_at"`
+}
+
+type getListResponse struct {
+	Employees []employeeListItemResponse `json:"employees"`
+	Total     int                        `json:"total"`
+}

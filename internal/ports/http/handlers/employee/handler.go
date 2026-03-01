@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
@@ -19,6 +20,7 @@ type inviteUseCase interface {
 
 type employeeUseCase interface {
 	GetProfile(ctx context.Context, employeeID uuid.UUID) (*employeeUC.ProfileOutput, error)
+	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *identity.EmployeeFilter) (*employeeUC.ListOutput, error)
 }
 
 type Handler struct {
@@ -48,6 +50,7 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMid.Handle)
 			r.Use(h.orgContextMid.Handle)
+			r.Get("/", h.getList)
 			r.Get("/me", h.getMe)
 			r.Post("/invite", h.sendInvite)
 			r.Post("/invite/resend", h.resendInvite)

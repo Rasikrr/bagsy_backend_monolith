@@ -20,3 +20,8 @@ type ProfileOutput struct {
 	Active         bool
 	CreatedAt      time.Time
 }
+
+type ListOutput struct {
+	Items []ProfileOutput
+	Total int
+}

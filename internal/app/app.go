@@ -249,6 +249,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.employeeRepo,
 		a.mediaRepo,
 		a.s3Client,
+		a.policy,
 		15*time.Minute,
 	)
 
