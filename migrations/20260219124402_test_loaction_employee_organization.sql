@@ -84,7 +84,7 @@ INSERT INTO employees (
 ) VALUES (
     '911f8256-c798-469f-9a78-07f43ada5679', -- id
     '77715275251',                          -- phone
-    '$2a$10$aKTrWq7Mv7DZB5NZOgkInOvOArT.8M/oRuw9JvsNQG7sW9lYcw/QS', -- password_hash
+    '$2a$10$gmd4gREMdZrPW6L5NXcj2emx8jZEj1xL9JrrUfDGjf/S..qx6b/k.', -- password_hash
     'Расул',                                -- first_name
     'Туртулов',                             -- last_name
     'edf875dd-dd42-408e-93b6-5606c13b74e0', -- organization_id
@@ -98,6 +98,22 @@ INSERT INTO employees (
     NULL,                                   -- deleted_at
     NULL                                    -- avatar_id
 );
+
+
+-- Подписка (plan: point, status: active)
+INSERT INTO subscriptions (
+    id, organization_id, plan_id, status, billing_cycle,
+    recurring_amount, current_period_start, current_period_end
+) VALUES (
+     'b0b0b0b0-0000-4000-8000-000000000001',
+     'edf875dd-dd42-408e-93b6-5606c13b74e0',
+     (SELECT id FROM plans WHERE code = 'point'),
+     'active',
+     'monthly',
+     25000.00,
+     NOW(),
+     NOW() + INTERVAL '30 days'
+ );
 -- +goose StatementEnd
 
 -- +goose Down
