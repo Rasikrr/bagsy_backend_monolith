@@ -10,6 +10,8 @@ var (
 	ErrEmployeeNameRequired  = errors.New("employee name is required")
 	ErrEmployeePhoneRequired = errors.New("employee phone is required")
 	ErrPermissionDenied      = errors.New("permission denied")
+	ErrCannotModifySelf      = errors.New("cannot modify own account")
+	ErrCannotSetOwnerRole    = errors.New("cannot assign owner role")
 	ErrInvalidRole           = errors.New("invalid employee role")
 	ErrInvalidGender         = errors.New("invalid gender")
 )

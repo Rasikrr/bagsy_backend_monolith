@@ -12,6 +12,10 @@ import (
 	"github.com/google/uuid"
 )
 
+// extractOrgContextAndID is a helper that extracts OrgContext from the request context
+// and parses the employee UUID from the "id" URL parameter.
+// Returns false if either extraction fails (response is already written).
+
 type inviteUseCase interface {
 	SendInvite(ctx context.Context, orgCtx *access.OrgContext, input uc.SendInviteInput) (*uc.SendInviteOutput, error)
 	ConfirmInvite(ctx context.Context, input uc.ConfirmInviteInput) (*uc.TokensOutput, error)
@@ -21,6 +25,12 @@ type inviteUseCase interface {
 type employeeUseCase interface {
 	GetProfile(ctx context.Context, employeeID uuid.UUID) (*employeeUC.ProfileOutput, error)
 	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *identity.EmployeeFilter) (*employeeUC.ListOutput, error)
+	UpdateProfile(ctx context.Context, employeeID uuid.UUID, input employeeUC.UpdateProfileInput) (*employeeUC.ProfileOutput, error)
+	TransferEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID, input employeeUC.TransferInput) error
+	ActivateEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID) error
+	DeactivateEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID) error
+	ChangeRole(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID, input employeeUC.ChangeRoleInput) error
+	ChangePermissions(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID, input employeeUC.ChangePermissionsInput) error
 }
 
 type Handler struct {
@@ -50,10 +60,18 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMid.Handle)
 			r.Use(h.orgContextMid.Handle)
+
 			r.Get("/", h.getList)
 			r.Get("/me", h.getMe)
+			r.Put("/me", h.updateMe)
 			r.Post("/invite", h.sendInvite)
 			r.Post("/invite/resend", h.resendInvite)
+
+			r.Post("/{id}/transfer", h.transferEmployee)
+			r.Post("/{id}/activate", h.activateEmployee)
+			r.Post("/{id}/deactivate", h.deactivateEmployee)
+			r.Patch("/{id}/role", h.changeRole)
+			r.Patch("/{id}/permissions", h.changePermissions)
 		})
 
 		// Unauthenticated routes

@@ -134,6 +134,9 @@ func (e *Employee) ChangeRole(newRole Role) error {
 	if !newRole.IsValid() {
 		return ErrInvalidRole
 	}
+	if newRole == RoleOwner {
+		return ErrCannotSetOwnerRole
+	}
 
 	e.Role = newRole
 	e.touch()

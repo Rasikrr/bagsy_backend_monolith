@@ -25,3 +25,22 @@ type ListOutput struct {
 	Items []ProfileOutput
 	Total int
 }
+
+type UpdateProfileInput struct {
+	FirstName string
+	LastName  *string
+	AvatarID  *uuid.UUID
+}
+
+type TransferInput struct {
+	LocationID uuid.UUID
+}
+
+type ChangeRoleInput struct {
+	Role string
+}
+
+type ChangePermissionsInput struct {
+	CanProvideServices        bool
+	CanManageLocationSchedule bool
+}

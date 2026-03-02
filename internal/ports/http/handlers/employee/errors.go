@@ -6,6 +6,7 @@ import (
 	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
@@ -19,10 +20,17 @@ var employeeErrors = httputil.ErrorMap{
 
 	// identity
 	identity.ErrEmployeeNotFound:      {Code: http.StatusNotFound, Message: "employee_not_found"},
+	identity.ErrEmployeeDeleted:       {Code: http.StatusGone, Message: "employee_deleted"},
 	identity.ErrPermissionDenied:      {Code: http.StatusForbidden, Message: "permission_denied"},
+	identity.ErrCannotModifySelf:      {Code: http.StatusForbidden, Message: "cannot_modify_self"},
+	identity.ErrCannotSetOwnerRole:    {Code: http.StatusBadRequest, Message: "cannot_set_owner_role"},
 	identity.ErrInvalidRole:           {Code: http.StatusBadRequest, Message: "invalid_role"},
 	identity.ErrEmployeeNameRequired:  {Code: http.StatusBadRequest, Message: "name_required"},
 	identity.ErrEmployeePhoneRequired: {Code: http.StatusBadRequest, Message: "phone_required"},
+
+	// media
+	media.ErrAssetNotFound: {Code: http.StatusNotFound, Message: "avatar_not_found"},
+	media.ErrAssetNotReady: {Code: http.StatusUnprocessableEntity, Message: "avatar_not_ready"},
 
 	// billing
 	billing.ErrSubscriptionSuspended: {Code: http.StatusForbidden, Message: "subscription_suspended"},

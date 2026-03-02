@@ -3,7 +3,7 @@ module github.com/Rasikrr/bagsy_backend_monolith
 go 1.25.1
 
 require (
-	github.com/Rasikrr/core v0.0.86
+	github.com/Rasikrr/core v0.0.88
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/aws/aws-sdk-go-v2 v1.41.2
 	github.com/aws/aws-sdk-go-v2/config v1.32.10

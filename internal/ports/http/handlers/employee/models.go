@@ -70,6 +70,29 @@ type permissionsResponse struct {
 	CanManageLocationSchedule bool `json:"can_manage_location_schedule"`
 }
 
+// ── Update Me ───────────────────────────────────────────────────
+
+type updateMeRequest struct {
+	FirstName string     `json:"first_name"`
+	LastName  *string    `json:"last_name,omitempty"`
+	AvatarID  *uuid.UUID `json:"avatar_id,omitempty"`
+}
+
+// ── Admin Actions ───────────────────────────────────────────────
+
+type transferRequest struct {
+	LocationID uuid.UUID `json:"location_id"`
+}
+
+type changeRoleRequest struct {
+	Role string `json:"role"`
+}
+
+type changePermissionsRequest struct {
+	CanProvideServices        bool `json:"can_provide_services"`
+	CanManageLocationSchedule bool `json:"can_manage_location_schedule"`
+}
+
 // ── Get List ──────────────────────────────────────────────────────
 
 type employeeListItemResponse struct {

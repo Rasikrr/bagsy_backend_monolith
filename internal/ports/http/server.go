@@ -97,7 +97,7 @@ func initCORSMiddleware() coreHTTP.Middleware {
 				"Authorization",
 				coreHTTP.TraceIDHeader,
 			},
-			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 			AllowedOrigins: []string{"*"},
 		},
 	)

@@ -14,6 +14,7 @@ import (
 type employeeRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*identity.Employee, error)
 	GetByFilter(ctx context.Context, filter *identity.EmployeeFilter) (*identity.EmployeePage, error)
+	Save(ctx context.Context, emp *identity.Employee) error
 }
 
 type mediaRepository interface {
@@ -27,6 +28,9 @@ type storageClient interface {
 
 type policy interface {
 	CanListEmployees(orgCtx *access.OrgContext, filter *identity.EmployeeFilter) error
+	CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
+	CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
+	CanChangePermissions(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 }
 
 type UseCase struct {

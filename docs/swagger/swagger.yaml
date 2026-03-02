@@ -234,6 +234,18 @@ definitions:
       start_at:
         type: string
     type: object
+  internal_ports_http_handlers_employee.changePermissionsRequest:
+    properties:
+      can_manage_location_schedule:
+        type: boolean
+      can_provide_services:
+        type: boolean
+    type: object
+  internal_ports_http_handlers_employee.changeRoleRequest:
+    properties:
+      role:
+        type: string
+    type: object
   internal_ports_http_handlers_employee.confirmInviteRequest:
     properties:
       password:
@@ -348,6 +360,20 @@ definitions:
       message:
         type: string
       phone:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.transferRequest:
+    properties:
+      location_id:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.updateMeRequest:
+    properties:
+      avatar_id:
+        type: string
+      first_name:
+        type: string
+      last_name:
         type: string
     type: object
   internal_ports_http_handlers_location.createRequest:
@@ -1069,6 +1095,216 @@ paths:
       summary: Получение списка сотрудников
       tags:
       - employees
+  /api/v1/employees/{id}/activate:
+    post:
+      description: Owner может активировать любого. Manager — только staff своей локации.
+      parameters:
+      - description: UUID сотрудника
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: permission_denied / cannot_modify_self
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Активация сотрудника
+      tags:
+      - employees
+  /api/v1/employees/{id}/deactivate:
+    post:
+      description: Owner может деактивировать любого. Manager — только staff своей
+        локации.
+      parameters:
+      - description: UUID сотрудника
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: permission_denied / cannot_modify_self
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Деактивация сотрудника
+      tags:
+      - employees
+  /api/v1/employees/{id}/permissions:
+    patch:
+      consumes:
+      - application/json
+      description: Owner может менять любому. Manager — только staff своей локации.
+      parameters:
+      - description: UUID сотрудника
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Новые разрешения
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.changePermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: permission_denied
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Смена разрешений сотрудника
+      tags:
+      - employees
+  /api/v1/employees/{id}/role:
+    patch:
+      consumes:
+      - application/json
+      description: Только owner может менять роли. Нельзя менять свою роль и назначать
+        роль owner.
+      parameters:
+      - description: UUID сотрудника
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Новая роль
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.changeRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: invalid_role / cannot_set_owner_role
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: permission_denied / cannot_modify_self
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Смена роли сотрудника
+      tags:
+      - employees
+  /api/v1/employees/{id}/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Owner может перевести любого сотрудника. Manager — только staff
+        своей локации.
+      parameters:
+      - description: UUID сотрудника
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Данные для перевода
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.transferRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: permission_denied / cannot_modify_self
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Перевод сотрудника в другую локацию
+      tags:
+      - employees
   /api/v1/employees/invite:
     post:
       consumes:
@@ -1236,6 +1472,49 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Получение профиля текущего сотрудника
+      tags:
+      - employees
+    put:
+      consumes:
+      - application/json
+      description: Позволяет сотруднику обновить своё имя, фамилию и аватар.
+      parameters:
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.updateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.getMeResponse'
+        "400":
+          description: Неверные параметры запроса
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: employee_not_found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "410":
+          description: employee_deleted
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление своего профиля
       tags:
       - employees
   /api/v1/locations:

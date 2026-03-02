@@ -26,9 +26,26 @@ func NewRepository(db *postgres.Postgres) *Repository {
 }
 
 func (r *Repository) Save(ctx context.Context, a *booking.Appointment) error {
+	if postgres.HasTx(ctx) {
+		return r.save(ctx, a)
+	}
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	if err = r.save(postgres.InjectTx(ctx, tx), a); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) save(ctx context.Context, a *booking.Appointment) error {
 	m := fromDomain(a)
 
-	// Save main appointment
 	_, err := r.db.Exec(ctx, saveAppointment,
 		m.ID, m.OrganizationID, m.LocationID, m.ServiceID, m.EmployeeID, m.CustomerID,
 		m.StartAt, m.EndAt, m.Price, m.DurationMinutes, m.Status, m.CustomerComment,
@@ -42,7 +59,6 @@ func (r *Repository) Save(ctx context.Context, a *booking.Appointment) error {
 		return fmt.Errorf("save appointment: %w", err)
 	}
 
-	// Save status history entries
 	for _, h := range a.StatusHistory {
 		hm := fromHistoryDomain(a.ID, h)
 		_, err = r.db.Exec(ctx, saveStatusHistory,

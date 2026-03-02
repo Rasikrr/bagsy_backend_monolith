@@ -9,6 +9,8 @@ github.com/Masterminds/squirrel v1.5.4 h1:uUcX/aBc8O7Fg9kaISIUsHXdKuqehiXAMQTYX8
 github.com/Masterminds/squirrel v1.5.4/go.mod h1:NNaOrjSoIDfDA40n7sr2tPNZRfjzjA400rg+riTZj10=
 github.com/Rasikrr/core v0.0.86 h1:nL5rMN9uX7L0a7jpps98yPEKoAJYnMtDD1QSr2hR0kM=
 github.com/Rasikrr/core v0.0.86/go.mod h1:ldu/2acJUI1KCj1y17fWxLt4AyuhcbYHsI1zTt3S6ik=
+github.com/Rasikrr/core v0.0.88 h1:xYC1AAkV+pgzN3jhUk+dAtpqUOBqUeLNzdFyRfPLBHk=
+github.com/Rasikrr/core v0.0.88/go.mod h1:ldu/2acJUI1KCj1y17fWxLt4AyuhcbYHsI1zTt3S6ik=
 github.com/andybalholm/brotli v1.1.0 h1:eLKJA0d02Lf0mVpIDgYnqXcUn0GqVmEFny3VuID1U3M=
 github.com/andybalholm/brotli v1.1.0/go.mod h1:sms7XGricyQI9K10gOSf56VKKWS4oLer58Q+mhRPtnY=
 github.com/avast/retry-go v3.0.0+incompatible h1:4SOWQ7Qs+oroOTQOYnAHqelpCO0biHSxpiH9JdtuBj0=

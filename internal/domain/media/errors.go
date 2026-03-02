@@ -11,4 +11,5 @@ var (
 	ErrAssetNotFound       = errors.New("media asset not found")
 	ErrAssetNotPending     = errors.New("asset is not in pending status")
 	ErrS3ObjectNotFound    = errors.New("file not found in storage")
+	ErrAssetNotReady       = errors.New("asset is not ready for use")
 )

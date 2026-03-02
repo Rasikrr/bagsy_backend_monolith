@@ -94,6 +94,77 @@ func (p *Policy) CanListEmployees(orgCtx *access.OrgContext, filter *identity.Em
 	}
 }
 
+// CanManageEmployee проверяет право на transfer, activate, deactivate.
+func (p *Policy) CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Employee.ID == targetEmp.ID {
+		return identity.ErrCannotModifySelf
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if !targetEmp.Role.IsStaff() {
+			return identity.ErrPermissionDenied
+		}
+		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
+// CanChangeRole проверяет право на смену роли. Только owner, нельзя менять себя.
+func (p *Policy) CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Employee.ID == targetEmp.ID {
+		return identity.ErrCannotModifySelf
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
+// CanChangePermissions проверяет право на смену permissions.
+// Owner — любого. Manager — staff в своей локации.
+func (p *Policy) CanChangePermissions(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if !targetEmp.Role.IsStaff() {
+			return identity.ErrPermissionDenied
+		}
+		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended
