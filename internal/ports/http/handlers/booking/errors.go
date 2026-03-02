@@ -44,6 +44,10 @@ var bookingErrors = httputil.ErrorMap{
 		Code:    http.StatusNotFound,
 		Message: "employee_not_found",
 	},
+	identity.ErrEmployeeInactive: {
+		Code:    http.StatusUnprocessableEntity,
+		Message: "employee_inactive",
+	},
 	booking.ErrCannotBookSelf: {
 		Code:    http.StatusForbidden,
 		Message: "cannot_book_self",

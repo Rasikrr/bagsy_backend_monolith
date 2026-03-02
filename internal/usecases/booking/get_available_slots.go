@@ -7,6 +7,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -65,12 +66,19 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 		employeeIDs = append(employeeIDs, es.EmployeeID)
 	}
 
-	// 4. Load employee details
-	employees, err := u.employeeRepo.GetByIDs(ctx, employeeIDs)
+	// 4. Load employee details (only active)
+	allEmployees, err := u.employeeRepo.GetByIDs(ctx, employeeIDs)
 	if err != nil {
 		return nil, fmt.Errorf("get employees: %w", err)
 	}
-	log.Debug(ctx, "get available slots: employees loaded", log.Int("count", len(employees)))
+
+	employees := lo.Filter(allEmployees, func(e *identity.Employee, _ int) bool {
+		return e.IsActive()
+	})
+	log.Debug(ctx, "get available slots: employees loaded",
+		log.Int("total", len(allEmployees)),
+		log.Int("active", len(employees)),
+	)
 
 	// 5. Load schedules
 	locSlots, err := u.scheduleRepo.GetLocationSlots(ctx, input.LocationID, input.StartDate, input.EndDate)
