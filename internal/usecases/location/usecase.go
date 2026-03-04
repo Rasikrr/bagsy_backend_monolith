@@ -16,6 +16,8 @@ import (
 type locationRepository interface {
 	Save(ctx context.Context, l *location.Location) error
 	CountByOrganization(ctx context.Context, orgID uuid.UUID) (int, error)
+	GetByFilter(ctx context.Context, filter *location.Filter) (*shared.Page[*location.Location], error)
+	GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error)
 }
 
 type categoryRepository interface {
@@ -32,6 +34,8 @@ type employeeRepository interface {
 }
 
 type policyProvider interface {
+	CanViewLocations(orgCtx *access.OrgContext) error
+	CanViewLocation(orgCtx *access.OrgContext, locationID uuid.UUID) error
 	CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error
 }
 

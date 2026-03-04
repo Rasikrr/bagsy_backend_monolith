@@ -4,13 +4,18 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	domainLoc "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type locationUseCase interface {
 	Create(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateLocationInput) (*uc.CreateLocationOutput, error)
+	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *domainLoc.Filter) (*shared.Page[*domainLoc.Location], error)
+	GetByID(ctx context.Context, orgCtx *access.OrgContext, id uuid.UUID) (*domainLoc.Location, error)
 }
 
 type Handler struct {
@@ -36,6 +41,8 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Use(h.authMid.Handle)
 		r.Use(h.orgContextMid.Handle)
 
+		r.Get("/", h.getList)
+		r.Get("/{id}", h.getByID)
 		r.Post("/", h.create)
 	})
 }

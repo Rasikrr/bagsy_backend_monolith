@@ -103,7 +103,7 @@ func (r *Repository) CountByOrganization(ctx context.Context, orgID uuid.UUID) (
 	return count, nil
 }
 
-func (r *Repository) GetByFilter(ctx context.Context, filter *identity.EmployeeFilter) (*identity.EmployeePage, error) {
+func (r *Repository) GetByFilter(ctx context.Context, filter *identity.EmployeeFilter) (*shared.Page[*identity.Employee], error) {
 	base := buildFilterBase(filter)
 
 	countSQL, countArgs, err := base.Columns("COUNT(*)").ToSql()
@@ -141,7 +141,7 @@ func (r *Repository) GetByFilter(ctx context.Context, filter *identity.EmployeeF
 		items = append(items, emp)
 	}
 
-	return &identity.EmployeePage{
+	return &shared.Page[*identity.Employee]{
 		Items: items,
 		Total: total,
 	}, nil

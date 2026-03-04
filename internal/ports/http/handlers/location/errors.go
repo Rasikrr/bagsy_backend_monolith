@@ -15,6 +15,7 @@ var locationErrors = httputil.ErrorMap{
 	billing.ErrSubscriptionSuspended: {Code: http.StatusForbidden, Message: "subscription_suspended"},
 	identity.ErrPermissionDenied:     {Code: http.StatusForbidden, Message: "permission_denied"},
 
+	location.ErrLocationNotFound:     {Code: http.StatusNotFound, Message: "location_not_found"},
 	location.ErrCategoryNotFound:     {Code: http.StatusBadRequest, Message: "category_not_found"},
 	location.ErrNameRequired:         {Code: http.StatusBadRequest, Message: "name_required"},
 	location.ErrInvalidScheduleType:  {Code: http.StatusBadRequest, Message: "invalid_schedule_type"},

@@ -1,4 +1,4 @@
-package identity
+package location
 
 import (
 	"errors"
@@ -8,18 +8,15 @@ import (
 )
 
 // ─────────────────────────────────────────────────────────────────
-// Employee Filter & Pagination
+// Location Filter & Pagination
 // ─────────────────────────────────────────────────────────────────
 
-type EmployeeFilter struct {
+type Filter struct {
 	OrganizationID uuid.UUID
-	LocationID     *uuid.UUID
-	Roles          []Role
-	PhoneSearch    *string
 	Active         *bool
 	Limit          uint64
 	Offset         uint64
-	OrderBy        EmployeeOrderBy
+	OrderBy        OrderBy
 	SortOrder      shared.SortOrder
 }
 
@@ -27,30 +24,26 @@ type EmployeeFilter struct {
 // OrderBy enum (whitelist for safe SQL)
 // ─────────────────────────────────────────────────────────────────
 
-type EmployeeOrderBy string
+type OrderBy string
 
 const (
-	OrderByCreatedAt EmployeeOrderBy = "created_at"
-	OrderByFirstName EmployeeOrderBy = "first_name"
-	OrderByPhone     EmployeeOrderBy = "phone"
-	OrderByRole      EmployeeOrderBy = "role"
+	OrderByCreatedAt OrderBy = "created_at"
+	OrderByName      OrderBy = "name"
 )
 
-var validOrderBy = map[EmployeeOrderBy]bool{
+var validOrderBy = map[OrderBy]bool{
 	OrderByCreatedAt: true,
-	OrderByFirstName: true,
-	OrderByPhone:     true,
-	OrderByRole:      true,
+	OrderByName:      true,
 }
 
 var ErrInvalidOrderBy = errors.New("invalid order_by value")
 
-func ParseEmployeeOrderBy(s string) (EmployeeOrderBy, error) {
-	o := EmployeeOrderBy(s)
+func ParseOrderBy(s string) (OrderBy, error) {
+	o := OrderBy(s)
 	if !validOrderBy[o] {
 		return "", ErrInvalidOrderBy
 	}
 	return o, nil
 }
 
-func (o EmployeeOrderBy) String() string { return string(o) }
+func (o OrderBy) String() string { return string(o) }

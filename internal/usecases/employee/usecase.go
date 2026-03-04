@@ -8,13 +8,14 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
 )
 
 type employeeRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*identity.Employee, error)
-	GetByFilter(ctx context.Context, filter *identity.EmployeeFilter) (*identity.EmployeePage, error)
+	GetByFilter(ctx context.Context, filter *identity.EmployeeFilter) (*shared.Page[*identity.Employee], error)
 	Save(ctx context.Context, emp *identity.Employee) error
 }
 

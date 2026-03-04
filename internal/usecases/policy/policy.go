@@ -5,6 +5,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/google/uuid"
 )
 
 type Policy struct{}
@@ -182,6 +183,34 @@ func (p *Policy) CanChangePermissions(orgCtx *access.OrgContext, targetEmp *iden
 	default:
 		return identity.ErrPermissionDenied
 	}
+}
+
+// CanViewLocation проверяет право на просмотр одной локации.
+// Owner — любую, Manager/Staff — только свою.
+func (p *Policy) CanViewLocation(orgCtx *access.OrgContext, locationID uuid.UUID) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+
+	if orgCtx.Employee.Role.IsOwner() {
+		return nil
+	}
+
+	if orgCtx.Employee.LocationID != locationID {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
+// CanViewLocations проверяет право на просмотр списка локаций. Только owner.
+func (p *Policy) CanViewLocations(orgCtx *access.OrgContext) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
 }
 
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
