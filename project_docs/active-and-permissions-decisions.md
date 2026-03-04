@@ -1,6 +1,6 @@
-# Active & Permissions — Решения и открытые задачи
+# Active & Permissions — Решения
 
-Дата: 2026-03-03
+Дата: 2026-03-03, обновлено 2026-03-04
 
 ## Контекст
 
@@ -21,12 +21,11 @@
 | `CanProvideServices = false` | Не принимает клиентов | Только бронирование |
 
 - Сценарий: конфликт/разбирательство — нужно забрать доступ, но не удалять сотрудника.
-- `Active` фильтровать **в базе** (`WHERE active = true AND deleted_at IS NULL`), не в коде.
-- `CanServeClients()` может зависеть только от `!IsDeleted() && Permissions.CanProvideServices`, без `Active` — деактивированный сотрудник и так не дойдёт до бронирования (middleware отсечёт).
+- `Active` фильтруется **в базе** (`WHERE active = true AND deleted_at IS NULL`) в `getOrgContext`.
+- `Active` проверяется в `LoginEmployee()` и `RefreshTokens()`.
+- `CanServeClients()` = `Active && !IsDeleted() && CanProvideServices` — Active нужен потому что booking публичный (без auth middleware).
 
 ### 2. Права на смену permissions (policy)
-
-Текущее поведение в `policy.CanChangePermissions`:
 
 | Кто меняет | Кому | Разрешено? |
 |---|---|---|
@@ -35,27 +34,18 @@
 | **Manager** | Себе | Нет (Manager не Staff) |
 | **Staff** | Кому угодно | Нет |
 
-- Эндпоинт: `PATCH /employees/{id}/permissions`
-- Owner меняет свои permissions через тот же эндпоинт, подставляя свой ID
 - Self-modification для Owner — **намеренное** поведение (может убрать себя из бронирования)
+- Задокументировано комментарием в `CanChangePermissions`
 
-## TODO
+## Выполнено (2026-03-04)
 
-### ChangeRole должен сбрасывать permissions
-- Сейчас `ChangeRole` не трогает permissions — при повышении staff→manager permissions остаются от старой роли
-- **Вариант A (предпочтительный):** `ChangeRole` автоматически сбрасывает permissions на `DefaultPermissionsForRole(newRole)`
-- **Вариант B:** `ChangePermissions` валидирует допустимые комбинации для роли
-
-### Валидация permissions при ChangePermissions
-- Сейчас принимает любые комбинации без привязки к роли
-- Нужно решить: свободная настройка или ограничения по роли?
-- Если жёсткие — добавить `Permissions.ValidateForRole(role)` в домен, вызывать из `SetPermissions`
-- Если свободные — оставить как есть, но документировать
-
-### Отвязать CanServeClients() от Active
-- Сейчас: `IsActive() && Permissions.CanProvideServices` (где `IsActive = Active && !IsDeleted`)
-- Предлагается: `!IsDeleted() && Permissions.CanProvideServices`
-- Причина: middleware уже отсекает неактивных сотрудников, двойная проверка не нужна
-
-### Добавить комментарий в policy
-- В `CanChangePermissions` добавить комментарий что self-modification для Owner — намеренное поведение
+- [x] **ChangeRole сбрасывает permissions** на `DefaultPermissionsForRole(newRole)` (Вариант A)
+- [x] **Валидация permissions** — решено оставить свободную настройку без ограничений по роли
+- [x] **CanServeClients()** — `Active && !IsDeleted() && CanProvideServices` (Active оставлен для публичных эндпоинтов)
+- [x] **Комментарий в policy** — добавлен в `CanChangePermissions`
+- [x] **Active проверяется при логине и refresh** — `IsActive()` в `LoginEmployee()` и `RefreshTokens()`
+- [x] **OrgContext middleware** — SQL фильтрует `active = true`, проверяет `Organization.Active`
+- [x] **Booking проверяет Location и Service** — `loc.CanOperate()`, `svc.IsActive()`
+- [x] **Transfer — только Owner** — выделен в отдельную policy `CanTransferEmployee`
+- [x] **Transfer пишет WorkHistory** — атомарно в транзакции
+- [x] **Transfer валидирует локацию** — принадлежит организации + `CanOperate()`

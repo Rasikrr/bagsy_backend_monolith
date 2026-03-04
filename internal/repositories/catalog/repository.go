@@ -39,7 +39,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*catalog.Servic
 // EmployeeService Repository Implementation
 // ─────────────────────────────────────────────────────────────────
 
-func (r *Repository) GetByEmployeeAndService(ctx context.Context, employeeID, serviceID uuid.UUID) (*catalog.EmployeeService, error) {
+func (r *Repository) GetActiveByEmployeeAndService(ctx context.Context, employeeID, serviceID uuid.UUID) (*catalog.EmployeeService, error) {
 	var m employeeServiceModel
 	if err := pgxscan.Get(ctx, r.db, &m, getEmployeeServiceByEmployeeAndService, employeeID, serviceID); err != nil {
 		if pgxscan.NotFound(err) {
@@ -50,7 +50,7 @@ func (r *Repository) GetByEmployeeAndService(ctx context.Context, employeeID, se
 	return m.toDomain()
 }
 
-func (r *Repository) GetByLocationAndService(ctx context.Context, locationID, serviceID uuid.UUID) ([]*catalog.EmployeeService, error) {
+func (r *Repository) GetActiveByLocationAndService(ctx context.Context, locationID, serviceID uuid.UUID) ([]*catalog.EmployeeService, error) {
 	var models []employeeServiceModel
 	if err := pgxscan.Select(ctx, r.db, &models, getEmployeeServicesByLocationAndService, locationID, serviceID); err != nil {
 		return nil, fmt.Errorf("select employee services: %w", err)

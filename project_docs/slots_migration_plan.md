@@ -87,7 +87,7 @@
 2. `serviceRepo.GetByID()` → получить `Service` (`DurationMinutes`)
 3. Определить сотрудников:
    - Если `input.EmployeeID != nil` → использовать одного
-   - Иначе → `empServiceRepo.GetByLocationAndService(locationID, serviceID)` → список сотрудников
+   - Иначе → `empServiceRepo.GetActiveByLocationAndService(locationID, serviceID)` → список сотрудников
 4. `employeeRepo.GetByIDs()` → загрузить данные сотрудников (имена)
 5. `scheduleRepo.GetLocationSlots(locationID, startDate, endDate)` → расписание локации
 6. `scheduleRepo.GetEmployeesSlots(employeeIDs, startDate, endDate)` → расписания сотрудников
@@ -131,7 +131,7 @@
 | `appointmentRepository` | `GetOccupiedSlots(ctx, locationID, employeeIDs, start, end)` |
 | `employeeRepository` | `GetByID(ctx, id)`, `GetByIDs(ctx, ids)` |
 | `serviceRepository` | `GetByID(ctx, id)` |
-| `employeeServiceRepository` | `GetByEmployeeAndService(...)`, `GetByLocationAndService(...)` |
+| `employeeServiceRepository` | `GetActiveByEmployeeAndService(...)`, `GetActiveByLocationAndService(...)` |
 | `locationRepository` | `GetByID(ctx, id)` |
 | `scheduleRepository` | `GetLocationSlots(...)`, `GetEmployeesSlots(...)` |
 

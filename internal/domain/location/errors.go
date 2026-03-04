@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrLocationNotFound     = errors.New("location not found")
 	ErrLocationDeleted      = errors.New("location deleted")
+	ErrLocationInactive     = errors.New("location is inactive")
 	ErrNameRequired         = errors.New("name is required")
 	ErrCityRequired         = errors.New("city required")
 	ErrInvalidScheduleType  = errors.New("invalid schedule type for location")

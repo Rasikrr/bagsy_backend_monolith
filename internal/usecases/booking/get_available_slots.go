@@ -8,6 +8,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/core/log"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -27,6 +28,11 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 	if err != nil {
 		return nil, fmt.Errorf("get location: %w", err)
 	}
+
+	if !loc.CanOperate() {
+		return nil, location.ErrLocationInactive
+	}
+
 	log.Debug(ctx, "get available slots: location loaded",
 		log.String("location", loc.Name),
 		log.String("schedule_type", loc.ScheduleType.String()),
@@ -38,6 +44,11 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 	if err != nil {
 		return nil, fmt.Errorf("get service: %w", err)
 	}
+
+	if !svc.IsActive() {
+		return nil, catalog.ErrServiceInactive
+	}
+
 	log.Debug(ctx, "get available slots: service loaded",
 		log.String("service", svc.Name),
 		log.Int("duration_min", svc.DurationMinutes.Minutes()),
@@ -75,6 +86,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 	employees := lo.Filter(allEmployees, func(e *identity.Employee, _ int) bool {
 		return e.CanServeClients()
 	})
+
 	log.Debug(ctx, "get available slots: employees loaded",
 		log.Int("total", len(allEmployees)),
 		log.Int("active", len(employees)),
@@ -159,14 +171,14 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 
 func (u *UseCase) getEmployeeServices(ctx context.Context, input GetAvailableSlotsInput) ([]*catalog.EmployeeService, error) {
 	if input.EmployeeID != nil {
-		es, err := u.empServiceRepo.GetByEmployeeAndService(ctx, *input.EmployeeID, input.ServiceID)
+		es, err := u.empServiceRepo.GetActiveByEmployeeAndService(ctx, *input.EmployeeID, input.ServiceID)
 		if err != nil {
 			return nil, fmt.Errorf("get employee service: %w", err)
 		}
 		return []*catalog.EmployeeService{es}, nil
 	}
 
-	empServices, err := u.empServiceRepo.GetByLocationAndService(ctx, input.LocationID, input.ServiceID)
+	empServices, err := u.empServiceRepo.GetActiveByLocationAndService(ctx, input.LocationID, input.ServiceID)
 	if err != nil {
 		return nil, fmt.Errorf("get employee services: %w", err)
 	}

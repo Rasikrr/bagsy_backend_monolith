@@ -60,6 +60,14 @@ var bookingErrors = httputil.ErrorMap{
 		Code:    http.StatusConflict,
 		Message: "slot_not_available",
 	},
+	location.ErrLocationInactive: {
+		Code:    http.StatusUnprocessableEntity,
+		Message: "location_inactive",
+	},
+	catalog.ErrServiceInactive: {
+		Code:    http.StatusUnprocessableEntity,
+		Message: "service_inactive",
+	},
 	billing.ErrSubscriptionSuspended: {
 		Code:    http.StatusForbidden,
 		Message: "organization_suspended",

@@ -6,6 +6,7 @@ import (
 	authDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
@@ -27,6 +28,11 @@ var employeeErrors = httputil.ErrorMap{
 	identity.ErrInvalidRole:           {Code: http.StatusBadRequest, Message: "invalid_role"},
 	identity.ErrEmployeeNameRequired:  {Code: http.StatusBadRequest, Message: "name_required"},
 	identity.ErrEmployeePhoneRequired: {Code: http.StatusBadRequest, Message: "phone_required"},
+
+	// location
+	location.ErrLocationNotFound: {Code: http.StatusNotFound, Message: "location_not_found"},
+	location.ErrLocationInactive: {Code: http.StatusUnprocessableEntity, Message: "location_inactive"},
+	location.ErrLocationDeleted:  {Code: http.StatusGone, Message: "location_deleted"},
 
 	// media
 	media.ErrAssetNotFound: {Code: http.StatusNotFound, Message: "avatar_not_found"},

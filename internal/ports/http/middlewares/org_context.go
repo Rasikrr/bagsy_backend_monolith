@@ -39,6 +39,11 @@ func (m *OrgContext) Handle(next http.Handler) http.Handler {
 			return
 		}
 
+		if !orgCtx.Organization.Active {
+			coreHTTP.SendData(ctx, w, map[string]string{"error": "organization_inactive"}, http.StatusForbidden)
+			return
+		}
+
 		ctx = access.WithOrgContext(ctx, orgCtx)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

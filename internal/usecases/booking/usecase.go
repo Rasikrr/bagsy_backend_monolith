@@ -42,8 +42,8 @@ type serviceRepository interface {
 }
 
 type employeeServiceRepository interface {
-	GetByEmployeeAndService(ctx context.Context, employeeID, serviceID uuid.UUID) (*catalog.EmployeeService, error)
-	GetByLocationAndService(ctx context.Context, locationID, serviceID uuid.UUID) ([]*catalog.EmployeeService, error)
+	GetActiveByEmployeeAndService(ctx context.Context, employeeID, serviceID uuid.UUID) (*catalog.EmployeeService, error)
+	GetActiveByLocationAndService(ctx context.Context, locationID, serviceID uuid.UUID) ([]*catalog.EmployeeService, error)
 }
 
 type locationRepository interface {
@@ -245,7 +245,11 @@ func (u *UseCase) validateAndLoadDeps(ctx context.Context, input CreateBookingIn
 		return nil, nil, nil, fmt.Errorf("get service: %w", err)
 	}
 
-	empSvc, err := u.empServiceRepo.GetByEmployeeAndService(ctx, input.EmployeeID, input.ServiceID)
+	if !svc.IsActive() {
+		return nil, nil, nil, catalog.ErrServiceInactive
+	}
+
+	empSvc, err := u.empServiceRepo.GetActiveByEmployeeAndService(ctx, input.EmployeeID, input.ServiceID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("get employee service: %w", err)
 	}
@@ -266,6 +270,10 @@ func (u *UseCase) validateAndLoadDeps(ctx context.Context, input CreateBookingIn
 	loc, err := u.locationRepo.GetByID(ctx, input.LocationID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("get location: %w", err)
+	}
+
+	if !loc.CanOperate() {
+		return nil, nil, nil, location.ErrLocationInactive
 	}
 
 	sub, err := u.subscriptionRepo.GetByOrganizationID(ctx, loc.OrganizationID)

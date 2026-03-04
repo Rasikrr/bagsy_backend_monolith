@@ -31,7 +31,7 @@ func (u *UseCase) TransferEmployee(ctx context.Context, orgCtx *access.OrgContex
 	}
 
 	if !loc.CanOperate() {
-		return location.ErrLocationDeleted
+		return location.ErrLocationInactive
 	}
 
 	if err = emp.Transfer(input.LocationID); err != nil {

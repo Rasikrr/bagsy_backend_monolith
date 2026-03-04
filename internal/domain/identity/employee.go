@@ -226,7 +226,7 @@ func (e *Employee) IsActive() bool {
 }
 
 func (e *Employee) CanServeClients() bool {
-	return !e.IsDeleted() && e.Permissions.CanProvideServices
+	return e.Active && !e.IsDeleted() && e.Permissions.CanProvideServices
 }
 
 func (e *Employee) FullName() string {
