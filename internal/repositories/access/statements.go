@@ -22,6 +22,6 @@ const (
 		JOIN organizations o ON e.organization_id = o.id
 		JOIN subscriptions s ON s.organization_id = o.id
 		JOIN plans p ON s.plan_id = p.id
-		WHERE e.id = $1 AND e.deleted_at IS NULL;
+		WHERE e.id = $1 AND e.active = true AND e.deleted_at IS NULL;
 	`
 )

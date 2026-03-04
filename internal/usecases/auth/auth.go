@@ -78,6 +78,10 @@ func (u *UseCase) RefreshTokens(ctx context.Context, refreshToken string) (*Toke
 		return nil, fmt.Errorf("get employee for refresh: %w", err)
 	}
 
+	if !employee.IsActive() {
+		return nil, identity.ErrEmployeeInactive
+	}
+
 	// 3. Generate new token pair.
 	access, refresh, err := u.tokenService.GenerateTokens(ctx, employee.ID, employee.Phone)
 	if err != nil {

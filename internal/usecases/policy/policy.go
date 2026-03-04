@@ -113,7 +113,8 @@ func (p *Policy) CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identit
 		if !targetEmp.Role.IsStaff() {
 			return identity.ErrPermissionDenied
 		}
-		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+		if (targetEmp.LocationID == nil) ||
+			(*targetEmp.LocationID != orgCtx.Employee.LocationID) {
 			return identity.ErrPermissionDenied
 		}
 		return nil
