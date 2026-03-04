@@ -30,6 +30,7 @@ import (
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	catalogUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
@@ -85,6 +86,7 @@ type App struct {
 	inviteEmployeeUC *inviteUC.UseCase
 	employeeUseCase  *employeeUC.UseCase
 	createLocationUC *locationUC.UseCase
+	catalogUseCase   *catalogUC.UseCase
 	bookingUseCase   *bookingUC.UseCase
 	mediaUseCase     *mediaUC.UseCase
 
@@ -192,6 +194,7 @@ func (a *App) initInfra(_ context.Context) error {
 	return nil
 }
 
+// nolint: funlen
 func (a *App) initUseCases(_ context.Context) error {
 	vars := a.Config().Variables
 	txManager := a.PostgresTXManager()
@@ -275,6 +278,13 @@ func (a *App) initUseCases(_ context.Context) error {
 		mediaMaxSize,
 	)
 
+	a.catalogUseCase = catalogUC.NewUseCase(
+		a.catalogRepo,
+		a.locationRepo,
+		a.employeeRepo,
+		a.policy,
+	)
+
 	a.bookingUseCase = bookingUC.NewUseCase(
 		a.bookingRepo,
 		a.customerRepo,
@@ -307,6 +317,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.employeeUseCase,
 		a.accessRepo,
 		a.createLocationUC,
+		a.catalogUseCase,
 		a.bookingUseCase,
 		a.mediaUseCase,
 	)

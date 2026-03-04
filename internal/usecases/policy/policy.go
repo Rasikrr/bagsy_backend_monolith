@@ -213,6 +213,52 @@ func (p *Policy) CanViewLocations(orgCtx *access.OrgContext) error {
 	return nil
 }
 
+// CanCreateService проверяет право на создание услуги в локации.
+// Owner — в любой локации org, Manager — только в своей.
+func (p *Policy) CanCreateService(orgCtx *access.OrgContext, locationID uuid.UUID) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if orgCtx.Employee.LocationID != locationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
+// CanCreateEmployeeService проверяет право на привязку услуги к сотруднику.
+// Owner — любого, Manager — staff в своей локации.
+func (p *Policy) CanCreateEmployeeService(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if !targetEmp.Role.IsStaff() {
+			return identity.ErrPermissionDenied
+		}
+		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

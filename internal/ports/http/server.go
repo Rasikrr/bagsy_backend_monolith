@@ -4,6 +4,7 @@ import (
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
 	bookingC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/booking"
+	catalogC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/catalog"
 	employeeC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/employee"
 	locationC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/location"
 	mediaC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
@@ -12,6 +13,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
+	catalogUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
@@ -49,6 +51,7 @@ func NewServer(
 	employeeUseCase *employeeUC.UseCase,
 	accessRepo *access.Repository,
 	createLocationUC *locationUC.UseCase,
+	catalogUseCase *catalogUC.UseCase,
 	bookingUseCase *bookingUC.UseCase,
 	mediaUseCase *mediaUC.UseCase,
 ) {
@@ -61,6 +64,7 @@ func NewServer(
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
 	employeeHandler := employeeC.New(inviteUseCase, employeeUseCase, authMiddleware, orgContextMiddleware)
+	catalogHandler := catalogC.New(catalogUseCase, authMiddleware, orgContextMiddleware)
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
 	mediaHandler := mediaC.New(mediaUseCase, authMiddleware)
 
@@ -68,6 +72,7 @@ func NewServer(
 		authHandler,
 		locationHandler,
 		employeeHandler,
+		catalogHandler,
 		bookingHandler,
 		mediaHandler,
 	)

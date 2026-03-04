@@ -51,6 +51,23 @@ func (m *serviceModel) toDomain() (*catalog.Service, error) {
 	}, nil
 }
 
+func fromServiceDomain(s *catalog.Service) serviceModel {
+	return serviceModel{
+		ID:              s.ID,
+		LocationID:      s.LocationID,
+		CategoryID:      s.CategoryID,
+		Name:            s.Name,
+		Description:     s.Description,
+		DurationMinutes: s.DurationMinutes.Minutes(),
+		Color:           string(s.Color),
+		SortOrder:       s.SortOrder,
+		Active:          s.Active,
+		CreatedAt:       s.CreatedAt,
+		UpdatedAt:       s.UpdatedAt,
+		DeletedAt:       s.DeletedAt,
+	}
+}
+
 type employeeServiceModel struct {
 	ID         uuid.UUID       `db:"id"`
 	EmployeeID uuid.UUID       `db:"employee_id"`
@@ -59,6 +76,18 @@ type employeeServiceModel struct {
 	Active     bool            `db:"active"`
 	CreatedAt  time.Time       `db:"created_at"`
 	UpdatedAt  *time.Time      `db:"updated_at"`
+}
+
+func fromEmployeeServiceDomain(es *catalog.EmployeeService) employeeServiceModel {
+	return employeeServiceModel{
+		ID:         es.ID,
+		EmployeeID: es.EmployeeID,
+		ServiceID:  es.ServiceID,
+		Price:      es.Price.Amount(),
+		Active:     es.Active,
+		CreatedAt:  es.CreatedAt,
+		UpdatedAt:  es.UpdatedAt,
+	}
 }
 
 func (m *employeeServiceModel) toDomain() (*catalog.EmployeeService, error) {
@@ -76,4 +105,26 @@ func (m *employeeServiceModel) toDomain() (*catalog.EmployeeService, error) {
 		CreatedAt:  m.CreatedAt,
 		UpdatedAt:  m.UpdatedAt,
 	}, nil
+}
+
+type serviceCategoryModel struct {
+	ID                 uuid.UUID  `db:"id"`
+	LocationCategoryID uuid.UUID  `db:"location_category_id"`
+	ParentID           *uuid.UUID `db:"parent_id"`
+	Name               string     `db:"name"`
+	SortOrder          int        `db:"sort_order"`
+	Active             bool       `db:"active"`
+	CreatedAt          time.Time  `db:"created_at"`
+}
+
+func (m *serviceCategoryModel) toDomain() *catalog.ServiceCategory {
+	return &catalog.ServiceCategory{
+		ID:                 m.ID,
+		LocationCategoryID: m.LocationCategoryID,
+		ParentID:           m.ParentID,
+		Name:               m.Name,
+		SortOrder:          m.SortOrder,
+		Active:             m.Active,
+		CreatedAt:          m.CreatedAt,
+	}
 }

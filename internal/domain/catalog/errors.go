@@ -12,6 +12,10 @@ var (
 )
 
 var (
-	ErrCategorySelfParent   = errors.New("location_category self parent")
-	ErrCategoryNameRequired = errors.New("location_category name is required")
+	ErrCategorySelfParent       = errors.New("location_category self parent")
+	ErrCategoryNameRequired     = errors.New("location_category name is required")
+	ErrServiceCategoryNotFound  = errors.New("service category not found")
+	ErrServiceCategoryInactive  = errors.New("service category is inactive")
+	ErrCategoryMismatch         = errors.New("service category does not match location category")
+	ErrEmployeeLocationMismatch = errors.New("employee does not belong to service location")
 )
