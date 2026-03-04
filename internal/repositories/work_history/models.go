@@ -34,3 +34,18 @@ func fromDomain(wh *identity.WorkHistory) *model {
 		CreatedAt:      wh.CreatedAt,
 	}
 }
+
+func (m *model) toDomain() *identity.WorkHistory {
+	return &identity.WorkHistory{
+		ID:             m.ID,
+		EmployeeID:     m.EmployeeID,
+		OrganizationID: m.OrganizationID,
+		LocationID:     m.LocationID,
+		Role:           identity.Role(m.Role),
+		StartedAt:      m.StartedAt,
+		EndedAt:        m.EndedAt,
+		ChangeType:     identity.ChangeType(m.ChangeType),
+		Comment:        m.Comment,
+		CreatedAt:      m.CreatedAt,
+	}
+}

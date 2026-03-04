@@ -94,7 +94,7 @@ func (p *Policy) CanListEmployees(orgCtx *access.OrgContext, filter *identity.Em
 	}
 }
 
-// CanManageEmployee проверяет право на transfer, activate, deactivate.
+// CanManageEmployee проверяет право на activate, deactivate.
 func (p *Policy) CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended
@@ -123,6 +123,23 @@ func (p *Policy) CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identit
 	}
 }
 
+// CanTransferEmployee проверяет право на перевод сотрудника в другую локацию. Только owner.
+func (p *Policy) CanTransferEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Employee.ID == targetEmp.ID {
+		return identity.ErrCannotModifySelf
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
 // CanChangeRole проверяет право на смену роли. Только owner, нельзя менять себя.
 func (p *Policy) CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
@@ -141,7 +158,8 @@ func (p *Policy) CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Em
 }
 
 // CanChangePermissions проверяет право на смену permissions.
-// Owner — любого. Manager — staff в своей локации.
+// Owner — любого, включая себя (намеренно: может убрать себя из бронирования).
+// Manager — staff в своей локации.
 func (p *Policy) CanChangePermissions(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

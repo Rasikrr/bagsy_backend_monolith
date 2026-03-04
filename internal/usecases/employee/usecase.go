@@ -6,6 +6,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/media"
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
@@ -17,9 +18,22 @@ type employeeRepository interface {
 	Save(ctx context.Context, emp *identity.Employee) error
 }
 
+type locationRepository interface {
+	GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error)
+}
+
 type mediaRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*media.Asset, error)
 	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*media.Asset, error)
+}
+
+type workHistoryRepository interface {
+	GetActiveByEmployeeID(ctx context.Context, employeeID uuid.UUID) (*identity.WorkHistory, error)
+	Save(ctx context.Context, wh *identity.WorkHistory) error
+}
+
+type txManager interface {
+	Do(ctx context.Context, fn func(txCtx context.Context) error) error
 }
 
 type storageClient interface {
@@ -29,29 +43,39 @@ type storageClient interface {
 type policy interface {
 	CanListEmployees(orgCtx *access.OrgContext, filter *identity.EmployeeFilter) error
 	CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
+	CanTransferEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 	CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 	CanChangePermissions(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 }
 
 type UseCase struct {
 	employeeRepo    employeeRepository
+	locationRepo    locationRepository
+	workHistoryRepo workHistoryRepository
 	mediaRepo       mediaRepository
 	storage         storageClient
+	txManager       txManager
 	policy          policy
 	avatarURLExpiry time.Duration
 }
 
 func NewUseCase(
 	employeeRepo employeeRepository,
+	locationRepo locationRepository,
+	workHistoryRepo workHistoryRepository,
 	mediaRepo mediaRepository,
 	storage storageClient,
+	txManager txManager,
 	policy policy,
 	avatarURLExpiry time.Duration,
 ) *UseCase {
 	return &UseCase{
 		employeeRepo:    employeeRepo,
+		locationRepo:    locationRepo,
+		workHistoryRepo: workHistoryRepo,
 		mediaRepo:       mediaRepo,
 		storage:         storage,
+		txManager:       txManager,
 		policy:          policy,
 		avatarURLExpiry: avatarURLExpiry,
 	}

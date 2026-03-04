@@ -247,8 +247,11 @@ func (a *App) initUseCases(_ context.Context) error {
 
 	a.employeeUseCase = employeeUC.NewUseCase(
 		a.employeeRepo,
+		a.locationRepo,
+		a.workHistoryRepo,
 		a.mediaRepo,
 		a.s3Client,
+		txManager,
 		a.policy,
 		15*time.Minute,
 	)
