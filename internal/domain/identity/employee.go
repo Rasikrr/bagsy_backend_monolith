@@ -24,9 +24,16 @@ type Employee struct {
 	OrganizationID uuid.UUID
 	LocationID     *uuid.UUID
 
-	Role        Role
+	Role Role
+
+	// Permissions определяет что сотрудник может делать внутри системы:
+	// - CanProvideServices: отображается ли при бронировании и может ли принимать клиентов
+	// - CanManageLocationSchedule: может ли управлять расписанием локации
 	Permissions Permissions
 
+	// Active определяет доступ сотрудника к системе в целом (логин, панель управления).
+	// Деактивированный сотрудник не может войти и не виден нигде.
+	// Для управления видимостью при бронировании используется Permissions.CanProvideServices.
 	Active    bool
 	CreatedAt time.Time
 	UpdatedAt *time.Time
@@ -139,6 +146,7 @@ func (e *Employee) ChangeRole(newRole Role) error {
 	}
 
 	e.Role = newRole
+	e.Permissions = DefaultPermissionsForRole(newRole)
 	e.touch()
 	return nil
 }
@@ -215,6 +223,10 @@ func (e *Employee) IsDeleted() bool {
 
 func (e *Employee) IsActive() bool {
 	return e.Active && !e.IsDeleted()
+}
+
+func (e *Employee) CanServeClients() bool {
+	return !e.IsDeleted() && e.Permissions.CanProvideServices
 }
 
 func (e *Employee) FullName() string {

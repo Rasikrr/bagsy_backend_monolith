@@ -141,7 +141,7 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 		return nil, errors.Wrap(err, "generate invite token")
 	}
 
-	permissions := permissionsForRole(role)
+	permissions := identity.DefaultPermissionsForRole(role)
 	now := time.Now()
 
 	pending := &PendingInvite{
@@ -314,15 +314,4 @@ func (u *UseCase) ResendInvite(ctx context.Context, orgCtx *access.OrgContext, i
 		ExpiresIn:  int(u.inviteTTL.Seconds()),
 		RetryAfter: int(inviteCooldown.Seconds()),
 	}, nil
-}
-
-// TODO: maybe remove to domain
-func permissionsForRole(role identity.Role) identity.Permissions {
-	switch role {
-	case identity.RoleManager:
-		return identity.NewPermissions(false, true)
-	case identity.RoleStaff:
-		return identity.NewPermissions(true, false)
-	}
-	return identity.DefaultPermissions()
 }

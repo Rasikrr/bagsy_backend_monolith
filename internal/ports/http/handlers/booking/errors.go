@@ -48,6 +48,10 @@ var bookingErrors = httputil.ErrorMap{
 		Code:    http.StatusUnprocessableEntity,
 		Message: "employee_inactive",
 	},
+	identity.ErrEmployeeCannotServe: {
+		Code:    http.StatusUnprocessableEntity,
+		Message: "employee_cannot_serve",
+	},
 	booking.ErrCannotBookSelf: {
 		Code:    http.StatusForbidden,
 		Message: "cannot_book_self",

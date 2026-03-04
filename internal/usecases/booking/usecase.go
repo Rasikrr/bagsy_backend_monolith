@@ -255,8 +255,8 @@ func (u *UseCase) validateAndLoadDeps(ctx context.Context, input CreateBookingIn
 		return nil, nil, nil, fmt.Errorf("get employee by id: %w", err)
 	}
 
-	if !employee.IsActive() {
-		return nil, nil, nil, identity.ErrEmployeeInactive
+	if !employee.CanServeClients() {
+		return nil, nil, nil, identity.ErrEmployeeCannotServe
 	}
 
 	if employee.Phone == phone {

@@ -291,7 +291,7 @@ func (u *RegisterOwnerUseCase) createOrganization(ctx context.Context) (uuid.UUI
 }
 
 func (u *RegisterOwnerUseCase) createOwner(ctx context.Context, phone shared.Phone, reg *PendingRegistration, orgID uuid.UUID) (uuid.UUID, error) {
-	employeePermissions := identity.NewPermissions(true, true)
+	employeePermissions := identity.DefaultPermissionsForRole(identity.RoleOwner)
 
 	emp, err := identity.NewOwnerEmployee(identity.CreateOwnerParams{
 		Phone:          phone,

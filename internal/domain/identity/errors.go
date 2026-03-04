@@ -7,6 +7,7 @@ var (
 	ErrEmployeeNotFound      = errors.New("employee not found")
 	ErrEmployeeDeleted       = errors.New("employee is deleted")
 	ErrEmployeeInactive      = errors.New("employee is inactive")
+	ErrEmployeeCannotServe   = errors.New("employee cannot serve clients")
 	ErrEmployeeNameRequired  = errors.New("employee name is required")
 	ErrEmployeePhoneRequired = errors.New("employee phone is required")
 	ErrPermissionDenied      = errors.New("permission denied")

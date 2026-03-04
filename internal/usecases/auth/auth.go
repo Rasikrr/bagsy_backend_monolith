@@ -48,6 +48,9 @@ func (u *UseCase) LoginEmployee(ctx context.Context, phone, password string) (*T
 	if !hasher.CheckPassword(employee.PasswordHash, password) {
 		return nil, identity.ErrEmployeeNotFound
 	}
+	if !employee.IsActive() {
+		return nil, identity.ErrEmployeeInactive
+	}
 	access, refresh, err := u.tokenService.GenerateTokens(ctx, employee.ID, employee.Phone)
 	if err != nil {
 		return nil, err

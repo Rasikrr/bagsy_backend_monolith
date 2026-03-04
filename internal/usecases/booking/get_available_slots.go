@@ -73,7 +73,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 	}
 
 	employees := lo.Filter(allEmployees, func(e *identity.Employee, _ int) bool {
-		return e.IsActive()
+		return e.CanServeClients()
 	})
 	log.Debug(ctx, "get available slots: employees loaded",
 		log.Int("total", len(allEmployees)),
