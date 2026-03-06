@@ -398,7 +398,6 @@ func (u *UseCase) scheduleReminders(ctx context.Context, appt *booking.Appointme
 		EmployeePhone: employee.Phone,
 		ServiceName:   svc.Name,
 		LocationName:  loc.Name,
-		MaxAttempts:   3,
 	}); schedErr != nil {
 		log.Error(ctx, "confirm: schedule reminders failed", log.Err(schedErr))
 	}

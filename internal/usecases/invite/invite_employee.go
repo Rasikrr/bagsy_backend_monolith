@@ -10,6 +10,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/hasher"
+	"github.com/Rasikrr/core/log"
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
 )
@@ -169,6 +170,7 @@ func (u *UseCase) SendInvite(ctx context.Context, orgCtx *access.OrgContext, inp
 	if err = u.linkSender.SendInviteLink(ctx, phone, link); err != nil {
 		return nil, errors.Wrap(err, "send invite link")
 	}
+	log.Infof(ctx, "invite link sent to %s", link)
 
 	return &SendInviteOutput{
 		Phone:     phone.String(),

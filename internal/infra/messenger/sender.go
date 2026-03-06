@@ -44,14 +44,22 @@ func (s *Messenger) SendInviteLink(ctx context.Context, phone shared.Phone, link
 	return s.send(ctx, phone, msg)
 }
 
-// SendReminder sends a pre-formatted reminder message to the given phone number.
-func (s *Messenger) SendReminder(ctx context.Context, phone shared.Phone, message string) error {
-	return s.send(ctx, phone, message)
+// SendReminder formats a reminder message based on metadata and sends it.
+func (s *Messenger) SendReminder(ctx context.Context, task *notification.Task) error {
+	formattedTime := task.Metadata.AppointmentAt.Format("02.01.2006 15:04")
+	msg := formatReminderMessage(
+		task.Type,
+		task.RecipientType,
+		task.Metadata.ServiceName,
+		task.Metadata.LocationName,
+		formattedTime,
+	)
+	return s.send(ctx, task.RecipientPhone, msg)
 }
 
 // FormatReminderMessage formats a reminder message based on type and recipient.
 // Implements notification.MessageFormatter.
-func FormatReminderMessage(taskType notification.Type, recipientType notification.RecipientType, serviceName, locationName, startAt string) string {
+func formatReminderMessage(taskType notification.Type, recipientType notification.RecipientType, serviceName, locationName, startAt string) string {
 	switch {
 	case recipientType == notification.RecipientCustomer && taskType == notification.Type24HrReminder:
 		return formatCustomer24hReminder(startAt, serviceName, locationName)

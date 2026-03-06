@@ -8,6 +8,7 @@ import (
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type Repository struct {
@@ -18,34 +19,42 @@ func NewRepository(db *postgres.Postgres) *Repository {
 	return &Repository{db: db}
 }
 
-// SaveBatch inserts multiple notification tasks.
 func (r *Repository) SaveBatch(ctx context.Context, tasks []*notification.Task) error {
+	if len(tasks) == 0 {
+		return nil
+	}
 	if postgres.HasTx(ctx) {
 		return r.saveBatch(ctx, tasks)
 	}
-
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
+
 	defer tx.Rollback(ctx) //nolint:errcheck
 
-	if err := r.saveBatch(postgres.InjectTx(ctx, tx), tasks); err != nil {
+	if err = r.saveBatch(postgres.InjectTx(ctx, tx), tasks); err != nil {
 		return fmt.Errorf("save batch: %w", err)
 	}
+
 	return tx.Commit(ctx)
 }
 
 func (r *Repository) saveBatch(ctx context.Context, tasks []*notification.Task) error {
+	batch := &pgx.Batch{}
 	for _, t := range tasks {
 		m := fromDomain(t)
-
-		_, err := r.db.Exec(ctx, saveBatch,
+		batch.Queue(saveBatch,
 			m.AppointmentID, m.Type, m.RecipientType, m.RecipientPhone,
-			m.Message, m.Status, m.ScheduledFor, m.Attempts, m.MaxAttempts, m.CreatedAt,
+			m.Metadata, m.Status, m.ScheduledFor, m.Attempts, m.MaxAttempts, m.CreatedAt,
 		)
-		if err != nil {
-			return fmt.Errorf("save notification task: %w", err)
+	}
+	br := r.db.SendBatch(ctx, batch)
+	defer br.Close() //nolint:errcheck
+
+	for i := range tasks {
+		if _, err := br.Exec(); err != nil {
+			return fmt.Errorf("execute batch save at index %d: %w", i, err)
 		}
 	}
 	return nil
@@ -87,6 +96,46 @@ func (r *Repository) Update(ctx context.Context, task *notification.Task) error 
 	)
 	if err != nil {
 		return fmt.Errorf("update notification task: %w", err)
+	}
+	return nil
+}
+
+// UpdateBatch updates multiple notification tasks in a single batch.
+func (r *Repository) UpdateBatch(ctx context.Context, tasks []*notification.Task) error {
+	if len(tasks) == 0 {
+		return nil
+	}
+	if postgres.HasTx(ctx) {
+		return r.updateBatch(ctx, tasks)
+	}
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	if err = r.updateBatch(postgres.InjectTx(ctx, tx), tasks); err != nil {
+		return fmt.Errorf("save batch: %w", err)
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) updateBatch(ctx context.Context, tasks []*notification.Task) error {
+	batch := &pgx.Batch{}
+	for _, t := range tasks {
+		batch.Queue(updateTask,
+			t.ID, string(t.Status), t.Attempts, t.LastError, t.UpdatedAt,
+		)
+	}
+
+	br := r.db.Pool().SendBatch(ctx, batch)
+	defer br.Close() //nolint:errcheck
+
+	for i := range tasks {
+		if _, err := br.Exec(); err != nil {
+			return fmt.Errorf("execute batch update at index %d: %w", i, err)
+		}
 	}
 	return nil
 }

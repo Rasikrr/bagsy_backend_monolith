@@ -29,7 +29,6 @@ const (
 
 	BagsyNotificationMaxAttempts = "bagsy_notification_max_attempts"
 	BagsyNotificationBatchSize   = "bagsy_notification_batch_size"
-	BagsyNotificationWorkerCount = "bagsy_notification_worker_count"
 	BagsyNotificationSchedule    = "bagsy_notification_schedule"
 
 	AwsRegion          = "aws_region"
@@ -38,6 +37,7 @@ const (
 	AwsSecretAccessKey = "aws_secret_access_key"
 	AwsAccessKeyID     = "aws_access_key_id"
 
-	MediaUploadTTL    = "media_upload_ttl"
-	MediaMaxSizeBytes = "media_max_size_bytes"
+	MediaUploadTTL      = "media_upload_ttl"
+	MediaMaxSizeBytes   = "media_max_size_bytes"
+	MediaWorkerSchedule = "media_worker_schedule"
 )

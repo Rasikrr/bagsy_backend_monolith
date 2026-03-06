@@ -4,7 +4,7 @@ const (
 	saveBatch = `
 		INSERT INTO notification_outbox (
 			appointment_id, type, recipient_type, recipient_phone,
-			message, status, scheduled_for, attempts, max_attempts, created_at
+			metadata, status, scheduled_for, attempts, max_attempts, created_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
@@ -15,7 +15,7 @@ const (
 
 	pollReady = `
 		SELECT id, appointment_id, type, recipient_type, recipient_phone,
-			   message, status, scheduled_for, attempts, max_attempts, last_error,
+			   metadata, status, scheduled_for, attempts, max_attempts, last_error,
 			   created_at, updated_at
 		FROM notification_outbox
 		WHERE status = 'pending' AND scheduled_for <= NOW()

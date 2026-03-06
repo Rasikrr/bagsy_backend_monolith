@@ -290,7 +290,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.policy,
 	)
 
-	a.notifUseCase = notifUC.NewUseCase(a.notificationRepo, messenger.FormatReminderMessage)
+	a.notifUseCase = notifUC.NewUseCase(a.notificationRepo)
 
 	a.bookingUseCase = bookingUC.NewUseCase(
 		a.bookingRepo,
@@ -345,11 +345,13 @@ func (a *App) initJobs(_ context.Context) error {
 	)
 
 	mediaUploadTTL := vars.GetDuration(appenv.MediaUploadTTL)
+	mediaWorkerSchedule := vars.GetString(appenv.MediaWorkerSchedule)
+
 	notifBatchSize := vars.GetInt(appenv.BagsyNotificationBatchSize)
 	notifSchedule := vars.GetString(appenv.BagsyNotificationSchedule)
 
 	a.WithCronJobs(
-		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, "0 */1 * * * *"),
+		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, mediaWorkerSchedule),
 		workers.NewReminderNotificationJob(a.notificationRepo, a.messenger, notifBatchSize, notifSchedule),
 	)
 

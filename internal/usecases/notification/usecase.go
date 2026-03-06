@@ -14,12 +14,10 @@ type notificationRepository interface {
 
 type UseCase struct {
 	notifRepo notificationRepository
-	formatter notification.MessageFormatter
 }
 
-func NewUseCase(notifRepo notificationRepository, formatter notification.MessageFormatter) *UseCase {
+func NewUseCase(notifRepo notificationRepository) *UseCase {
 	return &UseCase{
 		notifRepo: notifRepo,
-		formatter: formatter,
 	}
 }

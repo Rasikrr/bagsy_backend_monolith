@@ -8,8 +8,6 @@ import (
 )
 
 func (u *UseCase) ScheduleReminders(ctx context.Context, params notification.ScheduleParams) error {
-	params.Formatter = u.formatter
-
 	tasks := notification.GenerateReminders(params)
 	if len(tasks) == 0 {
 		return nil

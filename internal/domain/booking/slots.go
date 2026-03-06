@@ -210,10 +210,7 @@ func filterWorkSlotsLoc(date time.Time, slots []*schedule.LocationScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsWorkSlot() {
-			res = append(res, TimeSlot{
-				StartAt: date.Add(s.StartTime.Sub(s.Date)),
-				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
-			})
+			res = append(res, makeTimeSlot(date, s.StartTime, s.EndTime))
 		}
 	}
 	return res
@@ -223,10 +220,7 @@ func filterWorkSlotsEmp(date time.Time, slots []*schedule.EmployeeScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsWorkSlot() {
-			res = append(res, TimeSlot{
-				StartAt: date.Add(s.StartTime.Sub(s.Date)),
-				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
-			})
+			res = append(res, makeTimeSlot(date, s.StartTime, s.EndTime))
 		}
 	}
 	return res
@@ -236,10 +230,7 @@ func filterRestSlotsLoc(date time.Time, slots []*schedule.LocationScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsRestSlot() {
-			res = append(res, TimeSlot{
-				StartAt: date.Add(s.StartTime.Sub(s.Date)),
-				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
-			})
+			res = append(res, makeTimeSlot(date, s.StartTime, s.EndTime))
 		}
 	}
 	return res
@@ -249,18 +240,27 @@ func filterRestSlotsEmp(date time.Time, slots []*schedule.EmployeeScheduleSlot) 
 	var res []TimeSlot
 	for _, s := range slots {
 		if s.IsRestSlot() {
-			res = append(res, TimeSlot{
-				StartAt: date.Add(s.StartTime.Sub(s.Date)),
-				EndAt:   date.Add(s.EndTime.Sub(s.Date)),
-			})
+			res = append(res, makeTimeSlot(date, s.StartTime, s.EndTime))
 		}
 	}
 	return res
 }
 
+func makeTimeSlot(date, startTime, endTime time.Time) TimeSlot {
+	start := combineDateTime(date, startTime)
+	end := combineDateTime(date, endTime)
+	// Handle TIME 24:00:00 — Go normalizes hour 24 to next day 00:00,
+	// so combineDateTime gives the same midnight as start-of-day.
+	// Since DB constraint guarantees start_time < end_time, end <= start
+	// only happens for end_time = 24:00. Fix by adding a day.
+	if !end.After(start) {
+		end = end.AddDate(0, 0, 1)
+	}
+	return TimeSlot{StartAt: start, EndAt: end}
+}
+
 func combineDateTime(date, t time.Time) time.Time {
-	tDate := TruncateToDate(t)
-	return TruncateToDate(date).Add(t.Sub(tDate))
+	return time.Date(date.Year(), date.Month(), date.Day(), t.Hour(), t.Minute(), t.Second(), 0, date.Location())
 }
 
 func findIntersection(a, b []TimeSlot) []TimeSlot {

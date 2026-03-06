@@ -7,13 +7,19 @@ import (
 	"github.com/google/uuid"
 )
 
+type Metadata struct {
+	ServiceName   string
+	LocationName  string
+	AppointmentAt time.Time
+}
+
 type Task struct {
 	ID             int64
 	AppointmentID  uuid.UUID
 	Type           Type
 	RecipientType  RecipientType
 	RecipientPhone shared.Phone
-	Message        string
+	Metadata       Metadata
 	Status         Status
 	ScheduledFor   time.Time
 	Attempts       int
@@ -28,7 +34,7 @@ type CreateTaskParams struct {
 	Type           Type
 	RecipientType  RecipientType
 	RecipientPhone shared.Phone
-	Message        string
+	Metadata       Metadata
 	ScheduledFor   time.Time
 	MaxAttempts    int
 }
@@ -39,7 +45,7 @@ func NewTask(params CreateTaskParams) *Task {
 		Type:           params.Type,
 		RecipientType:  params.RecipientType,
 		RecipientPhone: params.RecipientPhone,
-		Message:        params.Message,
+		Metadata:       params.Metadata,
 		Status:         StatusPending,
 		ScheduledFor:   params.ScheduledFor,
 		Attempts:       0,
