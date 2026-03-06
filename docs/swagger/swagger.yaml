@@ -234,6 +234,60 @@ definitions:
       start_at:
         type: string
     type: object
+  internal_ports_http_handlers_catalog.createEmployeeServiceRequest:
+    properties:
+      employee_id:
+        type: string
+      price:
+        type: string
+      service_id:
+        type: string
+    type: object
+  internal_ports_http_handlers_catalog.createEmployeeServiceResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  internal_ports_http_handlers_catalog.createServiceRequest:
+    properties:
+      category_id:
+        type: string
+      color:
+        type: string
+      description:
+        type: string
+      duration_minutes:
+        type: integer
+      location_id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_ports_http_handlers_catalog.createServiceResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  internal_ports_http_handlers_catalog.getServiceCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_catalog.serviceCategoryResponse'
+        type: array
+    type: object
+  internal_ports_http_handlers_catalog.serviceCategoryResponse:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_catalog.serviceCategoryResponse'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      sort_order:
+        type: integer
+    type: object
   internal_ports_http_handlers_employee.changePermissionsRequest:
     properties:
       can_manage_location_schedule:
@@ -376,6 +430,24 @@ definitions:
       last_name:
         type: string
     type: object
+  internal_ports_http_handlers_location.addressResponse:
+    properties:
+      building:
+        type: string
+      city:
+        type: string
+      details:
+        type: string
+      street:
+        type: string
+    type: object
+  internal_ports_http_handlers_location.coordsResponse:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
   internal_ports_http_handlers_location.createRequest:
     properties:
       address:
@@ -414,6 +486,42 @@ definitions:
         type: string
       prompt_org_profile:
         type: boolean
+    type: object
+  internal_ports_http_handlers_location.getListResponse:
+    properties:
+      locations:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_location.locationResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  internal_ports_http_handlers_location.locationResponse:
+    properties:
+      active:
+        type: boolean
+      address:
+        $ref: '#/definitions/internal_ports_http_handlers_location.addressResponse'
+      category_id:
+        type: string
+      coordinates:
+        $ref: '#/definitions/internal_ports_http_handlers_location.coordsResponse'
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      schedule_type:
+        type: string
+      slot_duration_minutes:
+        type: integer
+      slug:
+        type: string
     type: object
   internal_ports_http_handlers_media.uploadRequest:
     properties:
@@ -1010,6 +1118,51 @@ paths:
       summary: Получение доступных слотов для записи
       tags:
       - booking
+  /api/v1/employee-services:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт связь сотрудник-услуга с индивидуальной ценой. Owner —
+        любого, Manager — staff в своей локации.
+      parameters:
+      - description: Данные привязки
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_catalog.createEmployeeServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_catalog.createEmployeeServiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Привязка услуги к сотруднику
+      tags:
+      - catalog
   /api/v1/employees:
     get:
       consumes:
@@ -1518,6 +1671,66 @@ paths:
       tags:
       - employees
   /api/v1/locations:
+    get:
+      description: Возвращает список локаций организации с пагинацией и фильтрацией.
+        Только Owner.
+      parameters:
+      - description: Фильтр по активности
+        in: query
+        name: active
+        type: boolean
+      - description: 'Количество записей (default: 20, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Смещение для пагинации (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      - default: created_at
+        description: Поле сортировки
+        enum:
+        - created_at
+        - name
+        in: query
+        name: order_by
+        type: string
+      - default: desc
+        description: Направление сортировки
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_location.getListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение списка локаций
+      tags:
+      - locations
     post:
       consumes:
       - application/json
@@ -1554,6 +1767,47 @@ paths:
       summary: Создание локации
       tags:
       - location
+  /api/v1/locations/{id}:
+    get:
+      description: Возвращает детали конкретной локации. Только Owner.
+      parameters:
+      - description: UUID локации
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_location.locationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение локации по ID
+      tags:
+      - locations
   /api/v1/media/{id}/confirm:
     post:
       description: Проверяет наличие файла в S3 и меняет статус ассета на uploaded.
@@ -1619,6 +1873,79 @@ paths:
       summary: Генерация presigned URL для загрузки файла
       tags:
       - media
+  /api/v1/service-categories:
+    get:
+      description: Возвращает дерево категорий услуг для указанного типа бизнеса (location_category_id).
+      parameters:
+      - description: ID категории локации
+        in: query
+        name: location_category_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_catalog.getServiceCategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение категорий услуг
+      tags:
+      - catalog
+  /api/v1/services:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт новую услугу в локации. Owner — в любой, Manager — в своей.
+      parameters:
+      - description: Данные услуги
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_catalog.createServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_catalog.createServiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создание услуги
+      tags:
+      - catalog
 securityDefinitions:
   ApiKeyAuth:
     in: header
