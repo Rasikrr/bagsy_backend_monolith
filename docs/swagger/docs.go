@@ -1789,7 +1789,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "location"
+                    "locations"
                 ],
                 "summary": "Создание локации",
                 "parameters": [
@@ -1838,7 +1838,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Возвращает детали конкретной локации. Только Owner.",
+                "description": "Возвращает детали конкретной локации.",
                 "produces": [
                     "application/json"
                 ],

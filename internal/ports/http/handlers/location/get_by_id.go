@@ -13,7 +13,7 @@ import (
 // getByID handles GET /api/v1/locations/{id}.
 //
 // @Summary      Получение локации по ID
-// @Description  Возвращает детали конкретной локации. Только Owner.
+// @Description  Возвращает детали конкретной локации.
 // @Tags         locations
 // @Produce      json
 // @Param        id   path      string  true  "UUID локации"

@@ -13,7 +13,7 @@ import (
 //
 // @Summary      Создание локации
 // @Description  Создаёт новую точку обслуживания для организации. Проверяет лимиты тарифного плана.
-// @Tags         location
+// @Tags         locations
 // @Accept       json
 // @Produce      json
 // @Param        body  body      createRequest  true  "Данные локации"

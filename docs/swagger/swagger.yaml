@@ -1766,10 +1766,10 @@ paths:
       - ApiKeyAuth: []
       summary: Создание локации
       tags:
-      - location
+      - locations
   /api/v1/locations/{id}:
     get:
-      description: Возвращает детали конкретной локации. Только Owner.
+      description: Возвращает детали конкретной локации.
       parameters:
       - description: UUID локации
         in: path
