@@ -84,6 +84,19 @@ func (r *Repository) GetActiveByEmployeeAndService(ctx context.Context, employee
 	return m.toDomain()
 }
 
+func (r *Repository) GetServiceCategoriesByLocationCategoryID(ctx context.Context, locationCategoryID uuid.UUID) ([]*catalog.ServiceCategory, error) {
+	var models []serviceCategoryModel
+	if err := pgxscan.Select(ctx, r.db, &models, getServiceCategoriesByLocationCategoryID, locationCategoryID); err != nil {
+		return nil, fmt.Errorf("get service categories by location category id: %w", err)
+	}
+
+	result := make([]*catalog.ServiceCategory, 0, len(models))
+	for _, m := range models {
+		result = append(result, m.toDomain())
+	}
+	return result, nil
+}
+
 func (r *Repository) GetActiveByLocationAndService(ctx context.Context, locationID, serviceID uuid.UUID) ([]*catalog.EmployeeService, error) {
 	var models []employeeServiceModel
 	if err := pgxscan.Select(ctx, r.db, &models, getEmployeeServicesByLocationAndService, locationID, serviceID); err != nil {

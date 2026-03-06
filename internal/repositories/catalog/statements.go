@@ -34,7 +34,7 @@ const (
 	`
 
 	getServiceCategoryByID = `
-		SELECT id, location_category_id, parent_id, name, sort_order, active, created_at
+		SELECT id, location_category_id, parent_id, name, sort_order, created_at
 		FROM service_categories
 		WHERE id = $1;
 	`
@@ -50,5 +50,12 @@ const (
 		FROM employee_services es
 		JOIN services s ON s.id = es.service_id
 		WHERE s.location_id = $1 AND es.service_id = $2 AND es.active = true;
+	`
+
+	getServiceCategoriesByLocationCategoryID = `
+		SELECT id, location_category_id, parent_id, name, sort_order, created_at
+		FROM service_categories
+		WHERE location_category_id = $1
+		ORDER BY sort_order, name;
 	`
 )

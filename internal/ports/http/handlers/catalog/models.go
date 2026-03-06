@@ -26,3 +26,14 @@ type createEmployeeServiceRequest struct {
 type createEmployeeServiceResponse struct {
 	ID string `json:"id"`
 }
+
+type serviceCategoryResponse struct {
+	ID        string                    `json:"id"`
+	Name      string                    `json:"name"`
+	SortOrder int                       `json:"sort_order"`
+	Children  []serviceCategoryResponse `json:"children"`
+}
+
+type getServiceCategoriesResponse struct {
+	Categories []serviceCategoryResponse `json:"categories"`
+}

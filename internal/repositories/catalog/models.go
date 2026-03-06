@@ -113,7 +113,6 @@ type serviceCategoryModel struct {
 	ParentID           *uuid.UUID `db:"parent_id"`
 	Name               string     `db:"name"`
 	SortOrder          int        `db:"sort_order"`
-	Active             bool       `db:"active"`
 	CreatedAt          time.Time  `db:"created_at"`
 }
 
@@ -124,7 +123,6 @@ func (m *serviceCategoryModel) toDomain() *catalog.ServiceCategory {
 		ParentID:           m.ParentID,
 		Name:               m.Name,
 		SortOrder:          m.SortOrder,
-		Active:             m.Active,
 		CreatedAt:          m.CreatedAt,
 	}
 }

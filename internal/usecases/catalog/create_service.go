@@ -48,10 +48,6 @@ func (u *UseCase) CreateService(ctx context.Context, orgCtx *access.OrgContext, 
 		return nil, fmt.Errorf("get service category: %w", err)
 	}
 
-	if !svcCategory.IsActive() {
-		return nil, catalog.ErrServiceCategoryInactive
-	}
-
 	if svcCategory.LocationCategoryID != loc.CategoryID {
 		return nil, catalog.ErrCategoryMismatch
 	}

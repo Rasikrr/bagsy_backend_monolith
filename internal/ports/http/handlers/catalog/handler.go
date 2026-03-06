@@ -7,11 +7,13 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type catalogUseCase interface {
 	CreateService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateServiceInput) (*uc.CreateServiceOutput, error)
 	CreateEmployeeService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateEmployeeServiceInput) (*uc.CreateEmployeeServiceOutput, error)
+	GetServiceCategories(ctx context.Context, locationCategoryID uuid.UUID) ([]uc.ServiceCategoryTree, error)
 }
 
 type Handler struct {
@@ -45,5 +47,12 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Use(h.orgContextMid.Handle)
 
 		r.Post("/", h.createEmployeeService)
+	})
+
+	router.Route("/api/v1/service-categories", func(r chi.Router) {
+		r.Use(h.authMid.Handle)
+		r.Use(h.orgContextMid.Handle)
+
+		r.Get("/", h.getServiceCategories)
 	})
 }

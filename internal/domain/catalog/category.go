@@ -17,7 +17,6 @@ type ServiceCategory struct {
 	ParentID           *uuid.UUID
 	Name               string
 	SortOrder          int
-	Active             bool
 	CreatedAt          time.Time
 	UpdatedAt          *time.Time
 }
@@ -35,7 +34,6 @@ func NewServiceCategory(
 		LocationCategoryID: locationCategoryID,
 		ParentID:           parentID,
 		Name:               name,
-		Active:             true,
 		CreatedAt:          time.Now(),
 	}, nil
 }
@@ -63,22 +61,8 @@ func (c *ServiceCategory) ChangeParent(parentID *uuid.UUID) error {
 	return nil
 }
 
-func (c *ServiceCategory) Activate() {
-	c.Active = true
-	c.touch()
-}
-
-func (c *ServiceCategory) Deactivate() {
-	c.Active = false
-	c.touch()
-}
-
 func (c *ServiceCategory) IsRoot() bool {
 	return c.ParentID == nil
-}
-
-func (c *ServiceCategory) IsActive() bool {
-	return c.Active
 }
 
 func (c *ServiceCategory) touch() {

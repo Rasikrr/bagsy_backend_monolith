@@ -23,7 +23,6 @@ var catalogErrors = httputil.ErrorMap{
 	domainCatalog.ErrServiceNameRequired:      {Code: http.StatusBadRequest, Message: "service_name_required"},
 	domainCatalog.ErrServiceInvalidColor:      {Code: http.StatusBadRequest, Message: "service_invalid_color"},
 	domainCatalog.ErrServiceCategoryNotFound:  {Code: http.StatusNotFound, Message: "service_category_not_found"},
-	domainCatalog.ErrServiceCategoryInactive:  {Code: http.StatusUnprocessableEntity, Message: "service_category_inactive"},
 	domainCatalog.ErrCategoryMismatch:         {Code: http.StatusBadRequest, Message: "category_mismatch"},
 	domainCatalog.ErrEmployeeLocationMismatch: {Code: http.StatusUnprocessableEntity, Message: "employee_location_mismatch"},
 

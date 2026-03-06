@@ -15,6 +15,7 @@ type catalogRepository interface {
 	SaveEmployeeService(ctx context.Context, es *catalog.EmployeeService) error
 	GetByID(ctx context.Context, id uuid.UUID) (*catalog.Service, error)
 	GetServiceCategoryByID(ctx context.Context, id uuid.UUID) (*catalog.ServiceCategory, error)
+	GetServiceCategoriesByLocationCategoryID(ctx context.Context, locationCategoryID uuid.UUID) ([]*catalog.ServiceCategory, error)
 }
 
 type locationRepository interface {
