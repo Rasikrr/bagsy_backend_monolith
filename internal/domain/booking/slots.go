@@ -259,8 +259,10 @@ func makeTimeSlot(date, startTime, endTime time.Time) TimeSlot {
 	return TimeSlot{StartAt: start, EndAt: end}
 }
 
+var almaty = time.FixedZone("Asia/Almaty", 5*3600)
+
 func combineDateTime(date, t time.Time) time.Time {
-	return time.Date(date.Year(), date.Month(), date.Day(), t.Hour(), t.Minute(), t.Second(), 0, date.Location())
+	return time.Date(date.Year(), date.Month(), date.Day(), t.Hour(), t.Minute(), t.Second(), 0, almaty)
 }
 
 func findIntersection(a, b []TimeSlot) []TimeSlot {

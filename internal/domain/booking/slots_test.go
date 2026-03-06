@@ -16,10 +16,10 @@ import (
 // Test helpers
 // ─────────────────────────────────────────────────────────────────
 
-var testDate = time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC) // Tuesday
+var testDate = time.Date(2026, 3, 10, 0, 0, 0, 0, almaty) // Tuesday
 
 func makeTime(day time.Time, h, m int) time.Time {
-	return time.Date(day.Year(), day.Month(), day.Day(), h, m, 0, 0, time.UTC)
+	return time.Date(day.Year(), day.Month(), day.Day(), h, m, 0, 0, almaty)
 }
 
 func mustDuration(minutes int) shared.Duration {
@@ -598,17 +598,17 @@ func TestSplitIntoSlots(t *testing.T) {
 // ─────────────────────────────────────────────────────────────────
 
 func TestCombineDateTime(t *testing.T) {
-	date := time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
-	timeOnly := time.Date(0, 1, 1, 14, 30, 0, 0, time.UTC)
+	date := time.Date(2026, 3, 10, 0, 0, 0, 0, almaty)
+	timeOnly := time.Date(0, 1, 1, 14, 30, 0, 0, almaty)
 
 	got := combineDateTime(date, timeOnly)
-	assert.Equal(t, time.Date(2026, 3, 10, 14, 30, 0, 0, time.UTC), got)
+	assert.Equal(t, time.Date(2026, 3, 10, 14, 30, 0, 0, almaty), got)
 }
 
 func TestTruncateToDate(t *testing.T) {
-	ts := time.Date(2026, 3, 10, 15, 45, 30, 123, time.UTC)
+	ts := time.Date(2026, 3, 10, 15, 45, 30, 123, almaty)
 	got := TruncateToDate(ts)
-	assert.Equal(t, time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), got)
+	assert.Equal(t, time.Date(2026, 3, 10, 0, 0, 0, 0, almaty), got)
 }
 
 // ─────────────────────────────────────────────────────────────────

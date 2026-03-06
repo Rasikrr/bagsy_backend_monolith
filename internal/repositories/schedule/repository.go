@@ -22,7 +22,7 @@ func NewRepository(db *postgres.Postgres) *Repository {
 
 func (r *Repository) GetLocationSlots(ctx context.Context, locationID uuid.UUID, start, end time.Time) ([]*schedule.LocationScheduleSlot, error) {
 	var models []locationSlotModel
-	if err := pgxscan.Select(ctx, r.db, &models, getLocationSlots, locationID, start, end); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getLocationSlots, locationID, start.Format("2006-01-02"), end.Format("2006-01-02")); err != nil {
 		return nil, fmt.Errorf("get location schedule slots: %w", err)
 	}
 
@@ -40,7 +40,7 @@ func (r *Repository) GetLocationSlots(ctx context.Context, locationID uuid.UUID,
 
 func (r *Repository) GetEmployeesSlots(ctx context.Context, employeeIDs []uuid.UUID, start, end time.Time) (map[uuid.UUID][]*schedule.EmployeeScheduleSlot, error) {
 	var models []employeeSlotModel
-	if err := pgxscan.Select(ctx, r.db, &models, getEmployeesSlots, pq.Array(employeeIDs), start, end); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getEmployeesSlots, pq.Array(employeeIDs), start.Format("2006-01-02"), end.Format("2006-01-02")); err != nil {
 		return nil, fmt.Errorf("get employee schedule slots: %w", err)
 	}
 

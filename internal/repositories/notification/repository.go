@@ -46,7 +46,7 @@ func (r *Repository) saveBatch(ctx context.Context, tasks []*notification.Task) 
 		m := fromDomain(t)
 		batch.Queue(saveBatch,
 			m.AppointmentID, m.Type, m.RecipientType, m.RecipientPhone,
-			m.Metadata, m.Status, m.ScheduledFor, m.Attempts, m.MaxAttempts, m.CreatedAt,
+			string(m.Metadata), m.Status, m.ScheduledFor, m.Attempts, m.MaxAttempts, m.CreatedAt,
 		)
 	}
 	br := r.db.SendBatch(ctx, batch)

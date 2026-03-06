@@ -215,6 +215,7 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		log.Error(ctx, "create booking: failed to send otp", log.Err(err))
 		return nil, fmt.Errorf("send notification: %w", err)
 	}
+	log.Infof(ctx, "otp: %s", otp.Code)
 
 	log.Info(ctx, "create booking: completed",
 		log.String("appointment_id", appt.ID.String()),
@@ -426,7 +427,7 @@ func (u *UseCase) ResendOTP(ctx context.Context, appointmentID uuid.UUID) error 
 	if err != nil {
 		return err
 	}
-
+	log.Infof(ctx, "otp: %s", otp.Code)
 	// 5. Save and Send
 	if err = u.otpRepo.Save(ctx, appointmentID, otp); err != nil {
 		return err
