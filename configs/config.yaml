@@ -243,16 +243,11 @@ env:
     value: 100
     required: true
 
-  bagsy_notification_worker_count:
-    type: "int"
-    env_name: "BAGSY_NOTIFICATION_WORKER_COUNT"
-    value: 0
-    required: true
-
   bagsy_notification_schedule:
     type: "string"
     env_name: "BAGSY_NOTIFICATION_SCHEDULE"
     value: "0 */1 * * * *"  # каждую минуту (с секундами)
+    required: true
 
   point_categories_ttl:
     type: "duration"
@@ -294,4 +289,10 @@ env:
     type: "duration"
     env_name: "MEDIA_UPLOAD_TTL"
     value: "600s"
+    required: true
+
+  media_worker_schedule:
+    env_name: "MEDIA_WORKER_SCHEDULE"
+    type: "string"
+    value: "0 */1 * * * *"
     required: true

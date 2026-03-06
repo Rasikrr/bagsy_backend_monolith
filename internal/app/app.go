@@ -18,6 +18,7 @@ import (
 	locationRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location"
 	categoryRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/location_category"
 	mediaRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/media"
+	notifRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/notification"
 	orgRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/organization"
 	planRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/plan"
 	scheduleRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/schedule"
@@ -35,6 +36,7 @@ import (
 	inviteUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
+	notifUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/notification"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/workers"
 
@@ -68,6 +70,7 @@ type App struct {
 	catalogRepo        *catalogRepo.Repository
 	scheduleRepo       *scheduleRepo.Repository
 	mediaRepo          *mediaRepo.Repository
+	notificationRepo   *notifRepo.Repository
 	otpRepo            *otpRepo.Repository
 	pendingRegStore    *pendingReg.PendingRegistrationStore
 	refreshTokenRepo   *refreshTokenRepo.RefreshTokenRepository
@@ -89,6 +92,7 @@ type App struct {
 	catalogUseCase   *catalogUC.UseCase
 	bookingUseCase   *bookingUC.UseCase
 	mediaUseCase     *mediaUC.UseCase
+	notifUseCase     *notifUC.UseCase
 
 	// Policies
 	policy *policy.Policy
@@ -159,6 +163,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.catalogRepo = catalogRepo.NewRepository(db)
 	a.scheduleRepo = scheduleRepo.NewRepository(db)
 	a.mediaRepo = mediaRepo.NewRepository(db)
+	a.notificationRepo = notifRepo.NewRepository(db)
 
 	a.otpRepo = otpRepo.NewRepository(a.Redis())
 	a.pendingRegStore = pendingReg.NewPendingRegistrationStore(a.Redis())
@@ -285,6 +290,8 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.policy,
 	)
 
+	a.notifUseCase = notifUC.NewUseCase(a.notificationRepo)
+
 	a.bookingUseCase = bookingUC.NewUseCase(
 		a.bookingRepo,
 		a.customerRepo,
@@ -298,6 +305,7 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.messenger,
 		a.policy,
 		txManager,
+		a.notifUseCase,
 	)
 
 	return nil
@@ -337,9 +345,14 @@ func (a *App) initJobs(_ context.Context) error {
 	)
 
 	mediaUploadTTL := vars.GetDuration(appenv.MediaUploadTTL)
+	mediaWorkerSchedule := vars.GetString(appenv.MediaWorkerSchedule)
+
+	notifBatchSize := vars.GetInt(appenv.BagsyNotificationBatchSize)
+	notifSchedule := vars.GetString(appenv.BagsyNotificationSchedule)
 
 	a.WithCronJobs(
-		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, "0 */1 * * * *"),
+		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, mediaWorkerSchedule),
+		workers.NewReminderNotificationJob(a.notificationRepo, a.messenger, notifBatchSize, notifSchedule),
 	)
 
 	return nil

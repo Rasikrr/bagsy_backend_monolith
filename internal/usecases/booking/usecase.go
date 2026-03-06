@@ -13,6 +13,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/notification"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/core/log"
@@ -77,6 +78,11 @@ type txManager interface {
 	Do(ctx context.Context, fn func(txCtx context.Context) error) error
 }
 
+type notificationScheduler interface {
+	ScheduleReminders(ctx context.Context, params notification.ScheduleParams) error
+	CancelReminders(ctx context.Context, appointmentID uuid.UUID) error
+}
+
 type UseCase struct {
 	appointmentRepo  appointmentRepository
 	customerRepo     customerRepository
@@ -90,6 +96,7 @@ type UseCase struct {
 	otpSender        otpSender
 	policy           policyProvider
 	txManager        txManager
+	notifScheduler   notificationScheduler
 }
 
 func NewUseCase(
@@ -105,6 +112,7 @@ func NewUseCase(
 	otpSender otpSender,
 	policy policyProvider,
 	txManager txManager,
+	notifScheduler notificationScheduler,
 ) *UseCase {
 	return &UseCase{
 		appointmentRepo:  appointmentRepo,
@@ -119,6 +127,7 @@ func NewUseCase(
 		otpSender:        otpSender,
 		policy:           policy,
 		txManager:        txManager,
+		notifScheduler:   notifScheduler,
 	}
 }
 
@@ -206,6 +215,7 @@ func (u *UseCase) Create(ctx context.Context, input CreateBookingInput) (*Create
 		log.Error(ctx, "create booking: failed to send otp", log.Err(err))
 		return nil, fmt.Errorf("send notification: %w", err)
 	}
+	log.Infof(ctx, "otp: %s", otp.Code)
 
 	log.Info(ctx, "create booking: completed",
 		log.String("appointment_id", appt.ID.String()),
@@ -342,12 +352,56 @@ func (u *UseCase) Confirm(ctx context.Context, appointmentID uuid.UUID, code str
 	}
 
 	// 4. Save and cleanup
-	return u.txManager.Do(ctx, func(txCtx context.Context) error {
+	if err = u.txManager.Do(ctx, func(txCtx context.Context) error {
 		if err = u.appointmentRepo.Save(txCtx, appt); err != nil {
 			return err
 		}
 		return u.otpRepo.Delete(txCtx, appointmentID)
-	})
+	}); err != nil {
+		return err
+	}
+
+	// 5. Schedule reminders (best-effort, non-critical)
+	u.scheduleReminders(ctx, appt)
+
+	return nil
+}
+
+func (u *UseCase) scheduleReminders(ctx context.Context, appt *booking.Appointment) {
+	customer, err := u.customerRepo.GetByID(ctx, appt.CustomerID)
+	if err != nil {
+		log.Error(ctx, "confirm: get customer for reminders", log.Err(err))
+		return
+	}
+
+	employee, err := u.employeeRepo.GetByID(ctx, appt.EmployeeID)
+	if err != nil {
+		log.Error(ctx, "confirm: get employee for reminders", log.Err(err))
+		return
+	}
+
+	svc, err := u.serviceRepo.GetByID(ctx, appt.ServiceID)
+	if err != nil {
+		log.Error(ctx, "confirm: get service for reminders", log.Err(err))
+		return
+	}
+
+	loc, err := u.locationRepo.GetByID(ctx, appt.LocationID)
+	if err != nil {
+		log.Error(ctx, "confirm: get location for reminders", log.Err(err))
+		return
+	}
+
+	if schedErr := u.notifScheduler.ScheduleReminders(ctx, notification.ScheduleParams{
+		AppointmentID: appt.ID,
+		AppointmentAt: appt.StartAt,
+		CustomerPhone: customer.Phone,
+		EmployeePhone: employee.Phone,
+		ServiceName:   svc.Name,
+		LocationName:  loc.Name,
+	}); schedErr != nil {
+		log.Error(ctx, "confirm: schedule reminders failed", log.Err(schedErr))
+	}
 }
 
 func (u *UseCase) ResendOTP(ctx context.Context, appointmentID uuid.UUID) error {
@@ -373,7 +427,7 @@ func (u *UseCase) ResendOTP(ctx context.Context, appointmentID uuid.UUID) error 
 	if err != nil {
 		return err
 	}
-
+	log.Infof(ctx, "otp: %s", otp.Code)
 	// 5. Save and Send
 	if err = u.otpRepo.Save(ctx, appointmentID, otp); err != nil {
 		return err
@@ -396,5 +450,14 @@ func (u *UseCase) Cancel(ctx context.Context, orgCtx *access.OrgContext, appoint
 		return err
 	}
 
-	return u.appointmentRepo.Save(ctx, appt)
+	if err = u.appointmentRepo.Save(ctx, appt); err != nil {
+		return err
+	}
+
+	// Cleanup pending reminders (best-effort)
+	if cleanupErr := u.notifScheduler.CancelReminders(ctx, appointmentID); cleanupErr != nil {
+		log.Error(ctx, "cancel: cleanup reminders failed", log.Err(cleanupErr))
+	}
+
+	return nil
 }

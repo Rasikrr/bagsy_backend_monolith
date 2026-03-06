@@ -117,7 +117,7 @@ func (u *UseCase) GetAvailableSlots(ctx context.Context, input GetAvailableSlots
 	})
 
 	// 7. Generate slots per employee
-	now := time.Now().UTC()
+	now := time.Now()
 	var masterSlots []MasterAvailableSlots
 
 	for _, emp := range employees {
