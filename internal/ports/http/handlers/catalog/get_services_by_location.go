@@ -19,14 +19,14 @@ var errLocationIDRequired = errors.New("location_id is required")
 // @Description  Возвращает список услуг для указанной локации.
 // @Tags         catalog
 // @Produce      json
-// @Param        location_id  query     string  true  "ID локации"
+// @Param        id  path     string  true  "ID локации"
 // @Success      200  {object}  getServicesByLocationResponse
 // @Failure      400  {object}  httputil.errorResponse
 // @Failure      401  {object}  httputil.errorResponse
 // @Failure      404  {object}  httputil.errorResponse
 // @Failure      500  {object}  httputil.errorResponse
 // @Security     ApiKeyAuth
-// @Router       /api/v1/services [get]
+// @Router       /api/v1/services/{id} [get]
 func (h *Handler) getServicesByLocation(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
