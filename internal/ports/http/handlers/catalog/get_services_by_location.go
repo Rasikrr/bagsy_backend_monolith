@@ -5,7 +5,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	httputil "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -31,12 +30,6 @@ var errLocationIDRequired = errors.New("location_id is required")
 func (h *Handler) getServicesByLocation(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	orgCtx, ok := access.OrgContextFromContext(ctx)
-	if !ok {
-		coreHTTP.SendData(ctx, w, map[string]string{"error": "unauthorized"}, http.StatusUnauthorized)
-		return
-	}
-
 	locationIDStr := chi.URLParam(r, "id")
 	if locationIDStr == "" {
 		httputil.SendBadRequest(ctx, w, errLocationIDRequired)
@@ -49,7 +42,7 @@ func (h *Handler) getServicesByLocation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	services, err := h.catalogUseCase.GetServicesByLocation(ctx, orgCtx, locationID)
+	services, err := h.catalogUseCase.GetServicesByLocation(ctx, locationID)
 	if err != nil {
 		httputil.SendError(ctx, w, err, catalogErrors)
 		return

@@ -14,7 +14,7 @@ type catalogUseCase interface {
 	CreateService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateServiceInput) (*uc.CreateServiceOutput, error)
 	CreateEmployeeService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateEmployeeServiceInput) (*uc.CreateEmployeeServiceOutput, error)
 	GetServiceCategories(ctx context.Context, locationCategoryID uuid.UUID) ([]uc.ServiceCategoryTree, error)
-	GetServicesByLocation(ctx context.Context, orgCtx *access.OrgContext, locationID uuid.UUID) ([]uc.ServiceOutput, error)
+	GetServicesByLocation(ctx context.Context, locationID uuid.UUID) ([]uc.ServiceOutput, error)
 }
 
 type Handler struct {

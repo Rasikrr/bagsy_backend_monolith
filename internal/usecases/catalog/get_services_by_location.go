@@ -3,9 +3,7 @@ package catalog
 import (
 	"context"
 
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
-	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
 )
@@ -21,13 +19,10 @@ type ServiceOutput struct {
 	Active          bool
 }
 
-func (u *UseCase) GetServicesByLocation(ctx context.Context, orgCtx *access.OrgContext, locationID uuid.UUID) ([]ServiceOutput, error) {
-	loc, err := u.locationRepo.GetByID(ctx, locationID)
+func (u *UseCase) GetServicesByLocation(ctx context.Context, locationID uuid.UUID) ([]ServiceOutput, error) {
+	_, err := u.locationRepo.GetByID(ctx, locationID)
 	if err != nil {
 		return nil, errors.Wrap(err, "get location")
-	}
-	if !loc.BelongsTo(orgCtx.Organization.ID) {
-		return nil, location.ErrLocationNotFound
 	}
 
 	services, err := u.catalogRepo.GetByLocationID(ctx, locationID)
