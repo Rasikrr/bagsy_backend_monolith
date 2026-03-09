@@ -37,11 +37,15 @@ func New(
 
 func (h *Handler) Init(router *chi.Mux) {
 	router.Route("/api/v1/services", func(r chi.Router) {
-		r.Use(h.authMid.Handle)
-		r.Use(h.orgContextMid.Handle)
-
 		r.Get("/{id}", h.getServicesByLocation)
-		r.Post("/", h.createService)
+
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMid.Handle)
+			r.Use(h.orgContextMid.Handle)
+
+			r.Get("/{id}", h.getServicesByLocation)
+			r.Post("/", h.createService)
+		})
 	})
 
 	router.Route("/api/v1/employee-services", func(r chi.Router) {
