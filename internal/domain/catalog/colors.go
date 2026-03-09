@@ -4,7 +4,7 @@ type Color string
 
 const (
 	ColorUnknown Color = "unknown"
-	ColorBlack   Color = "black"
+	ColorBlue    Color = "blue"
 	ColorGreen   Color = "green"
 	ColorRed     Color = "red"
 	ColorYellow  Color = "yellow"
@@ -19,7 +19,7 @@ func (c Color) String() string {
 
 func (c Color) IsValid() bool {
 	switch c {
-	case ColorBlack, ColorGreen, ColorRed, ColorYellow, ColorPurple, ColorOrange, ColorGray:
+	case ColorBlue, ColorGreen, ColorRed, ColorYellow, ColorPurple, ColorOrange, ColorGray:
 		return true
 	default:
 		return false
