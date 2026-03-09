@@ -43,7 +43,6 @@ func (h *Handler) Init(router *chi.Mux) {
 			r.Use(h.authMid.Handle)
 			r.Use(h.orgContextMid.Handle)
 
-			r.Get("/{id}", h.getServicesByLocation)
 			r.Post("/", h.createService)
 		})
 	})
