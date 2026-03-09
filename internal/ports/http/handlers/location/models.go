@@ -63,3 +63,14 @@ type getListResponse struct {
 	Locations []locationResponse `json:"locations"`
 	Total     int                `json:"total"`
 }
+
+type locationCategoryResponse struct {
+	ID        string `json:"id"`
+	Slug      string `json:"slug"`
+	Name      string `json:"name"`
+	SortOrder int    `json:"sort_order"`
+}
+
+type getCategoriesResponse struct {
+	Categories []locationCategoryResponse `json:"categories"`
+}

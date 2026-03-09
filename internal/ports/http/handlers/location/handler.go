@@ -16,6 +16,7 @@ type locationUseCase interface {
 	Create(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateLocationInput) (*uc.CreateLocationOutput, error)
 	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *domainLoc.Filter) (*shared.Page[*domainLoc.Location], error)
 	GetByID(ctx context.Context, orgCtx *access.OrgContext, id uuid.UUID) (*domainLoc.Location, error)
+	GetCategories(ctx context.Context) ([]*domainLoc.Category, error)
 }
 
 type Handler struct {
@@ -38,11 +39,15 @@ func New(
 
 func (h *Handler) Init(router *chi.Mux) {
 	router.Route("/api/v1/locations", func(r chi.Router) {
-		r.Use(h.authMid.Handle)
-		r.Use(h.orgContextMid.Handle)
+		r.Get("/categories", h.getCategories)
 
-		r.Get("/", h.getList)
-		r.Get("/{id}", h.getByID)
-		r.Post("/", h.create)
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMid.Handle)
+			r.Use(h.orgContextMid.Handle)
+
+			r.Get("/", h.getList)
+			r.Get("/{id}", h.getByID)
+			r.Post("/", h.create)
+		})
 	})
 }

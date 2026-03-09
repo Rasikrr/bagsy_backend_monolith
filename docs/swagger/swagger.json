@@ -1824,6 +1824,32 @@
                 }
             }
         },
+        "/api/v1/locations/categories": {
+            "get": {
+                "description": "Возвращает все доступные категории локаций, отсортированные по sort_order.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "locations"
+                ],
+                "summary": "Список категорий локаций",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_location.getCategoriesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/locations/{id}": {
             "get": {
                 "security": [
@@ -2861,6 +2887,17 @@
                 }
             }
         },
+        "internal_ports_http_handlers_location.getCategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_location.locationCategoryResponse"
+                    }
+                }
+            }
+        },
         "internal_ports_http_handlers_location.getListResponse": {
             "type": "object",
             "properties": {
@@ -2871,6 +2908,23 @@
                     }
                 },
                 "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_location.locationCategoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "sort_order": {
                     "type": "integer"
                 }
             }

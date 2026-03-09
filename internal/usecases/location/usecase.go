@@ -22,6 +22,7 @@ type locationRepository interface {
 
 type categoryRepository interface {
 	ExistsByID(ctx context.Context, id uuid.UUID) (bool, error)
+	GetAll(ctx context.Context) ([]*location.Category, error)
 }
 
 type organizationRepository interface {
@@ -211,6 +212,14 @@ func (u *UseCase) transferOwnerToFirstLocation(ctx context.Context, employeeID, 
 		return fmt.Errorf("save employee: %w", err)
 	}
 	return nil
+}
+
+func (u *UseCase) GetCategories(ctx context.Context) ([]*location.Category, error) {
+	categories, err := u.categoryRepo.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get location categories: %w", err)
+	}
+	return categories, nil
 }
 
 // resolveScheduleType определяет schedule_type для создаваемой локации.

@@ -487,6 +487,13 @@ definitions:
       prompt_org_profile:
         type: boolean
     type: object
+  internal_ports_http_handlers_location.getCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_location.locationCategoryResponse'
+        type: array
+    type: object
   internal_ports_http_handlers_location.getListResponse:
     properties:
       locations:
@@ -494,6 +501,17 @@ definitions:
           $ref: '#/definitions/internal_ports_http_handlers_location.locationResponse'
         type: array
       total:
+        type: integer
+    type: object
+  internal_ports_http_handlers_location.locationCategoryResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      sort_order:
         type: integer
     type: object
   internal_ports_http_handlers_location.locationResponse:
@@ -1806,6 +1824,24 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Получение локации по ID
+      tags:
+      - locations
+  /api/v1/locations/categories:
+    get:
+      description: Возвращает все доступные категории локаций, отсортированные по
+        sort_order.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_location.getCategoriesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Список категорий локаций
       tags:
       - locations
   /api/v1/media/{id}/confirm:
