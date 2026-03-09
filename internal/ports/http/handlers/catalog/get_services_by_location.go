@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"errors"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
@@ -36,7 +37,7 @@ func (h *Handler) getServicesByLocation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	locationIDStr := r.URL.Query().Get("location_id")
+	locationIDStr := chi.URLParam(r, "id")
 	if locationIDStr == "" {
 		httputil.SendBadRequest(ctx, w, errLocationIDRequired)
 		return
