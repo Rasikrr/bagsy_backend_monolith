@@ -14,6 +14,7 @@ type catalogUseCase interface {
 	CreateService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateServiceInput) (*uc.CreateServiceOutput, error)
 	CreateEmployeeService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateEmployeeServiceInput) (*uc.CreateEmployeeServiceOutput, error)
 	GetServiceCategories(ctx context.Context, locationCategoryID uuid.UUID) ([]uc.ServiceCategoryTree, error)
+	GetServicesByLocation(ctx context.Context, orgCtx *access.OrgContext, locationID uuid.UUID) ([]uc.ServiceOutput, error)
 }
 
 type Handler struct {
@@ -39,6 +40,7 @@ func (h *Handler) Init(router *chi.Mux) {
 		r.Use(h.authMid.Handle)
 		r.Use(h.orgContextMid.Handle)
 
+		r.Get("/{id}", h.getServicesByLocation)
 		r.Post("/", h.createService)
 	})
 

@@ -37,3 +37,18 @@ type serviceCategoryResponse struct {
 type getServiceCategoriesResponse struct {
 	Categories []serviceCategoryResponse `json:"categories"`
 }
+
+type serviceResponse struct {
+	ID              string  `json:"id"`
+	CategoryID      string  `json:"category_id"`
+	Name            string  `json:"name"`
+	Description     *string `json:"description,omitempty"`
+	DurationMinutes int     `json:"duration_minutes"`
+	Color           string  `json:"color"`
+	SortOrder       int     `json:"sort_order"`
+	Active          bool    `json:"active"`
+}
+
+type getServicesByLocationResponse struct {
+	Services []serviceResponse `json:"services"`
+}

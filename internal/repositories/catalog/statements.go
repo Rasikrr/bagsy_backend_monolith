@@ -58,4 +58,12 @@ const (
 		WHERE location_category_id = $1
 		ORDER BY sort_order, name;
 	`
+
+	getServicesByLocationID = `
+		SELECT id, location_id, category_id, name, description, duration_minutes,
+		       color, sort_order, active, created_at, updated_at, deleted_at
+		FROM services
+		WHERE location_id = $1 AND deleted_at IS NULL
+		ORDER BY sort_order, name;
+	`
 )
