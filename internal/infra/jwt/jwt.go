@@ -11,7 +11,7 @@ import (
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -63,10 +63,13 @@ func (t *TokenManager) ParseAccessToken(accessToken string) (auth.Token, error) 
 		return []byte(t.secretKey), nil
 	})
 	if err != nil {
-		return auth.Token{}, fmt.Errorf("failed to parse access token: %w", err)
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return auth.Token{}, auth.ErrTokenExpired
+		}
+		return auth.Token{}, auth.ErrInvalidToken
 	}
 	if !token.Valid {
-		return auth.Token{}, errors.New("invalid token")
+		return auth.Token{}, auth.ErrInvalidToken
 	}
 	userID, err := uuid.Parse(claims.UserID)
 	if err != nil {
@@ -76,18 +79,16 @@ func (t *TokenManager) ParseAccessToken(accessToken string) (auth.Token, error) 
 	if err != nil {
 		return auth.Token{}, err
 	}
-	expiresAt := time.Unix(claims.ExpiresAt, 0)
 
-	return auth.ReconstructToken(userID, phone, expiresAt), nil
+	return auth.ReconstructToken(userID, phone, claims.ExpiresAt.Time), nil
 }
 
 func (t *TokenManager) createAccessClaims(token auth.Token) *accessClaims {
-	jwtID := uuid.New().String()
 	claims := &accessClaims{
-		StandardClaims: jwt.StandardClaims{
-			Id:        jwtID,
-			ExpiresAt: token.ExpiresAt.Unix(),
-			IssuedAt:  time.Now().Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.New().String(),
+			ExpiresAt: jwt.NewNumericDate(token.ExpiresAt),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    t.issuer,
 		},
 		Phone:  token.Phone.String(),

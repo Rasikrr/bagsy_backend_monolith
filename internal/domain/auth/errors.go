@@ -30,3 +30,8 @@ var (
 	ErrUnknownTokenPurpose = errors.New("unknown token purpose")
 	ErrActionTokenNotFound = errors.New("action token not found")
 )
+
+var (
+	ErrTokenExpired = errors.New("token expired")
+	ErrInvalidToken = errors.New("invalid token")
+)

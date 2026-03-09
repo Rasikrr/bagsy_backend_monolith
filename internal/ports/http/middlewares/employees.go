@@ -35,7 +35,7 @@ func (a *Auth) Handle(next http.Handler) http.Handler {
 
 		tokenInfo, err := a.authService.VerifyAccessToken(ctx, token)
 		if err != nil {
-			httputil.SendBadRequest(ctx, w, err)
+			httputil.SendError(ctx, w, err, authErrors)
 			return
 		}
 
