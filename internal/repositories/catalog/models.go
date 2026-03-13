@@ -71,6 +71,7 @@ func fromServiceDomain(s *catalog.Service) serviceModel {
 
 type serviceWithPricesModel struct {
 	serviceModel
+
 	MinPrice *decimal.Decimal `db:"min_price"`
 	MaxPrice *decimal.Decimal `db:"max_price"`
 }
