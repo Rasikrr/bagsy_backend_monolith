@@ -15,7 +15,7 @@ type EmployeeFilter struct {
 	OrganizationID uuid.UUID
 	LocationID     *uuid.UUID
 	Roles          []Role
-	PhoneSearch    *string
+	Search         *string
 	Active         *bool
 	Limit          uint64
 	Offset         uint64

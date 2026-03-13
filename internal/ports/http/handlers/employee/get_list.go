@@ -29,7 +29,7 @@ const (
 // @Produce      json
 // @Param        location_id  query     string    false  "UUID локации для фильтрации"
 // @Param        role         query     []string  false  "Фильтр по ролям (multi-value)" collectionFormat(multi) Enums(owner,manager,staff)
-// @Param        phone_search query     string    false  "Поиск по номеру телефона (ILIKE)"
+// @Param        search       query     string    false  "Поиск по имени или номеру телефона (ILIKE)"
 // @Param        active       query     bool      false  "Фильтр по активности"
 // @Param        limit        query     int       false  "Количество записей (default: 20, max: 100)"
 // @Param        offset       query     int       false  "Смещение для пагинации (default: 0)"
@@ -79,7 +79,7 @@ func parseEmployeeFilter(q url.Values) (*identity.EmployeeFilter, error) {
 	if err := parseRoles(q, filter); err != nil {
 		return nil, err
 	}
-	parsePhoneSearch(q, filter)
+	parseSearch(q, filter)
 	if err := parseActive(q, filter); err != nil {
 		return nil, err
 	}
@@ -123,9 +123,9 @@ func parseRoles(q url.Values, filter *identity.EmployeeFilter) error {
 	return nil
 }
 
-func parsePhoneSearch(q url.Values, filter *identity.EmployeeFilter) {
-	if phoneSearch := q.Get("phone_search"); phoneSearch != "" {
-		filter.PhoneSearch = &phoneSearch
+func parseSearch(q url.Values, filter *identity.EmployeeFilter) {
+	if search := q.Get("search"); search != "" {
+		filter.Search = &search
 	}
 }
 
