@@ -80,15 +80,19 @@ func (m *serviceWithPricesModel) toDomain() (*catalog.Service, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	var (
+		money shared.Money
+	)
 	if m.MinPrice != nil {
-		money, err := shared.NewMoney(*m.MinPrice)
+		money, err = shared.NewMoney(*m.MinPrice)
 		if err != nil {
 			return nil, fmt.Errorf("parse min_price: %w", err)
 		}
 		svc.MinPrice = &money
 	}
 	if m.MaxPrice != nil {
-		money, err := shared.NewMoney(*m.MaxPrice)
+		money, err = shared.NewMoney(*m.MaxPrice)
 		if err != nil {
 			return nil, fmt.Errorf("parse max_price: %w", err)
 		}
