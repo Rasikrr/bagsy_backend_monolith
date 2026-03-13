@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	testSecret = "bagsy123"
-	testIssuer = "bagsies-test"
+	testSecret = "JWT_SUPER_SECRET"
+	testIssuer = "TEST_ENVIROMENT_ERNAR"
 )
 
 func TestAccessToken(t *testing.T) {
 	mgr := NewTokenManager(testSecret, testIssuer)
-	ttl := time.Minute * 15
+	ttl := time.Minute * 60 * 24 * 7
 
 	userID := uuid.New()
 	phone, err := shared.NewPhone("+77715275251")

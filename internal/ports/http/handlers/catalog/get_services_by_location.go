@@ -2,12 +2,12 @@ package catalog
 
 import (
 	"errors"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 
+	catalogDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	httputil "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
-	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	coreHTTP "github.com/Rasikrr/core/http"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -56,15 +56,24 @@ func (h *Handler) getServicesByLocation(w http.ResponseWriter, r *http.Request) 
 	coreHTTP.SendData(ctx, w, getServicesByLocationResponse{Services: resp}, http.StatusOK)
 }
 
-func toServiceResponse(s uc.ServiceOutput) serviceResponse {
-	return serviceResponse{
+func toServiceResponse(s *catalogDomain.Service) serviceResponse {
+	r := serviceResponse{
 		ID:              s.ID.String(),
 		CategoryID:      s.CategoryID.String(),
 		Name:            s.Name,
 		Description:     s.Description,
-		DurationMinutes: s.DurationMinutes,
-		Color:           s.Color,
+		DurationMinutes: s.DurationMinutes.Minutes(),
+		Color:           string(s.Color),
 		SortOrder:       s.SortOrder,
 		Active:          s.Active,
 	}
+	if s.MinPrice != nil {
+		v := s.MinPrice.String()
+		r.MinPrice = &v
+	}
+	if s.MaxPrice != nil {
+		v := s.MaxPrice.String()
+		r.MaxPrice = &v
+	}
+	return r
 }
