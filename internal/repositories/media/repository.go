@@ -9,6 +9,7 @@ import (
 	"github.com/Rasikrr/core/database/postgres"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Repository struct {
@@ -34,7 +35,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*media.Asset, e
 
 func (r *Repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*media.Asset, error) {
 	var models []model
-	if err := pgxscan.Select(ctx, r.db, &models, getByIDs, ids); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getByIDs, pq.Array(ids)); err != nil {
 		return nil, fmt.Errorf("get media assets by ids: %w", err)
 	}
 

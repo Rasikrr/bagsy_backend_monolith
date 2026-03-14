@@ -13,6 +13,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 )
 
 type Repository struct {
@@ -93,7 +94,7 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*booking.Appoin
 
 func (r *Repository) GetOccupiedSlots(ctx context.Context, locationID uuid.UUID, employeeIDs []uuid.UUID, start, end time.Time) ([]*booking.Appointment, error) {
 	var models []appointmentModel
-	if err := pgxscan.Select(ctx, r.db, &models, getOccupiedSlots, locationID, uuidStrings(employeeIDs), start, end); err != nil {
+	if err := pgxscan.Select(ctx, r.db, &models, getOccupiedSlots, locationID, pq.Array(employeeIDs), start, end); err != nil {
 		return nil, fmt.Errorf("get occupied slots: %w", err)
 	}
 
@@ -166,12 +167,4 @@ func (r *Repository) GetCalendarEntries(ctx context.Context, orgID uuid.UUID, st
 	}
 
 	return entries, nil
-}
-
-func uuidStrings(ids []uuid.UUID) []string {
-	s := make([]string, len(ids))
-	for i, id := range ids {
-		s[i] = id.String()
-	}
-	return s
 }
