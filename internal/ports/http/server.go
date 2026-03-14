@@ -8,6 +8,7 @@ import (
 	employeeC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/employee"
 	locationC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/location"
 	mediaC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/media"
+	scheduleC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
@@ -18,6 +19,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/invite"
 	locationUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
 	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
+	scheduleUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/schedule"
 	"github.com/Rasikrr/core/enum"
 	"github.com/Rasikrr/core/environment"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -54,6 +56,7 @@ func NewServer(
 	catalogUseCase *catalogUC.UseCase,
 	bookingUseCase *bookingUC.UseCase,
 	mediaUseCase *mediaUC.UseCase,
+	scheduleUseCase *scheduleUC.UseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
@@ -67,6 +70,7 @@ func NewServer(
 	catalogHandler := catalogC.New(catalogUseCase, authMiddleware, orgContextMiddleware)
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
 	mediaHandler := mediaC.New(mediaUseCase, authMiddleware)
+	scheduleHandler := scheduleC.New(scheduleUseCase, authMiddleware, orgContextMiddleware)
 
 	server.WithControllers(
 		authHandler,
@@ -75,6 +79,7 @@ func NewServer(
 		catalogHandler,
 		bookingHandler,
 		mediaHandler,
+		scheduleHandler,
 	)
 }
 

@@ -38,6 +38,7 @@ import (
 	mediaUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/media"
 	notifUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/notification"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/policy"
+	scheduleUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/workers"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/pkg/s3"
@@ -93,6 +94,7 @@ type App struct {
 	bookingUseCase   *bookingUC.UseCase
 	mediaUseCase     *mediaUC.UseCase
 	notifUseCase     *notifUC.UseCase
+	scheduleUseCase  *scheduleUC.UseCase
 
 	// Policies
 	policy *policy.Policy
@@ -308,6 +310,14 @@ func (a *App) initUseCases(_ context.Context) error {
 		a.notifUseCase,
 	)
 
+	a.scheduleUseCase = scheduleUC.NewUseCase(
+		a.scheduleRepo,
+		a.locationRepo,
+		a.employeeRepo,
+		a.policy,
+		txManager,
+	)
+
 	return nil
 }
 
@@ -328,6 +338,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.catalogUseCase,
 		a.bookingUseCase,
 		a.mediaUseCase,
+		a.scheduleUseCase,
 	)
 	return nil
 }

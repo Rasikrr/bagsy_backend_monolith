@@ -259,6 +259,96 @@ func (p *Policy) CanCreateEmployeeService(orgCtx *access.OrgContext, targetEmp *
 	}
 }
 
+// CanManageLocationSchedule — Owner: any location in org. Manager: own location + CanManageLocationSchedule permission.
+func (p *Policy) CanManageLocationSchedule(orgCtx *access.OrgContext, locationID uuid.UUID) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if !orgCtx.Employee.Permissions.CanManageLocationSchedule {
+			return identity.ErrPermissionDenied
+		}
+		if orgCtx.Employee.LocationID != locationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
+// CanViewLocationSchedule — Owner: any. Others: own location.
+func (p *Policy) CanViewLocationSchedule(orgCtx *access.OrgContext, locationID uuid.UUID) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+
+	if orgCtx.Employee.Role.IsOwner() {
+		return nil
+	}
+
+	if orgCtx.Employee.LocationID != locationID {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
+// CanManageEmployeeSchedule — Owner: any employee in org. Manager: staff in own location.
+func (p *Policy) CanManageEmployeeSchedule(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if !targetEmp.Role.IsStaff() {
+			return identity.ErrPermissionDenied
+		}
+		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
+// CanViewEmployeeSchedule — Owner: any. Manager: own location employees. Staff: self only.
+func (p *Policy) CanViewEmployeeSchedule(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	case orgCtx.Employee.Role.IsStaff():
+		if orgCtx.Employee.ID != targetEmp.ID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

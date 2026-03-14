@@ -595,6 +595,48 @@ definitions:
       upload_url:
         type: string
     type: object
+  internal_ports_http_handlers_schedule.getScheduleResponse:
+    properties:
+      slots:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_schedule.slotResponse'
+        type: array
+    type: object
+  internal_ports_http_handlers_schedule.setScheduleRequest:
+    properties:
+      end:
+        type: string
+      slots:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_schedule.slotRequest'
+        type: array
+      start:
+        type: string
+    type: object
+  internal_ports_http_handlers_schedule.slotRequest:
+    properties:
+      date:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        type: string
+      type:
+        type: string
+    type: object
+  internal_ports_http_handlers_schedule.slotResponse:
+    properties:
+      date:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: string
+      start_time:
+        type: string
+      type:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -1162,6 +1204,154 @@ paths:
       summary: Получение доступных слотов для записи
       tags:
       - booking
+  /api/v1/employee-schedules/{employeeID}:
+    delete:
+      description: Удаляет все слоты расписания сотрудника за указанный период. Owner
+        — любого, Manager — staff в своей локации.
+      parameters:
+      - description: ID сотрудника
+        in: path
+        name: employeeID
+        required: true
+        type: string
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: end
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление расписания сотрудника
+      tags:
+      - schedule
+    get:
+      description: Возвращает слоты расписания сотрудника за указанный период. Owner
+        — любого, Manager — своей локации, Staff — только своё.
+      parameters:
+      - description: ID сотрудника
+        in: path
+        name: employeeID
+        required: true
+        type: string
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: end
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_schedule.getScheduleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение расписания сотрудника
+      tags:
+      - schedule
+    put:
+      consumes:
+      - application/json
+      description: Заменяет все слоты сотрудника за указанный период новыми. Owner
+        — любого, Manager — staff в своей локации.
+      parameters:
+      - description: ID сотрудника
+        in: path
+        name: employeeID
+        required: true
+        type: string
+      - description: Период и слоты расписания
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_schedule.setScheduleRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Установка расписания сотрудника
+      tags:
+      - schedule
   /api/v1/employee-services:
     post:
       consumes:
@@ -1714,6 +1904,152 @@ paths:
       summary: Обновление своего профиля
       tags:
       - employees
+  /api/v1/location-schedules/{locationID}:
+    delete:
+      description: Удаляет все слоты расписания локации за указанный период.
+      parameters:
+      - description: ID локации
+        in: path
+        name: locationID
+        required: true
+        type: string
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: end
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление расписания локации
+      tags:
+      - schedule
+    get:
+      description: Возвращает слоты расписания локации за указанный период.
+      parameters:
+      - description: ID локации
+        in: path
+        name: locationID
+        required: true
+        type: string
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: end
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_schedule.getScheduleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение расписания локации
+      tags:
+      - schedule
+    put:
+      consumes:
+      - application/json
+      description: Заменяет все слоты локации за указанный период новыми. Удаляет
+        старые, вставляет новые в одной транзакции.
+      parameters:
+      - description: ID локации
+        in: path
+        name: locationID
+        required: true
+        type: string
+      - description: Период и слоты расписания
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_schedule.setScheduleRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Установка расписания локации
+      tags:
+      - schedule
   /api/v1/locations:
     get:
       description: Возвращает список локаций организации с пагинацией и фильтрацией.
