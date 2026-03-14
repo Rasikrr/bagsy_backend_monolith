@@ -19,6 +19,7 @@ var catalogErrors = httputil.ErrorMap{
 	location.ErrLocationInactive: {Code: http.StatusUnprocessableEntity, Message: "location_inactive"},
 
 	domainCatalog.ErrServiceNotFound:          {Code: http.StatusNotFound, Message: "service_not_found"},
+	domainCatalog.ErrServiceDeleted:           {Code: http.StatusGone, Message: "service_deleted"},
 	domainCatalog.ErrServiceInactive:          {Code: http.StatusUnprocessableEntity, Message: "service_inactive"},
 	domainCatalog.ErrServiceNameRequired:      {Code: http.StatusBadRequest, Message: "service_name_required"},
 	domainCatalog.ErrServiceInvalidColor:      {Code: http.StatusBadRequest, Message: "service_invalid_color"},

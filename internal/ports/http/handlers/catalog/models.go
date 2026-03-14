@@ -54,3 +54,11 @@ type serviceResponse struct {
 type getServicesByLocationResponse struct {
 	Services []serviceResponse `json:"services"`
 }
+
+type updateServiceRequest struct {
+	Name            *string `json:"name,omitempty"`
+	Description     *string `json:"description,omitempty"`
+	Color           *string `json:"color,omitempty"`
+	DurationMinutes *int    `json:"duration_minutes,omitempty"`
+	SortOrder       *int    `json:"sort_order,omitempty"`
+}

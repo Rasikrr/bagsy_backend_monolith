@@ -29,6 +29,7 @@ type employeeRepository interface {
 
 type policyProvider interface {
 	CanCreateService(orgCtx *access.OrgContext, locationID uuid.UUID) error
+	CanManageService(orgCtx *access.OrgContext, locationID uuid.UUID) error
 	CanCreateEmployeeService(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 }
 

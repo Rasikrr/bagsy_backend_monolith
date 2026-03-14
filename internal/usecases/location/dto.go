@@ -2,6 +2,25 @@ package location
 
 import "github.com/google/uuid"
 
+type UpdateLocationAddressInput struct {
+	City     *string
+	Street   *string
+	Building *string
+	Details  *string
+}
+
+type UpdateLocationInput struct {
+	ID                  uuid.UUID
+	Name                *string
+	Phone               *string
+	Address             *UpdateLocationAddressInput
+	Latitude            *float64
+	Longitude           *float64
+	Active              *bool
+	ScheduleType        *string
+	SlotDurationMinutes *int
+}
+
 type CreateLocationInput struct {
 	CategoryID          uuid.UUID
 	Name                string

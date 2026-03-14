@@ -17,6 +17,8 @@ type locationUseCase interface {
 	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *domainLoc.Filter) (*shared.Page[*domainLoc.Location], error)
 	GetByID(ctx context.Context, orgCtx *access.OrgContext, id uuid.UUID) (*domainLoc.Location, error)
 	GetCategories(ctx context.Context) ([]*domainLoc.Category, error)
+	UpdateLocation(ctx context.Context, orgCtx *access.OrgContext, input uc.UpdateLocationInput) error
+	DeleteLocation(ctx context.Context, orgCtx *access.OrgContext, locationID uuid.UUID) error
 }
 
 type Handler struct {
@@ -48,6 +50,8 @@ func (h *Handler) Init(router *chi.Mux) {
 			r.Get("/", h.getList)
 			r.Get("/{id}", h.getByID)
 			r.Post("/", h.create)
+			r.Put("/{id}", h.updateLocation)
+			r.Delete("/{id}", h.deleteLocation)
 		})
 	})
 }

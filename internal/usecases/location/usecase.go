@@ -38,6 +38,7 @@ type policyProvider interface {
 	CanViewLocations(orgCtx *access.OrgContext) error
 	CanViewLocation(orgCtx *access.OrgContext, locationID uuid.UUID) error
 	CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error
+	CanManageLocation(orgCtx *access.OrgContext, loc *location.Location) error
 }
 
 type txManager interface {

@@ -27,6 +27,24 @@ type createRequestAddress struct {
 	Details  string `json:"details"`
 }
 
+type updateLocationAddressRequest struct {
+	City     *string `json:"city,omitempty"`
+	Street   *string `json:"street,omitempty"`
+	Building *string `json:"building,omitempty"`
+	Details  *string `json:"details,omitempty"`
+}
+
+type updateLocationRequest struct {
+	Name                *string                       `json:"name,omitempty"`
+	Phone               *string                       `json:"phone,omitempty"`
+	Address             *updateLocationAddressRequest  `json:"address,omitempty"`
+	Latitude            *float64                      `json:"latitude,omitempty"`
+	Longitude           *float64                      `json:"longitude,omitempty"`
+	Active              *bool                         `json:"active,omitempty"`
+	ScheduleType        *string                       `json:"schedule_type,omitempty"`
+	SlotDurationMinutes *int                          `json:"slot_duration_minutes,omitempty"`
+}
+
 type createResponse struct {
 	ID               string `json:"id"`
 	PromptOrgProfile bool   `json:"prompt_org_profile"`

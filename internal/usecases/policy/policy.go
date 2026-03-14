@@ -5,6 +5,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/booking"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
 	"github.com/google/uuid"
 )
 
@@ -233,6 +234,26 @@ func (p *Policy) CanCreateService(orgCtx *access.OrgContext, locationID uuid.UUI
 	}
 }
 
+// CanManageService проверяет право на обновление/удаление услуги в локации.
+// Owner — в любой локации org, Manager — только в своей.
+func (p *Policy) CanManageService(orgCtx *access.OrgContext, locationID uuid.UUID) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if orgCtx.Employee.LocationID != locationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
 // CanCreateEmployeeService проверяет право на привязку услуги к сотруднику.
 // Owner — любого, Manager — staff в своей локации.
 func (p *Policy) CanCreateEmployeeService(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
@@ -347,6 +368,20 @@ func (p *Policy) CanViewEmployeeSchedule(orgCtx *access.OrgContext, targetEmp *i
 	default:
 		return identity.ErrPermissionDenied
 	}
+}
+
+// CanManageLocation проверяет право на обновление/удаление локации. Только owner.
+func (p *Policy) CanManageLocation(orgCtx *access.OrgContext, loc *location.Location) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if !loc.BelongsTo(orgCtx.Organization.ID) {
+		return identity.ErrPermissionDenied
+	}
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
 }
 
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {

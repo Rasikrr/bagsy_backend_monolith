@@ -13,6 +13,8 @@ import (
 
 type catalogUseCase interface {
 	CreateService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateServiceInput) (*uc.CreateServiceOutput, error)
+	UpdateService(ctx context.Context, orgCtx *access.OrgContext, input uc.UpdateServiceInput) error
+	DeleteService(ctx context.Context, orgCtx *access.OrgContext, serviceID uuid.UUID) error
 	CreateEmployeeService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateEmployeeServiceInput) (*uc.CreateEmployeeServiceOutput, error)
 	GetServiceCategories(ctx context.Context, locationCategoryID uuid.UUID) ([]uc.ServiceCategoryTree, error)
 	GetServicesByLocation(ctx context.Context, locationID uuid.UUID) ([]*catalogDomain.Service, error)
@@ -45,6 +47,8 @@ func (h *Handler) Init(router *chi.Mux) {
 			r.Use(h.orgContextMid.Handle)
 
 			r.Post("/", h.createService)
+			r.Put("/{id}", h.updateService)
+			r.Delete("/{id}", h.deleteService)
 		})
 	})
 
