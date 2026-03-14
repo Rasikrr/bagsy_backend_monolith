@@ -68,11 +68,11 @@ func toServiceResponse(s *catalogDomain.Service) serviceResponse {
 		Active:          s.Active,
 	}
 	if s.MinPrice != nil {
-		v := s.MinPrice.String()
+		v := s.MinPrice.Amount().IntPart()
 		r.MinPrice = &v
 	}
 	if s.MaxPrice != nil {
-		v := s.MaxPrice.String()
+		v := s.MaxPrice.Amount().IntPart()
 		r.MaxPrice = &v
 	}
 	return r

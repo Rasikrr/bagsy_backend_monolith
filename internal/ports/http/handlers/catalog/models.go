@@ -47,8 +47,8 @@ type serviceResponse struct {
 	Color           string  `json:"color"`
 	SortOrder       int     `json:"sort_order"`
 	Active          bool    `json:"active"`
-	MinPrice        *string `json:"min_price,omitempty"`
-	MaxPrice        *string `json:"max_price,omitempty"`
+	MinPrice        *int64  `json:"min_price,omitempty"`
+	MaxPrice        *int64  `json:"max_price,omitempty"`
 }
 
 type getServicesByLocationResponse struct {

@@ -93,12 +93,12 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				out.MinPrice = nil
 			} else {
 				if out.MinPrice == nil {
-					out.MinPrice = new(string)
+					out.MinPrice = new(int64)
 				}
 				if in.IsNull() {
 					in.Skip()
 				} else {
-					*out.MinPrice = string(in.String())
+					*out.MinPrice = int64(in.Int64())
 				}
 			}
 		case "max_price":
@@ -107,12 +107,12 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 				out.MaxPrice = nil
 			} else {
 				if out.MaxPrice == nil {
-					out.MaxPrice = new(string)
+					out.MaxPrice = new(int64)
 				}
 				if in.IsNull() {
 					in.Skip()
 				} else {
-					*out.MaxPrice = string(in.String())
+					*out.MaxPrice = int64(in.Int64())
 				}
 			}
 		default:
@@ -172,12 +172,12 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 	if in.MinPrice != nil {
 		const prefix string = ",\"min_price\":"
 		out.RawString(prefix)
-		out.String(string(*in.MinPrice))
+		out.Int64(int64(*in.MinPrice))
 	}
 	if in.MaxPrice != nil {
 		const prefix string = ",\"max_price\":"
 		out.RawString(prefix)
-		out.String(string(*in.MaxPrice))
+		out.Int64(int64(*in.MaxPrice))
 	}
 	out.RawByte('}')
 }
