@@ -113,6 +113,22 @@ func (r *Repository) GetByLocationID(ctx context.Context, locationID uuid.UUID) 
 	return result, nil
 }
 
+func (r *Repository) GetByLocationIDWithPrices(ctx context.Context, locationID uuid.UUID) ([]*catalog.Service, error) {
+	var models []serviceWithPricesModel
+	if err := pgxscan.Select(ctx, r.db, &models, getServicesByLocationIDWithPrices, locationID); err != nil {
+		return nil, fmt.Errorf("get services with prices by location id: %w", err)
+	}
+	result := make([]*catalog.Service, 0, len(models))
+	for _, m := range models {
+		svc, err := m.toDomain()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, svc)
+	}
+	return result, nil
+}
+
 func (r *Repository) GetActiveByLocationAndService(ctx context.Context, locationID, serviceID uuid.UUID) ([]*catalog.EmployeeService, error) {
 	var models []employeeServiceModel
 	if err := pgxscan.Select(ctx, r.db, &models, getEmployeeServicesByLocationAndService, locationID, serviceID); err != nil {

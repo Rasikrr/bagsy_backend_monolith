@@ -1,25 +1,25 @@
 package jwt
 
 import (
+	"github.com/google/uuid"
 	"testing"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/auth"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	testSecret = "bagsy123"
-	testIssuer = "bagsies-test"
+	testSecret = "JWT_SUPER_SECRET"
+	testIssuer = "TEST_ENVIROMENT_ERNAR"
 )
 
 func TestAccessToken(t *testing.T) {
 	mgr := NewTokenManager(testSecret, testIssuer)
-	ttl := time.Minute * 15
+	ttl := time.Minute * 60 * 24 * 7
 
-	userID := uuid.New()
+	userID, _ := uuid.Parse("911f8256-c798-469f-9a78-07f43ada5679")
 	phone, err := shared.NewPhone("+77715275251")
 	require.NoError(t, err)
 

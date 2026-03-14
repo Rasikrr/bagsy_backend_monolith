@@ -87,6 +87,34 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			} else {
 				out.Active = bool(in.Bool())
 			}
+		case "min_price":
+			if in.IsNull() {
+				in.Skip()
+				out.MinPrice = nil
+			} else {
+				if out.MinPrice == nil {
+					out.MinPrice = new(int64)
+				}
+				if in.IsNull() {
+					in.Skip()
+				} else {
+					*out.MinPrice = int64(in.Int64())
+				}
+			}
+		case "max_price":
+			if in.IsNull() {
+				in.Skip()
+				out.MaxPrice = nil
+			} else {
+				if out.MaxPrice == nil {
+					out.MaxPrice = new(int64)
+				}
+				if in.IsNull() {
+					in.Skip()
+				} else {
+					*out.MaxPrice = int64(in.Int64())
+				}
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -140,6 +168,16 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"active\":"
 		out.RawString(prefix)
 		out.Bool(bool(in.Active))
+	}
+	if in.MinPrice != nil {
+		const prefix string = ",\"min_price\":"
+		out.RawString(prefix)
+		out.Int64(int64(*in.MinPrice))
+	}
+	if in.MaxPrice != nil {
+		const prefix string = ",\"max_price\":"
+		out.RawString(prefix)
+		out.Int64(int64(*in.MaxPrice))
 	}
 	out.RawByte('}')
 }

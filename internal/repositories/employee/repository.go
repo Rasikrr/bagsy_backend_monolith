@@ -171,8 +171,11 @@ func buildFilterBase(filter *identity.EmployeeFilter) sq.SelectBuilder {
 		builder = builder.Where(sq.Eq{"role": roles})
 	}
 
-	if filter.PhoneSearch != nil {
-		builder = builder.Where("phone ILIKE '%' || ? || '%'", *filter.PhoneSearch)
+	if filter.Search != nil {
+		builder = builder.Where(
+			"(phone ILIKE '%' || ? || '%' OR CONCAT(first_name, ' ', last_name) ILIKE '%' || ? || '%')",
+			*filter.Search, *filter.Search,
+		)
 	}
 
 	if filter.Active != nil {

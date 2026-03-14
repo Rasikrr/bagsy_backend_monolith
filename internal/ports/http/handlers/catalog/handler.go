@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	catalogDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	"github.com/go-chi/chi/v5"
@@ -14,7 +15,7 @@ type catalogUseCase interface {
 	CreateService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateServiceInput) (*uc.CreateServiceOutput, error)
 	CreateEmployeeService(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateEmployeeServiceInput) (*uc.CreateEmployeeServiceOutput, error)
 	GetServiceCategories(ctx context.Context, locationCategoryID uuid.UUID) ([]uc.ServiceCategoryTree, error)
-	GetServicesByLocation(ctx context.Context, locationID uuid.UUID) ([]uc.ServiceOutput, error)
+	GetServicesByLocation(ctx context.Context, locationID uuid.UUID) ([]*catalogDomain.Service, error)
 }
 
 type Handler struct {

@@ -66,4 +66,16 @@ const (
 		WHERE location_id = $1 AND deleted_at IS NULL
 		ORDER BY sort_order, name;
 	`
+
+	getServicesByLocationIDWithPrices = `
+		SELECT s.id, s.location_id, s.category_id, s.name, s.description, s.duration_minutes,
+		       s.color, s.sort_order, s.active, s.created_at, s.updated_at, s.deleted_at,
+		       MIN(es.price) FILTER (WHERE es.active = true) AS min_price,
+		       MAX(es.price) FILTER (WHERE es.active = true) AS max_price
+		FROM services s
+		LEFT JOIN employee_services es ON es.service_id = s.id
+		WHERE s.location_id = $1 AND s.deleted_at IS NULL
+		GROUP BY s.id
+		ORDER BY s.sort_order, s.name;
+	`
 )

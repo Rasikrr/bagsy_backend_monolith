@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
@@ -66,6 +67,39 @@ func fromServiceDomain(s *catalog.Service) serviceModel {
 		UpdatedAt:       s.UpdatedAt,
 		DeletedAt:       s.DeletedAt,
 	}
+}
+
+type serviceWithPricesModel struct {
+	serviceModel
+
+	MinPrice *decimal.Decimal `db:"min_price"`
+	MaxPrice *decimal.Decimal `db:"max_price"`
+}
+
+func (m *serviceWithPricesModel) toDomain() (*catalog.Service, error) {
+	svc, err := m.serviceModel.toDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		money shared.Money
+	)
+	if m.MinPrice != nil {
+		money, err = shared.NewMoney(*m.MinPrice)
+		if err != nil {
+			return nil, fmt.Errorf("parse min_price: %w", err)
+		}
+		svc.MinPrice = &money
+	}
+	if m.MaxPrice != nil {
+		money, err = shared.NewMoney(*m.MaxPrice)
+		if err != nil {
+			return nil, fmt.Errorf("parse max_price: %w", err)
+		}
+		svc.MaxPrice = &money
+	}
+	return svc, nil
 }
 
 type employeeServiceModel struct {
