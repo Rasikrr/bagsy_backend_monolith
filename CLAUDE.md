@@ -1,4 +1,6 @@
-# CLAUDE.md — Bagsy Backend Monolith
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -10,24 +12,29 @@ Bagsy — SaaS-платформа для управления записями, 
 - **Cache/Sessions:** Redis
 - **Object Storage:** S3 (AWS SDK v2)
 - **Messaging:** WhatsApp (GreenAPI), SMS
+- **Core library:** `github.com/Rasikrr/core` — shared foundation (HTTP server, DB pool, config, logging via `slog`, OpenTelemetry, Sentry). The app embeds `application.App` from core and uses `coreHTTP.Server` for routing (chi-based).
 
 ## Architecture
 
 Clean Architecture + DDD. Dependency Rule: зависимости направлены только внутрь.
 
 ```
-HTTP Request → Handler → UseCase → Domain Entity + Repository → Database
+HTTP Request → Middleware → Handler → UseCase → Domain Entity + Repository → Database
 ```
 
 ### Layer Structure
 
 | Layer | Path | Responsibility |
 |-------|------|----------------|
-| **Domain** | `internal/domain/{context}/` | Entities, String Objects, Domain Errors. Zero external deps. |
+| **Domain** | `internal/domain/{context}/` | Entities, Value Objects, Domain Errors. Zero external deps. |
 | **Use Cases** | `internal/usecases/{context}/` | Orchestration: load aggregate → call method → save. |
-| **Ports** | `internal/ports/http/` | HTTP handlers, middlewares, server. |
-| **Infrastructure** | `internal/infra/` | JWT, external integrations impl. |
-| **Packages** | `pkg/` | Shared utilities (hasher, s3, sms, whatsapp). |
+| **Policy** | `internal/usecases/policy/` | Authorization checks separated from business logic. |
+| **Ports** | `internal/ports/http/` | HTTP handlers, middlewares, server, routing. |
+| **Repositories** | `internal/repositories/{context}/` | PostgreSQL/Redis persistence. Maps DB models ↔ domain entities. |
+| **Infrastructure** | `internal/infra/` | JWT (`jwt/`), messenger gateway (`messenger/`). |
+| **Workers** | `internal/workers/` | Cron-based background jobs (media cleanup, notification reminders, pending appointments, subscription checks). |
+| **App** | `internal/app/app.go` | DI wiring — constructs all repos, use cases, handlers, workers, and starts the server. |
+| **Packages** | `pkg/` | Shared utilities: `hasher`, `s3`, `sms`, `whatsapp`. Isolated from domain. |
 
 ### Domain Contexts (Bounded Contexts)
 
@@ -44,7 +51,14 @@ HTTP Request → Handler → UseCase → Domain Entity + Repository → Database
 | booking | `domain/booking` | Appointment, Status, StatusHistory |
 | notification | `domain/notification` | Task, Type |
 | media | `domain/media` | Asset, Status |
-| shared | `domain/shared` | Phone, Money, Slug, Duration (String Objects) |
+| shared | `domain/shared` | Phone, Money, Slug, Duration (Value Objects) |
+
+### Middleware Auth Chains
+
+Two separate middleware chains in `internal/ports/http/middlewares/`:
+- **`employees.go`** — authenticates employees (staff/owner) via JWT, assembles `OrgContext`.
+- **`clients.go`** — authenticates customers (end-users).
+- **`org_context.go`** — builds the `OrgContext` read-only projection used for multi-tenant scoping.
 
 ## Coding Conventions
 
@@ -53,7 +67,7 @@ HTTP Request → Handler → UseCase → Domain Entity + Repository → Database
 1. **No framework/infra imports in domain.** Only stdlib + `github.com/google/uuid` + `github.com/shopspring/decimal`.
 2. **No `json`, `sql`, `db` tags** on domain structs. Domain is pure Go.
 3. **Rich domain models.** Business logic lives in entity methods, not in services.
-4. **String Objects** are immutable structs with private fields and constructor validation (`NewPhone`, `NewMoney`, `NewSlug`).
+4. **Value Objects** are immutable structs with private fields and constructor validation (`NewPhone`, `NewMoney`, `NewSlug`).
 5. **Domain errors** — `var ErrXxx = errors.New("...")` in `errors.go` per context. Use `errors` stdlib package.
 6. **Soft delete pattern** — entities have `DeletedAt *time.Time`. Check `IsDeleted()` before mutations.
 7. **`touch()` pattern** — private method sets `UpdatedAt` on every mutation.
@@ -211,7 +225,7 @@ Handler:    неизвестная ошибка → log.Error + 500 "internal_er
 | Pattern | Where | Purpose |
 |---------|-------|---------|
 | Aggregate Root | domain entities | Consistency boundary |
-| String Object | `shared/` (Phone, Money, Slug) | Immutable, self-validating |
+| Value Object | `shared/` (Phone, Money, Slug) | Immutable, self-validating |
 | Transactional Outbox | notification_outbox table | Reliable event publishing |
 | ACL (Anti-Corruption Layer) | `pkg/`, `gateway/` | Isolate external DTOs from domain |
 | OrgContext | `domain/access` | Multi-tenant context propagation |
@@ -219,11 +233,45 @@ Handler:    неизвестная ошибка → log.Error + 500 "internal_er
 
 ## Commands
 
+### Build & Run
+
 ```bash
-make <target>    # See scripts/*.mk for available targets
-make lint        # Run golangci-lint — MUST pass before considering a task complete
-make swagger     # Regenerate Swagger docs (run after adding/changing swagger annotations)
-make generate    # Run all code generation (easyjson, enumer, etc.)
+make build              # Build binary to bin/app
+make run                # Run the app (go run cmd/app/main.go)
+go build ./...          # Compile check (no binary output)
+```
+
+### Lint & Format
+
+```bash
+make lint               # Install golangci-lint (v2.4.0) + go fmt + run linter — MUST pass before task is complete
+```
+
+### Testing
+
+```bash
+make test               # Run all tests
+make test-short         # Run tests with -short flag
+make coverage           # Run tests with coverage report
+go test ./internal/domain/identity/...              # Run tests for a single package
+go test ./internal/domain/identity/ -run TestFoo    # Run a single test by name
+```
+
+### Code Generation
+
+```bash
+make generate           # Run go generate ./... (easyjson, enumer, etc.)
+make swagger            # Regenerate Swagger docs (swag init from server.go)
+```
+
+### Migrations (requires POSTGRES_DSN in .env)
+
+```bash
+make migration NAME=add_foo_table    # Create new migration file
+make migrate-up                      # Apply all pending migrations
+make migrate-to VERSION=20240101     # Migrate up to specific version
+make migrate-down-to VERSION=20240101  # Rollback to specific version
+make migrate-reset                   # Rollback all migrations to zero
 ```
 
 ## Definition of Done
