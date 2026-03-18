@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// cancel handles POST /api/v1/bookings/{id}/cancel.
+// cancel handles POST /api/v1/appointments/{id}/cancel.
 //
 // @Summary      Отмена записи
 // @Description  Отменяет существующую запись. Доступно только сотрудникам организации.
@@ -25,7 +25,7 @@ import (
 // @Failure      404   {object}  httputil.errorResponse  "Запись не найдена"
 // @Failure      500   {object}  httputil.errorResponse
 // @Security     ApiKeyAuth
-// @Router       /api/v1/bookings/{id}/cancel [post]
+// @Router       /api/v1/appointments/{id}/cancel [post]
 func (h *Handler) cancel(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

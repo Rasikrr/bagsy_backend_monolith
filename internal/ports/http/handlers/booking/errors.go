@@ -40,6 +40,10 @@ var bookingErrors = httputil.ErrorMap{
 		Code:    http.StatusNotFound,
 		Message: "employee_service_not_found",
 	},
+	identity.ErrPermissionDenied: {
+		Code:    http.StatusForbidden,
+		Message: "permission_denied",
+	},
 	identity.ErrEmployeeNotFound: {
 		Code:    http.StatusNotFound,
 		Message: "employee_not_found",

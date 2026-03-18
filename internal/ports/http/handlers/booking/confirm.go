@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// confirm handles POST /api/v1/bookings/{id}/confirm.
+// confirm handles POST /api/v1/appointments/{id}/confirm.
 //
 // @Summary      Подтверждение записи
 // @Description  Подтверждает запись с помощью OTP-кода, присланного в SMS/WhatsApp.
@@ -22,7 +22,7 @@ import (
 // @Failure      400   {object}  httputil.errorResponse  "Неверный код или формат"
 // @Failure      404   {object}  httputil.errorResponse  "Запись не найдена"
 // @Failure      500   {object}  httputil.errorResponse
-// @Router       /api/v1/bookings/{id}/confirm [post]
+// @Router       /api/v1/appointments/{id}/confirm [post]
 func (h *Handler) confirm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

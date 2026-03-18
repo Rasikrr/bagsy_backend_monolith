@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// getCalendar handles GET /api/v1/bookings/calendar.
+// getCalendar handles GET /api/v1/appointments/calendar.
 //
 // @Summary      Получение календаря записей
 // @Description  Возвращает записи за указанный период с информацией о сотруднике, клиенте, услуге и локации.
@@ -31,7 +31,7 @@ import (
 // @Failure      403  {object}  httputil.errorResponse  "Подписка приостановлена"
 // @Failure      500  {object}  httputil.errorResponse
 // @Security     ApiKeyAuth
-// @Router       /api/v1/bookings/calendar [get]
+// @Router       /api/v1/appointments/calendar [get]
 func (h *Handler) getCalendar(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

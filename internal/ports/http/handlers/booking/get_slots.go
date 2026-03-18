@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-// getSlots handles POST /api/v1/bookings/slots.
+// getSlots handles POST /api/v1/appointments/slots.
 //
 // @Summary      Получение доступных слотов для записи
 // @Description  Возвращает доступные временные слоты для записи на услугу, сгруппированные по сотрудникам.
@@ -22,7 +22,7 @@ import (
 // @Failure      400   {object}  httputil.errorResponse
 // @Failure      404   {object}  httputil.errorResponse  "Локация или услуга не найдена"
 // @Failure      500   {object}  httputil.errorResponse
-// @Router       /api/v1/bookings/slots [post]
+// @Router       /api/v1/appointments/slots [post]
 func (h *Handler) getSlots(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

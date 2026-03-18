@@ -13,6 +13,7 @@ import (
 
 type bookingUseCase interface {
 	Create(ctx context.Context, input uc.CreateBookingInput) (*uc.CreateBookingOutput, error)
+	CreateDirect(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateBookingInput) (*uc.CreateBookingOutput, error)
 	Confirm(ctx context.Context, appointmentID uuid.UUID, code string) error
 	Cancel(ctx context.Context, orgCtx *access.OrgContext, appointmentID uuid.UUID, reason string) error
 	ResendOTP(ctx context.Context, appointmentID uuid.UUID) error
@@ -39,7 +40,7 @@ func New(
 }
 
 func (h *Handler) Init(router *chi.Mux) {
-	router.Route("/api/v1/bookings", func(r chi.Router) {
+	router.Route("/api/v1/appointments", func(r chi.Router) {
 		// Публичные эндпоинты (или доступные клиентам)
 		r.Post("/", h.create)
 		r.Post("/slots", h.getSlots)
@@ -53,6 +54,7 @@ func (h *Handler) Init(router *chi.Mux) {
 				h.orgContextMid.Handle,
 			)
 
+			admin.Post("/direct", h.createDirect)
 			admin.Post("/{id}/cancel", h.cancel)
 			admin.Get("/calendar", h.getCalendar)
 		})

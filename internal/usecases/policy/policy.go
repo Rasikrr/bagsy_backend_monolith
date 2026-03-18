@@ -384,6 +384,28 @@ func (p *Policy) CanManageLocation(orgCtx *access.OrgContext, loc *location.Loca
 	return nil
 }
 
+func (p *Policy) CanCreateDirectBooking(orgCtx *access.OrgContext, locationID uuid.UUID, targetEmployeeID uuid.UUID) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	switch {
+	case orgCtx.Employee.Role.IsOwner():
+		return nil
+	case orgCtx.Employee.Role.IsManager():
+		if orgCtx.Employee.LocationID != locationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	case orgCtx.Employee.Role.IsStaff():
+		if orgCtx.Employee.ID != targetEmployeeID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	default:
+		return identity.ErrPermissionDenied
+	}
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

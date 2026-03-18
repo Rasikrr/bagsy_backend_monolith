@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// resendOTP handles POST /api/v1/bookings/{id}/resend-otp.
+// resendOTP handles POST /api/v1/appointments/{id}/resend-otp.
 //
 // @Summary      Повторная отправка кода
 // @Description  Генерирует и отправляет новый код подтверждения для существующей записи.
@@ -20,7 +20,7 @@ import (
 // @Failure      400   {object}  httputil.errorResponse  "Запись уже подтверждена или отменена"
 // @Failure      404   {object}  httputil.errorResponse  "Запись не найдена"
 // @Failure      500   {object}  httputil.errorResponse
-// @Router       /api/v1/bookings/{id}/resend-otp [post]
+// @Router       /api/v1/appointments/{id}/resend-otp [post]
 func (h *Handler) resendOTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

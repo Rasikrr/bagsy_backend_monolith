@@ -72,6 +72,7 @@ type otpSender interface {
 
 type policyProvider interface {
 	CanCancelAppointment(orgCtx *access.OrgContext, appt *booking.Appointment) error
+	CanCreateDirectBooking(orgCtx *access.OrgContext, locationID uuid.UUID, targetEmployeeID uuid.UUID) error
 }
 
 type txManager interface {
