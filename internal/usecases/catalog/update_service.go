@@ -51,30 +51,8 @@ func (u *UseCase) UpdateService(ctx context.Context, orgCtx *access.OrgContext, 
 }
 
 func applyServicePatch(svc *catalog.Service, input UpdateServiceInput) error {
-	if input.Name != nil || input.Description != nil || input.DurationMinutes != nil {
-		name := svc.Name
-		if input.Name != nil {
-			name = *input.Name
-		}
-
-		desc := svc.Description
-		if input.Description != nil {
-			desc = input.Description
-		}
-
-		durationMinutes := svc.DurationMinutes.Minutes()
-		if input.DurationMinutes != nil {
-			durationMinutes = *input.DurationMinutes
-		}
-
-		duration, err := shared.NewDuration(durationMinutes)
-		if err != nil {
-			return err
-		}
-
-		if err = svc.UpdateInfo(name, desc, duration); err != nil {
-			return err
-		}
+	if err := applyServiceInfoPatch(svc, input); err != nil {
+		return err
 	}
 
 	if input.Color != nil {
@@ -92,4 +70,32 @@ func applyServicePatch(svc *catalog.Service, input UpdateServiceInput) error {
 	}
 
 	return nil
+}
+
+func applyServiceInfoPatch(svc *catalog.Service, input UpdateServiceInput) error {
+	if input.Name == nil && input.Description == nil && input.DurationMinutes == nil {
+		return nil
+	}
+
+	name := svc.Name
+	if input.Name != nil {
+		name = *input.Name
+	}
+
+	desc := svc.Description
+	if input.Description != nil {
+		desc = input.Description
+	}
+
+	durationMinutes := svc.DurationMinutes.Minutes()
+	if input.DurationMinutes != nil {
+		durationMinutes = *input.DurationMinutes
+	}
+
+	duration, err := shared.NewDuration(durationMinutes)
+	if err != nil {
+		return err
+	}
+
+	return svc.UpdateInfo(name, desc, duration)
 }
