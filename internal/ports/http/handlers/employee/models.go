@@ -93,6 +93,24 @@ type changePermissionsRequest struct {
 	CanManageLocationSchedule bool `json:"can_manage_location_schedule"`
 }
 
+// ── Get Employee Services ─────────────────────────────────────────
+
+type employeeServiceItemResponse struct {
+	ID              string  `json:"id"`
+	CategoryID      string  `json:"category_id"`
+	Name            string  `json:"name"`
+	Description     *string `json:"description,omitempty"`
+	DurationMinutes int     `json:"duration_minutes"`
+	Color           string  `json:"color"`
+	SortOrder       int     `json:"sort_order"`
+	Active          bool    `json:"active"`
+	Price           *int64  `json:"price,omitempty"`
+}
+
+type getEmployeeServicesResponse struct {
+	Services []employeeServiceItemResponse `json:"services"`
+}
+
 // ── Get List ──────────────────────────────────────────────────────
 
 type employeeListItemResponse struct {

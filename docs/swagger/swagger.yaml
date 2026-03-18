@@ -380,6 +380,34 @@ definitions:
       role:
         type: string
     type: object
+  internal_ports_http_handlers_employee.employeeServiceItemResponse:
+    properties:
+      active:
+        type: boolean
+      category_id:
+        type: string
+      color:
+        type: string
+      description:
+        type: string
+      duration_minutes:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      sort_order:
+        type: integer
+    type: object
+  internal_ports_http_handlers_employee.getEmployeeServicesResponse:
+    properties:
+      services:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_employee.employeeServiceItemResponse'
+        type: array
+    type: object
   internal_ports_http_handlers_employee.getListResponse:
     properties:
       employees:
@@ -1689,6 +1717,37 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Смена роли сотрудника
+      tags:
+      - employees
+  /api/v1/employees/{id}/services:
+    get:
+      description: Возвращает список услуг сотрудника с его индивидуальными ценами.
+      parameters:
+      - description: ID сотрудника
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_employee.getEmployeeServicesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Получение услуг сотрудника
       tags:
       - employees
   /api/v1/employees/{id}/transfer:

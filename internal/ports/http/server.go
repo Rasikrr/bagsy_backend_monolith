@@ -66,7 +66,7 @@ func NewServer(
 
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
 	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
-	employeeHandler := employeeC.New(inviteUseCase, employeeUseCase, authMiddleware, orgContextMiddleware)
+	employeeHandler := employeeC.New(inviteUseCase, employeeUseCase, catalogUseCase, authMiddleware, orgContextMiddleware)
 	catalogHandler := catalogC.New(catalogUseCase, authMiddleware, orgContextMiddleware)
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
 	mediaHandler := mediaC.New(mediaUseCase, authMiddleware)

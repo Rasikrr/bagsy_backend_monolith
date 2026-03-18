@@ -17,6 +17,7 @@ type catalogRepository interface {
 	GetServiceCategoryByID(ctx context.Context, id uuid.UUID) (*catalog.ServiceCategory, error)
 	GetServiceCategoriesByLocationCategoryID(ctx context.Context, locationCategoryID uuid.UUID) ([]*catalog.ServiceCategory, error)
 	GetByLocationIDWithPrices(ctx context.Context, locationID uuid.UUID) ([]*catalog.Service, error)
+	GetByEmployeeIDWithPrice(ctx context.Context, employeeID uuid.UUID) ([]*catalog.Service, error)
 }
 
 type locationRepository interface {

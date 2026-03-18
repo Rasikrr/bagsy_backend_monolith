@@ -78,4 +78,15 @@ const (
 		GROUP BY s.id
 		ORDER BY s.sort_order, s.name;
 	`
+
+	getServicesByEmployeeID = `
+		SELECT s.id, s.location_id, s.category_id, s.name, s.description,
+		       s.duration_minutes, s.color, s.sort_order, s.active,
+		       s.created_at, s.updated_at, s.deleted_at,
+		       es.price AS min_price, es.price AS max_price
+		FROM services s
+		JOIN employee_services es ON es.service_id = s.id
+		WHERE es.employee_id = $1 AND es.active = true AND s.deleted_at IS NULL
+		ORDER BY s.sort_order, s.name;
+	`
 )

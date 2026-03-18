@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	catalogDomain "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/catalog"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
@@ -33,24 +34,31 @@ type employeeUseCase interface {
 	ChangePermissions(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID, input employeeUC.ChangePermissionsInput) error
 }
 
+type catalogUseCase interface {
+	GetServicesByEmployee(ctx context.Context, employeeID uuid.UUID) ([]*catalogDomain.Service, error)
+}
+
 type Handler struct {
-	inviteUseCase inviteUseCase
-	employeeUC    employeeUseCase
-	authMid       *middlewares.Auth
-	orgContextMid *middlewares.OrgContext
+	inviteUseCase  inviteUseCase
+	employeeUC     employeeUseCase
+	catalogUseCase catalogUseCase
+	authMid        *middlewares.Auth
+	orgContextMid  *middlewares.OrgContext
 }
 
 func New(
 	inviteUC inviteUseCase,
 	employeeUC employeeUseCase,
+	catalogUC catalogUseCase,
 	authMid *middlewares.Auth,
 	orgContextMid *middlewares.OrgContext,
 ) *Handler {
 	return &Handler{
-		inviteUseCase: inviteUC,
-		employeeUC:    employeeUC,
-		authMid:       authMid,
-		orgContextMid: orgContextMid,
+		inviteUseCase:  inviteUC,
+		employeeUC:     employeeUC,
+		catalogUseCase: catalogUC,
+		authMid:        authMid,
+		orgContextMid:  orgContextMid,
 	}
 }
 
@@ -76,5 +84,6 @@ func (h *Handler) Init(router *chi.Mux) {
 
 		// Unauthenticated routes
 		r.Post("/invite/confirm", h.confirmInvite)
+		r.Get("/{id}/services", h.getEmployeeServices)
 	})
 }
