@@ -2410,6 +2410,47 @@
                 }
             }
         },
+        "/api/v1/locations/slug/{slug}": {
+            "get": {
+                "description": "Возвращает публично доступную локацию по её slug + расписание на 7 дней.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "locations"
+                ],
+                "summary": "Получение локации по slug (публичный)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slug локации",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_location.locationResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/locations/{id}": {
             "get": {
                 "security": [
@@ -3595,6 +3636,23 @@
                 }
             }
         },
+        "internal_ports_http_handlers_employee.featuresResponse": {
+            "type": "object",
+            "properties": {
+                "api_access": {
+                    "type": "boolean"
+                },
+                "custom_branding": {
+                    "type": "boolean"
+                },
+                "multi_location": {
+                    "type": "boolean"
+                },
+                "sms_notifications": {
+                    "type": "boolean"
+                }
+            }
+        },
         "internal_ports_http_handlers_employee.getEmployeeServicesResponse": {
             "type": "object",
             "properties": {
@@ -3629,9 +3687,6 @@
                 "avatar_url": {
                     "type": "string"
                 },
-                "created_at": {
-                    "type": "string"
-                },
                 "first_name": {
                     "type": "string"
                 },
@@ -3644,8 +3699,8 @@
                 "location_id": {
                     "type": "string"
                 },
-                "organization_id": {
-                    "type": "string"
+                "organization": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.organizationResponse"
                 },
                 "permissions": {
                     "$ref": "#/definitions/internal_ports_http_handlers_employee.permissionsResponse"
@@ -3655,6 +3710,45 @@
                 },
                 "role": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.limitValueResponse": {
+            "type": "object",
+            "properties": {
+                "max": {
+                    "type": "integer"
+                },
+                "used": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.limitsResponse": {
+            "type": "object",
+            "properties": {
+                "bookings_monthly": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.limitValueResponse"
+                },
+                "employees": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.limitValueResponse"
+                },
+                "locations": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.limitValueResponse"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.organizationResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subscription": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.subscriptionResponse"
                 }
             }
         },
@@ -3724,6 +3818,26 @@
                     "type": "string"
                 },
                 "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_employee.subscriptionResponse": {
+            "type": "object",
+            "properties": {
+                "current_period_end": {
+                    "type": "string"
+                },
+                "features": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.featuresResponse"
+                },
+                "limits": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_employee.limitsResponse"
+                },
+                "plan": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
@@ -3910,6 +4024,12 @@
                 "phone": {
                     "type": "string"
                 },
+                "schedule": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_location.scheduleSlotResponse"
+                    }
+                },
                 "schedule_type": {
                     "type": "string"
                 },
@@ -3917,6 +4037,26 @@
                     "type": "integer"
                 },
                 "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_location.scheduleSlotResponse": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }

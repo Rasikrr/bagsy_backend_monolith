@@ -401,6 +401,17 @@ definitions:
       sort_order:
         type: integer
     type: object
+  internal_ports_http_handlers_employee.featuresResponse:
+    properties:
+      api_access:
+        type: boolean
+      custom_branding:
+        type: boolean
+      multi_location:
+        type: boolean
+      sms_notifications:
+        type: boolean
+    type: object
   internal_ports_http_handlers_employee.getEmployeeServicesResponse:
     properties:
       services:
@@ -423,8 +434,6 @@ definitions:
         type: boolean
       avatar_url:
         type: string
-      created_at:
-        type: string
       first_name:
         type: string
       id:
@@ -433,14 +442,39 @@ definitions:
         type: string
       location_id:
         type: string
-      organization_id:
-        type: string
+      organization:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.organizationResponse'
       permissions:
         $ref: '#/definitions/internal_ports_http_handlers_employee.permissionsResponse'
       phone:
         type: string
       role:
         type: string
+    type: object
+  internal_ports_http_handlers_employee.limitValueResponse:
+    properties:
+      max:
+        type: integer
+      used:
+        type: integer
+    type: object
+  internal_ports_http_handlers_employee.limitsResponse:
+    properties:
+      bookings_monthly:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.limitValueResponse'
+      employees:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.limitValueResponse'
+      locations:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.limitValueResponse'
+    type: object
+  internal_ports_http_handlers_employee.organizationResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      subscription:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.subscriptionResponse'
     type: object
   internal_ports_http_handlers_employee.permissionsResponse:
     properties:
@@ -485,6 +519,19 @@ definitions:
       message:
         type: string
       phone:
+        type: string
+    type: object
+  internal_ports_http_handlers_employee.subscriptionResponse:
+    properties:
+      current_period_end:
+        type: string
+      features:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.featuresResponse'
+      limits:
+        $ref: '#/definitions/internal_ports_http_handlers_employee.limitsResponse'
+      plan:
+        type: string
+      status:
         type: string
     type: object
   internal_ports_http_handlers_employee.transferRequest:
@@ -605,11 +652,28 @@ definitions:
         type: string
       phone:
         type: string
+      schedule:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_location.scheduleSlotResponse'
+        type: array
       schedule_type:
         type: string
       slot_duration_minutes:
         type: integer
       slug:
+        type: string
+    type: object
+  internal_ports_http_handlers_location.scheduleSlotResponse:
+    properties:
+      date:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: string
+      start_time:
+        type: string
+      type:
         type: string
     type: object
   internal_ports_http_handlers_location.updateLocationAddressRequest:
@@ -2427,6 +2491,34 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
       summary: Список категорий локаций
+      tags:
+      - locations
+  /api/v1/locations/slug/{slug}:
+    get:
+      description: Возвращает публично доступную локацию по её slug + расписание на
+        7 дней.
+      parameters:
+      - description: Slug локации
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_location.locationResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Получение локации по slug (публичный)
       tags:
       - locations
   /api/v1/media/{id}/confirm:
