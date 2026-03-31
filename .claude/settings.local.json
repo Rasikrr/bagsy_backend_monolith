@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(head -1 /mnt/d/khan/goProjects/bugsy_main/bugsy_backend_monolith/internal/ports/http/util/*.go)"
+    ]
+  }
+}

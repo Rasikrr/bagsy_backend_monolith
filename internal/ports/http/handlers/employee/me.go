@@ -54,6 +54,8 @@ func toGetMeResponse(out *employeeUC.ProfileOutput, orgCtx *access.OrgContext) g
 		},
 		Active:       out.Active,
 		Organization: toOrganizationResponse(orgCtx),
+		CreatedAt:    out.CreatedAt,
+		UpdatedAt:    out.UpdatedAt,
 	}
 
 	if out.LocationID != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/identity"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/organization"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 )
@@ -24,6 +25,9 @@ var locationErrors = httputil.ErrorMap{
 	location.ErrCityRequired:         {Code: http.StatusBadRequest, Message: "city_required"},
 	location.ErrInvalidLatitude:      {Code: http.StatusBadRequest, Message: "invalid_latitude"},
 	location.ErrInvalidLongitude:     {Code: http.StatusBadRequest, Message: "invalid_longitude"},
+
+	organization.ErrOrganizationNotFound:    {Code: http.StatusNotFound, Message: "organization_not_found"},
+	organization.ErrOrganizationNameRequired: {Code: http.StatusBadRequest, Message: "organization_name_required"},
 
 	shared.ErrInvalidPhone: {Code: http.StatusBadRequest, Message: "invalid_phone"},
 }

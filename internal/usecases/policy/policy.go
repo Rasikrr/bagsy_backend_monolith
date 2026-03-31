@@ -406,6 +406,17 @@ func (p *Policy) CanCreateDirectBooking(orgCtx *access.OrgContext, locationID uu
 	}
 }
 
+// CanUpdateOrganization проверяет право на обновление профиля организации. Только owner.
+func (p *Policy) CanUpdateOrganization(orgCtx *access.OrgContext) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

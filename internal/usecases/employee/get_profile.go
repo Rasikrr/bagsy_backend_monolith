@@ -29,5 +29,6 @@ func (u *UseCase) GetProfile(ctx context.Context, employeeID uuid.UUID) (*Profil
 		Permissions:    emp.Permissions,
 		Active:         emp.Active,
 		CreatedAt:      emp.CreatedAt,
+		UpdatedAt:      emp.UpdatedAt,
 	}, nil
 }

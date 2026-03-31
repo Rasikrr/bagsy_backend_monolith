@@ -62,6 +62,8 @@ type getMeResponse struct {
 	Permissions  permissionsResponse  `json:"permissions"`
 	Active       bool                 `json:"active"`
 	Organization organizationResponse `json:"organization"`
+	CreatedAt    time.Time            `json:"created_at"`
+	UpdatedAt    *time.Time           `json:"updated_at,omitempty"`
 }
 
 type permissionsResponse struct {

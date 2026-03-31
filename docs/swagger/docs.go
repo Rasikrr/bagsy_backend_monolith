@@ -2734,6 +2734,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/organizations/me": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Позволяет владельцу обновить имя и описание организации (сети).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "organizations"
+                ],
+                "summary": "Обновление профиля организации",
+                "parameters": [
+                    {
+                        "description": "Данные для обновления",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_location.updateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_location.updateOrganizationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "permission_denied",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "organization_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/service-categories": {
             "get": {
                 "security": [
@@ -3694,6 +3763,9 @@ const docTemplate = `{
                 "avatar_url": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string"
+                },
                 "first_name": {
                     "type": "string"
                 },
@@ -3716,6 +3788,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -4111,6 +4186,31 @@ const docTemplate = `{
                 },
                 "slot_duration_minutes": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_location.updateOrganizationRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_location.updateOrganizationResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

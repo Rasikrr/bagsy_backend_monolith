@@ -52,5 +52,6 @@ func (u *UseCase) UpdateProfile(ctx context.Context, employeeID uuid.UUID, input
 		Permissions:    emp.Permissions,
 		Active:         emp.Active,
 		CreatedAt:      emp.CreatedAt,
+		UpdatedAt:      emp.UpdatedAt,
 	}, nil
 }

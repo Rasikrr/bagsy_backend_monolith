@@ -19,6 +19,7 @@ type ProfileOutput struct {
 	Permissions    identity.Permissions
 	Active         bool
 	CreatedAt      time.Time
+	UpdatedAt      *time.Time
 }
 
 type ListOutput struct {

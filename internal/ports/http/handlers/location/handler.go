@@ -22,6 +22,7 @@ type locationUseCase interface {
 	GetCategories(ctx context.Context) ([]*domainLoc.Category, error)
 	UpdateLocation(ctx context.Context, orgCtx *access.OrgContext, input uc.UpdateLocationInput) error
 	DeleteLocation(ctx context.Context, orgCtx *access.OrgContext, locationID uuid.UUID) error
+	UpdateOrganization(ctx context.Context, orgCtx *access.OrgContext, input uc.UpdateOrganizationInput) error
 }
 
 type scheduleRepository interface {
@@ -63,6 +64,15 @@ func (h *Handler) Init(router *chi.Mux) {
 			r.Post("/", h.create)
 			r.Put("/{id}", h.updateLocation)
 			r.Delete("/{id}", h.deleteLocation)
+		})
+	})
+
+	router.Route("/api/v1/organizations", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMid.Handle)
+			r.Use(h.orgContextMid.Handle)
+
+			r.Put("/me", h.updateOrganization)
 		})
 	})
 }

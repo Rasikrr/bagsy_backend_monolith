@@ -28,6 +28,7 @@ type categoryRepository interface {
 
 type organizationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*organization.Organization, error)
+	Save(ctx context.Context, org *organization.Organization) error
 }
 
 type employeeRepository interface {
@@ -40,6 +41,7 @@ type policyProvider interface {
 	CanViewLocation(orgCtx *access.OrgContext, locationID uuid.UUID) error
 	CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error
 	CanManageLocation(orgCtx *access.OrgContext, loc *location.Location) error
+	CanUpdateOrganization(orgCtx *access.OrgContext) error
 }
 
 type txManager interface {

@@ -101,3 +101,16 @@ type locationCategoryResponse struct {
 type getCategoriesResponse struct {
 	Categories []locationCategoryResponse `json:"categories"`
 }
+
+// ── Update Organization ──────────────────────────────────────────
+
+type updateOrganizationRequest struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+}
+
+type updateOrganizationResponse struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+}
