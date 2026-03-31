@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	domainLoc "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
+	domainSchedule "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 
 	httputil "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
@@ -59,7 +61,20 @@ func (h *Handler) getList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coreHTTP.SendData(ctx, w, toGetListResponse(page), http.StatusOK)
+	now := time.Now()
+	end := now.AddDate(0, 0, 7)
+
+	items := make([]locationResponse, 0, len(page.Items))
+	for _, loc := range page.Items {
+		slots, sErr := h.scheduleRepo.GetLocationSlots(ctx, loc.ID, now, end)
+		if sErr != nil {
+			httputil.SendError(ctx, w, sErr, locationErrors)
+			return
+		}
+		items = append(items, toLocationResponse(loc, slots))
+	}
+
+	coreHTTP.SendData(ctx, w, getListResponse{Locations: items, Total: page.Total}, http.StatusOK)
 }
 
 func parseLocationFilter(q url.Values) (*domainLoc.Filter, error) {
@@ -117,7 +132,7 @@ func parseLocationFilter(q url.Values) (*domainLoc.Filter, error) {
 	return filter, nil
 }
 
-func toLocationResponse(loc *domainLoc.Location) locationResponse {
+func toLocationResponse(loc *domainLoc.Location, slots []*domainSchedule.LocationScheduleSlot) locationResponse {
 	resp := locationResponse{
 		ID:                  loc.ID.String(),
 		CategoryID:          loc.CategoryID.String(),
@@ -127,6 +142,7 @@ func toLocationResponse(loc *domainLoc.Location) locationResponse {
 		Active:              loc.Active,
 		ScheduleType:        string(loc.ScheduleType),
 		SlotDurationMinutes: loc.SlotDurationMinutes.Minutes(),
+		Schedule:            toScheduleSlotResponses(slots),
 		CreatedAt:           loc.CreatedAt,
 	}
 
@@ -154,14 +170,16 @@ func toLocationResponse(loc *domainLoc.Location) locationResponse {
 	return resp
 }
 
-func toGetListResponse(page *shared.Page[*domainLoc.Location]) getListResponse {
-	items := make([]locationResponse, 0, len(page.Items))
-	for _, loc := range page.Items {
-		items = append(items, toLocationResponse(loc))
+func toScheduleSlotResponses(slots []*domainSchedule.LocationScheduleSlot) []scheduleSlotResponse {
+	out := make([]scheduleSlotResponse, 0, len(slots))
+	for _, s := range slots {
+		out = append(out, scheduleSlotResponse{
+			ID:        s.ID.String(),
+			Date:      s.Date.Format("2006-01-02"),
+			Type:      s.Type.String(),
+			StartTime: s.StartTime.Format("15:04"),
+			EndTime:   s.EndTime.Format("15:04"),
+		})
 	}
-
-	return getListResponse{
-		Locations: items,
-		Total:     page.Total,
-	}
+	return out
 }

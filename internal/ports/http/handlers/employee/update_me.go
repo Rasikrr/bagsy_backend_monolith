@@ -50,5 +50,5 @@ func (h *Handler) updateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coreHTTP.SendData(ctx, w, toGetMeResponse(out), http.StatusOK)
+	coreHTTP.SendData(ctx, w, toGetMeResponse(out, orgCtx), http.StatusOK)
 }

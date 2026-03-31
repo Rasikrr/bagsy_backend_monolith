@@ -30,6 +30,15 @@ func (c Capabilities) IsAllowed(feature billing.Resource) bool {
 	return limit.IsUnlimited() || limit.Value() > 0
 }
 
+// GetLimit возвращает лимит для указанного ресурса.
+func (c Capabilities) GetLimit(resource billing.Resource) (billing.Limit, bool) {
+	if c.m == nil {
+		return billing.Limit{}, false
+	}
+	l, ok := c.m[resource]
+	return l, ok
+}
+
 // CanUse проверяет, можно ли использовать количественный ресурс.
 // Возвращает false если ресурса нет в плане или лимит исчерпан.
 func (c Capabilities) CanUse(resource billing.Resource, count int) bool {

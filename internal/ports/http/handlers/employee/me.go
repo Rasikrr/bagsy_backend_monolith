@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
+	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
 	httputil "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
 	coreHTTP "github.com/Rasikrr/core/http"
@@ -36,24 +37,23 @@ func (h *Handler) getMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coreHTTP.SendData(ctx, w, toGetMeResponse(out), http.StatusOK)
+	coreHTTP.SendData(ctx, w, toGetMeResponse(out, orgCtx), http.StatusOK)
 }
 
-func toGetMeResponse(out *employeeUC.ProfileOutput) getMeResponse {
+func toGetMeResponse(out *employeeUC.ProfileOutput, orgCtx *access.OrgContext) getMeResponse {
 	resp := getMeResponse{
-		ID:             out.ID.String(),
-		Phone:          out.Phone,
-		FirstName:      out.FirstName,
-		LastName:       out.LastName,
-		AvatarURL:      out.AvatarURL,
-		OrganizationID: out.OrganizationID.String(),
-		Role:           string(out.Role),
+		ID:        out.ID.String(),
+		Phone:     out.Phone,
+		FirstName: out.FirstName,
+		LastName:  out.LastName,
+		AvatarURL: out.AvatarURL,
+		Role:      string(out.Role),
 		Permissions: permissionsResponse{
 			CanProvideServices:        out.Permissions.CanProvideServices,
 			CanManageLocationSchedule: out.Permissions.CanManageLocationSchedule,
 		},
-		Active:    out.Active,
-		CreatedAt: out.CreatedAt,
+		Active:       out.Active,
+		Organization: toOrganizationResponse(orgCtx),
 	}
 
 	if out.LocationID != nil {
@@ -62,4 +62,48 @@ func toGetMeResponse(out *employeeUC.ProfileOutput) getMeResponse {
 	}
 
 	return resp
+}
+
+func toOrganizationResponse(orgCtx *access.OrgContext) organizationResponse {
+	return organizationResponse{
+		ID:           orgCtx.Organization.ID.String(),
+		Name:         orgCtx.Organization.Name,
+		Subscription: toSubscriptionResponse(orgCtx),
+	}
+}
+
+func toSubscriptionResponse(orgCtx *access.OrgContext) subscriptionResponse {
+	return subscriptionResponse{
+		Plan:             orgCtx.Plan.Code.String(),
+		Status:           string(orgCtx.Subscription.Status),
+		CurrentPeriodEnd: orgCtx.Subscription.CurrentPeriodEnd,
+		Limits:           toLimitsResponse(orgCtx),
+		Features:         toFeaturesResponse(orgCtx.Plan.Code),
+	}
+}
+
+func toLimitsResponse(orgCtx *access.OrgContext) limitsResponse {
+	return limitsResponse{
+		Locations:       toLimitValue(orgCtx.Plan.Capabilities, billing.ResourceMaxLocations, orgCtx.Subscription.LocationsUsed),
+		Employees:       toLimitValue(orgCtx.Plan.Capabilities, billing.ResourceMaxEmployees, orgCtx.Subscription.EmployeesUsed),
+		BookingsMonthly: limitValueResponse{Used: 0, Max: nil},
+	}
+}
+
+func toLimitValue(caps access.Capabilities, resource billing.Resource, used int) limitValueResponse {
+	limit, ok := caps.GetLimit(resource)
+	if !ok || limit.IsUnlimited() {
+		return limitValueResponse{Used: used, Max: nil}
+	}
+	v := limit.Value()
+	return limitValueResponse{Used: used, Max: &v}
+}
+
+func toFeaturesResponse(code billing.PlanCode) featuresResponse {
+	return featuresResponse{
+		MultiLocation:    code.IsNetwork(),
+		CustomBranding:   code.IsPoint() || code.IsNetwork(),
+		APIAccess:        code.IsNetwork(),
+		SMSNotifications: code.IsPoint() || code.IsNetwork(),
+	}
 }

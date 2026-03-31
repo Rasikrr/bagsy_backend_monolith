@@ -12,6 +12,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/swagger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
+	scheduleRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	catalogUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
@@ -53,6 +54,7 @@ func NewServer(
 	employeeUseCase *employeeUC.UseCase,
 	accessRepo *access.Repository,
 	createLocationUC *locationUC.UseCase,
+	locationScheduleRepo *scheduleRepo.Repository,
 	catalogUseCase *catalogUC.UseCase,
 	bookingUseCase *bookingUC.UseCase,
 	mediaUseCase *mediaUC.UseCase,
@@ -65,7 +67,7 @@ func NewServer(
 	orgContextMiddleware := middlewares.NewOrgContext(accessRepo)
 
 	authHandler := authC.New(registerOwnerUseCase, authUseCase, resetPasswordUseCase)
-	locationHandler := locationC.New(createLocationUC, authMiddleware, orgContextMiddleware)
+	locationHandler := locationC.New(createLocationUC, locationScheduleRepo, authMiddleware, orgContextMiddleware)
 	employeeHandler := employeeC.New(inviteUseCase, employeeUseCase, catalogUseCase, authMiddleware, orgContextMiddleware)
 	catalogHandler := catalogC.New(catalogUseCase, authMiddleware, orgContextMiddleware)
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)

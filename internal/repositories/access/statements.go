@@ -10,8 +10,18 @@ const (
 			e.can_provide_services as employee_can_provide_services,
 			e.can_manage_location_schedule as employee_can_manage_location_schedule,
 			o.id as organization_id,
+			o.name as organization_name,
 			o.active as organization_active,
 			s.status as subscription_status,
+			s.current_period_end as subscription_current_period_end,
+			(
+				SELECT COUNT(*) FROM locations
+				WHERE organization_id = o.id AND deleted_at IS NULL
+			) as locations_used,
+			(
+				SELECT COUNT(*) FROM employees
+				WHERE organization_id = o.id AND deleted_at IS NULL AND active = true
+			) as employees_used,
 			p.code as plan_code,
 			(
 				SELECT jsonb_object_agg(resource, limit_value)

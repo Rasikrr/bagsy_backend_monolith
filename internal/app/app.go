@@ -335,6 +335,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.employeeUseCase,
 		a.accessRepo,
 		a.createLocationUC,
+		a.scheduleRepo,
 		a.catalogUseCase,
 		a.bookingUseCase,
 		a.mediaUseCase,

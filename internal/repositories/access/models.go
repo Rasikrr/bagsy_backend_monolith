@@ -3,6 +3,7 @@ package access
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/billing"
@@ -20,9 +21,14 @@ type orgContextModel struct {
 	EmployeeCanManageSchedule  bool       `db:"employee_can_manage_location_schedule"`
 
 	OrganizationID     uuid.UUID `db:"organization_id"`
+	OrganizationName   string    `db:"organization_name"`
 	OrganizationActive bool      `db:"organization_active"`
 
-	SubscriptionStatus *string `db:"subscription_status"`
+	SubscriptionStatus           *string    `db:"subscription_status"`
+	SubscriptionCurrentPeriodEnd *time.Time `db:"subscription_current_period_end"`
+
+	LocationsUsed int `db:"locations_used"`
+	EmployeesUsed int `db:"employees_used"`
 
 	PlanCode         *string `db:"plan_code"`
 	PlanCapabilities []byte  `db:"plan_capabilities"`
@@ -58,9 +64,14 @@ func (m *orgContextModel) toDomain() (*access.OrgContext, error) {
 	orgInfo := access.OrganizationInfo{
 		ID:     m.OrganizationID,
 		Active: m.OrganizationActive,
+		Name:   m.OrganizationName,
 	}
 
-	subInfo := access.SubscriptionInfo{}
+	subInfo := access.SubscriptionInfo{
+		CurrentPeriodEnd: m.SubscriptionCurrentPeriodEnd,
+		LocationsUsed:    m.LocationsUsed,
+		EmployeesUsed:    m.EmployeesUsed,
+	}
 
 	if m.SubscriptionStatus != nil {
 		var subStatus billing.SubscriptionStatus

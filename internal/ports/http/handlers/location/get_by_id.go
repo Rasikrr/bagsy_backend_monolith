@@ -2,6 +2,7 @@ package location
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	httputil "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/util"
@@ -46,5 +47,12 @@ func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coreHTTP.SendData(ctx, w, toLocationResponse(loc), http.StatusOK)
+	now := time.Now()
+	slots, err := h.scheduleRepo.GetLocationSlots(ctx, loc.ID, now, now.AddDate(0, 0, 7))
+	if err != nil {
+		httputil.SendError(ctx, w, err, locationErrors)
+		return
+	}
+
+	coreHTTP.SendData(ctx, w, toLocationResponse(loc, slots), http.StatusOK)
 }

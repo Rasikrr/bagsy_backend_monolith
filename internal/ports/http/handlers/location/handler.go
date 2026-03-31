@@ -2,9 +2,11 @@ package location
 
 import (
 	"context"
+	"time"
 
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/access"
 	domainLoc "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/location"
+	domainSchedule "github.com/Rasikrr/bagsy_backend_monolith/internal/domain/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/domain/shared"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/middlewares"
 	uc "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/location"
@@ -16,24 +18,32 @@ type locationUseCase interface {
 	Create(ctx context.Context, orgCtx *access.OrgContext, input uc.CreateLocationInput) (*uc.CreateLocationOutput, error)
 	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *domainLoc.Filter) (*shared.Page[*domainLoc.Location], error)
 	GetByID(ctx context.Context, orgCtx *access.OrgContext, id uuid.UUID) (*domainLoc.Location, error)
+	GetBySlug(ctx context.Context, slug string) (*domainLoc.Location, error)
 	GetCategories(ctx context.Context) ([]*domainLoc.Category, error)
 	UpdateLocation(ctx context.Context, orgCtx *access.OrgContext, input uc.UpdateLocationInput) error
 	DeleteLocation(ctx context.Context, orgCtx *access.OrgContext, locationID uuid.UUID) error
 }
 
+type scheduleRepository interface {
+	GetLocationSlots(ctx context.Context, locationID uuid.UUID, start, end time.Time) ([]*domainSchedule.LocationScheduleSlot, error)
+}
+
 type Handler struct {
 	locationUseCase locationUseCase
+	scheduleRepo    scheduleRepository
 	authMid         *middlewares.Auth
 	orgContextMid   *middlewares.OrgContext
 }
 
 func New(
 	createUC locationUseCase,
+	scheduleRepo scheduleRepository,
 	authMid *middlewares.Auth,
 	orgContextMid *middlewares.OrgContext,
 ) *Handler {
 	return &Handler{
 		locationUseCase: createUC,
+		scheduleRepo:    scheduleRepo,
 		authMid:         authMid,
 		orgContextMid:   orgContextMid,
 	}
@@ -42,6 +52,7 @@ func New(
 func (h *Handler) Init(router *chi.Mux) {
 	router.Route("/api/v1/locations", func(r chi.Router) {
 		r.Get("/categories", h.getCategories)
+		r.Get("/slug/{slug}", h.getBySlug)
 
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMid.Handle)

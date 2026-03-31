@@ -18,6 +18,7 @@ type locationRepository interface {
 	CountByOrganization(ctx context.Context, orgID uuid.UUID) (int, error)
 	GetByFilter(ctx context.Context, filter *location.Filter) (*shared.Page[*location.Location], error)
 	GetByID(ctx context.Context, id uuid.UUID) (*location.Location, error)
+	GetBySlug(ctx context.Context, slug string) (*location.Location, error)
 }
 
 type categoryRepository interface {

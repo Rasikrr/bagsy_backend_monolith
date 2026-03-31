@@ -50,19 +50,28 @@ type createResponse struct {
 	PromptOrgProfile bool   `json:"prompt_org_profile"`
 }
 
+type scheduleSlotResponse struct {
+	ID        string `json:"id"`
+	Date      string `json:"date"`
+	Type      string `json:"type"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+}
+
 type locationResponse struct {
-	ID                  string           `json:"id"`
-	CategoryID          string           `json:"category_id"`
-	Name                string           `json:"name"`
-	Description         *string          `json:"description,omitempty"`
-	Phone               *string          `json:"phone,omitempty"`
-	Slug                string           `json:"slug"`
-	Address             *addressResponse `json:"address,omitempty"`
-	Coordinates         *coordsResponse  `json:"coordinates,omitempty"`
-	Active              bool             `json:"active"`
-	ScheduleType        string           `json:"schedule_type"`
-	SlotDurationMinutes int              `json:"slot_duration_minutes"`
-	CreatedAt           time.Time        `json:"created_at"`
+	ID                  string                 `json:"id"`
+	CategoryID          string                 `json:"category_id"`
+	Name                string                 `json:"name"`
+	Description         *string                `json:"description,omitempty"`
+	Phone               *string                `json:"phone,omitempty"`
+	Slug                string                 `json:"slug"`
+	Address             *addressResponse       `json:"address,omitempty"`
+	Coordinates         *coordsResponse        `json:"coordinates,omitempty"`
+	Active              bool                   `json:"active"`
+	ScheduleType        string                 `json:"schedule_type"`
+	SlotDurationMinutes int                    `json:"slot_duration_minutes"`
+	Schedule            []scheduleSlotResponse `json:"schedule"`
+	CreatedAt           time.Time              `json:"created_at"`
 }
 
 type addressResponse struct {

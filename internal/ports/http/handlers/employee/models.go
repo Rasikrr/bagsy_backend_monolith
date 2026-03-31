@@ -52,22 +52,53 @@ type resendInviteResponse struct {
 // ── Get Me ───────────────────────────────────────────────────────
 
 type getMeResponse struct {
-	ID             string              `json:"id"`
-	Phone          string              `json:"phone"`
-	FirstName      string              `json:"first_name"`
-	LastName       *string             `json:"last_name,omitempty"`
-	AvatarURL      *string             `json:"avatar_url,omitempty"`
-	OrganizationID string              `json:"organization_id"`
-	LocationID     *string             `json:"location_id,omitempty"`
-	Role           string              `json:"role"`
-	Permissions    permissionsResponse `json:"permissions"`
-	Active         bool                `json:"active"`
-	CreatedAt      time.Time           `json:"created_at"`
+	ID           string               `json:"id"`
+	Phone        string               `json:"phone"`
+	FirstName    string               `json:"first_name"`
+	LastName     *string              `json:"last_name,omitempty"`
+	AvatarURL    *string              `json:"avatar_url,omitempty"`
+	LocationID   *string              `json:"location_id,omitempty"`
+	Role         string               `json:"role"`
+	Permissions  permissionsResponse  `json:"permissions"`
+	Active       bool                 `json:"active"`
+	Organization organizationResponse `json:"organization"`
 }
 
 type permissionsResponse struct {
 	CanProvideServices        bool `json:"can_provide_services"`
 	CanManageLocationSchedule bool `json:"can_manage_location_schedule"`
+}
+
+type organizationResponse struct {
+	ID           string               `json:"id"`
+	Name         string               `json:"name"`
+	Subscription subscriptionResponse `json:"subscription"`
+}
+
+type subscriptionResponse struct {
+	Plan             string           `json:"plan"`
+	Status           string           `json:"status"`
+	CurrentPeriodEnd *time.Time       `json:"current_period_end"`
+	Limits           limitsResponse   `json:"limits"`
+	Features         featuresResponse `json:"features"`
+}
+
+type limitValueResponse struct {
+	Used int  `json:"used"`
+	Max  *int `json:"max"`
+}
+
+type limitsResponse struct {
+	Locations       limitValueResponse `json:"locations"`
+	Employees       limitValueResponse `json:"employees"`
+	BookingsMonthly limitValueResponse `json:"bookings_monthly"`
+}
+
+type featuresResponse struct {
+	MultiLocation    bool `json:"multi_location"`
+	CustomBranding   bool `json:"custom_branding"`
+	APIAccess        bool `json:"api_access"`
+	SMSNotifications bool `json:"sms_notifications"`
 }
 
 // ── Update Me ───────────────────────────────────────────────────

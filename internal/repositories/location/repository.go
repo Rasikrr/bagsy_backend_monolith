@@ -117,3 +117,14 @@ func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*location.Locat
 	}
 	return m.toDomain()
 }
+
+func (r *Repository) GetBySlug(ctx context.Context, slug string) (*location.Location, error) {
+	var m model
+	if err := pgxscan.Get(ctx, r.db, &m, getBySlug, slug); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, location.ErrLocationNotFound
+		}
+		return nil, fmt.Errorf("get location by slug: %w", err)
+	}
+	return m.toDomain()
+}
