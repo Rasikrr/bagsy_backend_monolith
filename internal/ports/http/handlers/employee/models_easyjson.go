@@ -1127,6 +1127,30 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			} else {
 				(out.Organization).UnmarshalEasyJSON(in)
 			}
+		case "created_at":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				if data := in.Raw(); in.Ok() {
+					in.AddError((out.CreatedAt).UnmarshalJSON(data))
+				}
+			}
+		case "updated_at":
+			if in.IsNull() {
+				in.Skip()
+				out.UpdatedAt = nil
+			} else {
+				if out.UpdatedAt == nil {
+					out.UpdatedAt = new(time.Time)
+				}
+				if in.IsNull() {
+					in.Skip()
+				} else {
+					if data := in.Raw(); in.Ok() {
+						in.AddError((*out.UpdatedAt).UnmarshalJSON(data))
+					}
+				}
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -1190,6 +1214,16 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"organization\":"
 		out.RawString(prefix)
 		(in.Organization).MarshalEasyJSON(out)
+	}
+	{
+		const prefix string = ",\"created_at\":"
+		out.RawString(prefix)
+		out.Raw((in.CreatedAt).MarshalJSON())
+	}
+	if in.UpdatedAt != nil {
+		const prefix string = ",\"updated_at\":"
+		out.RawString(prefix)
+		out.Raw((*in.UpdatedAt).MarshalJSON())
 	}
 	out.RawByte('}')
 }

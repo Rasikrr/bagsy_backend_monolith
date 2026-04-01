@@ -73,6 +73,17 @@ func (r *Repository) GetServiceCategoryByID(ctx context.Context, id uuid.UUID) (
 // EmployeeService Repository Implementation
 // ─────────────────────────────────────────────────────────────────
 
+func (r *Repository) GetEmployeeServiceByID(ctx context.Context, id uuid.UUID) (*catalog.EmployeeService, error) {
+	var m employeeServiceModel
+	if err := pgxscan.Get(ctx, r.db, &m, getEmployeeServiceByID, id); err != nil {
+		if pgxscan.NotFound(err) {
+			return nil, catalog.ErrEmployeeServiceNotFound
+		}
+		return nil, fmt.Errorf("get employee service by id: %w", err)
+	}
+	return m.toDomain()
+}
+
 func (r *Repository) GetActiveByEmployeeAndService(ctx context.Context, employeeID, serviceID uuid.UUID) (*catalog.EmployeeService, error) {
 	var m employeeServiceModel
 	if err := pgxscan.Get(ctx, r.db, &m, getEmployeeServiceByEmployeeAndService, employeeID, serviceID); err != nil {

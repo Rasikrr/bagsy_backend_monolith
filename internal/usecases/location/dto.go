@@ -12,6 +12,7 @@ type UpdateLocationAddressInput struct {
 type UpdateLocationInput struct {
 	ID                  uuid.UUID
 	Name                *string
+	Description         *string
 	Phone               *string
 	Address             *UpdateLocationAddressInput
 	Latitude            *float64

@@ -36,6 +36,7 @@ type updateLocationAddressRequest struct {
 
 type updateLocationRequest struct {
 	Name                *string                       `json:"name,omitempty"`
+	Description         *string                       `json:"description,omitempty"`
 	Phone               *string                       `json:"phone,omitempty"`
 	Address             *updateLocationAddressRequest  `json:"address,omitempty"`
 	Latitude            *float64                      `json:"latitude,omitempty"`

@@ -51,6 +51,7 @@ func (h *Handler) updateLocation(w http.ResponseWriter, r *http.Request) {
 	input := uc.UpdateLocationInput{
 		ID:                  locationID,
 		Name:                req.Name,
+		Description:         req.Description,
 		Phone:               req.Phone,
 		Latitude:            req.Latitude,
 		Longitude:           req.Longitude,

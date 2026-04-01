@@ -45,6 +45,7 @@ type policy interface {
 	CanListEmployees(orgCtx *access.OrgContext, filter *identity.EmployeeFilter) error
 	CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 	CanTransferEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
+	CanUnassignEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 	CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 	CanChangePermissions(orgCtx *access.OrgContext, targetEmp *identity.Employee) error
 }

@@ -36,12 +36,13 @@ func (u *UseCase) SetLocationSchedule(ctx context.Context, orgCtx *access.OrgCon
 		return identity.ErrPermissionDenied
 	}
 
-	if !loc.CanOperate() {
-		return location.ErrLocationInactive
-	}
-
 	if err = u.policy.CanManageLocationSchedule(orgCtx, input.LocationID); err != nil {
 		return err
+	}
+
+	// Owner может настраивать расписание даже для неактивной точки (initial setup).
+	if !orgCtx.Employee.Role.IsOwner() && !loc.CanOperate() {
+		return location.ErrLocationInactive
 	}
 
 	domainSlots := make([]*domainSchedule.LocationScheduleSlot, 0, len(input.Slots))

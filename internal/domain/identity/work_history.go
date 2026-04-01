@@ -17,12 +17,13 @@ const (
 	ChangeTypePromotion ChangeType = "promotion"
 	ChangeTypeDemotion  ChangeType = "demotion"
 	ChangeTypeTransfer  ChangeType = "transfer"
+	ChangeTypeUnassign  ChangeType = "unassign"
 )
 
 func (c ChangeType) IsValid() bool {
 	switch c {
 	case ChangeTypeHired, ChangeTypePromotion,
-		ChangeTypeDemotion, ChangeTypeTransfer:
+		ChangeTypeDemotion, ChangeTypeTransfer, ChangeTypeUnassign:
 		return true
 	}
 	return false

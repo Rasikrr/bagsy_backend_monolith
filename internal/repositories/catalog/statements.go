@@ -39,6 +39,12 @@ const (
 		WHERE id = $1;
 	`
 
+	getEmployeeServiceByID = `
+		SELECT id, employee_id, service_id, price, active, created_at, updated_at
+		FROM employee_services
+		WHERE id = $1 AND active = true;
+	`
+
 	getEmployeeServiceByEmployeeAndService = `
 		SELECT id, employee_id, service_id, price, active, created_at, updated_at
 		FROM employee_services

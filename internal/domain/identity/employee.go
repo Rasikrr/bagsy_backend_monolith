@@ -171,6 +171,16 @@ func (e *Employee) Transfer(locationID uuid.UUID) error {
 	return nil
 }
 
+func (e *Employee) Unassign() error {
+	if e.IsDeleted() {
+		return ErrEmployeeDeleted
+	}
+
+	e.LocationID = nil
+	e.touch()
+	return nil
+}
+
 func (e *Employee) Activate() error {
 	if e.IsDeleted() {
 		return ErrEmployeeDeleted

@@ -142,6 +142,23 @@ func (p *Policy) CanTransferEmployee(orgCtx *access.OrgContext, targetEmp *ident
 	return nil
 }
 
+// CanUnassignEmployee проверяет право на отвязку сотрудника от точки. Только owner.
+func (p *Policy) CanUnassignEmployee(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
+	if !orgCtx.Subscription.Status.CanOperate() {
+		return billing.ErrSubscriptionSuspended
+	}
+	if orgCtx.Employee.ID == targetEmp.ID {
+		return identity.ErrCannotModifySelf
+	}
+	if orgCtx.Organization.ID != targetEmp.OrganizationID {
+		return identity.ErrPermissionDenied
+	}
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
 // CanChangeRole проверяет право на смену роли. Только owner, нельзя менять себя.
 func (p *Policy) CanChangeRole(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
@@ -318,7 +335,7 @@ func (p *Policy) CanViewLocationSchedule(orgCtx *access.OrgContext, locationID u
 	return nil
 }
 
-// CanManageEmployeeSchedule — Owner: any employee in org. Manager: staff in own location.
+// CanManageEmployeeSchedule — Owner: any employee in org. Manager: staff in own location. Staff: self only.
 func (p *Policy) CanManageEmployeeSchedule(orgCtx *access.OrgContext, targetEmp *identity.Employee) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended
@@ -335,6 +352,11 @@ func (p *Policy) CanManageEmployeeSchedule(orgCtx *access.OrgContext, targetEmp 
 			return identity.ErrPermissionDenied
 		}
 		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
+			return identity.ErrPermissionDenied
+		}
+		return nil
+	case orgCtx.Employee.Role.IsStaff():
+		if orgCtx.Employee.ID != targetEmp.ID {
 			return identity.ErrPermissionDenied
 		}
 		return nil

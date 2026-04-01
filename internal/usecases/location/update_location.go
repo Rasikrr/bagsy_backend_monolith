@@ -33,6 +33,9 @@ func applyLocationPatch(loc *location.Location, orgCtx *access.OrgContext, u *Us
 	if err := applyNamePatch(loc, input); err != nil {
 		return err
 	}
+	if err := applyDescriptionPatch(loc, input); err != nil {
+		return err
+	}
 	if err := applyPhonePatch(loc, input); err != nil {
 		return err
 	}
@@ -53,6 +56,13 @@ func applyNamePatch(loc *location.Location, input UpdateLocationInput) error {
 		return nil
 	}
 	return loc.UpdateInfo(*input.Name, loc.Description)
+}
+
+func applyDescriptionPatch(loc *location.Location, input UpdateLocationInput) error {
+	if input.Description == nil {
+		return nil
+	}
+	return loc.UpdateInfo(loc.Name, input.Description)
 }
 
 func applyPhonePatch(loc *location.Location, input UpdateLocationInput) error {

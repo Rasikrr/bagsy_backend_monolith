@@ -13,6 +13,7 @@ import (
 type catalogRepository interface {
 	SaveService(ctx context.Context, s *catalog.Service) error
 	SaveEmployeeService(ctx context.Context, es *catalog.EmployeeService) error
+	GetEmployeeServiceByID(ctx context.Context, id uuid.UUID) (*catalog.EmployeeService, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*catalog.Service, error)
 	GetServiceCategoryByID(ctx context.Context, id uuid.UUID) (*catalog.ServiceCategory, error)
 	GetServiceCategoriesByLocationCategoryID(ctx context.Context, locationCategoryID uuid.UUID) ([]*catalog.ServiceCategory, error)

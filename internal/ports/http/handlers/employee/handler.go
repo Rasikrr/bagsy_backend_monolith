@@ -28,6 +28,7 @@ type employeeUseCase interface {
 	GetList(ctx context.Context, orgCtx *access.OrgContext, filter *identity.EmployeeFilter) (*employeeUC.ListOutput, error)
 	UpdateProfile(ctx context.Context, employeeID uuid.UUID, input employeeUC.UpdateProfileInput) (*employeeUC.ProfileOutput, error)
 	TransferEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID, input employeeUC.TransferInput) error
+	UnassignEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID) error
 	ActivateEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID) error
 	DeactivateEmployee(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID) error
 	ChangeRole(ctx context.Context, orgCtx *access.OrgContext, employeeID uuid.UUID, input employeeUC.ChangeRoleInput) error
@@ -76,6 +77,7 @@ func (h *Handler) Init(router *chi.Mux) {
 			r.Post("/invite/resend", h.resendInvite)
 
 			r.Post("/{id}/transfer", h.transferEmployee)
+			r.Delete("/{id}/location", h.unassignEmployee)
 			r.Post("/{id}/activate", h.activateEmployee)
 			r.Post("/{id}/deactivate", h.deactivateEmployee)
 			r.Patch("/{id}/role", h.changeRole)
