@@ -1206,6 +1206,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/employee-services/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Деактивирует привязку услуги к сотруднику. Owner — любого, Manager — staff своей локации.",
+                "tags": [
+                    "catalog"
+                ],
+                "summary": "Отвязка услуги от мастера",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID привязки (employee_service)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/employees": {
             "get": {
                 "security": [
@@ -1740,6 +1792,58 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "string"
                             }
+                        }
+                    },
+                    "403": {
+                        "description": "permission_denied / cannot_modify_self",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "employee_not_found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/employees/{id}/location": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Снимает привязку сотрудника к локации. Только Owner.",
+                "tags": [
+                    "employees"
+                ],
+                "summary": "Отвязка мастера от точки",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID сотрудника",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
                         }
                     },
                     "403": {
@@ -4168,6 +4272,9 @@ const docTemplate = `{
                 },
                 "address": {
                     "$ref": "#/definitions/internal_ports_http_handlers_location.updateLocationAddressRequest"
+                },
+                "description": {
+                    "type": "string"
                 },
                 "latitude": {
                     "type": "number"
