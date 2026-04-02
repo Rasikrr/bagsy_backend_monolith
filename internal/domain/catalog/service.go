@@ -25,8 +25,9 @@ type Service struct {
 	CreatedAt       time.Time
 	UpdatedAt       *time.Time
 	DeletedAt       *time.Time
-	MinPrice        *shared.Money // derived: nil if no active employee_services
-	MaxPrice        *shared.Money
+	MinPrice             *shared.Money // derived: nil if no active employee_services
+	MaxPrice             *shared.Money
+	EmployeeServiceID    *uuid.UUID // set only when fetched in employee context
 }
 
 type CreateServiceParams struct {

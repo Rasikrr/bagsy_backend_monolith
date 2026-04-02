@@ -65,6 +65,9 @@ func toEmployeeServiceItemResponse(s *catalogDomain.Service) employeeServiceItem
 		SortOrder:       s.SortOrder,
 		Active:          s.Active,
 	}
+	if s.EmployeeServiceID != nil {
+		r.EmployeeServiceID = s.EmployeeServiceID.String()
+	}
 	if s.MinPrice != nil {
 		v := s.MinPrice.Amount().IntPart()
 		r.Price = &v

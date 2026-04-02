@@ -1574,6 +1574,12 @@ func easyjsonD2b7633eDecodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 			} else {
 				out.ID = string(in.String())
 			}
+		case "employee_service_id":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				out.EmployeeServiceID = string(in.String())
+			}
 		case "category_id":
 			if in.IsNull() {
 				in.Skip()
@@ -1656,6 +1662,11 @@ func easyjsonD2b7633eEncodeGithubComRasikrrBagsyBackendMonolithInternalPortsHttp
 		const prefix string = ",\"id\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.ID))
+	}
+	{
+		const prefix string = ",\"employee_service_id\":"
+		out.RawString(prefix)
+		out.String(string(in.EmployeeServiceID))
 	}
 	{
 		const prefix string = ",\"category_id\":"
