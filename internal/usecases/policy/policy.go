@@ -101,9 +101,9 @@ func (p *Policy) CanManageEmployee(orgCtx *access.OrgContext, targetEmp *identit
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended
 	}
-	if orgCtx.Employee.ID == targetEmp.ID {
-		return identity.ErrCannotModifySelf
-	}
+	// if orgCtx.Employee.ID == targetEmp.ID {
+	//	return identity.ErrCannotModifySelf
+	// }
 	if orgCtx.Organization.ID != targetEmp.OrganizationID {
 		return identity.ErrPermissionDenied
 	}
