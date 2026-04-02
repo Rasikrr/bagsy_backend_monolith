@@ -130,7 +130,7 @@ func (p *Policy) CanTransferEmployee(orgCtx *access.OrgContext, targetEmp *ident
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended
 	}
-	if orgCtx.Employee.ID == targetEmp.ID {
+	if orgCtx.Employee.ID == targetEmp.ID && !orgCtx.Employee.Role.IsOwner() {
 		return identity.ErrCannotModifySelf
 	}
 	if orgCtx.Organization.ID != targetEmp.OrganizationID {
