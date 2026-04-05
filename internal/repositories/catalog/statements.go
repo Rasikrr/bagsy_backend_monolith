@@ -27,7 +27,7 @@ const (
 	saveEmployeeService = `
 		INSERT INTO employee_services (id, employee_id, service_id, price, active, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT (id) DO UPDATE SET
+		ON CONFLICT (employee_id, service_id) DO UPDATE SET
 			price = EXCLUDED.price,
 			active = EXCLUDED.active,
 			updated_at = EXCLUDED.updated_at;
