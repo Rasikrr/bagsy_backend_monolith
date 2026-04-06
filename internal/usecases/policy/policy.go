@@ -348,7 +348,7 @@ func (p *Policy) CanManageEmployeeSchedule(orgCtx *access.OrgContext, targetEmp 
 	case orgCtx.Employee.Role.IsOwner():
 		return nil
 	case orgCtx.Employee.Role.IsManager():
-		if !targetEmp.Role.IsStaff() {
+		if !targetEmp.Role.IsStaff() && !orgCtx.Employee.Permissions.CanProvideServices {
 			return identity.ErrPermissionDenied
 		}
 		if targetEmp.LocationID == nil || *targetEmp.LocationID != orgCtx.Employee.LocationID {
