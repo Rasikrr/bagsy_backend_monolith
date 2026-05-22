@@ -3,6 +3,7 @@ package http
 import (
 	docs "github.com/Rasikrr/bagsy_backend_monolith/docs/swagger"
 	authC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/auth"
+	billingC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/billing"
 	bookingC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/booking"
 	catalogC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/catalog"
 	employeeC "github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http/handlers/employee"
@@ -14,6 +15,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
 	scheduleRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/schedule"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	billingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/billing"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	catalogUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
@@ -59,6 +61,7 @@ func NewServer(
 	bookingUseCase *bookingUC.UseCase,
 	mediaUseCase *mediaUC.UseCase,
 	scheduleUseCase *scheduleUC.UseCase,
+	billingUseCase *billingUC.UseCase,
 ) {
 	server.WithMiddlewares(initCORSMiddleware())
 	initSwagger(server, swaggerHost, swaggerScheme)
@@ -73,6 +76,7 @@ func NewServer(
 	bookingHandler := bookingC.New(bookingUseCase, authMiddleware, orgContextMiddleware)
 	mediaHandler := mediaC.New(mediaUseCase, authMiddleware)
 	scheduleHandler := scheduleC.New(scheduleUseCase, authMiddleware, orgContextMiddleware)
+	billingHandler := billingC.New(billingUseCase, authMiddleware, orgContextMiddleware)
 
 	server.WithControllers(
 		authHandler,
@@ -82,6 +86,7 @@ func NewServer(
 		bookingHandler,
 		mediaHandler,
 		scheduleHandler,
+		billingHandler,
 	)
 }
 

@@ -439,6 +439,14 @@ func (p *Policy) CanUpdateOrganization(orgCtx *access.OrgContext) error {
 	return nil
 }
 
+// CanManageSubscription проверяет право на управление подпиской. Только owner.
+func (p *Policy) CanManageSubscription(orgCtx *access.OrgContext) error {
+	if !orgCtx.Employee.Role.IsOwner() {
+		return identity.ErrPermissionDenied
+	}
+	return nil
+}
+
 func (p *Policy) CanCreateLocation(orgCtx *access.OrgContext, currentCount int) error {
 	if !orgCtx.Subscription.Status.CanOperate() {
 		return billing.ErrSubscriptionSuspended

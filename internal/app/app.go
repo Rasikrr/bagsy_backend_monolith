@@ -30,6 +30,7 @@ import (
 	invitePendingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/pending"
 
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
+	billingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/billing"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	catalogUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
 	employeeUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/employee"
@@ -95,6 +96,7 @@ type App struct {
 	mediaUseCase     *mediaUC.UseCase
 	notifUseCase     *notifUC.UseCase
 	scheduleUseCase  *scheduleUC.UseCase
+	billingUseCase   *billingUC.UseCase
 
 	// Policies
 	policy *policy.Policy
@@ -318,6 +320,12 @@ func (a *App) initUseCases(_ context.Context) error {
 		txManager,
 	)
 
+	a.billingUseCase = billingUC.NewUseCase(
+		a.subscriptionRepo,
+		a.planRepo,
+		a.policy,
+	)
+
 	return nil
 }
 
@@ -340,6 +348,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.bookingUseCase,
 		a.mediaUseCase,
 		a.scheduleUseCase,
+		a.billingUseCase,
 	)
 	return nil
 }
@@ -362,9 +371,12 @@ func (a *App) initJobs(_ context.Context) error {
 	notifBatchSize := vars.GetInt(appenv.BagsyNotificationBatchSize)
 	notifSchedule := vars.GetString(appenv.BagsyNotificationSchedule)
 
+	subscriptionSchedule := vars.GetString(appenv.SubscriptionWorkerSchedule)
+
 	a.WithCronJobs(
 		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, mediaWorkerSchedule),
 		workers.NewReminderNotificationJob(a.notificationRepo, a.messenger, notifBatchSize, notifSchedule),
+		workers.NewSubscriptionStatusJob(a.subscriptionRepo, subscriptionSchedule),
 	)
 
 	return nil

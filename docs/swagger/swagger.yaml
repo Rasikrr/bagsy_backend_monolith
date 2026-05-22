@@ -108,6 +108,82 @@ definitions:
       phone:
         type: string
     type: object
+  internal_ports_http_handlers_billing.activateRequest:
+    properties:
+      cycle:
+        type: string
+    type: object
+  internal_ports_http_handlers_billing.capabilityResponse:
+    properties:
+      limit:
+        type: integer
+      resource:
+        type: string
+    type: object
+  internal_ports_http_handlers_billing.getSubscriptionResponse:
+    properties:
+      subscription:
+        $ref: '#/definitions/internal_ports_http_handlers_billing.subscriptionResponse'
+    type: object
+  internal_ports_http_handlers_billing.listPlansResponse:
+    properties:
+      plans:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_billing.planResponse'
+        type: array
+    type: object
+  internal_ports_http_handlers_billing.planResponse:
+    properties:
+      capabilities:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_billing.capabilityResponse'
+        type: array
+      code:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price_annual:
+        type: string
+      price_monthly:
+        type: string
+    type: object
+  internal_ports_http_handlers_billing.subscriptionResponse:
+    properties:
+      billing_cycle:
+        type: string
+      cancel_at_period_end:
+        type: boolean
+      canceled_at:
+        type: string
+      created_at:
+        type: string
+      current_period_end:
+        type: string
+      current_period_start:
+        type: string
+      data_delete_at:
+        type: string
+      id:
+        type: string
+      next_billing_at:
+        type: string
+      organization_id:
+        type: string
+      plan:
+        $ref: '#/definitions/internal_ports_http_handlers_billing.planResponse'
+      recurring_amount:
+        type: string
+      retry_count:
+        type: integer
+      status:
+        type: string
+      suspended_at:
+        type: string
+    type: object
   internal_ports_http_handlers_booking.calendarEntryResponse:
     properties:
       appointment_id:
@@ -392,6 +468,8 @@ definitions:
         type: string
       duration_minutes:
         type: integer
+      employee_service_id:
+        type: string
       id:
         type: string
       name:
@@ -2719,6 +2797,24 @@ paths:
       summary: Обновление профиля организации
       tags:
       - organizations
+  /api/v1/plans:
+    get:
+      description: Возвращает все активные тарифные планы с ценами и лимитами. Публичный
+        эндпоинт.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_billing.listPlansResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      summary: Список тарифных планов
+      tags:
+      - billing
   /api/v1/service-categories:
     get:
       description: Возвращает дерево категорий услуг для указанного типа бизнеса (location_category_id).
@@ -2902,6 +2998,134 @@ paths:
       summary: Обновление услуги
       tags:
       - catalog
+  /api/v1/subscription:
+    get:
+      description: Возвращает подписку текущей организации с информацией о плане.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_billing.getSubscriptionResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение текущей подписки
+      tags:
+      - billing
+  /api/v1/subscription/activate:
+    post:
+      consumes:
+      - application/json
+      description: 'Активирует подписку с выбранным циклом оплаты (monthly/annual).
+        Только Owner. Допустимо из статусов: trial, past_due, suspended.'
+      parameters:
+      - description: Цикл оплаты
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_ports_http_handlers_billing.activateRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Активация подписки
+      tags:
+      - billing
+  /api/v1/subscription/cancel:
+    post:
+      description: 'Помечает подписку для отмены в конце текущего оплаченного периода.
+        Только Owner. Допустимо из статуса: active.'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Запрос отмены подписки
+      tags:
+      - billing
+  /api/v1/subscription/undo-cancel:
+    post:
+      description: Отменяет ранее запрошенную отмену подписки. Подписка продолжит
+        автопродление. Только Owner.
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Отмена запроса на отмену подписки
+      tags:
+      - billing
 securityDefinitions:
   ApiKeyAuth:
     in: header

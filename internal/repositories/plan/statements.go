@@ -15,4 +15,14 @@ const (
 		FROM plan_capabilities
 		WHERE plan_id = $1;
 	`
+
+	findAllActive = `
+		SELECT id, code, name, description,
+			   price_monthly, price_annual,
+			   sort_order, active,
+			   created_at, updated_at
+		FROM plans
+		WHERE active = true
+		ORDER BY sort_order;
+	`
 )

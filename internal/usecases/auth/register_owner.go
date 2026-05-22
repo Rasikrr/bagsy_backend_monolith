@@ -214,7 +214,7 @@ func (u *RegisterOwnerUseCase) VerifyRegistration(ctx context.Context, req Verif
 		}
 
 		// 3. Create trial subscription.
-		sub := billing.NewTrialSubscription(orgID, plan.ID, billing.DefaultTrialDays)
+		sub := billing.NewTrialSubscription(orgID, plan.ID, reg.PlanCode.TrialDays())
 		if e = u.subscriptionsRepo.Save(txCtx, sub); e != nil {
 			return errors.Wrap(e, "save subscription")
 		}

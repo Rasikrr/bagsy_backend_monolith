@@ -26,7 +26,7 @@ var locationErrors = httputil.ErrorMap{
 	location.ErrInvalidLatitude:      {Code: http.StatusBadRequest, Message: "invalid_latitude"},
 	location.ErrInvalidLongitude:     {Code: http.StatusBadRequest, Message: "invalid_longitude"},
 
-	organization.ErrOrganizationNotFound:    {Code: http.StatusNotFound, Message: "organization_not_found"},
+	organization.ErrOrganizationNotFound:     {Code: http.StatusNotFound, Message: "organization_not_found"},
 	organization.ErrOrganizationNameRequired: {Code: http.StatusBadRequest, Message: "organization_name_required"},
 
 	shared.ErrInvalidPhone: {Code: http.StatusBadRequest, Message: "invalid_phone"},

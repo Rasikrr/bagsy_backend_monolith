@@ -40,4 +40,6 @@ const (
 	MediaUploadTTL      = "media_upload_ttl"
 	MediaMaxSizeBytes   = "media_max_size_bytes"
 	MediaWorkerSchedule = "media_worker_schedule"
+
+	SubscriptionWorkerSchedule = "subscription_worker_schedule"
 )
