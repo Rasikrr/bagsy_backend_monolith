@@ -15,7 +15,7 @@ const (
 	scopeFilter = `
 		organization_id = $1
 		AND (CARDINALITY($2::uuid[]) = 0 OR location_id = ANY($2))
-		AND start_at >= $3 AND start_at < $4 + INTERVAL '1 day'
+		AND start_at >= $3 AND start_at < $4::date + INTERVAL '1 day'
 		AND ($5::uuid IS NULL OR employee_id = $5)
 	`
 
@@ -49,7 +49,7 @@ const (
 		JOIN employees e ON e.id = a.employee_id
 		WHERE a.organization_id = $1
 			AND (CARDINALITY($2::uuid[]) = 0 OR a.location_id = ANY($2))
-			AND a.start_at >= $3 AND a.start_at < $4 + INTERVAL '1 day'
+			AND a.start_at >= $3 AND a.start_at < $4::date + INTERVAL '1 day'
 			AND ($5::uuid IS NULL OR a.employee_id = $5)
 			AND a.status = 'completed'
 		GROUP BY a.employee_id, e.full_name
@@ -64,7 +64,7 @@ const (
 		JOIN services s ON s.id = a.service_id
 		WHERE a.organization_id = $1
 			AND (CARDINALITY($2::uuid[]) = 0 OR a.location_id = ANY($2))
-			AND a.start_at >= $3 AND a.start_at < $4 + INTERVAL '1 day'
+			AND a.start_at >= $3 AND a.start_at < $4::date + INTERVAL '1 day'
 			AND ($5::uuid IS NULL OR a.employee_id = $5)
 			AND a.status = 'completed'
 		GROUP BY a.service_id, s.name
@@ -94,14 +94,14 @@ const (
 		JOIN locations l ON l.id = ls.location_id
 		WHERE l.organization_id = $1
 			AND (CARDINALITY($2::uuid[]) = 0 OR ls.location_id = ANY($2))
-			AND ls.date >= $3 AND ls.date <= $4
+			AND ls.date >= $3::date AND ls.date <= $4::date
 			AND ls.type = 'work'
 	`
 
 	getEmployeeScheduleMinutes = `
 		SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 60), 0)::float8
 		FROM employee_schedules
-		WHERE employee_id = $1 AND date >= $2 AND date <= $3 AND type = 'work'
+		WHERE employee_id = $1 AND date >= $2::date AND date <= $3::date AND type = 'work'
 	`
 
 	getEmployeeScheduleMinutesByEmployee = `
@@ -112,7 +112,7 @@ const (
 		JOIN employees e ON e.id = es.employee_id
 		WHERE e.organization_id = $1
 			AND (CARDINALITY($2::uuid[]) = 0 OR e.location_id = ANY($2))
-			AND es.date >= $3 AND es.date <= $4 AND es.type = 'work'
+			AND es.date >= $3::date AND es.date <= $4::date AND es.type = 'work'
 		GROUP BY es.employee_id
 	`
 
@@ -153,7 +153,7 @@ const (
 		FROM employees e
 		LEFT JOIN appointments a
 			ON a.employee_id = e.id
-			AND a.start_at >= $3 AND a.start_at < $4 + INTERVAL '1 day'
+			AND a.start_at >= $3 AND a.start_at < $4::date + INTERVAL '1 day'
 		WHERE e.organization_id = $1
 			AND e.deleted_at IS NULL
 			AND e.can_provide_services = true
@@ -171,7 +171,7 @@ const (
 		JOIN employees e ON e.id = a.employee_id
 		WHERE a.organization_id = $1
 			AND (CARDINALITY($2::uuid[]) = 0 OR e.location_id = ANY($2))
-			AND a.start_at >= $3 AND a.start_at < $4 + INTERVAL '1 day'
+			AND a.start_at >= $3 AND a.start_at < $4::date + INTERVAL '1 day'
 			AND a.status = 'completed'
 			AND e.can_provide_services = true
 		GROUP BY a.employee_id, weekday
@@ -192,7 +192,7 @@ const (
 		FROM employees e
 		LEFT JOIN appointments a
 			ON a.employee_id = e.id
-			AND a.start_at >= $3 AND a.start_at < $4 + INTERVAL '1 day'
+			AND a.start_at >= $3 AND a.start_at < $4::date + INTERVAL '1 day'
 			AND (CARDINALITY($2::uuid[]) = 0 OR a.location_id = ANY($2))
 		WHERE e.organization_id = $1
 			AND e.deleted_at IS NULL
