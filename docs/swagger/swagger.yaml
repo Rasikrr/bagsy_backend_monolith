@@ -4,6 +4,308 @@ definitions:
       error:
         type: string
     type: object
+  internal_ports_http_handlers_analytics.cancellationsDTO:
+    properties:
+      count:
+        type: integer
+      percent:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.clientKpiDTO:
+    properties:
+      lost:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      new:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      returning:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      total:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+    type: object
+  internal_ports_http_handlers_analytics.clientsBreakdownDTO:
+    properties:
+      new:
+        type: integer
+      returning:
+        type: integer
+    type: object
+  internal_ports_http_handlers_analytics.clientsResponse:
+    properties:
+      cohorts:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.cohortDTO'
+        type: array
+      kpi:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.clientKpiDTO'
+      retention:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.retentionDTO'
+      segments:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.segmentDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_analytics.cohortDTO:
+    properties:
+      active_percent:
+        type: number
+      month:
+        type: string
+      new_count:
+        type: integer
+    type: object
+  internal_ports_http_handlers_analytics.dailyPointDTO:
+    properties:
+      date:
+        type: string
+      prev_value:
+        type: number
+      value:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.employeeRefDTO:
+    properties:
+      avatar_url:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+    type: object
+  internal_ports_http_handlers_analytics.financeResponse:
+    properties:
+      gross_profit:
+        type: number
+      margin_percent:
+        type: number
+      payroll:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.payrollRowDTO'
+        type: array
+      payroll_total:
+        type: number
+      revenue:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.financeRevenueDTO'
+    type: object
+  internal_ports_http_handlers_analytics.financeRevenueDTO:
+    properties:
+      products:
+        type: number
+      services:
+        type: number
+      total:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.funnelStageDTO:
+    properties:
+      conversion:
+        type: number
+      count:
+        type: integer
+      key:
+        type: string
+    type: object
+  internal_ports_http_handlers_analytics.heatmapCellDTO:
+    properties:
+      hour:
+        type: integer
+      value:
+        type: number
+      weekday:
+        type: integer
+    type: object
+  internal_ports_http_handlers_analytics.hourlyLoadDTO:
+    properties:
+      hour:
+        type: integer
+      value:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.insightDTO:
+    properties:
+      key:
+        type: string
+      level:
+        type: string
+      params:
+        additionalProperties: {}
+        type: object
+    type: object
+  internal_ports_http_handlers_analytics.kpiBlockDTO:
+    properties:
+      avg_check:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      bookings:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      cancellation_percent:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      clients:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      load_percent:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+      revenue:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO'
+    type: object
+  internal_ports_http_handlers_analytics.kpiValueDTO:
+    properties:
+      delta_percent:
+        type: number
+      prev:
+        type: number
+      value:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.meResponse:
+    properties:
+      clients_breakdown:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.clientsBreakdownDTO'
+      heatmap:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.heatmapCellDTO'
+        type: array
+      kpi:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiBlockDTO'
+      revenue_by_day:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.dailyPointDTO'
+        type: array
+      top_services:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.topItemDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_analytics.overviewResponse:
+    properties:
+      funnel:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.funnelStageDTO'
+        type: array
+      heatmap:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.heatmapCellDTO'
+        type: array
+      insights:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.insightDTO'
+        type: array
+      kpi:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiBlockDTO'
+      revenue_by_day:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.dailyPointDTO'
+        type: array
+      top_employees:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.topItemDTO'
+        type: array
+      top_services:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.topItemDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_analytics.payrollRowDTO:
+    properties:
+      amount:
+        type: number
+      commission_percent:
+        type: integer
+      employee_id:
+        type: string
+      full_name:
+        type: string
+    type: object
+  internal_ports_http_handlers_analytics.retentionDTO:
+    properties:
+      after_1:
+        type: number
+      after_2:
+        type: number
+      after_3:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.segmentDTO:
+    properties:
+      count:
+        type: integer
+      key:
+        type: string
+      share:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.staffDetailResponse:
+    properties:
+      clients_breakdown:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.clientsBreakdownDTO'
+      employee:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.employeeRefDTO'
+      hourly_load:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.hourlyLoadDTO'
+        type: array
+      kpi:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.kpiBlockDTO'
+      revenue_by_day:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.dailyPointDTO'
+        type: array
+      top_services:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.topItemDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_analytics.staffResponse:
+    properties:
+      insights:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.insightDTO'
+        type: array
+      rows:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.staffRowDTO'
+        type: array
+      weekday_load:
+        items:
+          $ref: '#/definitions/internal_ports_http_handlers_analytics.weekdayLoadDTO'
+        type: array
+    type: object
+  internal_ports_http_handlers_analytics.staffRowDTO:
+    properties:
+      avg_check:
+        type: number
+      bookings:
+        type: integer
+      cancellations:
+        $ref: '#/definitions/internal_ports_http_handlers_analytics.cancellationsDTO'
+      employee_id:
+        type: string
+      full_name:
+        type: string
+      load_percent:
+        type: number
+      rating:
+        type: number
+      revenue:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.topItemDTO:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      revenue:
+        type: number
+      share:
+        type: number
+    type: object
+  internal_ports_http_handlers_analytics.weekdayLoadDTO:
+    properties:
+      employee_id:
+        type: string
+      value:
+        type: number
+      weekday:
+        type: integer
+    type: object
   internal_ports_http_handlers_auth.confirmResetRequest:
     properties:
       new_password:
@@ -392,6 +694,8 @@ definitions:
         type: string
       duration_minutes:
         type: integer
+      employee_service_id:
+        type: string
       id:
         type: string
       name:
@@ -811,6 +1115,333 @@ info:
   title: Bagsy API
   version: "1.0"
 paths:
+  /api/v1/analytics/clients:
+    get:
+      description: KPI клиентов, сегменты, retention и когорты.
+      parameters:
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: ID локации (UUID)
+        in: query
+        name: location_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.clientsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Аналитика клиентов (Beta)
+      tags:
+      - analytics
+  /api/v1/analytics/finance:
+    get:
+      description: Выручка, ФОТ по мастерам, валовая прибыль и маржа за период.
+      parameters:
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: ID локации (UUID)
+        in: query
+        name: location_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.financeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Финансовый отчёт
+      tags:
+      - analytics
+  /api/v1/analytics/locations/{locationID}:
+    get:
+      description: Сводка аналитики в скоупе одной локации. Только для Network-owner.
+      parameters:
+      - description: ID локации (UUID)
+        in: path
+        name: locationID
+        required: true
+        type: string
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.overviewResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Drill-down по локации
+      tags:
+      - analytics
+  /api/v1/analytics/me:
+    get:
+      description: KPI, выручка по дням, топ услуг, heatmap и разбивка клиентов текущего
+        сотрудника.
+      parameters:
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.meResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Личная аналитика сотрудника
+      tags:
+      - analytics
+  /api/v1/analytics/overview:
+    get:
+      description: KPI, выручка по дням, топы мастеров/услуг, воронка, heatmap и инсайты
+        за период.
+      parameters:
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: ID локации (UUID)
+        in: query
+        name: location_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.overviewResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Сводка аналитики
+      tags:
+      - analytics
+  /api/v1/analytics/staff:
+    get:
+      description: Таблица по всем мастерам локации + нагрузка по дням недели.
+      parameters:
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: ID локации (UUID)
+        in: query
+        name: location_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.staffResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Отчёт по мастерам
+      tags:
+      - analytics
+  /api/v1/analytics/staff/{employeeID}:
+    get:
+      description: KPI, выручка по дням, топ услуг, почасовая нагрузка и разбивка
+        клиентов мастера.
+      parameters:
+      - description: ID мастера (UUID)
+        in: path
+        name: employeeID
+        required: true
+        type: string
+      - description: Начало периода (YYYY-MM-DD)
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: Конец периода (YYYY-MM-DD)
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_ports_http_handlers_analytics.staffDetailResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Drill-down по мастеру
+      tags:
+      - analytics
   /api/v1/appointments:
     post:
       consumes:

@@ -23,6 +23,505 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/analytics/clients": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "KPI клиентов, сегменты, retention и когорты.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Аналитика клиентов (Beta)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID локации (UUID)",
+                        "name": "location_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.clientsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/finance": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Выручка, ФОТ по мастерам, валовая прибыль и маржа за период.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Финансовый отчёт",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID локации (UUID)",
+                        "name": "location_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.financeResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/locations/{locationID}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Сводка аналитики в скоупе одной локации. Только для Network-owner.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Drill-down по локации",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID локации (UUID)",
+                        "name": "locationID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.overviewResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/me": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "KPI, выручка по дням, топ услуг, heatmap и разбивка клиентов текущего сотрудника.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Личная аналитика сотрудника",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.meResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/overview": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "KPI, выручка по дням, топы мастеров/услуг, воронка, heatmap и инсайты за период.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Сводка аналитики",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID локации (UUID)",
+                        "name": "location_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.overviewResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/staff": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Таблица по всем мастерам локации + нагрузка по дням недели.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Отчёт по мастерам",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID локации (UUID)",
+                        "name": "location_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.staffResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/staff/{employeeID}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "KPI, выручка по дням, топ услуг, почасовая нагрузка и разбивка клиентов мастера.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Drill-down по мастеру",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID мастера (UUID)",
+                        "name": "employeeID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Начало периода (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_ports_http_handlers_analytics.staffDetailResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Rasikrr_bagsy_backend_monolith_internal_ports_http_util.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/appointments": {
             "post": {
                 "description": "Создаёт новую запись на услугу для клиента. Запись создаётся в статусе pending и требует подтверждения кодом.",
@@ -3202,6 +3701,471 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_ports_http_handlers_analytics.cancellationsDTO": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "percent": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.clientKpiDTO": {
+            "type": "object",
+            "properties": {
+                "lost": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "new": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "returning": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "total": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.clientsBreakdownDTO": {
+            "type": "object",
+            "properties": {
+                "new": {
+                    "type": "integer"
+                },
+                "returning": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.clientsResponse": {
+            "type": "object",
+            "properties": {
+                "cohorts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.cohortDTO"
+                    }
+                },
+                "kpi": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.clientKpiDTO"
+                },
+                "retention": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.retentionDTO"
+                },
+                "segments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.segmentDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.cohortDTO": {
+            "type": "object",
+            "properties": {
+                "active_percent": {
+                    "type": "number"
+                },
+                "month": {
+                    "type": "string"
+                },
+                "new_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.dailyPointDTO": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "prev_value": {
+                    "type": "number"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.employeeRefDTO": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.financeResponse": {
+            "type": "object",
+            "properties": {
+                "gross_profit": {
+                    "type": "number"
+                },
+                "margin_percent": {
+                    "type": "number"
+                },
+                "payroll": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.payrollRowDTO"
+                    }
+                },
+                "payroll_total": {
+                    "type": "number"
+                },
+                "revenue": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.financeRevenueDTO"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.financeRevenueDTO": {
+            "type": "object",
+            "properties": {
+                "products": {
+                    "type": "number"
+                },
+                "services": {
+                    "type": "number"
+                },
+                "total": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.funnelStageDTO": {
+            "type": "object",
+            "properties": {
+                "conversion": {
+                    "type": "number"
+                },
+                "count": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.heatmapCellDTO": {
+            "type": "object",
+            "properties": {
+                "hour": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "number"
+                },
+                "weekday": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.hourlyLoadDTO": {
+            "type": "object",
+            "properties": {
+                "hour": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.insightDTO": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.kpiBlockDTO": {
+            "type": "object",
+            "properties": {
+                "avg_check": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "bookings": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "cancellation_percent": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "clients": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "load_percent": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                },
+                "revenue": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiValueDTO"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.kpiValueDTO": {
+            "type": "object",
+            "properties": {
+                "delta_percent": {
+                    "type": "number"
+                },
+                "prev": {
+                    "type": "number"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.meResponse": {
+            "type": "object",
+            "properties": {
+                "clients_breakdown": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.clientsBreakdownDTO"
+                },
+                "heatmap": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.heatmapCellDTO"
+                    }
+                },
+                "kpi": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiBlockDTO"
+                },
+                "revenue_by_day": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.dailyPointDTO"
+                    }
+                },
+                "top_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.topItemDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.overviewResponse": {
+            "type": "object",
+            "properties": {
+                "funnel": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.funnelStageDTO"
+                    }
+                },
+                "heatmap": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.heatmapCellDTO"
+                    }
+                },
+                "insights": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.insightDTO"
+                    }
+                },
+                "kpi": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiBlockDTO"
+                },
+                "revenue_by_day": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.dailyPointDTO"
+                    }
+                },
+                "top_employees": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.topItemDTO"
+                    }
+                },
+                "top_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.topItemDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.payrollRowDTO": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "commission_percent": {
+                    "type": "integer"
+                },
+                "employee_id": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.retentionDTO": {
+            "type": "object",
+            "properties": {
+                "after_1": {
+                    "type": "number"
+                },
+                "after_2": {
+                    "type": "number"
+                },
+                "after_3": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.segmentDTO": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "share": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.staffDetailResponse": {
+            "type": "object",
+            "properties": {
+                "clients_breakdown": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.clientsBreakdownDTO"
+                },
+                "employee": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.employeeRefDTO"
+                },
+                "hourly_load": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.hourlyLoadDTO"
+                    }
+                },
+                "kpi": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.kpiBlockDTO"
+                },
+                "revenue_by_day": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.dailyPointDTO"
+                    }
+                },
+                "top_services": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.topItemDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.staffResponse": {
+            "type": "object",
+            "properties": {
+                "insights": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.insightDTO"
+                    }
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.staffRowDTO"
+                    }
+                },
+                "weekday_load": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_ports_http_handlers_analytics.weekdayLoadDTO"
+                    }
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.staffRowDTO": {
+            "type": "object",
+            "properties": {
+                "avg_check": {
+                    "type": "number"
+                },
+                "bookings": {
+                    "type": "integer"
+                },
+                "cancellations": {
+                    "$ref": "#/definitions/internal_ports_http_handlers_analytics.cancellationsDTO"
+                },
+                "employee_id": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "load_percent": {
+                    "type": "number"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "revenue": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.topItemDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "revenue": {
+                    "type": "number"
+                },
+                "share": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal_ports_http_handlers_analytics.weekdayLoadDTO": {
+            "type": "object",
+            "properties": {
+                "employee_id": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                },
+                "weekday": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_ports_http_handlers_auth.confirmResetRequest": {
             "type": "object",
             "properties": {
@@ -3801,6 +4765,9 @@ const docTemplate = `{
                 },
                 "duration_minutes": {
                     "type": "integer"
+                },
+                "employee_service_id": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"

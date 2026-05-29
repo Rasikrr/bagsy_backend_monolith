@@ -9,6 +9,7 @@ import (
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/infra/messenger"
 	"github.com/Rasikrr/bagsy_backend_monolith/internal/ports/http"
 	accessRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/access"
+	analyticsRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/analytics"
 	actionTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/action_token"
 	otpRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/otp"
 	bookingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/booking"
@@ -29,6 +30,7 @@ import (
 	refreshTokenRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/auth/tokens"
 	invitePendingRepo "github.com/Rasikrr/bagsy_backend_monolith/internal/repositories/invite/pending"
 
+	analyticsUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/analytics"
 	authUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/auth"
 	bookingUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/booking"
 	catalogUC "github.com/Rasikrr/bagsy_backend_monolith/internal/usecases/catalog"
@@ -71,6 +73,7 @@ type App struct {
 	catalogRepo        *catalogRepo.Repository
 	scheduleRepo       *scheduleRepo.Repository
 	mediaRepo          *mediaRepo.Repository
+	analyticsRepo      *analyticsRepo.Repository
 	notificationRepo   *notifRepo.Repository
 	otpRepo            *otpRepo.Repository
 	pendingRegStore    *pendingReg.PendingRegistrationStore
@@ -95,6 +98,7 @@ type App struct {
 	mediaUseCase     *mediaUC.UseCase
 	notifUseCase     *notifUC.UseCase
 	scheduleUseCase  *scheduleUC.UseCase
+	analyticsUseCase *analyticsUC.UseCase
 
 	// Policies
 	policy *policy.Policy
@@ -165,6 +169,7 @@ func (a *App) initRepositories(_ context.Context) error {
 	a.catalogRepo = catalogRepo.NewRepository(db)
 	a.scheduleRepo = scheduleRepo.NewRepository(db)
 	a.mediaRepo = mediaRepo.NewRepository(db)
+	a.analyticsRepo = analyticsRepo.NewRepository(db)
 	a.notificationRepo = notifRepo.NewRepository(db)
 
 	a.otpRepo = otpRepo.NewRepository(a.Redis())
@@ -318,6 +323,8 @@ func (a *App) initUseCases(_ context.Context) error {
 		txManager,
 	)
 
+	a.analyticsUseCase = analyticsUC.NewUseCase(a.analyticsRepo)
+
 	return nil
 }
 
@@ -340,6 +347,7 @@ func (a *App) initHTTP(_ context.Context) error {
 		a.bookingUseCase,
 		a.mediaUseCase,
 		a.scheduleUseCase,
+		a.analyticsUseCase,
 	)
 	return nil
 }
