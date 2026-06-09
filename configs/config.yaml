@@ -276,7 +276,7 @@ env:
   frontend_url:
     type: "string"
     env_name: "FRONTEND_URL"
-    value: "https://app.bagsy.kz/ru/invite"
+    value: "https://dev.app.bagsy.kz/ru/invite"
     required: true
 
   media_max_size_bytes:
