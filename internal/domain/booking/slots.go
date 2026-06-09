@@ -40,7 +40,7 @@ func GenerateSlots(
 		return s.Date.Format("2006-01-02")
 	})
 	occByDate := lo.GroupBy(occupied, func(a *Appointment) string {
-		return a.StartAt.Format("2006-01-02")
+		return a.StartAt.In(almaty).Format("2006-01-02")
 	})
 
 	var allIntervals []TimeSlot
@@ -111,7 +111,7 @@ func calculateDailyIntervals(
 	availableIntervals := subtractIntervals(workIntervals, restIntervals)
 
 	occIntervals := lo.Map(dayOcc, func(a *Appointment, _ int) TimeSlot {
-		return TimeSlot{StartAt: a.StartAt, EndAt: a.EndAt}
+		return TimeSlot{StartAt: a.StartAt.In(almaty), EndAt: a.EndAt.In(almaty)}
 	})
 
 	return subtractIntervals(availableIntervals, occIntervals)
@@ -145,7 +145,7 @@ func ValidateSlotAvailability(
 		return s.Date.Format("2006-01-02")
 	})
 	occByDate := lo.GroupBy(occupied, func(a *Appointment) string {
-		return a.StartAt.Format("2006-01-02")
+		return a.StartAt.In(almaty).Format("2006-01-02")
 	})
 
 	for d := dayStart; !d.After(dayEnd); d = d.AddDate(0, 0, 1) {

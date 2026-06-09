@@ -234,6 +234,45 @@ func TestGenerateSlots_OccupiedAppointmentsSubtracted(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
+// TestGenerateSlots_OccupiedInUTC_OutputAlwaysAlmaty reproduces the timezone bug:
+// occupied appointments come from Postgres in UTC, and after subtracting them the
+// resulting interval boundaries (and every slot generated from them) used to inherit
+// the UTC location, producing mixed +05:00 / Z output. All output slots must render
+// in the Almaty working zone regardless of the occupied appointment's location.
+func TestGenerateSlots_OccupiedInUTC_OutputAlwaysAlmaty(t *testing.T) {
+	// 10:00–11:00 Almaty expressed in UTC (== 05:00–06:00 UTC).
+	occUTC := &Appointment{
+		ID:      uuid.New(),
+		StartAt: time.Date(2026, 3, 10, 5, 0, 0, 0, time.UTC),
+		EndAt:   time.Date(2026, 3, 10, 6, 0, 0, 0, time.UTC),
+	}
+
+	slots := GenerateSlots(
+		location.ScheduleTypeFixed,
+		[]*schedule.LocationScheduleSlot{locWorkSlot(testDate, 9, 0, 12, 0)},
+		nil,
+		[]*Appointment{occUTC},
+		mustDuration(60),
+		mustDuration(60),
+		testDate, testDate,
+		makeTime(testDate, 0, 0),
+	)
+
+	require.NotEmpty(t, slots)
+
+	_, wantOffset := makeTime(testDate, 9, 0).Zone()
+	for _, s := range slots {
+		_, gotStart := s.StartAt.Zone()
+		_, gotEnd := s.EndAt.Zone()
+		assert.Equal(t, wantOffset, gotStart, "start_at must be in Almaty zone: %s", s.StartAt)
+		assert.Equal(t, wantOffset, gotEnd, "end_at must be in Almaty zone: %s", s.EndAt)
+	}
+
+	// The carved-out occupied hour must still be excluded, and the slot after it
+	// must render as 11:00 Almaty (not 06:00 UTC).
+	assert.Equal(t, [][2]string{{"09:00", "10:00"}, {"11:00", "12:00"}}, slotTimes(slots))
+}
+
 func TestGenerateSlots_PastSlotsFiltered(t *testing.T) {
 	slots := GenerateSlots(
 		location.ScheduleTypeFixed,
