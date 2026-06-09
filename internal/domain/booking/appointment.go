@@ -7,6 +7,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// reasonAutoCompleted — причина в истории статусов при системном авто-завершении.
+const reasonAutoCompleted = "auto-completed by system"
+
 // ─────────────────────────────────────────────────────────────────
 // Aggregate Root: Appointment
 // ─────────────────────────────────────────────────────────────────
@@ -109,6 +112,22 @@ func (a *Appointment) Complete(by uuid.UUID) error {
 
 	a.Status = StatusCompleted
 	a.addStatusHistory(StatusCompleted, &by, nil)
+	a.touch()
+
+	return nil
+}
+
+// AutoComplete завершает прошедшую запись системно (по расписанию, без
+// действующего сотрудника). Допустимо из confirmed/in_progress: время визита
+// прошло, поэтому запись считается выполненной независимо от того, перевёл ли
+// её кто-то вручную в in_progress.
+func (a *Appointment) AutoComplete() error {
+	if a.Status != StatusConfirmed && a.Status != StatusInProgress {
+		return ErrAppointmentInvalidStatusTransition
+	}
+
+	a.Status = StatusCompleted
+	a.addStatusHistory(StatusCompleted, nil, ptr(reasonAutoCompleted)) // changedBy=nil — системное действие
 	a.touch()
 
 	return nil

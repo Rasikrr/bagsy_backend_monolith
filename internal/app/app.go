@@ -370,9 +370,12 @@ func (a *App) initJobs(_ context.Context) error {
 	notifBatchSize := vars.GetInt(appenv.BagsyNotificationBatchSize)
 	notifSchedule := vars.GetString(appenv.BagsyNotificationSchedule)
 
+	apptCompletionSchedule := vars.GetString(appenv.AppointmentCompletionSchedule)
+
 	a.WithCronJobs(
 		workers.NewMediaCleanupJob(a.mediaRepo, mediaUploadTTL, mediaWorkerSchedule),
 		workers.NewReminderNotificationJob(a.notificationRepo, a.messenger, notifBatchSize, notifSchedule),
+		workers.NewAppointmentCompletionJob(a.bookingRepo, apptCompletionSchedule),
 	)
 
 	return nil

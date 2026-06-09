@@ -296,3 +296,9 @@ env:
     type: "string"
     value: "0 */1 * * * *"
     required: true
+
+  appointment_completion_schedule:
+    env_name: "APPOINTMENT_COMPLETION_SCHEDULE"
+    type: "string"
+    value: "0 */15 * * * *"  # каждые 15 минут (6-польный cron, с секундами)
+    required: true

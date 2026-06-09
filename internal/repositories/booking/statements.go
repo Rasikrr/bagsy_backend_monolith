@@ -30,6 +30,11 @@ const (
 		SELECT * FROM appointment_histories WHERE appointment_id = $1 ORDER BY created_at ASC
 	`
 
+	getDueForCompletion = `
+		SELECT id FROM appointments
+		WHERE status IN ('confirmed', 'in_progress') AND end_at < $1
+	`
+
 	getOccupiedSlots = `
 		SELECT * FROM appointments
 		WHERE location_id = $1

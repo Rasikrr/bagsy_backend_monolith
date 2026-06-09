@@ -73,6 +73,16 @@ func (r *Repository) save(ctx context.Context, a *booking.Appointment) error {
 	return nil
 }
 
+// GetDueForCompletion возвращает id записей, которые пора завершить:
+// статус confirmed/in_progress и время визита (end_at) уже прошло.
+func (r *Repository) GetDueForCompletion(ctx context.Context, now time.Time) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
+	if err := pgxscan.Select(ctx, r.db, &ids, getDueForCompletion, now); err != nil {
+		return nil, fmt.Errorf("get appointments due for completion: %w", err)
+	}
+	return ids, nil
+}
+
 func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*booking.Appointment, error) {
 	var m appointmentModel
 	if err := pgxscan.Get(ctx, r.db, &m, getAppointmentByID, id); err != nil {
